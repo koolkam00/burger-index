@@ -58,6 +58,12 @@ OUTCOME_TEXT = {
 }
 
 
+def _sentence(s: str) -> str:
+    """Upper-case the first letter only (keeps burger names as written) and end with a period."""
+    s = s.strip()
+    return (s[:1].upper() + s[1:] + ("" if s.endswith(".") else ".")) if s else s
+
+
 @dataclass
 class Evaluation:
     kind: str
@@ -173,7 +179,7 @@ class TargetRun:
     def scrape(self, cand: Candidate) -> Evaluation:
         self.scrapes += 1
         self.tried.add(discover.url_key(cand.url))
-        rec = self.api.scrape(cand.url, target=self.target.key)
+        rec = self.api.scrape(cand.url, target=self.target.key, scroll=config.SCROLL_DELIVERY_APPS and cand.category == "delivery_app")
         self._track(rec)
         ev = evaluate_scrape(rec, cand, self.target)
         n_priced = sum(1 for b in (ev.menu or {}).get("burgers", []) if b["price"] is not None)
@@ -201,6 +207,14 @@ class TargetRun:
                     if found:
                         self.queue = found + [cand] + self.queue
                         continue
+                    # No menu page on the site map: a bare homepage rarely lists prices, so search
+                    # first (if not done yet) and try it after ordering pages and aggregators.
+                    cand.tier = discover.UNMAPPED_HOME_TIER
+                    self.queue.insert(0, cand)
+                    if self.searches < config.MAX_SEARCHES:
+                        self.search()
+                    self.queue.sort(key=lambda c: c.rank)  # stable: equal tiers keep their order
+                    continue
                 ev = self.scrape(cand)
                 if self.best is None or ev.rank > self.best.rank:
                     self.best = ev
@@ -251,16 +265,16 @@ class TargetRun:
             where = ", ".join(x for x in (rep.get("address"), rep.get("borough")) if x)
             parts.append(f"Chain-level prices from one NYC location ({where}); prices may vary by location.")
         if menu and menu.get("notes"):
-            parts.append("; ".join(menu["notes"])[:200].capitalize() + ".")
+            parts.append(_sentence("; ".join(menu["notes"])[:200]))
         if status != "priced":
             tried = [f"{discover.host_of(a['url'])} ({a['outcome']})" for a in self.attempts if a["step"] == "scrape"]
             if tried:
                 parts.append("Tried: " + "; ".join(tried)[:300] + ".")
             if self.stop_reason:
-                parts.append(self.stop_reason.capitalize() + ".")
+                parts.append(_sentence(self.stop_reason))
         skipped = [n for n in self.notes if n.startswith("skipped")]
         if skipped and status != "priced":
-            parts.append("; ".join(skipped).capitalize() + ".")
+            parts.append(_sentence("; ".join(skipped)))
         website = self.website or next((u for u, o in t.csv_urls if o == "csv website"), None)
         if not website and menu_url and best and best.candidate.category in discover.OFFICIAL:
             website = discover.root_url(menu_url)

@@ -24,7 +24,7 @@ PROTEIN_SYNONYMS = {
 }
 # Strong signals in the item NAME that override a 'beef' label (only when the name has no 'beef').
 NAME_PROTEIN_OVERRIDES = (
-    (re.compile(r"\b(impossible|beyond|veggie|vegan|vegetarian|black bean|plant[- ]based|garden|falafel|tofu|mushroom burger)\b"), "veggie"),
+    (re.compile(r"\b(impossible|beyond|veggie|vegan|vegetarian|black bean|plant[- ]based|falafel|tofu)\b"), "veggie"),
     (re.compile(r"\b(chicken)\b"), "chicken"),
     (re.compile(r"\b(turkey)\b"), "turkey"),
     (re.compile(r"\b(salmon|tuna|fish|crab|shrimp|lobster|cod)\b"), "fish"),
@@ -58,6 +58,7 @@ def coerce_price(v: Any) -> float | None:
 def clean_name(name: Any, price: float | None = None) -> str:
     s = str(name or "")
     s = _EMOJI_RE.sub("", s)
+    s = re.sub(r"[®™©℠]", "", s)
     s = re.sub(r"[*_`#]+", "", s)  # markdown emphasis
     s = re.sub(r"^\s*(?:[-•·*]|\d+[.)])\s+", "", s)  # bullets / "1. "
     s = re.sub(r"\s+", " ", s).strip()

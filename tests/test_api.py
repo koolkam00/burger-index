@@ -104,3 +104,24 @@ def test_concurrent_same_key_is_fetched_once(tmp_path, fake):
     for t in threads:
         t.join()
     assert f.count("scrape") == 1 and api.ledger.spent == 5
+
+
+def test_stops_before_the_account_balance_runs_dry(tmp_path, fake, monkeypatch):
+    f = fake(pages={f"{URL}{i}": menu(("Burger", 10)) for i in range(3)})
+    balance = {"left": 12}
+
+    def with_balance(endpoint, request, *, max_age_ms=None):
+        out = f(endpoint, request, max_age_ms=max_age_ms)
+        balance["left"] -= out["credits"]
+        out["credits_remaining"] = balance["left"]  # what key_metadata.credits_remaining reports
+        return out
+
+    monkeypatch.setattr(context_client, "execute", with_balance)
+    ledger = CreditLedger(1000)
+    api = Api(DiskCache(tmp_path), ledger)
+    api.scrape(f"{URL}0")
+    assert ledger.balance == 7
+    api.scrape(f"{URL}1")  # 5 <= 7
+    with pytest.raises(CreditCapReached, match="account balance"):
+        api.scrape(f"{URL}2")  # 5 > 2 left
+    assert f.count("scrape") == 2 and ledger.summary()["account_credits_remaining"] == 2

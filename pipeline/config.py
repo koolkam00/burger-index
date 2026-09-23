@@ -37,3 +37,8 @@ MAX_SCRAPES = 3
 # Post-processing: prices outside this band are treated as extraction errors.
 PRICE_MIN = 2.0
 PRICE_MAX = 150.0
+
+# Scroll delivery-app store pages before extraction so lazy-loaded menu sections render.
+# Browser actions need a paid Context.dev plan (403 PAID_PLAN_REQUIRED on the current key),
+# so this is off; turning it on changes those scrapes' cache keys (+1 credit each).
+SCROLL_DELIVERY_APPS = False

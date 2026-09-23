@@ -65,7 +65,7 @@ def brand_of(rec: dict) -> tuple[str, ChainDef | None]:
                 return cd.slug, cd
     nn = norm_name(strip_store_number(names[0])) if names else ""
     nn = re.sub(r"^the ", "", nn)
-    nn = re.sub(r"\s+\d+$", "", nn)  # 'shake shack 1692'
+    nn = re.sub(r"\s+\d{3,}$", "", nn)  # store numbers: 'shake shack 1692' (not 'pier 17')
     return nn, None
 
 

@@ -151,3 +151,19 @@ def test_max_credits_stop_keeps_finished_targets(tmp_path, fake):
     summary2 = run_targets(targets, api2, workers=2, run_log_path=None)
     assert summary2["done"] == 6 and summary2["credits_spent"] == 20
     assert config.MAX_SCRAPES == 3
+
+
+def test_unmapped_homepage_searches_first_and_tries_aggregators_before_it(tmp_path, fake):
+    home = "http://paulsburgersnyc.com/"
+    gh = "https://www.grubhub.com/restaurant/pauls-da-burger-joint-131-2nd-ave-new-york/4381032"
+    f = fake(
+        maps={"paulsburgersnyc.com": []},
+        search={"Paul's": [sr("https://www.doordash.com/store/pauls-da-burger-joint-1/", "Paul's Da Burger Joint"),
+                           sr(gh, "Paul's Da Burger Joint - Grubhub")]},
+        pages={gh: menu(("Beef Burger", 9.5)), home: menu(is_menu=False, has_prices=False)},
+    )
+    t = one("Paul's Da Burger Joint", address="131 2 Avenue", csv=True, website=home)
+    res = process_target(t, api_for(tmp_path))
+    assert res["status"] == "priced" and res["menu_url"] == gh
+    assert [a["step"] for a in res["attempts"]] == ["map", "search", "scrape"]
+    assert f.count("scrape") == 1 and res["website"] == home

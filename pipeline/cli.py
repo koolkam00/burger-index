@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from . import config
-from .api import Api, CreditLedger, DiskCache, estimate_credits, lifetime_spend, looks_like_pdf
+from .api import Api, CreditLedger, DiskCache, estimate_credits, last_known_balance, lifetime_spend, looks_like_pdf
 from .build import assemble, write_dataset
 from .chains import build_targets, select_targets
 from .context_client import scrape_request
@@ -100,7 +100,8 @@ def _estimate(targets) -> dict:
         if usable:
             url, cat = usable[0]
             s, m = 0, 1 if cat == "official_home" else 0
-            first_scrape = pdf_cost if looks_like_pdf(url) else scrape_cost
+            first_scrape = estimate_credits(
+                "scrape", scrape_request(url, scroll=config.SCROLL_DELIVERY_APPS and cat == "delivery_app"))
         else:
             s, m, first_scrape = 1, 1, scrape_cost  # assume search lands on a homepage that needs a map
         first = s + m + first_scrape
@@ -116,6 +117,10 @@ def _estimate(targets) -> dict:
         credits["worst_case"] += worst
     credits["expected"] = round(credits["expected"])
     return {"calls": calls, "credits": credits}
+
+
+def scrape_cost_note() -> int:
+    return estimate_credits("scrape", scrape_request("https://example.com/menu"))
 
 
 def cmd_plan(args) -> int:
@@ -143,12 +148,18 @@ def cmd_plan(args) -> int:
         **est,
         "caps_per_target": {"searches": config.MAX_SEARCHES, "maps": config.MAX_MAPS, "scrapes": config.MAX_SCRAPES},
         "max_credits": args.max_credits,
-        "credit_costs": {"search_10_results": 1, "map": 1, "scrape_json": 5, "scrape_json_pdf_estimate": 7},
+        "credit_costs": {"search_10_results": 1, "map": 1, "scrape_json": scrape_cost_note(),
+                         "scrape_json_pdf_estimate": 7},
         "lifetime_credits_spent": lifetime_spend(config.LEDGER_PATH),
+        "account_credits_remaining_last_seen": last_known_balance(config.LEDGER_PATH),
     }
     _print(plan)
     if est["credits"]["worst_case"] > args.max_credits:
         log(f"plan: worst case {est['credits']['worst_case']} > --max-credits {args.max_credits}; the run would stop cleanly at the cap")
+    balance = plan["account_credits_remaining_last_seen"]
+    if balance is not None and est["credits"]["expected"] > balance:
+        log(f"plan: WARNING expected spend ~{est['credits']['expected']} exceeds the account's last seen balance "
+            f"({balance} credits); set --max-credits below the balance or top up first")
     return 0
 
 

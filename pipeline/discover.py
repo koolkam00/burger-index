@@ -27,6 +27,11 @@ MENU_AGGREGATORS = (
     "zmenu.com", "menuism.com", "cititour.com",
 )
 DELIVERY_APPS = ("ubereats.com", "doordash.com", "postmates.com", "trycaviar.com", "caviar.com")
+# Site-builder CDNs that host restaurants' own menu PDFs (their domain never matches the name).
+SITE_CDNS = (
+    "getbento.com", "squarespace-cdn.com", "squarespace.com", "website-files.com", "wixstatic.com", "popmenu.com",
+    "shopify.com", "webflow.com", "imgix.net", "cloudfront.net", "amazonaws.com", "wp.com",
+)
 # Domain entries ending in '.' match any TLD ('yelp.' -> yelp.com, yelp.ca).
 REJECT_DOMAINS = (
     "yelp.", "tripadvisor.", "instagram.com", "facebook.com", "fb.com", "tiktok.com", "twitter.com", "x.com",
@@ -66,8 +71,10 @@ NON_NYC_PLACES = (
 BOROUGH_WORDS = {"Manhattan": "manhattan", "Brooklyn": "brooklyn", "Queens": "queens", "Bronx": "bronx",
                  "Staten Island": "staten island"}
 
+# third_party: an unknown site whose domain is not the restaurant's but whose title names it
+# (line trackers, gift cards, fan price lists). Tried last; priced as a menu aggregator.
 TIERS = {"official_menu": 0, "official_pdf": 0, "official_home": 1, "online_ordering": 2,
-         "menu_aggregator": 3, "delivery_app": 4}
+         "menu_aggregator": 3, "delivery_app": 4, "third_party": 5}
 OFFICIAL = {"official_menu", "official_pdf", "official_home"}
 PRICE_SOURCE = {
     "official_menu": "official_site",
@@ -76,6 +83,7 @@ PRICE_SOURCE = {
     "online_ordering": "online_ordering",
     "menu_aggregator": "menu_aggregator",
     "delivery_app": "delivery_app",
+    "third_party": "menu_aggregator",
 }
 SOURCE_LABEL = {
     "official_site": "the restaurant's own site",
@@ -86,15 +94,50 @@ SOURCE_LABEL = {
 }
 
 
+# An official homepage whose site map has no menu page: tried after online-ordering pages and
+# aggregators (which reliably list prices) but before delivery apps (marked-up prices).
+UNMAPPED_HOME_TIER = 3.5
+
+
 @dataclass
 class Candidate:
     url: str
     category: str
     origin: str  # "csv menu_url" | "csv website" | "search" | "map"
+    tier: float | None = None  # overrides TIERS[category] when set
 
     @property
     def price_source(self) -> str | None:
         return PRICE_SOURCE.get(self.category)
+
+    @property
+    def rank(self) -> float:
+        return self.tier if self.tier is not None else TIERS.get(self.category, 9)
+
+
+# Platform pages that are a single store's menu. Anything else on these hosts is a directory /
+# city / brand listing without prices (grubhub.com/food/mcdonalds/ny-manhattan).
+STORE_PATHS = {
+    "ubereats.com": ("/store/",),
+    "doordash.com": ("/store/",),
+    "postmates.com": ("/store/",),
+    "trycaviar.com": ("/store/",),
+    "caviar.com": ("/store/",),
+    "grubhub.com": ("/restaurant/",),
+    "seamless.com": ("/menu/", "/restaurant/"),
+}
+TRACKING_PARAMS = re.compile(r"^(srsltid|utm_[a-z]+|gclid|fbclid|msclkid|ref|ref_src|_gl)$", re.I)
+
+
+def clean_url(url: str) -> str:
+    """Drop tracking query params (Google's srsltid, utm_*) so equal pages share a cache key."""
+    from urllib.parse import parse_qsl, urlencode, urlunparse
+
+    p = urlparse(url.strip())
+    if not p.query:
+        return url.strip()
+    q = [(k, v) for k, v in parse_qsl(p.query, keep_blank_values=True) if not TRACKING_PARAMS.match(k)]
+    return urlunparse(p._replace(query=urlencode(q)))
 
 
 def host_of(url: str) -> str:
@@ -136,6 +179,9 @@ def classify_url(url: str) -> tuple[str, str | None]:
         return "reject", f"{host} is not a menu source"
     if _host_matches(host, "cititour.com"):
         return ("menu_aggregator", None) if "/menu" in path else ("reject", "news article")
+    for platform, prefixes in STORE_PATHS.items():
+        if _host_matches(host, platform) and not any(path.startswith(pre) for pre in prefixes):
+            return "reject", "directory page, not a single store's menu"
     if _any_host(host, DELIVERY_APPS):
         return "delivery_app", None
     if _any_host(host, MENU_AGGREGATORS):
@@ -171,25 +217,23 @@ def _names(target) -> list[str]:
     return [n for n in dict.fromkeys(out) if n]
 
 
-def name_matches(target, url: str, title: str, category: str) -> bool:
-    """Does this result belong to the target restaurant (by domain for official sites,
-    by title/URL words for platform pages)?"""
-    names = _names(target)
-    title_n = norm_name(title)
-    if category in OFFICIAL:
-        dom = _compact(host_of(url).rsplit(".", 1)[0])
-        for n in names:
-            c = _compact(n)
-            toks = n.split()
-            if c and (c in dom or (len(dom) >= 5 and dom in c)):
-                return True
-            if len(toks) >= 2 and _compact(" ".join(toks[:2])) in dom:
-                return True
-            if len(n) >= 5 and fuzz.partial_ratio(n, title_n) >= 90:
-                return True
-        return False
-    text = f"{title_n} {_url_words(url)}"
-    for n in names:
+def domain_matches(target, url: str) -> bool:
+    """Is this the restaurant's own domain? (duewestnyc.com for 'Due West')."""
+    dom = _compact(host_of(url).rsplit(".", 1)[0])
+    for n in _names(target):
+        c = _compact(n)
+        toks = n.split()
+        if c and (c in dom or (len(dom) >= 5 and dom in c)):
+            return True
+        if len(toks) >= 2 and _compact(" ".join(toks[:2])) in dom:
+            return True
+    return False
+
+
+def title_matches(target, url: str, title: str) -> bool:
+    """Does a platform page's title / URL words name the restaurant?"""
+    text = f"{norm_name(title)} {_url_words(url)}"
+    for n in _names(target):
         if len(n) < 4:
             if re.search(rf"\b{re.escape(n)}\b", text):
                 return True
@@ -237,7 +281,7 @@ def rank_search_results(results: list[dict], target) -> tuple[list[Candidate], s
     official_root: str | None = None
     seen: set[str] = set()
     for i, res in enumerate(results or []):
-        url = (res.get("url") or "").strip()
+        url = clean_url(res.get("url") or "")
         if not url.startswith("http"):
             continue
         k = url_key(url)
@@ -249,7 +293,14 @@ def rank_search_results(results: list[dict], target) -> tuple[list[Candidate], s
             rejected.append(f"{host_of(url)}: {reason}")
             continue
         title, desc = res.get("title") or "", res.get("description") or ""
-        if not name_matches(target, url, title, category):
+        if category == "official_pdf" and _any_host(host_of(url), SITE_CDNS) and title_matches(target, url, title):
+            pass  # the restaurant's own PDF on its site builder's CDN
+        elif category in OFFICIAL and not domain_matches(target, url):
+            # Not the restaurant's own domain: keep as a last-resort third-party page if it names it.
+            category = "third_party" if title_matches(target, url, title) else "reject"
+        elif category not in OFFICIAL and not title_matches(target, url, title):
+            category = "reject"
+        if category == "reject":
             rejected.append(f"{host_of(url)}: different restaurant")
             continue
         conflict = location_conflict(target, url, title, desc, category)
@@ -297,6 +348,7 @@ def pick_menu_urls(map_data: dict | None, home_url: str, target, limit: int = 2)
         url = u.get("url") if isinstance(u, dict) else u
         if not url or not url.startswith("http"):
             continue
+        url = clean_url(url)
         h = host_of(url)
         if not (h == home or h.endswith("." + home_base) or h == home_base):
             continue

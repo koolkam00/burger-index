@@ -15,7 +15,8 @@ and are returned as {"error": ...} so they can be cached and not re-billed.
 Endpoints (docs: append .md to any docs URL for markdown):
   POST /web/search  https://docs.context.dev/api-reference/web-scraping/search  1 credit / 10 results
   GET  /web/urls    https://docs.context.dev/api-reference/web-scraping/map     1 credit (2 with search)
-  POST /web/scrape  https://docs.context.dev/api-reference/web-scraping/scrape  1 + 4 (JSON) + 1/OCR'd PDF page
+  POST /web/scrape  https://docs.context.dev/api-reference/web-scraping/scrape  1 (2 with actions) + 4 (JSON)
+                                                                               + 1 per OCR'd PDF page
 """
 
 from __future__ import annotations
@@ -145,17 +146,29 @@ def map_request(domain: str, *, url_regex: str | None = None, max_links: int = 1
     return req
 
 
-def scrape_request(url: str) -> dict:
+# Delivery-app store pages lazy-load their menu sections: scroll to the bottom first.
+# Browser actions make the base cost 2 credits instead of 1 (docs: scrape) and need a paid
+# plan (HTTP 403 PAID_PLAN_REQUIRED otherwise) — gated by config.SCROLL_DELIVERY_APPS.
+SCROLL_ACTIONS = [
+    {"type": "scroll", "direction": "down", "amount": "max", "max_scrolls": 15},
+    {"type": "wait", "milliseconds": 1500},
+]
+
+
+def scrape_request(url: str, *, scroll: bool = False) -> dict:
+    shared: dict[str, Any] = {
+        "dismiss_popups": True,
+        "include_frames": True,
+        "wait_for": 1000,
+        "parsers": {"pdf": {"ocr": "auto", "end_page": PDF_MAX_PAGES}},
+    }
+    if scroll:
+        shared["actions"] = SCROLL_ACTIONS
     return {
         "url": url,
         "formats": {"json": True},
         "json_params": {"schema": BURGER_MENU_SCHEMA, "instructions": BURGER_INSTRUCTIONS},
-        "shared_params": {
-            "dismiss_popups": True,
-            "include_frames": True,
-            "wait_for": 1000,
-            "parsers": {"pdf": {"ocr": "auto", "end_page": PDF_MAX_PAGES}},
-        },
+        "shared_params": shared,
     }
 
 
@@ -185,7 +198,7 @@ def _rate(headers: Any) -> dict[str, int | None]:
 
 
 def execute(endpoint: str, request: dict, *, max_age_ms: int | None = None) -> dict:
-    """Run one Context.dev call. Returns {"data", "credits", "error", "rate"}.
+    """Run one Context.dev call. Returns {"data", "credits", "credits_remaining", "error", "rate"}.
 
     data: the response as a JSON-able dict (API field names), or None on a page-level error.
     credits: key_metadata.credits_consumed when the API reports it, else None.
@@ -224,6 +237,7 @@ def execute(endpoint: str, request: dict, *, max_age_ms: int | None = None) -> d
         return {
             "data": None,
             "credits": credits,
+            "credits_remaining": _int((body.get("key_metadata") or {}).get("credits_remaining")),
             "error": {"status": e.status_code, "code": code, "message": message},
             "rate": _rate(e.response.headers),
         }
@@ -232,5 +246,11 @@ def execute(endpoint: str, request: dict, *, max_age_ms: int | None = None) -> d
 
     model = raw.parse()
     data = model.to_dict(mode="json")
-    credits = _int((data.get("key_metadata") or {}).get("credits_consumed"))
-    return {"data": data, "credits": credits, "error": None, "rate": _rate(raw.headers)}
+    meta = data.get("key_metadata") or {}
+    return {
+        "data": data,
+        "credits": _int(meta.get("credits_consumed")),
+        "credits_remaining": _int(meta.get("credits_remaining")),
+        "error": None,
+        "rate": _rate(raw.headers),
+    }

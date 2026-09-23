@@ -99,7 +99,7 @@ def test_csv_matching_dedupe_and_unmatched(nta_map):
         csv_row("Nowhere Burgers", row=6),
     ]
     out, report = sources.build_restaurants(rows, dohmh_rows, nta_map, cuisines=["Hamburgers"], min_date="2023-01-01")
-    by_name = {r["name"]: r for r in out}
+    by_name = {r["name"]: r for r in out if r["csv"]}
     # URL address beats an exact-name match elsewhere in the same neighborhood
     assert by_name["Five Guys"]["camis"] == "101"
     assert by_name["Shake Shack West Village"]["camis"] == "102"  # neighborhood suffix stripped

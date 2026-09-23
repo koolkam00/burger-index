@@ -26,7 +26,6 @@ from typing import Any
 from . import context_client
 from .context_client import FatalError, TransientError
 
-ENDPOINTS = ("search", "map", "scrape")
 PDF_OCR_ESTIMATE = 2  # extra credits reserved for a PDF (OCR is +1 per recovered page)
 
 
@@ -65,7 +64,7 @@ def estimate_credits(endpoint: str, request: dict) -> int:
     if endpoint == "map":
         return 2 if request.get("search") else 1
     if endpoint == "scrape":
-        cost = 1
+        cost = 2 if (request.get("shared_params") or {}).get("actions") else 1
         if (request.get("formats") or {}).get("json"):
             cost += 4
         if looks_like_pdf(request.get("url", "")):
@@ -112,6 +111,7 @@ class CreditLedger:
         self.calls: Counter = Counter()
         self.hits: Counter = Counter()
         self.transient: Counter = Counter()
+        self.balance: int | None = None  # key_metadata.credits_remaining from the latest live call
 
     def reserve(self, est: int) -> None:
         with self._lock:
@@ -120,15 +120,24 @@ class CreditLedger:
                 raise CreditCapReached(
                     f"--max-credits {self.max_credits} reached (spent {self.spent}, in flight {self.reserved}, next call ~{est})"
                 )
+            # The API reports the account's remaining credits on every call; stop before it runs dry.
+            if self.balance is not None and self.reserved + est > self.balance:
+                self.capped = True
+                raise CreditCapReached(
+                    f"account balance reached ({self.balance} credits left, in flight {self.reserved}, next call ~{est})"
+                )
             self.reserved += est
 
     def release(self, est: int) -> None:
         with self._lock:
             self.reserved -= est
 
-    def settle(self, est: int, actual: int | None, *, endpoint: str, key: str, target: str | None, outcome: str) -> int:
+    def settle(self, est: int, actual: int | None, *, endpoint: str, key: str, target: str | None, outcome: str,
+               balance: int | None = None, rate: dict | None = None) -> int:
         charged = est if actual is None else int(actual)
         with self._lock:
+            if balance is not None:
+                self.balance = balance
             self.reserved -= est
             self.spent += charged
             self.estimated += est
@@ -140,7 +149,8 @@ class CreditLedger:
                 line = {
                     "ts": _now(), "run_id": self.run_id, "endpoint": endpoint, "key": key, "target": target,
                     "estimated": est, "actual": actual, "charged": charged, "outcome": outcome,
-                    "run_total": self.spent,
+                    "run_total": self.spent, "account_balance": balance,
+                    "rate_limit": (rate or {}).get("limit"), "rate_remaining": (rate or {}).get("remaining"),
                 }
                 with open(self.log_path, "a") as f:
                     f.write(json.dumps(line) + "\n")
@@ -160,6 +170,7 @@ class CreditLedger:
                 "live_calls": dict(self.calls),
                 "cache_hits": dict(self.hits),
                 "transient_failures": dict(self.transient),
+                "account_credits_remaining": self.balance,
             }
 
 
@@ -184,6 +195,20 @@ class RateGate:
             delay = self._resume_at - time.time()
         if delay > 0:
             time.sleep(min(delay, 61.0))
+
+
+def last_known_balance(log_path: Path) -> int | None:
+    """Account credits_remaining reported by the most recent live call in the ledger."""
+    try:
+        lines = Path(log_path).read_text().splitlines()
+    except FileNotFoundError:
+        return None
+    for line in reversed(lines):
+        if line.strip():
+            bal = json.loads(line).get("account_balance")
+            if bal is not None:
+                return bal
+    return None
 
 
 def lifetime_spend(log_path: Path) -> int:
@@ -223,8 +248,8 @@ class Api:
     def map_urls(self, domain: str, *, target: str | None = None, **kw) -> dict:
         return self.call("map", context_client.map_request(domain, **kw), target=target)
 
-    def scrape(self, url: str, *, target: str | None = None) -> dict:
-        return self.call("scrape", context_client.scrape_request(url), target=target)
+    def scrape(self, url: str, *, target: str | None = None, scroll: bool = False) -> dict:
+        return self.call("scrape", context_client.scrape_request(url, scroll=scroll), target=target)
 
     # -- core ------------------------------------------------------------------------------
     def _lock_for(self, key: str) -> threading.Lock:
@@ -275,7 +300,8 @@ class Api:
             self.gate.update(out.get("rate"))
             rec = self._record(endpoint, key, request, credits=out.get("credits"), data=out.get("data"), error=out.get("error"))
             charged = self.ledger.settle(est, out.get("credits"), endpoint=endpoint, key=key, target=target,
-                                         outcome="ok" if rec["ok"] else "error")
+                                         outcome="ok" if rec["ok"] else "error", balance=out.get("credits_remaining"),
+                                         rate=out.get("rate"))
             self.cache.put(endpoint, key, rec)
             self._fetched_this_run.add(key)
             return {**rec, "charged": charged, "cached": False}

@@ -103,3 +103,19 @@ def test_same_restaurant():
     assert discover.same_restaurant(t, "Skinny Louie")
     assert discover.same_restaurant(t, None)
     assert not discover.same_restaurant(t, "Joe's Pizza")
+
+
+def test_unknown_domains_naming_the_restaurant_are_last_resort_third_party():
+    t = target("Hamburger America", address="51 Macdougal Street")
+    cands, official_root, _ = discover.rank_search_results([
+        res("https://damnlines.com/venue/hamburger-america", "Hamburger America - The Line"),
+        res("https://www.hamburgeramerica.com/menus/", "Menu | Hamburger America"),
+        res("https://www.doordash.com/store/hamburger-america-new-york-1/", "Hamburger America - DoorDash"),
+        res("https://images.getbento.com/x/Hamburger-America-Menu.pdf", "Hamburger America menu (PDF)"),
+        res("https://www.somefoodblog.net/", "Ten great NYC smash burgers"),
+    ], t)
+    assert [(c.category, discover.host_of(c.url)) for c in cands] == [
+        ("official_menu", "hamburgeramerica.com"), ("official_pdf", "images.getbento.com"),
+        ("delivery_app", "doordash.com"), ("third_party", "damnlines.com")]
+    assert cands[-1].price_source == "menu_aggregator"
+    assert official_root == "https://www.hamburgeramerica.com/"
