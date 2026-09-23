@@ -316,10 +316,14 @@ def _name_variants(row: dict) -> list[str]:
     return [v for v in dict.fromkeys(variants) if v]
 
 
+def _strip_city(n: str) -> str:
+    return re.sub(r"\s+(nyc|ny|new york)$", "", n)
+
+
 def name_score(a: str, b: str) -> float:
-    """token_sort_ratio, lifted to 90 when one multi-word name is contained in the other
-    ('peter luger' vs 'peter luger steak house')."""
-    s = fuzz.token_sort_ratio(a, b)
+    """max(token_sort_ratio, ratio ignoring spaces), lifted to 90 when one multi-word name is
+    contained in the other ('peter luger' vs 'peter luger steak house')."""
+    s = max(fuzz.token_sort_ratio(a, b), fuzz.ratio(a.replace(" ", ""), b.replace(" ", "")))
     short = min((a, b), key=len)
     if len(short.split()) >= 2 and len(short) >= 8 and fuzz.token_set_ratio(a, b) == 100:
         s = max(s, 90.0)
@@ -345,14 +349,18 @@ def match_csv_row(
     """Best DOHMH record for a pilot row (same borough), or None. Returns (record, score, method)."""
     if not candidates:
         return None, 0.0, "no candidates"
-    choices = [c[0] for c in candidates]
+    choices = [_strip_city(c[0]) for c in candidates]
+    compact = [c.replace(" ", "") for c in choices]
     pool: dict[int, float] = {}
     subset: set[int] = set()  # one name fully contained in the other
     for v in _name_variants(row):
-        for _, ts, idx in process.extract(v, choices, scorer=fuzz.token_set_ratio, score_cutoff=80, limit=None):
+        hits = {idx: ts for _, ts, idx in process.extract(v, choices, scorer=fuzz.token_set_ratio, score_cutoff=80, limit=None)}
+        for _, _, idx in process.extract(v.replace(" ", ""), compact, scorer=fuzz.ratio, score_cutoff=85, limit=None):
+            hits.setdefault(idx, 0.0)
+        for idx, ts in hits.items():
             s = name_score(v, choices[idx])
             pool[idx] = max(pool.get(idx, 0.0), s)
-            if ts == 100 and min(len(v), len(choices[idx])) >= 6:
+            if ts == 100 and min(len(v), len(choices[idx])) >= 5:
                 subset.add(idx)
     if not pool:
         return None, 0.0, "no similar name"
@@ -366,12 +374,13 @@ def match_csv_row(
         nb_ok = bool(rec.get("nta") and (rec["nta"] == csv_nta or (csv_nb and csv_nb in (rec.get("neighborhood") or "").lower())))
         url_ok = _address_in_urls(rec, urls)
         bonus += 6 if nb_ok else 0
-        bonus += 8 if url_ok else 0
+        bonus += 15 if url_ok else 0  # the pilot URL names this exact address (e.g. /296-bleecker-st)
         bonus += 2 if is_recent(rec, min_date) else -5
         bonus += 3 if choices[idx] in _name_variants(row) else 0
-        if idx in subset and (nb_ok or url_ok):  # "Westville Hudson" vs "WESTVILLE" in the same NTA
+        lifted = idx in subset and (nb_ok or url_ok)  # "Keens" vs "KEENS STEAKHOUSE" in the same NTA
+        if lifted:
             s = max(s, 82.0)
-        accept = s >= 86 or (s >= 80 and (nb_ok or url_ok))
+        accept = s >= 86 or lifted or (s >= 80 and url_ok)
         scored.append((s + bonus, s, accept, nb_ok, url_ok, rec["camis"], rec))
     scored.sort(key=lambda t: (-t[0], t[5]))
     total, s, accept, nb_ok, url_ok, _, rec = scored[0]
@@ -416,6 +425,10 @@ def build_restaurants(
             method = "duplicate match"
         if rec is not None:
             r = dict(rec)
+            if not r["nta"]:  # DOHMH record without NTA/zip: fall back to the CSV neighborhood
+                nta = neighborhood_to_nta(row["neighborhood"], row["borough"], nta_map)
+                if nta:
+                    r.update(nta=nta, neighborhood=nta_map[nta]["name"], nta_source="csv-neighborhood")
             r.update(
                 name=row["name"], website=row["website"], menu_url=row["menu_url"], csv=True,
                 csv_name=row["name"], csv_neighborhood=row["neighborhood"], csv_notes=row["notes"],

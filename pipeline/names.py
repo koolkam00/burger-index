@@ -15,7 +15,7 @@ SPECIAL_WORDS = {
     "SOHO": "SoHo", "NOHO": "NoHo", "NOLITA": "NoLita", "TRIBECA": "Tribeca", "BURGERFI": "BurgerFi",
     "BAREBURGER": "Bareburger", "SMASHBURGER": "Smashburger", "SMASHBURGERS": "Smashburgers",
 }
-SMALL_WORDS = {"a", "an", "and", "at", "by", "for", "in", "of", "on", "or", "the", "to", "n", "y", "de", "del", "la", "da"}
+SMALL_WORDS = {"a", "an", "and", "at", "by", "for", "in", "of", "on", "or", "the", "to", "n", "y", "de", "del"}
 
 # normalized name -> display name, for brands whose casing rules can't guess.
 DISPLAY_OVERRIDES = {
@@ -104,6 +104,8 @@ def display_case(s: str | None) -> str:
 def display_name(dba: str | None) -> str:
     """Display name for a DOHMH dba: store numbers stripped, sensible casing, brand overrides."""
     base = strip_store_number(dba or "")
+    base = re.sub(r"^HAMBURGERS?,\s*", "", base, flags=re.I)  # stadium stands: 'HAMBURGER, DAILY BURGER'
+    base = re.sub(r"\s*\b[A-Z]{1,3}\d{3,}\b", "", base).strip(" ,")  # concession codes like FB6030
     override = DISPLAY_OVERRIDES.get(norm_name(base))
     if override:
         return override
