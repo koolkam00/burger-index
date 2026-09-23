@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://burgerindex.nyc/contract/burger_index.schema.json",
+  "title": "BurgerIndex",
+  "description": "The single dataset the Python pipeline writes to data/burger_index.json and the Next.js site reads at build time. Prices are USD. Keep this file, pipeline/models, and web/src/lib/schema.ts in sync.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "generated_at", "currency", "methodology", "stats", "boroughs", "neighborhoods", "restaurants"],
+  "properties": {
+    "version": { "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "currency": { "const": "USD" },
+    "methodology": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index_price_rule", "sources", "coverage_note"],
+      "properties": {
+        "index_price_rule": { "type": "string", "description": "Human sentence, e.g. 'A restaurant's index price is its cheapest beef burger.'" },
+        "sources": { "type": "array", "items": { "type": "string" } },
+        "coverage_note": { "type": "string" }
+      }
+    },
+    "stats": { "$ref": "#/$defs/Stats" },
+    "boroughs": { "type": "array", "items": { "$ref": "#/$defs/AreaSummary" } },
+    "neighborhoods": { "type": "array", "items": { "$ref": "#/$defs/AreaSummary" } },
+    "restaurants": { "type": "array", "items": { "$ref": "#/$defs/Restaurant" } }
+  },
+  "$defs": {
+    "Money": { "type": ["number", "null"], "minimum": 0 },
+    "Stats": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["restaurants_scanned", "restaurants_priced", "burgers", "beef_burgers", "index_median", "index_mean", "index_p10", "index_p90", "all_burgers_median", "cheapest_burger_id", "priciest_burger_id"],
+      "properties": {
+        "restaurants_scanned": { "type": "integer", "minimum": 0 },
+        "restaurants_priced": { "type": "integer", "minimum": 0, "description": "Restaurants with a non-null index_price." },
+        "burgers": { "type": "integer", "minimum": 0, "description": "All burger items with a price, any protein." },
+        "beef_burgers": { "type": "integer", "minimum": 0 },
+        "index_median": { "$ref": "#/$defs/Money", "description": "THE Burger Index: median of restaurant index_price across priced restaurants." },
+        "index_mean": { "$ref": "#/$defs/Money" },
+        "index_p10": { "$ref": "#/$defs/Money" },
+        "index_p90": { "$ref": "#/$defs/Money" },
+        "all_burgers_median": { "$ref": "#/$defs/Money", "description": "Median over every priced burger item (all proteins, all restaurants)." },
+        "cheapest_burger_id": { "type": ["string", "null"] },
+        "priciest_burger_id": { "type": ["string", "null"] }
+      }
+    },
+    "AreaSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slug", "name", "borough", "restaurants", "restaurants_priced", "burgers", "index_median", "index_min", "index_max"],
+      "properties": {
+        "slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "name": { "type": "string" },
+        "borough": { "type": "string", "enum": ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"] },
+        "restaurants": { "type": "integer", "minimum": 0 },
+        "restaurants_priced": { "type": "integer", "minimum": 0 },
+        "burgers": { "type": "integer", "minimum": 0 },
+        "index_median": { "$ref": "#/$defs/Money" },
+        "index_min": { "$ref": "#/$defs/Money" },
+        "index_max": { "$ref": "#/$defs/Money" }
+      }
+    },
+    "Burger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "price", "description", "protein", "is_index_item"],
+      "properties": {
+        "id": { "type": "string", "description": "Globally unique: '<restaurant id>--<item slug>' (suffix -2, -3 on collisions)." },
+        "name": { "type": "string" },
+        "price": { "$ref": "#/$defs/Money" },
+        "description": { "type": ["string", "null"] },
+        "protein": { "type": "string", "enum": ["beef", "chicken", "turkey", "fish", "veggie", "lamb", "pork", "other"] },
+        "is_index_item": { "type": "boolean", "description": "True for exactly one burger per priced restaurant: the one whose price is the index_price." }
+      }
+    },
+    "Restaurant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "camis", "name", "chain", "address", "borough", "neighborhood", "neighborhood_slug", "zipcode", "lat", "lng", "cuisine", "website", "menu_url", "price_source", "status", "status_detail", "scraped_at", "index_price", "burgers"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$", "description": "URL slug, unique. Name + neighborhood (+ short camis suffix on collision)." },
+        "camis": { "type": ["string", "null"], "description": "NYC DOHMH restaurant id when matched." },
+        "name": { "type": "string", "description": "Display name in normal case (not the DOHMH all-caps dba)." },
+        "chain": { "type": ["string", "null"], "description": "Chain brand slug when this location shares a chain-level menu scrape (e.g. 'shake-shack')." },
+        "address": { "type": ["string", "null"] },
+        "borough": { "type": "string", "enum": ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"] },
+        "neighborhood": { "type": ["string", "null"] },
+        "neighborhood_slug": { "type": ["string", "null"], "pattern": "^[a-z0-9-]+$" },
+        "zipcode": { "type": ["string", "null"] },
+        "lat": { "type": ["number", "null"] },
+        "lng": { "type": ["number", "null"] },
+        "cuisine": { "type": ["string", "null"] },
+        "website": { "type": ["string", "null"] },
+        "menu_url": { "type": ["string", "null"], "description": "The page the prices were extracted from." },
+        "price_source": { "type": ["string", "null"], "enum": ["official_site", "official_pdf", "online_ordering", "delivery_app", "menu_aggregator", null], "description": "delivery_app prices usually run above in-store prices; the site labels them." },
+        "status": { "type": "string", "enum": ["priced", "no_burgers", "no_prices", "no_menu_found", "error"] },
+        "status_detail": { "type": ["string", "null"] },
+        "scraped_at": { "type": ["string", "null"], "format": "date-time" },
+        "index_price": { "$ref": "#/$defs/Money", "description": "Cheapest priced beef burger; null unless status == 'priced'." },
+        "burgers": { "type": "array", "items": { "$ref": "#/$defs/Burger" } }
+      }
+    }
+  }
+}

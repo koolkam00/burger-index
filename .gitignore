@@ -1,0 +1,10 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+data/cache/
+web/node_modules/
+web/.next/
+web/out/
+.vercel
+.DS_Store
