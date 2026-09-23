@@ -1,4 +1,5 @@
 // Small statistics helpers for charts (client-safe).
+import { formatPrice } from "./format";
 
 /** Linear interpolation between closest ranks (numpy default; same as pipeline/build.py). */
 export function percentile(sorted: readonly number[], q: number): number | null {
@@ -59,15 +60,26 @@ export function histogram(sortedPrices: readonly number[], width: number, minBin
   return bins;
 }
 
-/** 3–5 "clean" ticks from 0 to at least `max` (0, 5, 10… / 0, 25, 50…). */
+/** 3–5 clean integer ticks from 0 to at least `max` (0, 1, 2… / 0, 5, 10… / 0, 25, 50…). */
 export function niceTicks(max: number, target = 4): number[] {
   if (max <= 0) return [0, 1];
   const raw = max / target;
-  const mag = 10 ** Math.floor(Math.log10(raw));
-  const steps = [1, 2, 2.5, 5, 10].map((s) => s * mag).filter((s) => s >= 1 || mag < 1);
-  const step = steps.find((s) => s >= raw) ?? 10 * mag;
+  let step = 1;
+  if (raw > 1) {
+    const mag = 10 ** Math.floor(Math.log10(raw));
+    step = [1, 2, 2.5, 5, 10].map((s) => s * mag).find((s) => s >= raw && Number.isInteger(s)) ?? 10 * mag;
+  }
   const top = Math.ceil(max / step) * step;
   const ticks: number[] = [];
-  for (let v = 0; v <= top + 1e-9; v += step) ticks.push(Math.round(v * 100) / 100);
+  for (let v = 0; v <= top; v += step) ticks.push(v);
   return ticks;
+}
+
+/** "≤ $9.99", "$15.00–$15.99", "$30.00+" */
+export function binRangeLabel(bin: HistBin): string {
+  const last = formatPrice(Math.round((bin.hi - 0.01) * 100) / 100, { cents: "always" });
+  if (bin.openLow && bin.openHigh) return "All prices";
+  if (bin.openLow) return `≤ ${last}`;
+  if (bin.openHigh) return `${formatPrice(bin.lo, { cents: "always" })}+`;
+  return `${formatPrice(bin.lo, { cents: "always" })}–${last}`;
 }

@@ -1,12 +1,20 @@
 {
-  "name": "web",
+  "name": "burger-index-web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "sync-data": "node scripts/sync-data.mjs",
+    "predev": "npm run sync-data",
     "dev": "next dev",
+    "dev:sample": "BURGER_INDEX_USE_FIXTURE=1 npm run dev",
+    "prebuild": "npm run sync-data",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "build:sample": "BURGER_INDEX_USE_FIXTURE=1 npm run build",
+    "preview": "serve out -l 4173",
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "fixture": "node scripts/generate-fixture.mjs && node scripts/validate-contract.mjs fixtures/burger_index.sample.json",
+    "validate:data": "node scripts/validate-contract.mjs"
   },
   "dependencies": {
     "@fontsource/big-shoulders": "^5.3.0",
@@ -31,5 +39,8 @@
     "serve": "^14.2.6",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=20.9.0"
   }
 }

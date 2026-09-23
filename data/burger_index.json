@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generated_at": "2026-09-23T18:57:35Z",
+ "generated_at": "2026-09-23T18:59:22Z",
  "currency": "USD",
  "methodology": {
   "index_price_rule": "A restaurant's index price is its cheapest beef burger: the burger by itself (no combo or meal upgrade, no add-ons), single/standard size, at the dinner or all-day menu price when a menu lists several. The Burger Index is the median index price across priced restaurants.",
