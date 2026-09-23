@@ -7,24 +7,30 @@ import math
 import os
 import statistics
 import threading
+from decimal import ROUND_HALF_UP, Decimal
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
-from . import config, extract
-from .chains import Target
+from . import config, corrections as corrections_mod, extract
+from .chains import Target, is_airport
 from .models import AreaSummary, Burger, BurgerIndex, Restaurant, Stats
 from .names import slugify
+from .sources import NTA_DISPLAY_OVERRIDES
 
 INDEX_PRICE_RULE = (
     "A restaurant's index price is its cheapest beef burger: the burger by itself (no combo or meal upgrade, "
-    "no add-ons), single/standard size, at the dinner or all-day menu price when a menu lists several. "
-    "The Burger Index is the median index price across priced restaurants."
+    "no add-ons), single/standard size, at its dinner or all-day menu price. Lunch, brunch or late-night prices "
+    "count only when no beef burger on the menu has a dinner or all-day price; happy-hour prices are left out. "
+    "The Burger Index is the median index price across distinct menus: every independent restaurant counts once "
+    "and each chain counts once, however many locations it has (they share one scraped menu). Borough and "
+    "neighborhood figures count a chain at most once per area."
 )
 SOURCES = [
     "NYC DOHMH Restaurant Inspection Results (NYC Open Data 43nn-pn8j): restaurant list, addresses, coordinates, cuisine.",
-    "2010 Neighborhood Tabulation Areas (NYC Open Data 8ius-dhrr): neighborhood names.",
+    "2010 Neighborhood Tabulation Areas (NYC Open Data 8ius-dhrr): neighborhood names, a few relabeled to current "
+    "usage (" + ", ".join(f"{code} as {name}" for code, name in NTA_DISPLAY_OVERRIDES.items()) + ").",
     "Curated pilot list of NYC burger restaurants.",
     "Menu prices from each restaurant's own site or menu PDF, online-ordering pages, menu aggregators and "
     "delivery apps, read with Context.dev web scraping.",
@@ -36,7 +42,11 @@ class DatasetInvalid(RuntimeError):
 
 
 def money(x: float | None) -> float | None:
-    return None if x is None else round(float(x), 2)
+    """Cents, half up on the decimal value: median(13.00, 13.25) = 13.125 -> 13.13 (plain round() gives
+    13.12 or 13.13 depending on the float's binary error)."""
+    if x is None:
+        return None
+    return float(Decimal(repr(float(x))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
 
 
 def percentile(sorted_vals: list[float], q: float) -> float | None:
@@ -101,17 +111,32 @@ def make_burgers(restaurant_id: str, burgers: list[dict], priced: bool) -> tuple
     return out, (money(burgers[idx]["price"]) if idx is not None else None)
 
 
-def compute_stats(restaurants: list[Restaurant]) -> Stats:
-    idx_prices = sorted(r["index_price"] for r in restaurants if r["index_price"] is not None)
+def menu_index_prices(restaurants: Iterable[Restaurant]) -> list[float]:
+    """One index price per distinct menu, sorted: each chain once (its locations share one scraped
+    menu), every other restaurant once. The index and every area median are computed over these."""
+    per_menu: dict[str, float] = {}
+    for r in restaurants:
+        if r["index_price"] is not None:
+            per_menu.setdefault(f"chain:{r['chain']}" if r["chain"] else r["id"], r["index_price"])
+    return sorted(per_menu.values())
+
+
+def compute_stats(restaurants: list[Restaurant], menu_sources: set[str] | None = None) -> Stats:
+    """menu_sources: ids of the rows whose burgers stand for a distinct scraped menu (a chain's
+    source location, every other restaurant). The cheapest / priciest burger and the all-burgers
+    median are taken over them, so a chain's copied menu is counted once."""
+    idx_prices = menu_index_prices(restaurants)
     priced_burgers = [(b["price"], b["id"]) for r in restaurants for b in r["burgers"] if b["price"] is not None]
     beef = [p for r in restaurants for b in r["burgers"] if b["price"] is not None and b["protein"] == "beef"
             for p in [b["price"]]]
-    all_prices = sorted(p for p, _ in priced_burgers)
-    cheapest = min(priced_burgers, key=lambda t: (t[0], t[1]))[1] if priced_burgers else None
-    priciest = min(priced_burgers, key=lambda t: (-t[0], t[1]))[1] if priced_burgers else None
+    distinct = [(b["price"], b["id"]) for r in restaurants if menu_sources is None or r["id"] in menu_sources
+                for b in r["burgers"] if b["price"] is not None] or priced_burgers
+    all_prices = sorted(p for p, _ in distinct)
+    cheapest = min(distinct, key=lambda t: (t[0], t[1]))[1] if distinct else None
+    priciest = min(distinct, key=lambda t: (-t[0], t[1]))[1] if distinct else None
     return {
         "restaurants_scanned": len(restaurants),
-        "restaurants_priced": len(idx_prices),
+        "restaurants_priced": sum(1 for r in restaurants if r["index_price"] is not None),
         "burgers": len(priced_burgers),
         "beef_burgers": len(beef),
         "index_median": money(statistics.median(idx_prices)) if idx_prices else None,
@@ -139,14 +164,14 @@ def area_summaries(restaurants: list[Restaurant], level: str) -> list[AreaSummar
         names[slug] = name
     out: list[AreaSummary] = []
     for slug, rs in groups.items():
-        prices = [r["index_price"] for r in rs if r["index_price"] is not None]
+        prices = menu_index_prices(rs)  # a chain counts at most once per area
         borough = Counter(r["borough"] for r in rs).most_common(1)[0][0]
         out.append({
             "slug": slug,
             "name": names[slug],
             "borough": borough,
             "restaurants": len(rs),
-            "restaurants_priced": len(prices),
+            "restaurants_priced": sum(1 for r in rs if r["index_price"] is not None),
             "burgers": sum(1 for r in rs for b in r["burgers"] if b["price"] is not None),
             "index_median": money(statistics.median(prices)) if prices else None,
             "index_min": money(min(prices)) if prices else None,
@@ -156,7 +181,7 @@ def area_summaries(restaurants: list[Restaurant], level: str) -> list[AreaSummar
     return out
 
 
-def coverage_note(meta: dict, n_restaurants: int, n_pending: int) -> str:
+def coverage_note(meta: dict, n_restaurants: int, n_pending: int, n_airport: int = 0) -> str:
     cuisines = ", ".join(meta.get("cuisines") or config.DEFAULT_CUISINES)
     note = (
         f"{n_restaurants} restaurants: a curated pilot list plus every restaurant NYC DOHMH lists under "
@@ -164,9 +189,29 @@ def coverage_note(meta: dict, n_restaurants: int, n_pending: int) -> str:
         "(or not yet inspected). Chain locations share one menu price scraped from a single NYC location. "
         "Delivery-app prices usually run above in-store prices."
     )
+    if n_airport:
+        note += (f" {n_airport} airport chain location{'s are' if n_airport != 1 else ' is'} listed without the "
+                 "chain's street price.")
     if n_pending:
         note += f" {n_pending} more restaurants are in scope but not yet scraped."
     return note
+
+
+def possessive(name: str) -> str:
+    """McDonald's -> McDonald's, Five Guys -> Five Guys', Checkers -> Checkers', Shake Shack -> Shake Shack's."""
+    if name.endswith("'s"):
+        return name
+    return f"{name}'" if name.endswith("s") else f"{name}'s"
+
+
+def airport_result(t: Target, res: dict) -> dict:
+    """An airport location of a chain: concession prices differ, so the chain's menu is not copied."""
+    return {
+        "status": "no_menu_found",
+        "status_detail": f"Airport location: {possessive(t.name)} prices from its street locations are not applied here, "
+                         "and no airport menu has been read.",
+        "menu_url": None, "price_source": None, "website": res.get("website"), "scraped_at": None, "burgers": [],
+    }
 
 
 def assemble(
@@ -176,19 +221,32 @@ def assemble(
     meta: dict | None = None,
     generated_at: str | None = None,
     n_pending_restaurants: int = 0,
+    corrections: list[dict] | None = None,
 ) -> BurgerIndex:
-    rows: list[tuple[dict, str, Target, dict]] = []
-    for t in targets:
+    """corrections: hand-checked fixes (pipeline/corrections.py) applied on top of the scraped
+    results; the CLI passes pipeline/data/corrections.json, tests pass their own."""
+    results = corrections_mod.apply(results, corrections or [])
+    # Ids are assigned over every restaurant in scope, scraped or not, so an id does not change
+    # when a namesake in the same neighborhood gets scraped later (/restaurants/<id> permalinks).
+    everyone = [(m, t.name if t.chain else m["name"], t) for t in targets for m in t.members]
+    all_ids = assign_restaurant_ids([(m, name) for m, name, _ in everyone])
+    restaurants: list[Restaurant] = []
+    menu_sources: set[str] = set()
+    n_airport = 0
+    for (m, name, t), rid in zip(everyone, all_ids, strict=True):
         res = results.get(t.key)
         if res is None:
             continue
-        for m in t.members:
-            rows.append((m, t.name if t.chain else m["name"], t, res))
-    ids = assign_restaurant_ids([(m, name) for m, name, _, _ in rows])
-    restaurants: list[Restaurant] = []
-    for (m, name, t, res), rid in zip(rows, ids):
+        if t.chain and m is not t.rep and is_airport(m):
+            res = airport_result(t, res)
+            n_airport += 1
+        elif not t.chain or m is t.rep:
+            menu_sources.add(rid)
         status = res["status"]
-        burgers, index_price = make_burgers(rid, res["burgers"], priced=status == "priced")
+        # Happy-hour prices never set the index, and the contract has no field to label them, so a
+        # $12 happy-hour burger is not published next to the restaurant's $18 regular one.
+        regular = [b for b in res["burgers"] if b.get("menu_period") != "happy_hour"]
+        burgers, index_price = make_burgers(rid, regular, priced=status == "priced")
         if status == "priced" and index_price is None:  # defensive: priced requires a priced beef burger
             status = "no_prices"
         nb = m.get("neighborhood")
@@ -223,9 +281,9 @@ def assemble(
         "methodology": {
             "index_price_rule": INDEX_PRICE_RULE,
             "sources": SOURCES,
-            "coverage_note": coverage_note(meta or {}, len(restaurants), n_pending_restaurants),
+            "coverage_note": coverage_note(meta or {}, len(restaurants), n_pending_restaurants, n_airport),
         },
-        "stats": compute_stats(restaurants),
+        "stats": compute_stats(restaurants, menu_sources),
         "boroughs": area_summaries(restaurants, "borough"),
         "neighborhoods": area_summaries(restaurants, "neighborhood"),
         "restaurants": restaurants,

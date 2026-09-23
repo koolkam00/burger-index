@@ -38,6 +38,13 @@ MAX_SCRAPES = 3
 PRICE_MIN = 2.0
 PRICE_MAX = 150.0
 
+# A priced page is not the final answer (the target keeps looking within its caps, and falls
+# back to it) when it is a delivery-app page with fewer priced beef burgers than this (lazy-loaded
+# sections), a special menu (brunch, restaurant week...), or a menu file whose URL dates it more
+# than STALE_MENU_DAYS before the scrape.
+MIN_DELIVERY_BURGERS = 3
+STALE_MENU_DAYS = 365
+
 # Scroll delivery-app store pages before extraction so lazy-loaded menu sections render.
 # Browser actions need a paid Context.dev plan (403 PAID_PLAN_REQUIRED on the current key),
 # so this is off; turning it on changes those scrapes' cache keys (+1 credit each).

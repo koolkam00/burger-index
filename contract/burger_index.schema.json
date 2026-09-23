@@ -33,14 +33,14 @@
       "required": ["restaurants_scanned", "restaurants_priced", "burgers", "beef_burgers", "index_median", "index_mean", "index_p10", "index_p90", "all_burgers_median", "cheapest_burger_id", "priciest_burger_id"],
       "properties": {
         "restaurants_scanned": { "type": "integer", "minimum": 0 },
-        "restaurants_priced": { "type": "integer", "minimum": 0, "description": "Restaurants with a non-null index_price." },
+        "restaurants_priced": { "type": "integer", "minimum": 0, "description": "Restaurant locations with a non-null index_price (each chain location counts here)." },
         "burgers": { "type": "integer", "minimum": 0, "description": "All burger items with a price, any protein." },
         "beef_burgers": { "type": "integer", "minimum": 0 },
-        "index_median": { "$ref": "#/$defs/Money", "description": "THE Burger Index: median of restaurant index_price across priced restaurants." },
-        "index_mean": { "$ref": "#/$defs/Money" },
-        "index_p10": { "$ref": "#/$defs/Money" },
-        "index_p90": { "$ref": "#/$defs/Money" },
-        "all_burgers_median": { "$ref": "#/$defs/Money", "description": "Median over every priced burger item (all proteins, all restaurants)." },
+        "index_median": { "$ref": "#/$defs/Money", "description": "THE Burger Index: median index_price across distinct menus — each independent restaurant once, each chain once however many locations it has." },
+        "index_mean": { "$ref": "#/$defs/Money", "description": "Over distinct menus, like index_median." },
+        "index_p10": { "$ref": "#/$defs/Money", "description": "Over distinct menus, like index_median." },
+        "index_p90": { "$ref": "#/$defs/Money", "description": "Over distinct menus, like index_median." },
+        "all_burgers_median": { "$ref": "#/$defs/Money", "description": "Median over every priced burger item on distinct menus (all proteins; a chain's menu once)." },
         "cheapest_burger_id": { "type": ["string", "null"] },
         "priciest_burger_id": { "type": ["string", "null"] }
       }
@@ -56,7 +56,7 @@
         "restaurants": { "type": "integer", "minimum": 0 },
         "restaurants_priced": { "type": "integer", "minimum": 0 },
         "burgers": { "type": "integer", "minimum": 0 },
-        "index_median": { "$ref": "#/$defs/Money" },
+        "index_median": { "$ref": "#/$defs/Money", "description": "Median index_price over distinct menus in the area: a chain counts at most once per area." },
         "index_min": { "$ref": "#/$defs/Money" },
         "index_max": { "$ref": "#/$defs/Money" }
       }

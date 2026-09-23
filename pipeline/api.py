@@ -26,7 +26,10 @@ from typing import Any
 from . import context_client
 from .context_client import FatalError, TransientError
 
-PDF_OCR_ESTIMATE = 2  # extra credits reserved for a PDF (OCR is +1 per recovered page)
+# Extra credits reserved for a scrape that may be a PDF: OCR is +1 per recovered page, up to the
+# request's end_page. Reserving the worst case keeps --max-credits a hard cap; the ledger settles
+# the actual (usually lower) cost.
+PDF_OCR_RESERVE = context_client.PDF_MAX_PAGES
 
 
 class CacheMiss(Exception):
@@ -53,8 +56,9 @@ def looks_like_pdf(url: str) -> bool:
     return bool(re.search(r"\.pdf($|[?#])", url or "", re.I))
 
 
-def estimate_credits(endpoint: str, request: dict) -> int:
-    """Pre-call cost estimate from the docs (the ledger settles the reported actual)."""
+def estimate_credits(endpoint: str, request: dict, *, maybe_pdf: bool = False) -> int:
+    """Pre-call cost reservation from the docs (the ledger settles the reported actual).
+    maybe_pdf: the URL has no .pdf extension but may serve one (a site builder's CDN file)."""
     if endpoint == "search":
         n = int(request.get("num_results", 10))
         cost = math.ceil(n / 10)
@@ -67,8 +71,8 @@ def estimate_credits(endpoint: str, request: dict) -> int:
         cost = 2 if (request.get("shared_params") or {}).get("actions") else 1
         if (request.get("formats") or {}).get("json"):
             cost += 4
-        if looks_like_pdf(request.get("url", "")):
-            cost += PDF_OCR_ESTIMATE
+        if maybe_pdf or looks_like_pdf(request.get("url", "")):
+            cost += PDF_OCR_RESERVE
         return cost
     raise ValueError(endpoint)
 
@@ -97,13 +101,21 @@ class DiskCache:
 
 
 class CreditLedger:
-    """Thread-safe running total of live spend for one run, enforcing max_credits."""
+    """Thread-safe running total of live spend for one run, enforcing max_credits and the account balance.
 
-    def __init__(self, max_credits: int | None = None, *, log_path: Path | None = None, run_id: str | None = None):
+    balance: the account's remaining credits as last seen (e.g. from data/credit_ledger.jsonl). Until
+    a live call of this run confirms it, it only throttles: a call that would exceed it waits for
+    the in-flight calls to report the real balance (the first call always goes, so a stale low
+    value after a top-up does not block the run).
+    """
+
+    def __init__(self, max_credits: int | None = None, *, log_path: Path | None = None, run_id: str | None = None,
+                 balance: int | None = None):
         self.max_credits = max_credits
         self.log_path = Path(log_path) if log_path else None
         self.run_id = run_id
         self._lock = threading.Lock()
+        self._changed = threading.Condition(self._lock)
         self.spent = 0
         self.estimated = 0
         self.reserved = 0
@@ -111,39 +123,56 @@ class CreditLedger:
         self.calls: Counter = Counter()
         self.hits: Counter = Counter()
         self.transient: Counter = Counter()
-        self.balance: int | None = None  # key_metadata.credits_remaining from the latest live call
+        # key_metadata.credits_remaining: the lowest value reported this run (calls settle out of
+        # billing order, so the last report can be an older, higher balance).
+        self.balance: int | None = balance
+        self.balance_confirmed = False
+
+    def _cap_reached(self) -> bool:
+        return self.max_credits is not None and self.spent >= self.max_credits
 
     def reserve(self, est: int) -> None:
-        with self._lock:
-            if self.max_credits is not None and self.spent + self.reserved + est > self.max_credits:
-                self.capped = True
-                raise CreditCapReached(
-                    f"--max-credits {self.max_credits} reached (spent {self.spent}, in flight {self.reserved}, next call ~{est})"
-                )
-            # The API reports the account's remaining credits on every call; stop before it runs dry.
-            if self.balance is not None and self.reserved + est > self.balance:
-                self.capped = True
-                raise CreditCapReached(
-                    f"account balance reached ({self.balance} credits left, in flight {self.reserved}, next call ~{est})"
-                )
+        with self._changed:
+            while True:
+                if self.max_credits is not None and self.spent + self.reserved + est > self.max_credits:
+                    self.capped = True
+                    raise CreditCapReached(
+                        f"--max-credits {self.max_credits} reached (spent {self.spent}, in flight {self.reserved}, next call ~{est})"
+                    )
+                # The API reports the account's remaining credits on every call; stop before it runs dry.
+                if self.balance is None or self.reserved + est <= self.balance:
+                    break
+                if self.balance_confirmed:
+                    self.capped = True
+                    raise CreditCapReached(
+                        f"account balance reached ({self.balance} credits left, in flight {self.reserved}, next call ~{est})"
+                    )
+                if self.reserved == 0:
+                    break  # the balance is only last run's: let one call through to learn the real one
+                self._changed.wait(timeout=1.0)
             self.reserved += est
 
     def release(self, est: int) -> None:
-        with self._lock:
+        with self._changed:
             self.reserved -= est
+            self._changed.notify_all()
 
     def settle(self, est: int, actual: int | None, *, endpoint: str, key: str, target: str | None, outcome: str,
                balance: int | None = None, rate: dict | None = None) -> int:
         charged = est if actual is None else int(actual)
-        with self._lock:
+        with self._changed:
             if balance is not None:
-                self.balance = balance
+                self.balance = balance if not self.balance_confirmed else min(self.balance, balance)
+                self.balance_confirmed = True
             self.reserved -= est
             self.spent += charged
             self.estimated += est
             self.calls[endpoint] += 1
             if outcome == "transient":
                 self.transient[endpoint] += 1
+            if self._cap_reached():
+                self.capped = True  # an actual cost above its reservation used up the cap
+            self._changed.notify_all()
             if self.log_path:
                 self.log_path.parent.mkdir(parents=True, exist_ok=True)
                 line = {
@@ -248,15 +277,15 @@ class Api:
     def map_urls(self, domain: str, *, target: str | None = None, **kw) -> dict:
         return self.call("map", context_client.map_request(domain, **kw), target=target)
 
-    def scrape(self, url: str, *, target: str | None = None, scroll: bool = False) -> dict:
-        return self.call("scrape", context_client.scrape_request(url, scroll=scroll), target=target)
+    def scrape(self, url: str, *, target: str | None = None, scroll: bool = False, maybe_pdf: bool = False) -> dict:
+        return self.call("scrape", context_client.scrape_request(url, scroll=scroll), target=target, maybe_pdf=maybe_pdf)
 
     # -- core ------------------------------------------------------------------------------
     def _lock_for(self, key: str) -> threading.Lock:
         with self._locks_lock:
             return self._locks[key]
 
-    def call(self, endpoint: str, request: dict, *, target: str | None = None) -> dict:
+    def call(self, endpoint: str, request: dict, *, target: str | None = None, maybe_pdf: bool = False) -> dict:
         """Returns the cache record plus {"charged": credits billed now, "cached": bool}.
 
         Record: {endpoint, key, request, fetched_at, credits, ok, transient, data, error}.
@@ -273,12 +302,15 @@ class Api:
                 raise CacheMiss(f"{endpoint} {key}")
             if self.stop_event.is_set():
                 raise CreditCapReached("run stopped")
-            est = estimate_credits(endpoint, request)
+            est = estimate_credits(endpoint, request, maybe_pdf=maybe_pdf)
             try:
                 self.ledger.reserve(est)
             except CreditCapReached:
                 self.stop_event.set()
                 raise
+            if self.stop_event.is_set():  # stopped (Ctrl-C, cap, fatal) while this call waited in reserve()
+                self.ledger.release(est)
+                raise CreditCapReached("run stopped")
             self.gate.wait()
             try:
                 out = context_client.execute(endpoint, request, max_age_ms=self.max_age_ms)
@@ -302,6 +334,8 @@ class Api:
             charged = self.ledger.settle(est, out.get("credits"), endpoint=endpoint, key=key, target=target,
                                          outcome="ok" if rec["ok"] else "error", balance=out.get("credits_remaining"),
                                          rate=out.get("rate"))
+            if self.ledger.capped:
+                self.stop_event.set()
             self.cache.put(endpoint, key, rec)
             self._fetched_this_run.add(key)
             return {**rec, "charged": charged, "cached": False}

@@ -1,11 +1,12 @@
 // Dot-and-range plot for neighborhoods (DESIGN.md "Neighborhood plot"): a 10px --ink dot at the
-// median, a 2px --axis line from index_min to index_max, 28px rows sorted by median.
+// median, a 2px --axis line from index_min to index_max, 28px rows sorted by median. Areas priced only
+// from chain menus are marked "Chain prices only" beside their name.
 import Link from "next/link";
-import { formatCount, formatPrice } from "@/lib/format";
-import type { AreaSummary } from "@/lib/schema";
+import { formatCount, formatPrice, formatSpan } from "@/lib/format";
+import { isChainOnly, type AreaWithMenus } from "@/lib/menus";
 import { BoroughDot } from "../ui";
 
-export function RangePlot({ areas, cityMedian, labelledBy }: { areas: AreaSummary[]; cityMedian: number | null; labelledBy: string }) {
+export function RangePlot({ areas, cityMedian, labelledBy }: { areas: AreaWithMenus[]; cityMedian: number | null; labelledBy: string }) {
   const rows = areas.filter((a) => a.index_median !== null && a.index_min !== null && a.index_max !== null);
   if (!rows.length) return null;
   const lo = Math.max(0, Math.floor(Math.min(...rows.map((a) => a.index_min as number), cityMedian ?? Infinity) / 5) * 5);
@@ -23,7 +24,13 @@ export function RangePlot({ areas, cityMedian, labelledBy }: { areas: AreaSummar
         <div />
         <div className="relative h-6">
           {ticks.map((t) => (
-            <span key={t} className="t-num-s muted absolute bottom-1 -translate-x-1/2" style={{ left: pct(t) }}>
+            // Centered on its gridline, except a tick at either end of the axis, which aligns inward
+            // so it never runs into the name column or the "Median" head.
+            <span
+              key={t}
+              className={`t-num-s muted absolute bottom-1 whitespace-nowrap ${t <= lo ? "" : t >= lo + span ? "-translate-x-full" : "-translate-x-1/2"}`}
+              style={{ left: pct(t) }}
+            >
               ${t}
             </span>
           ))}
@@ -33,9 +40,12 @@ export function RangePlot({ areas, cityMedian, labelledBy }: { areas: AreaSummar
           <div key={a.slug} className="contents">
             <div className="t-ui-s flex min-h-7 min-w-0 items-center gap-2 py-1">
               <BoroughDot borough={a.borough} />
-              <Link href={`/neighborhoods/${a.slug}`} tabIndex={-1} className="ui-link break-anywhere leading-tight">
-                {a.name}
-              </Link>
+              <span className="break-anywhere leading-tight">
+                <Link href={`/neighborhoods/${a.slug}`} tabIndex={-1} className="ui-link">
+                  {a.name}
+                </Link>
+                {isChainOnly(a.menuCounts) ? <span className="muted whitespace-nowrap"> · Chain prices only</span> : null}
+              </span>
             </div>
             <div className="relative h-7 self-stretch">
               {ticks.map((t) => (
@@ -66,7 +76,7 @@ export function RangePlot({ areas, cityMedian, labelledBy }: { areas: AreaSummar
   );
 }
 
-export function AreaTable({ areas }: { areas: AreaSummary[] }) {
+export function AreaTable({ areas }: { areas: AreaWithMenus[] }) {
   return (
     <table className="data-table">
       <thead>
@@ -79,7 +89,7 @@ export function AreaTable({ areas }: { areas: AreaSummary[] }) {
             Range
           </th>
           <th scope="col" className="num">
-            Priced
+            Menus
           </th>
         </tr>
       </thead>
@@ -88,13 +98,16 @@ export function AreaTable({ areas }: { areas: AreaSummary[] }) {
           <tr key={a.slug}>
             <th scope="row" className="break-anywhere">
               {a.name}
-              <span className="t-ui-s muted block">{a.borough}</span>
+              <span className="t-ui-s muted block">
+                {a.borough}
+                {isChainOnly(a.menuCounts) ? " · Chain prices only" : ""}
+              </span>
             </th>
             <td className="num">{formatPrice(a.index_median, { cents: "always" })}</td>
             <td className="num hidden sm:table-cell">
-              {a.index_min !== null ? `${formatPrice(a.index_min, { cents: "always" })}–${formatPrice(a.index_max, { cents: "always" })}` : "—"}
+              {a.index_min !== null ? formatSpan(formatPrice(a.index_min, { cents: "always" }), formatPrice(a.index_max, { cents: "always" })) : "—"}
             </td>
-            <td className="num">{formatCount(a.restaurants_priced)}</td>
+            <td className="num">{formatCount(a.menuCounts.menus)}</td>
           </tr>
         ))}
       </tbody>

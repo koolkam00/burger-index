@@ -1,7 +1,7 @@
 # Design System — The Burger Index
 
 ## Product Context
-- **What this is:** A public index of what a burger costs in New York City. The headline number is the NYC median of each restaurant's *index price* (its cheapest priced beef burger). Around it: rankings by borough and neighborhood, a searchable table of every priced burger, restaurant pages, a price map, and a methodology page.
+- **What this is:** A public index of what a burger costs in New York City. The headline number is the NYC median *index price* (the cheapest priced beef burger) across distinct menus: every independent restaurant once, and each chain once, however many locations share its menu. Around it: rankings by borough and neighborhood, a searchable table of every priced burger, restaurant pages, a price map, and a methodology page.
 - **Who it's for:** Curious New Yorkers, food media quoting the number, and people screenshotting "my neighborhood is the priciest" to a group chat.
 - **Project type:** Next.js static site reading `data/burger_index.json` (schema: `contract/burger_index.schema.json`). Every screen must survive a screenshot with no hover state.
 - **References:** The Economist Big Mac Index (one number people quote), NYT Upshot (charts you can trust), diner peg letterboards, deli price cards with underlined superscript cents, menu boards with dotted leaders.
@@ -107,9 +107,10 @@ Validator results, adjacent pairs: light passes, with worst CVD ΔE 8.8, worst n
 - **Axes:** No y-axis line. Use 3–5 clean y ticks (0, 25, 50…) with solid 1px `--grid` gridlines and a solid 1px `--axis` baseline. X ticks go every $5 (`$15`). Tick labels are num-s in `--ink-muted`. Never use dashed rules.
 - **Median annotation:** A 2px `--ink` vertical line through the plot, with the label "NYC median $16.50" (ui-s, weight 600, `--ink`) above the plot. Add at most two more annotations per chart, in ui-s `--ink-muted` with a 1px `--axis` leader. Text never uses a data color.
 - **Borough bars:** Bars start at $0, are sorted high → low, 20px thick in 36px rows, and filled with `--bar`. The hovered or current borough gets `--ink`. The value goes at the bar tip (num-m, `--ink`). The citywide median is a 1px `--ink` reference line labeled "NYC". The borough key dot sits beside the name.
-- **Neighborhood plot:** A 10px `--ink` dot marks the median, with a 2px `--axis` line from `index_min` to `index_max`. Rows are 28px and sorted by median. Only areas with 5 or more priced restaurants are ranked; the rest are listed under "Too few to rank".
-- **Minimums:** Don't draw a histogram with fewer than 20 priced restaurants in the slice. Show the empty state instead.
-- **Tooltips:** On `--surface` with a 1px `--line` border, radius 4px, `--shadow-pop`, padding 8×12. The value comes first ("142 restaurants", ui-m 700), then context ("$15.00–$15.99 · Going rate", ui-s `--ink-muted`), with a 12×2px line key in the mark's color. The same content appears on keyboard focus: a chart is one tab stop, and ←/→ move between marks. Hit targets are at least 24px, larger than the mark. Insert labels with `textContent`.
+- **Neighborhood plot:** A 10px `--ink` dot marks the median, with a 2px `--axis` line from `index_min` to `index_max`. Rows are 28px and sorted by median. Only areas with 5 or more distinct priced menus are ranked (a chain counts once per area, so five McDonald's are one menu); the rest are listed under "Too few to rank". A chain-only area carries "Chain prices only" beside its name.
+- **Minimums:** Don't draw a histogram with fewer than 20 distinct priced menus in the slice. Show the empty state instead.
+- **Counting unit:** Histograms, typical ranges, rankings, cheapest/priciest lists and every threshold count distinct menus (menu key = chain, else restaurant). Map pins, restaurant pages and table rows count locations, and any location count in copy says "locations" (or "pins").
+- **Tooltips:** On `--surface` with a 1px `--line` border, radius 4px, `--shadow-pop`, padding 8×12. The value comes first ("142 menus", ui-m 700), then context ("$15.00–$15.99 · Going rate", ui-s `--ink-muted`), with a 12×2px line key in the mark's color. The same content appears on keyboard focus: a chart is one tab stop, and ←/→ move between marks. Hit targets are at least 24px, larger than the mark. Insert labels with `textContent`.
 - **Text alternative:** Every chart is a `<figure>`. The `<figcaption>` holds a title plus a one-sentence takeaway, for example "Most NYC burgers cost $12–$22; the median is $16.50." The SVG gets `role="img"` and `aria-labelledby` pointing at them. A "View as table" toggle swaps in a real `<table>` of the same numbers.
 - **Filter changes:** Charts keep their previous frame at 50% opacity until the new data renders. No skeletons, no layout jump.
 - **Empty state:** A `--surface` box the chart's height, with a 1px `--line` border and centered ui-m `--ink-muted` copy (see Voice).
@@ -126,7 +127,7 @@ Validator results, adjacent pairs: light passes, with worst CVD ΔE 8.8, worst n
 ## Components
 - **The Letterboard (headline price tag):**
   - **Board:** `--board` background with grooves (`repeating-linear-gradient(to bottom, transparent 0 7px, rgba(255,255,255,.035) 7px 8px)`), a 6px `--board-frame` border, radius 4px, and the board inset shadow. Padding is 20×20 on mobile and 32×40 on desktop.
-  - **Content, top to bottom:** First, a `label` overline in `--board-muted`: "THE BURGER INDEX · NYC MEDIAN". Next, the price in display-xl `--board-ink`, with `text-shadow: 0 1px 0 rgba(0,0,0,.55)` for plastic-letter relief, and cents as price-card superscript with underline. Last, a ui-m `--board-muted` line: "Cheapest beef burger at 1,284 restaurants · Updated Sep 23, 2026".
+  - **Content, top to bottom:** First, a `label` overline in `--board-muted`: "THE BURGER INDEX · NYC MEDIAN". Next, the price in display-xl `--board-ink`, with `text-shadow: 0 1px 0 rgba(0,0,0,.55)` for plastic-letter relief, and cents as price-card superscript with underline. Last, a ui-m `--board-muted` line: "Cheapest beef burger on 1,284 menus · Updated Sep 23, 2026".
   - **Behavior:** The board stays black in both themes. Glyph spans are `aria-hidden`, with an sr-only "$16.50". The same layout, at 1200×630, is the Open Graph image.
   - **Placement:** Exactly one per page. On the home page it spans columns 6–12 at `lg`, and sits under the H1 on mobile.
 - **Stat tile:** A 2px `--ink` top rule, then 12px, then the `label` in `--ink-muted`, the value in `stat` (price-card cents for money), and a ui-s `--ink-muted` sub-line. Tiles have no box and are separated by 1px `--line` vertical rules at `md` and up. They stack two per row on mobile.
@@ -139,7 +140,7 @@ Validator results, adjacent pairs: light passes, with worst CVD ΔE 8.8, worst n
 - **Filter bar:** One row above everything it scopes. It holds the search, then Borough (multi-select), Price range, Protein, "Hide delivery-app prices", and Sort.
   - **Filter chips:** 32px, pill, 1px `--line-strong` border, ui-m. Active chips are inverse (`--ink` background, `--surface` text) with an × to clear, and a "Clear all" ghost button follows.
   - **Below `md`:** Search plus a "Filters (n)" button that opens a bottom sheet. Chips wrap and never scroll sideways.
-- **Search input:** 44px tall, `--surface`, 1px `--line-strong` border, radius 4px, a 16px search icon inset 12px, ui-l text. Placeholder: "Search burgers, restaurants, neighborhoods". A clear × shows when filled. `/` focuses the input (hint shown at `lg`). Matches are wrapped in `<mark>` with a `--highlight-tint` background.
+- **Search input:** 44px tall, `--surface`, 1px `--line-strong` border, radius 4px, a 16px search icon inset 12px, ui-l text. Placeholder: "Search burgers, restaurants, neighborhoods", shortened to "Search burgers, restaurants" below `sm` (at 375px the full text needs about 330px and the input leaves about 290px after the icon inset). A clear × shows when filled. `/` focuses the input (hint shown at `lg`). Matches are wrapped in `<mark>` with a `--highlight-tint` background.
 - **Cards:** Restaurant cards on mobile results and the cheapest/priciest callouts. `--surface`, 1px `--line`, radius 4px, padding 16px. The whole card is clickable through a stretched link on the name. Hover changes the border to `--line-strong`.
 - **Restaurant menu list:** A menu-board layout: the name (ui-l), a dotted leader (`border-bottom: 1px dotted var(--line-strong)` flex filler), then the price (num-l), with the description below in body-s `--ink-muted`.
 - **Source badges:** 22px, radius 2px, 1px `--line-strong` border, 12px ui weight 500 in `--ink-muted`, with a 14px icon. Labels:
@@ -174,7 +175,7 @@ Validator results, adjacent pairs: light passes, with worst CVD ΔE 8.8, worst n
   - **Right side:** A search icon and the theme toggle.
   - **Below `md`:** The wordmark plus a Menu button that opens a full-height sheet.
 - **Footer:** A 2px `--ink` rule, then 48px of padding and three columns (one on mobile):
-  - The data line: "Updated Sep 23, 2026 · 1,284 restaurants priced".
+  - The data line: "Updated Sep 23, 2026 · 1,284 menus at 1,530 locations priced".
   - The links.
   - The disclaimer: "We index prices, not quality. Not affiliated with any restaurant."
 - **Buttons:** Sizes are sm 32 / md 40 / lg 48px tall, padding-x 12/16/20, Libre Franklin 600 at 14/14/16px, radius 4px. The touch hit area is at least 44×44.
@@ -200,7 +201,7 @@ Validator results, adjacent pairs: light passes, with worst CVD ΔE 8.8, worst n
 
 ## Voice & Copy
 Lead with the number, keep a straight face, and allow at most one dry line per screen. Use "we", sentence-case headings, no exclamation marks, and never a pun in a heading.
-- **Hero:** H1 "What a burger costs in New York." Lede: "We read the menus of 1,284 restaurants and recorded the cheapest beef burger at each. Half charge more than $16.50. Half charge less."
+- **Hero:** H1 "What a burger costs in New York." Lede: "We looked up 1,400 New York restaurants and 30 chains (2,100 locations in all) and recorded the cheapest beef burger on every menu we could price: 1,284 menus. A chain counts once, however many locations it has. Half of those menus charge more than $16.50. Half charge less."
 - **Section heads:** "The priciest borough is still Manhattan." / "Where $12 still gets you lunch."
 - **Empty search:** "No burgers match “truffle smash” in Staten Island. Try fewer filters."
 - **Status copy:**
@@ -208,7 +209,8 @@ Lead with the number, keep a straight face, and allow at most one dry line per s
   - no_prices: "There's a burger on the menu, but no price online. Market price, apparently."
   - no_menu_found: "We couldn't find a menu online for this place."
   - error: "Our scraper choked on this menu. It tries again next update."
-- **Too few:** "Only 3 priced restaurants here. Not enough to call it a trend."
+- **Too few:** "Only 3 priced menus here. Not enough to call it a trend."
+- **Chain prices only:** An area (borough or neighborhood) with priced chain menus but no priced independent restaurant says so in exactly these words, as a badge (Store icon, source-badge shape) on its page and as a label on every chart row, table row and list row. Its median is never set beside another area's as a like-for-like comparison, gets no Letterboard and no "vs NYC" delta. Copy is computed from the data, never a hard-coded borough name.
 - **Methodology tone:** Plain, specific and auditable. Open with the rule itself: "A restaurant's index price is its cheapest beef burger." Then explain why (it's the price of admission, and it isn't skewed by $40 wagyu specials), then list sources, exclusions, known biases (delivery markups, stale PDFs) and dates. No hedging adjectives and no marketing.
 
 ## Don'ts
@@ -233,3 +235,4 @@ Lead with the number, keep a straight face, and allow at most one dry line per s
 | 2026-09-23 | Initial design system | Written for the Next.js build; the palettes were checked with the dataviz validator and a WCAG contrast script |
 | 2026-09-23 | Big Shoulders + Newsreader + Libre Franklin | Signage display, news body, and Franklin data labels (Upshot lineage) |
 | 2026-09-23 | Price bins at ±15% / ±30% of the citywide median | Colors stay stable under filters, and bin names make good share copy |
+| 2026-09-23 | Chains count once: every figure, chart, ranking and threshold counts distinct menus; chain-only areas are labelled "Chain prices only" | User decision. A chain's locations share one scraped menu, so counting locations let 150+ McDonald's copies set the city number and fill the cheapest lists. So far only Manhattan has independent restaurants priced, and chain medians elsewhere must not read as borough prices |

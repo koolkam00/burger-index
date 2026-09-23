@@ -16,7 +16,10 @@ def test_estimates_follow_the_docs():
     assert estimate_credits("map", context_client.map_request("a.com")) == 1
     assert estimate_credits("map", {"domain": "a.com", "search": "menu"}) == 2
     assert estimate_credits("scrape", context_client.scrape_request(URL)) == 5  # 1 + 4 for JSON
-    assert estimate_credits("scrape", context_client.scrape_request("https://a.com/menu.pdf")) == 7  # + OCR estimate
+    # a PDF reserves its worst-case OCR (+1 per page up to end_page) so --max-credits is a hard cap
+    pdf = 1 + 4 + context_client.PDF_MAX_PAGES
+    assert estimate_credits("scrape", context_client.scrape_request("https://a.com/menu.pdf")) == pdf
+    assert estimate_credits("scrape", context_client.scrape_request("https://cdn.x/abc"), maybe_pdf=True) == pdf
 
 
 def test_cache_key_ignores_volatile_options():
@@ -125,3 +128,60 @@ def test_stops_before_the_account_balance_runs_dry(tmp_path, fake, monkeypatch):
     with pytest.raises(CreditCapReached, match="account balance"):
         api.scrape(f"{URL}2")  # 5 > 2 left
     assert f.count("scrape") == 2 and ledger.summary()["account_credits_remaining"] == 2
+
+
+def test_pdf_reservation_keeps_the_cap_under_concurrency():
+    pdf = estimate_credits("scrape", context_client.scrape_request("https://a.com/menu.pdf"))
+    ledger = CreditLedger(20)
+    ledger.reserve(pdf)  # one scanned PDF in flight
+    with pytest.raises(CreditCapReached):
+        ledger.reserve(pdf)  # a second one could push a 10-page OCR bill past the cap
+    ledger.settle(pdf, 15, endpoint="scrape", key="k", target=None, outcome="ok")  # 1 + 4 + 10 pages
+    assert ledger.spent == 15 <= 20
+
+
+def test_actual_cost_above_reservation_stops_the_run(tmp_path, fake):
+    f = fake(pages={f"{URL}{i}": menu(("Burger", 10)) for i in range(3)}, scrape_credits=15)  # an unmarked PDF
+    api = Api(DiskCache(tmp_path), CreditLedger(20))
+    api.scrape(f"{URL}0")
+    api.scrape(f"{URL}1")  # reserved 5 (15 + 5 <= 20), billed 15
+    assert api.ledger.spent == 30 and api.ledger.capped and api.stop_event.is_set()
+    with pytest.raises(CreditCapReached):
+        api.scrape(f"{URL}2")
+    assert f.count("scrape") == 2
+
+
+def test_balance_is_the_lowest_reported_and_seeded_from_last_run():
+    ledger = CreditLedger(1000)
+    ledger.reserve(5)
+    ledger.reserve(5)
+    ledger.settle(5, 5, endpoint="scrape", key="a", target=None, outcome="ok", balance=90)
+    ledger.settle(5, 5, endpoint="map", key="b", target=None, outcome="ok", balance=95)  # billed earlier, settled later
+    assert ledger.balance == 90
+
+    # a stale low balance from the last run (then a top-up) lets one call through to learn the real one
+    stale = CreditLedger(1000, balance=3)
+    stale.reserve(5)
+    stale.settle(5, 5, endpoint="scrape", key="c", target=None, outcome="ok", balance=4995)
+    stale.reserve(5)
+    assert stale.balance == 4995
+
+    # an accurate low balance: the second call waits for the first to report, then stops cleanly
+    low = CreditLedger(1000, balance=7)
+    low.reserve(5)
+    outcome = {}
+
+    def second():
+        try:
+            low.reserve(5)
+            outcome["r"] = "reserved"
+        except CreditCapReached as e:
+            outcome["r"] = str(e)
+
+    t = threading.Thread(target=second)
+    t.start()
+    t.join(0.2)
+    assert t.is_alive()  # waiting, not refused on a guess and not sent unchecked
+    low.settle(5, 5, endpoint="scrape", key="d", target=None, outcome="ok", balance=2)
+    t.join(5)
+    assert "account balance" in outcome["r"]

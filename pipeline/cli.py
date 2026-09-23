@@ -7,6 +7,8 @@
     .venv/bin/python -m pipeline build                   # data/burger_index.json purely from cache
 
 Every Context.dev response is cached under data/cache/, so re-runs spend 0 credits unless --refresh.
+Scope flags (--cuisines, --min-inspection-date) are remembered in data/restaurants.json: later
+commands reuse them until they are passed again.
 """
 
 from __future__ import annotations
@@ -17,7 +19,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import config
+from . import config, corrections
 from .api import Api, CreditLedger, DiskCache, estimate_credits, last_known_balance, lifetime_spend, looks_like_pdf
 from .build import assemble, write_dataset
 from .chains import build_targets, select_targets
@@ -43,14 +45,29 @@ def _add_select(p: argparse.ArgumentParser) -> None:
     p.add_argument("--only", action="append", metavar="NAME", help="only targets matching this name (repeatable)")
 
 
+def _saved_scope() -> dict:
+    """The scope (cuisines, min inspection date) data/restaurants.json was last written with."""
+    try:
+        return json.loads(config.RESTAURANTS_PATH.read_text()).get("meta") or {}
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
 def _scope(args, *, offline: bool = False, write: bool = True):
-    """Resolve the restaurant universe. `build` reuses data/restaurants.json unless scope flags are given."""
+    """Resolve the restaurant universe. `build` reuses data/restaurants.json unless scope flags are given.
+
+    Each scope flag that is not passed keeps the value data/restaurants.json was written with, so a
+    `run --only X` after a wider `run --cuisines ...` does not silently shrink the dataset."""
     explicit = bool(getattr(args, "cuisines", None) or getattr(args, "min_inspection_date", None) or getattr(args, "refresh_sources", False))
     if offline and not explicit and config.RESTAURANTS_PATH.exists():
         doc = json.loads(config.RESTAURANTS_PATH.read_text())
         return doc["restaurants"], doc.get("report", {}), doc.get("meta", {})
-    cuisines = _cuisines(getattr(args, "cuisines", None)) or list(config.DEFAULT_CUISINES)
-    min_date = getattr(args, "min_inspection_date", None) or config.DEFAULT_MIN_INSPECTION
+    saved = _saved_scope()
+    cuisines = _cuisines(getattr(args, "cuisines", None)) or saved.get("cuisines") or list(config.DEFAULT_CUISINES)
+    min_date = getattr(args, "min_inspection_date", None) or saved.get("min_inspection_date") or config.DEFAULT_MIN_INSPECTION
+    if (list(cuisines), min_date) != (list(config.DEFAULT_CUISINES), config.DEFAULT_MIN_INSPECTION):
+        log(f"scope: cuisines={','.join(cuisines)} min-inspection-date={min_date}"
+            + (" (saved in data/restaurants.json; pass the flags to change)" if saved and not explicit else ""))
     restaurants, report = load_restaurants(
         cuisines=cuisines, min_date=min_date, cache_dir=config.CACHE_DIR, csv_path=config.PILOT_CSV,
         nta_path=config.NTA_PATH, refresh=getattr(args, "refresh_sources", False), offline=offline,
@@ -149,7 +166,7 @@ def cmd_plan(args) -> int:
         "caps_per_target": {"searches": config.MAX_SEARCHES, "maps": config.MAX_MAPS, "scrapes": config.MAX_SCRAPES},
         "max_credits": args.max_credits,
         "credit_costs": {"search_10_results": 1, "map": 1, "scrape_json": scrape_cost_note(),
-                         "scrape_json_pdf_estimate": 7},
+                         "scrape_json_pdf_estimate": estimate_credits("scrape", scrape_request("https://example.com/menu.pdf"))},
         "lifetime_credits_spent": lifetime_spend(config.LEDGER_PATH),
         "account_credits_remaining_last_seen": last_known_balance(config.LEDGER_PATH),
     }
@@ -166,7 +183,8 @@ def cmd_plan(args) -> int:
 def _build(targets, meta, *, output: Path) -> dict:
     api = Api(DiskCache(config.CACHE_DIR), offline=True)
     results, pending = replay(targets, api)
-    dataset = assemble(targets, results, meta=meta, n_pending_restaurants=sum(len(t.members) for t in pending))
+    dataset = assemble(targets, results, meta=meta, n_pending_restaurants=sum(len(t.members) for t in pending),
+                       corrections=corrections.load())
     write_dataset(dataset, output, config.CONTRACT_PATH)
     s = dataset["stats"]
     summary = {
@@ -202,7 +220,9 @@ def cmd_run(args) -> int:
         log("run: no targets matched")
         return 1
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    ledger = CreditLedger(args.max_credits, log_path=config.LEDGER_PATH, run_id=run_id)
+    # Start from the last balance seen, so the first wave of calls is checked too (see CreditLedger).
+    ledger = CreditLedger(args.max_credits, log_path=config.LEDGER_PATH, run_id=run_id,
+                          balance=last_known_balance(config.LEDGER_PATH))
     api = Api(DiskCache(config.CACHE_DIR), ledger, refresh=args.refresh, max_age_ms=0 if args.refresh else None)
     log(f"run {run_id}: {len(selected)} target(s) ({sum(len(t.members) for t in selected)} restaurants), "
         f"workers={args.workers}, max-credits={args.max_credits}{', refresh' if args.refresh else ''}")
@@ -247,7 +267,11 @@ def main(argv: list[str] | None = None) -> int:
     s.set_defaults(fn=cmd_build)
 
     args = p.parse_args(argv)
-    return args.fn(args)
+    try:
+        return args.fn(args)
+    except KeyboardInterrupt:
+        log(f"{args.cmd}: interrupted (finished targets are cached; the next run resumes)")
+        return 130
 
 
 if __name__ == "__main__":

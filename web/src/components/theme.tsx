@@ -38,12 +38,15 @@ function store(theme: Theme | null) {
 }
 
 export function ThemeToggle() {
+  const dark = useResolvedTheme() === "dark";
   return (
     <button
       type="button"
       className="icon-btn"
-      aria-label="Toggle dark mode"
-      title="Toggle dark mode"
+      // A toggle button: the name stays put and aria-pressed carries the state.
+      aria-label="Dark mode"
+      aria-pressed={dark}
+      title={dark ? "Switch to light mode" : "Switch to dark mode"}
       onClick={() => {
         const next: Theme = readTheme() === "dark" ? "light" : "dark";
         document.documentElement.setAttribute("data-theme", next);

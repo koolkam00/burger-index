@@ -9,6 +9,7 @@ import {
   FileX,
   Globe,
   ShoppingBag,
+  Store,
   TriangleAlert,
   type LucideIcon,
 } from "lucide-react";
@@ -62,19 +63,35 @@ export function Swatch({ price, median }: { price: number; median: number }) {
   return <span className="swatch" style={{ background: bin.color }} aria-hidden="true" />;
 }
 
-/** Price chip: ramp swatch, price, delta vs the citywide median. Never red/green. */
+/** "†" after a delivery-app price. The glyph is hidden from screen readers, which hear the words. */
+export function Dagger() {
+  return (
+    <>
+      <span aria-hidden="true">†</span>
+      <span className="sr-only"> (delivery-app price)</span>
+    </>
+  );
+}
+
+/**
+ * Price chip: ramp swatch, price, delta vs the citywide median. Never red/green. `narrowWrap` lets the
+ * delta drop to a second line inside the chip on screens under 360px, where a one-line chip in a
+ * two-column table pushes the page wider than the screen.
+ */
 export function PriceChip({
   price,
   median,
   delta = true,
   suffix = "vs NYC",
   dagger = false,
+  narrowWrap = false,
 }: {
   price: number | null;
   median: number | null;
   delta?: boolean;
   suffix?: string;
   dagger?: boolean;
+  narrowWrap?: boolean;
 }) {
   if (price === null) {
     return (
@@ -85,11 +102,13 @@ export function PriceChip({
   }
   const bin = median !== null ? binFor(price, median) : null;
   return (
-    <span className="price-chip" title={bin ? bin.name : undefined}>
-      {bin ? <span className="swatch" style={{ background: bin.color }} aria-hidden="true" /> : null}
-      <span className="t-num-m">
-        {formatPrice(price, { cents: "always" })}
-        {dagger ? <span aria-label=" (delivery app price)">†</span> : null}
+    <span className={`price-chip ${narrowWrap ? "price-chip-wrap" : ""}`} title={bin ? bin.name : undefined}>
+      <span className="price-chip-main">
+        {bin ? <span className="swatch" style={{ background: bin.color }} aria-hidden="true" /> : null}
+        <span className="t-num-m">
+          {formatPrice(price, { cents: "always" })}
+          {dagger ? <Dagger /> : null}
+        </span>
       </span>
       {delta && median !== null ? <span className="t-num-s muted">{formatDelta(price, median, { suffix })}</span> : null}
     </span>
@@ -134,6 +153,19 @@ export function StatusBadge({ status }: { status: Status }) {
     <span className="badge badge-status" style={{ background: bg }}>
       <Icon {...ICON} style={{ color: icon }} />
       {STATUS_LABEL[status]}
+    </span>
+  );
+}
+
+/**
+ * Coverage badge for an area priced only from chain menus (no independent restaurant priced there
+ * yet). Same shape as the source badges; the words carry the meaning, the icon only repeats it.
+ */
+export function ChainOnlyBadge() {
+  return (
+    <span className="badge" title="No independent restaurant is priced here yet: every price comes from a chain's menu.">
+      <Store {...ICON} />
+      Chain prices only
     </span>
   );
 }

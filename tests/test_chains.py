@@ -56,3 +56,17 @@ def test_select_targets_only_and_limit():
     assert [t.name for t in select_targets(targets, only=["Burger Joint"])] == ["Burger Joint"]  # exact wins
     assert [t.name for t in select_targets(targets, only=["paul"])] == ["Paul's Da Burger Joint"]
     assert len(select_targets(targets, limit=2)) == 2
+
+
+def test_pinned_chain_menu_url_is_tried_first_and_airports_are_not_the_rep():
+    from pipeline.chains import ChainGroup, is_airport
+
+    rs = [rec("Wendy's", camis="1", dba="WENDY'S", address="1 Main Terminal", borough="Queens", zipcode=None),
+          rec("Wendy's", camis="2", dba="WENDY'S", address="100 Broadway", borough="Brooklyn"),
+          rec("Wendy's", camis="3", dba="WENDY'S (CONCOURSE F)", address="Terminal C", borough="Queens", zipcode="11371")]
+    assert [is_airport(r) for r in rs] == [True, False, True]
+    assert not is_airport(rec("Burger King", camis="4", address="557 Grand Concourse", borough="Bronx"))
+    pinned = "https://www.grubhub.com/restaurant/wendys-100-broadway-brooklyn/1"
+    chains = {"wendys": ChainGroup("wendys", "Wendy's", False, rs, "jr hamburger", pinned)}
+    t = build_targets(rs, chains)[0]
+    assert t.rep["camis"] == "2" and t.csv_urls[0] == (pinned, "chain menu_url") and t.cheapest_item == "jr hamburger"

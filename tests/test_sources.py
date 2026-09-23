@@ -67,7 +67,10 @@ def test_norm_and_slug():
 def test_neighborhood_to_nta(nta_map):
     assert sources.neighborhood_to_nta("West Village", "Manhattan", nta_map) == "MN23"
     assert sources.neighborhood_to_nta("Greenwich Village", "Manhattan", nta_map) == "MN23"  # alias
-    assert sources.neighborhood_to_nta("Williamsburg", "Brooklyn", nta_map) == "BK72"  # exact beats 'East Williamsburg'
+    # BK73 ('North Side-South Side' in 2010) is shown as Williamsburg; exact beats 'East Williamsburg'
+    assert sources.neighborhood_to_nta("Williamsburg", "Brooklyn", nta_map) == "BK73"
+    assert nta_map["BK72"]["name"] == "South Williamsburg"
+    assert sources.neighborhood_to_nta("Lower East Side", "Manhattan", nta_map) == "MN27"  # Orchard / Ludlow
     assert sources.neighborhood_to_nta("Park Slope", "Brooklyn", nta_map) == "BK37"  # 'Park Slope-Gowanus'
     assert sources.neighborhood_to_nta("SoHo", "Manhattan", nta_map) == "MN24"
     assert sources.neighborhood_to_nta("Atlantis", "Manhattan", nta_map) is None
@@ -138,3 +141,66 @@ def test_load_csv_cleans_urls(tmp_path):
     assert [r["name"] for r in rows] == ["A", "B"]  # bad borough skipped
     assert rows[0]["website"] is None and rows[0]["menu_url"] is None
     assert rows[1]["website"] == "https://b.com"
+
+
+def test_csv_match_prefers_the_record_in_the_rows_neighborhood(nta_map):
+    # Pilot 'Burger Joint', Midtown ('hidden hotel burger counter') is the Thompson hotel counter on
+    # W 57th St (MN17), not the exact-name BURGER JOINT on W 31st St (MN13).
+    rows = [
+        dohmh("50116365", "BURGER JOINT", building="383", street="WEST   31 STREET", nta="MN13", zipcode="10001",
+              last="2026-04-28T00:00:00.000"),
+        dohmh("50092105", "THOMPSON NEW YORK HOTEL (Burger Joint)", building="118", street="WEST   57 STREET",
+              nta="MN17", zipcode="10019", cuisine="American", last="2024-12-10T00:00:00.000"),
+    ]
+    out, report = sources.build_restaurants([csv_row("Burger Joint", neighborhood="Midtown")], rows, nta_map,
+                                            cuisines=["Hamburgers"], min_date="2023-01-01")
+    pilot = out[0]
+    assert pilot["camis"] == "50092105" and pilot["address"] == "118 West 57 Street"
+    assert pilot["match"]["method"].startswith("name+neighborhood")
+    assert [r["camis"] for r in out[1:]] == ["50116365"]  # the W 31st St shop stays, as its own restaurant
+
+
+def test_unmatched_csv_rows_with_the_same_name_keep_separate_keys_and_prices(nta_map):
+    from pipeline import build
+    from pipeline.chains import build_targets
+
+    rows = [csv_row("Westville", neighborhood="West Village", menu_url="https://westville.com/wv", row=1),
+            csv_row("Westville", neighborhood="Chelsea", menu_url="https://westville.com/chelsea", row=2)]
+    out, _ = sources.build_restaurants(rows, [], nta_map)
+    assert len({r["key"] for r in out}) == 2
+    targets = build_targets(out, chains={})
+    results = {
+        t.key: {"status": "priced", "status_detail": None, "menu_url": url, "price_source": "official_site",
+                "website": None, "scraped_at": "2026-09-23T12:00:00Z",
+                "burgers": [{"name": "Burger", "price": price, "description": None, "protein": "beef",
+                             "menu_period": None}]}
+        for t, (url, price) in zip(targets, [("https://westville.com/wv", 14), ("https://westville.com/chelsea", 22)], strict=True)
+    }
+    d = build.assemble(targets, results, generated_at="2026-09-23T12:00:00Z")
+    assert sorted((r["neighborhood"], r["index_price"]) for r in d["restaurants"]) == [
+        ("Hudson Yards-Chelsea-Flat Iron-Union Square", 22), ("West Village", 14)]
+
+
+def test_repermitted_restaurant_is_listed_once(nta_map):
+    rows = [
+        dohmh("40538662", "MCDONALD'S", building="4040", street="BROADWAY", nta="MN36", last="2025-03-04T00:00:00.000"),
+        dohmh("50183866", "MCDONALD'S", building="4040", street="BROADWAY", nta="MN36", last="2026-06-29T00:00:00.000"),
+        dohmh("50087334", "JUMBO HAMBURGER PLACE", building="112", street="WEST 116 STREET", nta="MN11",
+              last="2025-10-03T00:00:00.000"),
+        dohmh("50185072", "JUMBO HAMBURGERS", building="112", street="WEST 116 STREET", nta="MN11",
+              last="2026-06-29T00:00:00.000"),
+        # two stands in one venue: permitted together, inspected the same day -> both kept
+        dohmh("50044590", "HAMBURGER, DAILY BURGER", building="4", street="PENN PLAZA", nta="MN17",
+              last="2025-02-01T00:00:00.000"),
+        dohmh("50044622", "Daily Burger", building="4", street="PENN PLAZA", nta="MN17", last="2025-02-01T00:00:00.000"),
+        # a different restaurant at the same address is never merged
+        dohmh("50144161", "BURGER KING", building="2655", street="RICHMOND AVENUE", boro="Staten Island", nta="SI01",
+              last="2025-03-11T00:00:00.000"),
+        dohmh("50180342", "SHAKE SHACK", building="2655", street="RICHMOND AVENUE", boro="Staten Island", nta="SI01",
+              last="2026-04-24T00:00:00.000"),
+    ]
+    out, report = sources.build_restaurants([], rows, nta_map, cuisines=["Hamburgers"], min_date="2023-01-01")
+    camis = sorted(r["camis"] for r in out)
+    assert camis == ["50044590", "50044622", "50144161", "50180342", "50183866", "50185072"]
+    assert {d["dropped"]: d["kept"] for d in report["dohmh_superseded_permits"]} == {
+        "40538662": "50183866", "50087334": "50185072"}

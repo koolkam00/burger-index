@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { formatCount, formatDate } from "@/lib/format";
+import { formatDate, pluralize } from "@/lib/format";
 import { NAV } from "@/lib/site";
 import { UseSystemTheme } from "./theme";
 
-export function SiteFooter({ generatedAt, priced }: { generatedAt: string; priced: number }) {
+export function SiteFooter({ generatedAt, menus, locations }: { generatedAt: string; menus: number; locations: number }) {
   return (
     <footer className="mt-12 md:mt-24">
       <div className="wrap">
@@ -13,7 +13,7 @@ export function SiteFooter({ generatedAt, priced }: { generatedAt: string; price
               <span className="wordmark-the">The</span>Burger Index
             </p>
             <p className="t-ui-m mt-3">
-              Updated {formatDate(generatedAt)} · {formatCount(priced)} restaurants priced
+              Updated {formatDate(generatedAt)} · {pluralize(menus, "menu")} at {pluralize(locations, "location")} priced
             </p>
             <p className="t-ui-s muted mt-2">Prices in US dollars, before tax and tip.</p>
           </div>

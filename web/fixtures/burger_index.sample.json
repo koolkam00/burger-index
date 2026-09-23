@@ -3,7 +3,7 @@
  "generated_at": "2026-09-23T19:05:00Z",
  "currency": "USD",
  "methodology": {
-  "index_price_rule": "A restaurant's index price is its cheapest beef burger: the burger by itself (no combo or meal upgrade, no add-ons), single/standard size, at the dinner or all-day menu price when a menu lists several. The Burger Index is the median index price across priced restaurants.",
+  "index_price_rule": "A restaurant's index price is its cheapest beef burger: the burger by itself (no combo or meal upgrade, no add-ons), single/standard size, at its dinner or all-day menu price. Lunch, brunch or late-night prices count only when no beef burger on the menu has a dinner or all-day price; happy-hour prices are left out. The Burger Index is the median index price across distinct menus: every independent restaurant counts once and each chain counts once, however many locations it has (they share one scraped menu). Borough and neighborhood figures count a chain at most once per area.",
   "sources": [
    "NYC DOHMH Restaurant Inspection Results (NYC Open Data 43nn-pn8j): restaurant list, addresses, coordinates, cuisine.",
    "2010 Neighborhood Tabulation Areas (NYC Open Data 8ius-dhrr): neighborhood names.",
@@ -17,11 +17,11 @@
   "restaurants_priced": 46,
   "burgers": 143,
   "beef_burgers": 98,
-  "index_median": 15.38,
-  "index_mean": 17.01,
-  "index_p10": 9.87,
-  "index_p90": 24.88,
-  "all_burgers_median": 16.99,
+  "index_median": 16.5,
+  "index_mean": 17.94,
+  "index_p10": 10,
+  "index_p90": 25.38,
+  "all_burgers_median": 18.75,
   "cheapest_burger_id": "82nd-street-burger-stand-jackson-heights--crispy-chicken-burger",
   "priciest_burger_id": "berry-street-smokehouse-north-side--wagyu-burger"
  },
@@ -1584,7 +1584,7 @@
    "menu_url": "https://halloranstavern.example/menu",
    "price_source": "official_site",
    "status": "priced",
-   "status_detail": null,
+   "status_detail": "Prices corrected by hand after re-checking the menu on 2026-09-20: the scrape read the lunch menu; the dinner menu lists the same burgers, and the index uses dinner prices.",
    "scraped_at": "2026-09-22T14:06:05Z",
    "index_price": 16.75,
    "burgers": [

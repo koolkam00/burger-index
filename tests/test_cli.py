@@ -94,3 +94,35 @@ def test_run_only_and_max_credits(data_dir, fake, capsys):
     assert out["capped"] and out["stopped"] == 1 and out["credits_spent"] == 0
     assert out["build"]["restaurants"] == 0  # nothing cached yet, dataset still valid
     build.validate(json.loads(config.OUTPUT_PATH.read_text()))
+
+
+def test_scope_flags_are_remembered_by_later_commands(data_dir, fake, capsys, monkeypatch):
+    irish = {**DOHMH_ROWS[3], "camis": "6", "dba": "THE IRISH PUB", "building": "7", "street": "BARROW STREET",
+             "cuisine_description": "Irish"}
+    monkeypatch.setattr(sources, "socrata_get", lambda url, params, http=None: DOHMH_ROWS + [irish])
+    assert cli.main(["sources", "--cuisines", "Hamburgers,Irish", "--min-inspection-date", "2024-01-01"]) == 0
+    wide = json.loads(config.RESTAURANTS_PATH.read_text())
+    assert len(wide["restaurants"]) == 6
+
+    capsys.readouterr()
+    assert cli.main(["plan"]) == 0
+    assert json.loads(capsys.readouterr().out)["scope"]["cuisines"] == ["Hamburgers", "Irish"]
+
+    fake(pages={"https://www.duewestnyc.com/menus/": menu(("Smash Burger", 27))}, search={})
+    assert cli.main(["run", "--only", "Due West", "--max-credits", "20"]) == 0
+    doc = json.loads(config.RESTAURANTS_PATH.read_text())
+    assert doc["meta"]["cuisines"] == ["Hamburgers", "Irish"] and doc["meta"]["min_inspection_date"] == "2024-01-01"
+    assert len(doc["restaurants"]) == 6  # not silently narrowed back to the default scope
+
+    # passing a flag changes that part of the scope only
+    assert cli.main(["sources", "--cuisines", "Hamburgers"]) == 0
+    doc = json.loads(config.RESTAURANTS_PATH.read_text())
+    assert doc["meta"]["cuisines"] == ["Hamburgers"] and doc["meta"]["min_inspection_date"] == "2024-01-01"
+
+
+def test_ctrl_c_exits_cleanly(data_dir, monkeypatch):
+    def interrupted(*a, **k):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(cli, "run_targets", interrupted)
+    assert cli.main(["run", "--only", "Due West"]) == 130

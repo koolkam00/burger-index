@@ -128,7 +128,8 @@ def test_chain_scraped_once_and_replayed_offline(tmp_path, fake):
     mc = [r for r in d["restaurants"] if r["chain"] == "mcdonalds"]
     assert len(mc) == 4 and {r["index_price"] for r in mc} == {3.29}
     assert all(r["price_source"] == "delivery_app" and "may vary by location" in r["status_detail"] for r in mc)
-    assert d["stats"]["index_median"] == 3.29
+    # McDonald's counts once, not four times: median(3.29, 11)
+    assert d["stats"]["index_median"] == 7.15 and d["stats"]["restaurants_priced"] == 5
 
 
 def test_max_credits_stop_keeps_finished_targets(tmp_path, fake):
@@ -153,7 +154,7 @@ def test_max_credits_stop_keeps_finished_targets(tmp_path, fake):
     assert config.MAX_SCRAPES == 3
 
 
-def test_unmapped_homepage_searches_first_and_tries_aggregators_before_it(tmp_path, fake):
+def test_unmapped_homepage_searches_first_and_tries_marketplaces_before_it(tmp_path, fake):
     home = "http://paulsburgersnyc.com/"
     gh = "https://www.grubhub.com/restaurant/pauls-da-burger-joint-131-2nd-ave-new-york/4381032"
     f = fake(
@@ -167,3 +168,134 @@ def test_unmapped_homepage_searches_first_and_tries_aggregators_before_it(tmp_pa
     assert res["status"] == "priced" and res["menu_url"] == gh
     assert [a["step"] for a in res["attempts"]] == ["map", "search", "scrape"]
     assert f.count("scrape") == 1 and res["website"] == home
+    # Grubhub is a delivery marketplace: delivery prices, labeled as such
+    assert res["price_source"] == "delivery_app" and "Delivery-app prices" in res["status_detail"]
+
+
+def test_ctrl_c_stops_queued_targets_and_live_calls(tmp_path, fake, monkeypatch):
+    import os
+    import signal
+
+    import pytest
+
+    from pipeline import context_client
+
+    rs = [rec(f"Place {i}", camis=str(100 + i), csv=True, menu_url=f"https://p{i}.com/menu") for i in range(30)]
+    targets = build_targets(rs)
+    f = fake(pages={f"https://p{i}.com/menu": menu(("Burger", 10 + i)) for i in range(30)})
+
+    def interrupting(endpoint, request, *, max_age_ms=None):
+        out = f(endpoint, request, max_age_ms=max_age_ms)
+        if f.count("scrape") == 3:
+            os.kill(os.getpid(), signal.SIGINT)  # Ctrl-C: KeyboardInterrupt in the main thread only
+        return out
+
+    monkeypatch.setattr(context_client, "execute", interrupting)
+    api = api_for(tmp_path, max_credits=1000)
+    run_log = tmp_path / "run_log.jsonl"
+    with pytest.raises(KeyboardInterrupt):
+        run_targets(targets, api, workers=2, run_log_path=run_log)
+    # the queue was cancelled and in-flight targets made no further live call
+    assert api.stop_event.is_set()
+    assert f.count("scrape") <= 4 and api.ledger.spent <= 20
+    assert json.loads(run_log.read_text().splitlines()[-1])["status"] == "interrupted"
+
+
+def test_partial_delivery_page_keeps_looking_for_a_full_menu(tmp_path, fake):
+    rs = [rec("McDonald's", camis=f"4000000{i}", dba="MCDONALD'S", address="4040 Broadway") for i in range(3)]
+    t = build_targets(rs)[0]
+    ue = "https://www.ubereats.com/store/mcdonalds-4040-broadway/xyz"
+    gh = "https://www.grubhub.com/restaurant/mcdonalds-4040-broadway-new-york/123"
+    f = fake(
+        search={"McDonald's": [sr(ue, "McDonald's (4040 Broadway)"), sr(gh, "McDonald's 4040 Broadway - Grubhub")]},
+        pages={ue: menu(("Double Cheeseburger", 4.99), ("Big Mac", 8.39)),
+               gh: menu(("Hamburger", 3.19), ("Cheeseburger", 3.59), ("McDouble", 4.19), ("Big Mac", 7.99))},
+    )
+    res = process_target(t, api_for(tmp_path))
+    # Grubhub (full store menu) now ranks ahead of Uber Eats and wins anyway
+    assert res["status"] == "priced" and res["menu_url"] == gh and f.count("scrape") == 1
+
+    # Only a partial Uber Eats page: keep looking within the caps, then fall back to it with a note
+    f = fake(search={"McDonald's": [sr(ue, "McDonald's (4040 Broadway)")]},
+             pages={ue: menu(("Double Cheeseburger", 4.99), ("Big Mac", 8.39))})
+    res = process_target(t, api_for(tmp_path / "2"))
+    assert res["status"] == "priced" and res["menu_url"] == ue
+    assert "looked incomplete (only 2 priced beef burgers on the page)" in res["status_detail"]
+    assert "not final" in res["attempts"][-1]["outcome"]
+
+
+def test_curated_chain_page_without_its_cheapest_item_is_not_final(tmp_path, fake):
+    rs = [rec("McDonald's", camis=f"4000000{i}", dba="MCDONALD'S", address="4040 Broadway") for i in range(3)]
+    t = build_targets(rs)[0]
+    assert t.cheapest_item == "hamburger"
+    a = "https://www.ubereats.com/store/mcdonalds-4040-broadway/a"
+    b = "https://www.doordash.com/store/mcdonalds-4040-broadway-2/"
+    fake(search={"McDonald's": [sr(a, "McDonald's (4040 Broadway)"), sr(b, "McDonald's 4040 Broadway")]},
+         pages={a: menu(("Cheeseburger", 4.19), ("McDouble", 4.49), ("Big Mac", 8.39)),
+                b: menu(("Hamburger", 3.29), ("Cheeseburger", 4.19), ("McDouble", 4.49), ("Big Mac", 8.39))})
+    res = process_target(t, api_for(tmp_path))
+    assert res["menu_url"] == b and [x["price"] for x in res["burgers"]][0] == 3.29
+
+
+def test_temporary_search_failure_is_retried_not_published(tmp_path, fake, monkeypatch):
+    from pipeline import cli, context_client
+
+    f = fake(search={})
+
+    def failing_search(endpoint, request, *, max_age_ms=None):
+        if endpoint == "search":
+            f.calls.append((endpoint, request))
+            raise context_client.TransientError("search: HTTP 429")
+        return f(endpoint, request, max_age_ms=max_age_ms)
+
+    monkeypatch.setattr(context_client, "execute", failing_search)
+    t = one("Ghost Kitchen")
+    res = process_target(t, api_for(tmp_path))
+    assert res["retry_pending"] and res["status"] == "no_menu_found"
+    assert "Web search failed (TRANSIENT)" in res["status_detail"] and "retries it" in res["status_detail"]
+    assert "found no usable menu page" not in res["status_detail"]
+
+    # plan/build: not yet scraped (priced for the retry), not published as 'no menu'
+    results, pending = replay([t], Api(DiskCache(tmp_path / "cache"), offline=True))
+    assert results == {} and pending == [t]
+    assert cli._estimate(pending)["credits"]["first_pass"] > 0
+
+    # the next live run retries the search
+    fake(search={})
+    process_target(t, api_for(tmp_path))
+    assert f.count("search") == 1
+
+
+def test_special_pilot_menu_url_tries_the_website_first(tmp_path, fake):
+    rw = "https://duewestnyc.com/s/Restaurant Week Summer 2026.pdf"
+    home = "https://duewestnyc.com/"
+    dinner = "https://duewestnyc.com/menus/dinner"
+    f = fake(maps={"duewestnyc.com": [dinner]},
+             pages={rw: menu(("Burger (prix fixe)", 45)), dinner: menu(("Due Burger", 24))})
+    res = process_target(one(csv=True, menu_url=rw, website=home), api_for(tmp_path))
+    assert res["status"] == "priced" and res["menu_url"] == dinner
+    assert [a["step"] for a in res["attempts"]] == ["map", "scrape"] and f.count("scrape") == 1
+
+
+def test_old_menu_file_keeps_looking_and_says_its_date(tmp_path, fake):
+    old = "https://static1.squarespace.com/static/5db3124b/t/623a243b/1647977531864/menus_for_web_DINNER.pdf"
+    home = "https://www.duewestnyc.com/"
+    dinner = "https://www.duewestnyc.com/menus/dinner"
+    fake(maps={"duewestnyc.com": [dinner]}, pages={old: menu(("Hamburger", 12)), dinner: menu(("Due Burger", 24))})
+    res = process_target(one(csv=True, menu_url=old, website=home), api_for(tmp_path))
+    assert res["menu_url"] == dinner and res["burgers"][0]["price"] == 24
+
+    # nothing newer: the old file is used, and the result says how old it is
+    fake(maps={"duewestnyc.com": []}, pages={old: menu(("Hamburger", 12)), home: menu(is_menu=False)}, search={})
+    res = process_target(one(csv=True, menu_url=old, website=home), api_for(tmp_path / "2"))
+    assert res["status"] == "priced" and res["menu_url"] == old
+    assert "The menu file dates from March 2022, so prices may have changed" in res["status_detail"]
+
+
+def test_scraped_page_for_another_city_is_rejected(tmp_path, fake):
+    dd = "https://www.doordash.com/store/due-west-123/"
+    page = menu(("Due Burger", 14))
+    page["location"] = "4400 Westheimer Rd, Houston, TX 77027"
+    fake(search={"Due West": [sr(dd, "Due West - DoorDash")]}, pages={dd: page})
+    res = process_target(one(), api_for(tmp_path))
+    assert res["status"] == "no_menu_found" and "outside NYC" in res["status_detail"]

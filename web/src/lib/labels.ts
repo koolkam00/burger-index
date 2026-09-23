@@ -23,7 +23,8 @@ export const PRICE_SOURCE_MEANING: Record<PriceSource, string> = {
   official_pdf: "A menu PDF published by the restaurant. PDFs can go stale between reprints.",
   online_ordering: "The restaurant's own online-ordering page (pickup prices).",
   menu_aggregator: "A third-party menu listing site. Usually accurate, sometimes out of date.",
-  delivery_app: "A delivery app listing. Delivery-app prices usually run higher than ordering in person.",
+  // DELIVERY_NOTE is shown beside every delivery-app price already; this line doesn't repeat it.
+  delivery_app: "A delivery-app listing of the restaurant's menu.",
 };
 
 export const DELIVERY_NOTE = "Delivery-app prices usually run higher than ordering in person.";
@@ -43,6 +44,12 @@ export const STATUS_COPY: Record<Status, string> = {
   no_menu_found: "We couldn't find a menu online for this place.",
   error: "Our scraper choked on this menu. It tries again next update.",
 };
+
+/**
+ * Replaces STATUS_COPY.no_prices when the menu does have a price online but a hand check withheld it
+ * (pipeline/corrections.py `withhold`): "no price online" would contradict the hand-check note.
+ */
+export const WITHHELD_COPY = "We found a price online but couldn't confirm it against a current menu, so we left it out.";
 
 export const PROTEIN_LABEL: Record<Protein, string> = {
   beef: "Beef",

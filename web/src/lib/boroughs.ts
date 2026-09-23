@@ -1,5 +1,6 @@
 // Boroughs in the fixed DESIGN.md order (never cycled, never re-sorted for color).
-import { BOROUGHS, type Borough } from "./schema";
+import { BOROUGHS } from "./enums";
+import type { Borough } from "./schema";
 
 export type BoroughSlug = "manhattan" | "brooklyn" | "queens" | "bronx" | "staten-island";
 
@@ -32,4 +33,9 @@ export function boroughBySlug(slug: string): BoroughMeta | undefined {
 
 export function boroughIndex(name: Borough): number {
   return BOROUGHS.indexOf(name);
+}
+
+/** A borough name inside a sentence: "the Bronx", "Queens". Capitalize it yourself at a sentence start. */
+export function boroughInProse(name: Borough): string {
+  return name === "Bronx" ? "the Bronx" : name;
 }

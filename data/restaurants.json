@@ -47,14 +47,1200 @@
    }
   ],
   "csv_duplicate_matches": [],
-  "dohmh_records": 31268,
+  "dohmh_records": 31120,
   "dohmh_dropped_boro": 87,
-  "dohmh_in_cuisines": 502,
+  "dohmh_superseded_permits": [
+   {
+    "dropped": "50032966",
+    "kept": "50055362",
+    "dba": "DUNKIN' #1115",
+    "address": "625 8 Avenue",
+    "borough": "Manhattan",
+    "last_inspection": "2026-02-03"
+   },
+   {
+    "dropped": "40391304",
+    "kept": "50179051",
+    "dba": "BAY RIDGE MANOR CATERING",
+    "address": "476 76 Street",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-03-20"
+   },
+   {
+    "dropped": "40392668",
+    "kept": "50165380",
+    "dba": "LUCY'S",
+    "address": "135 Avenue a",
+    "borough": "Manhattan",
+    "last_inspection": "2023-11-28"
+   },
+   {
+    "dropped": "40402610",
+    "kept": "50086387",
+    "dba": "YALE CLUB",
+    "address": "50 Vanderbilt Avenue",
+    "borough": "Manhattan",
+    "last_inspection": "2026-04-30"
+   },
+   {
+    "dropped": "40512617",
+    "kept": "40586000",
+    "dba": "ZARO'S BREAD BASKET",
+    "address": "89 East 42 Street",
+    "borough": "Manhattan",
+    "last_inspection": "2026-02-10"
+   },
+   {
+    "dropped": "40511696",
+    "kept": "50178701",
+    "dba": "GEMINI'S LOUNGE",
+    "address": "107-23 Liberty Avenue",
+    "borough": "Queens",
+    "last_inspection": "2025-11-13"
+   },
+   {
+    "dropped": "40538662",
+    "kept": "50183866",
+    "dba": "MCDONALD'S",
+    "address": "4040 Broadway",
+    "borough": "Manhattan",
+    "last_inspection": "2025-03-04"
+   },
+   {
+    "dropped": "50116647",
+    "kept": "50180368",
+    "dba": "CRAZY FRUITS",
+    "address": "3120 Bainbridge Avenue",
+    "borough": "Bronx",
+    "last_inspection": "2025-08-26"
+   },
+   {
+    "dropped": "40689838",
+    "kept": "50135276",
+    "dba": "SMOKE",
+    "address": "2751 Broadway",
+    "borough": "Manhattan",
+    "last_inspection": "2023-03-09"
+   },
+   {
+    "dropped": "40999668",
+    "kept": "50191073",
+    "dba": "DUNKIN'",
+    "address": "269 8 Avenue",
+    "borough": "Manhattan",
+    "last_inspection": "2025-12-18"
+   },
+   {
+    "dropped": "50111802",
+    "kept": "50153883",
+    "dba": "CINNABON",
+    "address": "90-15 Queens Boulevard",
+    "borough": "Queens",
+    "last_inspection": "2026-05-26"
+   },
+   {
+    "dropped": "50111806",
+    "kept": "50153866",
+    "dba": "AUNTIE ANNE'S PRETZELS",
+    "address": "90-15 Queens Boulevard",
+    "borough": "Queens",
+    "last_inspection": "2026-04-28"
+   },
+   {
+    "dropped": "50134919",
+    "kept": "50174106",
+    "dba": "CHICK-FIL-A",
+    "address": "90-15 Queens Boulevard",
+    "borough": "Queens",
+    "last_inspection": "2025-01-10"
+   },
+   {
+    "dropped": "50148989",
+    "kept": "50153866",
+    "dba": "AUNTIE ANNE'S PRETZEL / JAMBA JUICE",
+    "address": "90-15 Queens Boulevard",
+    "borough": "Queens",
+    "last_inspection": "2026-03-26"
+   },
+   {
+    "dropped": "50174106",
+    "kept": "50182915",
+    "dba": "CHICK-FIL-A",
+    "address": "90-15 Queens Boulevard",
+    "borough": "Queens",
+    "last_inspection": "2025-10-14"
+   },
+   {
+    "dropped": "50039333",
+    "kept": "50040509",
+    "dba": "AUNTIE ANNE'S PRETZELS",
+    "address": "2655 Richmond Avenue",
+    "borough": "Staten Island",
+    "last_inspection": "2026-03-11"
+   },
+   {
+    "dropped": "41211622",
+    "kept": "50183896",
+    "dba": "MCDONALD'S",
+    "address": "2726 Broadway",
+    "borough": "Manhattan",
+    "last_inspection": "2026-04-08"
+   },
+   {
+    "dropped": "41231473",
+    "kept": "50102705",
+    "dba": "ALL NATIONS",
+    "address": "1091 Utica Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2019-06-07"
+   },
+   {
+    "dropped": "41240455",
+    "kept": "50147818",
+    "dba": "ROMER'S HELL'S KITCHEN HOTEL",
+    "address": "851 8 Avenue",
+    "borough": "Manhattan",
+    "last_inspection": "2025-12-17"
+   },
+   {
+    "dropped": "41279614",
+    "kept": "41556769",
+    "dba": "BLUE RIBBON SUSHI BAR & GRILL",
+    "address": "6 Columbus Circle",
+    "borough": "Manhattan",
+    "last_inspection": "2025-04-30"
+   },
+   {
+    "dropped": "41315707",
+    "kept": "50182055",
+    "dba": "LOUKOUMI TAVERNA",
+    "address": "45-07 Ditmars Boulevard",
+    "borough": "Queens",
+    "last_inspection": "2025-08-05"
+   },
+   {
+    "dropped": "41390152",
+    "kept": "50168978",
+    "dba": "FIVE GUYS FAMOUS BURGERS AND FRIES",
+    "address": "73-25 Woodhaven Boulevard",
+    "borough": "Queens",
+    "last_inspection": "2025-10-23"
+   },
+   {
+    "dropped": "41503714",
+    "kept": "41695803",
+    "dba": "MISS KOREA",
+    "address": "10 West 32 Street",
+    "borough": "Manhattan",
+    "last_inspection": "2025-11-18"
+   },
+   {
+    "dropped": "41422049",
+    "kept": "41428295",
+    "dba": "THE FACULTY HOUSE - (COLUMBIA UNIVERSITY)",
+    "address": "64 Morningside Drive",
+    "borough": "Manhattan",
+    "last_inspection": "2026-01-22"
+   },
+   {
+    "dropped": "41435053",
+    "kept": "50164590",
+    "dba": "BERRY PARK",
+    "address": "4 Berry Street",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-01-15"
+   },
+   {
+    "dropped": "41435182",
+    "kept": "50173671",
+    "dba": "LA GRAN URUGUAYA",
+    "address": "85-06 37 Avenue",
+    "borough": "Queens",
+    "last_inspection": "2025-02-06"
+   },
+   {
+    "dropped": "41463516",
+    "kept": "50183869",
+    "dba": "MCDONALD'S",
+    "address": "404 East 14 Street",
+    "borough": "Manhattan",
+    "last_inspection": "2025-12-31"
+   },
+   {
+    "dropped": "50176018",
+    "kept": "50177506",
+    "dba": "WETZELS PRETZELS",
+    "address": "5100 Kings Plaza",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-12-16"
+   },
+   {
+    "dropped": "41491419",
+    "kept": "50103358",
+    "dba": "ITAL FUSION",
+    "address": "4705 Church Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2019-09-03"
+   },
+   {
+    "dropped": "41572018",
+    "kept": "50064309",
+    "dba": "AIR BAR, NY DELI, TIM HORTONS",
+    "address": "93-40 Sutphin Boulevard",
+    "borough": "Queens",
+    "last_inspection": "2026-02-12"
+   },
+   {
+    "dropped": "41643403",
+    "kept": "50165788",
+    "dba": "DON ANTONIO RESTAURANT",
+    "address": "309 West 50 Street",
+    "borough": "Manhattan",
+    "last_inspection": "2025-07-01"
+   },
+   {
+    "dropped": "50134183",
+    "kept": "50177185",
+    "dba": "MOUSTACHE",
+    "address": "29 7 Avenue South",
+    "borough": "Manhattan",
+    "last_inspection": "2025-08-21"
+   },
+   {
+    "dropped": "41654555",
+    "kept": "50180531",
+    "dba": "NEW KING WOK RESTAURANT",
+    "address": "2025 7 Avenue",
+    "borough": "Manhattan",
+    "last_inspection": "2025-11-25"
+   },
+   {
+    "dropped": "41705814",
+    "kept": "50180430",
+    "dba": "XIN RONG",
+    "address": "741 Hunts Point Avenue",
+    "borough": "Bronx",
+    "last_inspection": "2025-03-18"
+   },
+   {
+    "dropped": "50001148",
+    "kept": "50183899",
+    "dba": "MCDONALD'S",
+    "address": "148 West 125 Street",
+    "borough": "Manhattan",
+    "last_inspection": "2025-08-05"
+   },
+   {
+    "dropped": "50002387",
+    "kept": "50163634",
+    "dba": "ISLAND KITCHEN CHINESE RESTAURANT",
+    "address": "462 Nome Avenue",
+    "borough": "Staten Island",
+    "last_inspection": "2024-12-12"
+   },
+   {
+    "dropped": "50010956",
+    "kept": "50129374",
+    "dba": "ROYAL QUEEN",
+    "address": "136-20 Roosevelt Avenue",
+    "borough": "Queens",
+    "last_inspection": "2026-06-30"
+   },
+   {
+    "dropped": "50005685",
+    "kept": "50181211",
+    "dba": "KING'S WOK",
+    "address": "261 Troy Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2026-01-13"
+   },
+   {
+    "dropped": "50011673",
+    "kept": "50167947",
+    "dba": "COPPER & OAK",
+    "address": "157 Allen Street",
+    "borough": "Manhattan",
+    "last_inspection": "2024-05-09"
+   },
+   {
+    "dropped": "50154095",
+    "kept": "50179824",
+    "dba": "NOCHES DE COLOMBIA",
+    "address": "200 Baychester Avenue",
+    "borough": "Bronx",
+    "last_inspection": "2026-03-20"
+   },
+   {
+    "dropped": "50048590",
+    "kept": "50145858",
+    "dba": "JANE STREET",
+    "address": "250 Vesey Street",
+    "borough": "Manhattan",
+    "last_inspection": "2025-08-11"
+   },
+   {
+    "dropped": "50014686",
+    "kept": "50089626",
+    "dba": "JONGRO BBQ",
+    "address": "22 West 32 Street",
+    "borough": "Manhattan",
+    "last_inspection": "2025-09-11"
+   },
+   {
+    "dropped": "50047786",
+    "kept": "50180714",
+    "dba": "KARAOKE CITY",
+    "address": "22 West 32 Street",
+    "borough": "Manhattan",
+    "last_inspection": "2026-01-20"
+   },
+   {
+    "dropped": "50016877",
+    "kept": "50178826",
+    "dba": "ASIAN KITCHEN",
+    "address": "85-43 Grand Avenue",
+    "borough": "Queens",
+    "last_inspection": "2025-04-29"
+   },
+   {
+    "dropped": "50018504",
+    "kept": "50185241",
+    "dba": "MERRY LAND BUFFET",
+    "address": "505 East 163 Street",
+    "borough": "Bronx",
+    "last_inspection": "2025-05-05"
+   },
+   {
+    "dropped": "50038716",
+    "kept": "50188187",
+    "dba": "SUBWAY",
+    "address": "834 2 Avenue",
+    "borough": "Manhattan",
+    "last_inspection": "2025-06-10"
+   },
+   {
+    "dropped": "50041687",
+    "kept": "50184495",
+    "dba": "CHINA KING",
+    "address": "175-45 Hillside Avenue",
+    "borough": "Queens",
+    "last_inspection": "2025-05-13"
+   },
+   {
+    "dropped": "50041875",
+    "kept": "50161136",
+    "dba": "LAS BANDERAS",
+    "address": "1641 McDonald Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2024-03-18"
+   },
+   {
+    "dropped": "50043137",
+    "kept": "50185551",
+    "dba": "LION'S MILK",
+    "address": "104 Roebling Street",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-09-22"
+   },
+   {
+    "dropped": "50045276",
+    "kept": "50183392",
+    "dba": "SUBWAY",
+    "address": "882 5 Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-05-15"
+   },
+   {
+    "dropped": "50045631",
+    "kept": "50183527",
+    "dba": "PUEBLA RESTAURANT",
+    "address": "39-22 61 Street",
+    "borough": "Queens",
+    "last_inspection": "2025-04-21"
+   },
+   {
+    "dropped": "50046173",
+    "kept": "50179817",
+    "dba": "LA BAGEL DELIGHT",
+    "address": "90 Court Street",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-10-27"
+   },
+   {
+    "dropped": "50046462",
+    "kept": "50187028",
+    "dba": "GENERAL TSO'S CHINESE RESTAURANT",
+    "address": "1215 White Plains Road",
+    "borough": "Bronx",
+    "last_inspection": "2026-05-04"
+   },
+   {
+    "dropped": "50123219",
+    "kept": "50182182",
+    "dba": "AUNTIE ANNE'S PRETZELS / JAMBA JUICE",
+    "address": "185 Greenwich Street",
+    "borough": "Manhattan",
+    "last_inspection": "2023-07-11"
+   },
+   {
+    "dropped": "50139326",
+    "kept": "50141457",
+    "dba": "DUNKIN DONUTS",
+    "address": "185 Greenwich Street",
+    "borough": "Manhattan",
+    "last_inspection": "2026-02-18"
+   },
+   {
+    "dropped": "50055419",
+    "kept": "50082290",
+    "dba": "KIRKLAND & ELLIS CONFERENCE ROOMS",
+    "address": "601 Lexington Avenue",
+    "borough": "Manhattan",
+    "last_inspection": "2026-03-20"
+   },
+   {
+    "dropped": "50058673",
+    "kept": "50180017",
+    "dba": "AMMAZZACAFFE",
+    "address": "702 Grand Street",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-02-06"
+   },
+   {
+    "dropped": "50067182",
+    "kept": "50187867",
+    "dba": "SIK GAEK",
+    "address": "49-11 Roosevelt Avenue",
+    "borough": "Queens",
+    "last_inspection": "2026-03-09"
+   },
+   {
+    "dropped": "50070560",
+    "kept": "50159142",
+    "dba": "HO FOODS NYC",
+    "address": "110 East 7 Street",
+    "borough": "Manhattan",
+    "last_inspection": "2026-05-01"
+   },
+   {
+    "dropped": "50072251",
+    "kept": "50187999",
+    "dba": "FRESH TACO",
+    "address": "1701 Putnam Avenue",
+    "borough": "Queens",
+    "last_inspection": "2026-01-13"
+   },
+   {
+    "dropped": "50073751",
+    "kept": "50177305",
+    "dba": "JAYA RESTAURANT",
+    "address": "79 Audubon Avenue",
+    "borough": "Manhattan",
+    "last_inspection": "2025-06-18"
+   },
+   {
+    "dropped": "50074098",
+    "kept": "50174553",
+    "dba": "KING WOK",
+    "address": "3510 Nostrand Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-02-12"
+   },
+   {
+    "dropped": "50077630",
+    "kept": "50183717",
+    "dba": "TJ ASIAN BISTRO",
+    "address": "50-19 Skillman Avenue",
+    "borough": "Queens",
+    "last_inspection": "2026-02-25"
+   },
+   {
+    "dropped": "50082317",
+    "kept": "50138411",
+    "dba": "THE JUICY BOX",
+    "address": "2281 Nostrand Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2023-01-30"
+   },
+   {
+    "dropped": "50082440",
+    "kept": "50188448",
+    "dba": "EMPANADA LOCA BEER GARDEN",
+    "address": "9 Dekalb Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2024-11-19"
+   },
+   {
+    "dropped": "50082639",
+    "kept": "50167608",
+    "dba": "COUNTRY BAY PIZZA",
+    "address": "3233 Ampere Avenue",
+    "borough": "Bronx",
+    "last_inspection": "2025-03-05"
+   },
+   {
+    "dropped": "50143505",
+    "kept": "50179558",
+    "dba": "SQUARESPACE",
+    "address": "225 Varick Street",
+    "borough": "Manhattan",
+    "last_inspection": "2025-12-02"
+   },
+   {
+    "dropped": "50085970",
+    "kept": "50186684",
+    "dba": "DUNKIN",
+    "address": "1779 Southern Boulevard",
+    "borough": "Bronx",
+    "last_inspection": "2025-10-14"
+   },
+   {
+    "dropped": "50086540",
+    "kept": "50156068",
+    "dba": "SONNYBOY",
+    "address": "65 Rivington Street",
+    "borough": "Manhattan",
+    "last_inspection": "2024-07-02"
+   },
+   {
+    "dropped": "50086706",
+    "kept": "50186832",
+    "dba": "HENRY'S",
+    "address": "433 7 Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-07-14"
+   },
+   {
+    "dropped": "50087301",
+    "kept": "50172374",
+    "dba": "GOLDEN WOK",
+    "address": "1770 Amsterdam Avenue",
+    "borough": "Manhattan",
+    "last_inspection": "2025-01-15"
+   },
+   {
+    "dropped": "50087334",
+    "kept": "50185072",
+    "dba": "JUMBO HAMBURGER PLACE",
+    "address": "112 West 116 Street",
+    "borough": "Manhattan",
+    "last_inspection": "2025-10-03"
+   },
+   {
+    "dropped": "50090164",
+    "kept": "50148324",
+    "dba": "FLYWHEEL",
+    "address": "1000 Surf Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2019-10-01"
+   },
+   {
+    "dropped": "50090323",
+    "kept": "50148587",
+    "dba": "CONEY'S CONES",
+    "address": "1023 Boardwalk West",
+    "borough": "Brooklyn",
+    "last_inspection": "2023-09-16"
+   },
+   {
+    "dropped": "50092277",
+    "kept": "50172122",
+    "dba": "GOO GONG TAN",
+    "address": "40-09 149 Place",
+    "borough": "Queens",
+    "last_inspection": "2025-04-18"
+   },
+   {
+    "dropped": "50131797",
+    "kept": "50180586",
+    "dba": "KENNEDY FRIED CHICKEN",
+    "address": "667 East 187 Street",
+    "borough": "Bronx",
+    "last_inspection": "2025-12-10"
+   },
+   {
+    "dropped": "50097939",
+    "kept": "50143671",
+    "dba": "DO , Cookie Dough Confection",
+    "address": "42 West 42 Street",
+    "borough": "Manhattan",
+    "last_inspection": "2019-12-11"
+   },
+   {
+    "dropped": "50132203",
+    "kept": "50180717",
+    "dba": "FLAMIN' CHICKEN & PIZZA",
+    "address": "1595 Broadway",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-11-17"
+   },
+   {
+    "dropped": "50160078",
+    "kept": "50173995",
+    "dba": "HOLY PITA",
+    "address": "263 Prospect Park West",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-07-14"
+   },
+   {
+    "dropped": "50103190",
+    "kept": "50181705",
+    "dba": "KENNEDY FRIED CHICKEN",
+    "address": "297 East 170 Street",
+    "borough": "Bronx",
+    "last_inspection": "2025-09-04"
+   },
+   {
+    "dropped": "50175473",
+    "kept": "50182886",
+    "dba": "THE BLACK BULL",
+    "address": "97 Atlantic Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-12-11"
+   },
+   {
+    "dropped": "50104552",
+    "kept": "50181118",
+    "dba": "GOLDEN DRAGON KITCHEN",
+    "address": "34-06 31 Avenue",
+    "borough": "Queens",
+    "last_inspection": "2025-12-31"
+   },
+   {
+    "dropped": "50106520",
+    "kept": "50187420",
+    "dba": "HADRAMOUT",
+    "address": "172 Atlantic Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-04-01"
+   },
+   {
+    "dropped": "50106579",
+    "kept": "50176894",
+    "dba": "THAI HOT BOX",
+    "address": "1598 3 Avenue",
+    "borough": "Manhattan",
+    "last_inspection": "2025-07-08"
+   },
+   {
+    "dropped": "50107576",
+    "kept": "50146632",
+    "dba": "NEW YORK TAVERN & LOUNGE",
+    "address": "138-11 Jamaica Avenue",
+    "borough": "Queens",
+    "last_inspection": "2022-10-07"
+   },
+   {
+    "dropped": "50108061",
+    "kept": "50183673",
+    "dba": "CHICK-FIL-A",
+    "address": "40-27 82 Street",
+    "borough": "Queens",
+    "last_inspection": "2026-02-05"
+   },
+   {
+    "dropped": "50108725",
+    "kept": "50179849",
+    "dba": "KENNEDY FRIED CHICKEN",
+    "address": "3420 Boston Road",
+    "borough": "Bronx",
+    "last_inspection": "2025-11-10"
+   },
+   {
+    "dropped": "50108836",
+    "kept": "50182151",
+    "dba": "CHINA KING",
+    "address": "6805 New Utrecht Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-05-20"
+   },
+   {
+    "dropped": "50108879",
+    "kept": "50182807",
+    "dba": "TAQUERIA SAN LUCAS",
+    "address": "2376 Jerome Avenue",
+    "borough": "Bronx",
+    "last_inspection": "2025-09-29"
+   },
+   {
+    "dropped": "50108886",
+    "kept": "50181366",
+    "dba": "FU WING CHINESE FOOD",
+    "address": "153 East 106 Street",
+    "borough": "Manhattan",
+    "last_inspection": "2025-09-03"
+   },
+   {
+    "dropped": "50108986",
+    "kept": "50181608",
+    "dba": "ASIA KITCHEN",
+    "address": "87-46 Britton Avenue",
+    "borough": "Queens",
+    "last_inspection": "2026-01-05"
+   },
+   {
+    "dropped": "50110159",
+    "kept": "50186754",
+    "dba": "PADOCA BAKERY",
+    "address": "210 East 67 Street",
+    "borough": "Manhattan",
+    "last_inspection": "2025-12-19"
+   },
+   {
+    "dropped": "50111827",
+    "kept": "50141026",
+    "dba": "TWO PERRYS",
+    "address": "127 Avenue C",
+    "borough": "Manhattan",
+    "last_inspection": "2023-03-08"
+   },
+   {
+    "dropped": "50114944",
+    "kept": "50169138",
+    "dba": "LADY CHOW KITCHEN",
+    "address": "171 Hester Street",
+    "borough": "Manhattan",
+    "last_inspection": "2024-08-06"
+   },
+   {
+    "dropped": "50115783",
+    "kept": "50185235",
+    "dba": "PRIMO PIZZERIA",
+    "address": "1282 Richmond Road",
+    "borough": "Staten Island",
+    "last_inspection": "2026-03-27"
+   },
+   {
+    "dropped": "50117018",
+    "kept": "50183442",
+    "dba": "XI'AN FAMOUS FOODS",
+    "address": "8 Liberty Place",
+    "borough": "Manhattan",
+    "last_inspection": "2026-03-05"
+   },
+   {
+    "dropped": "50117547",
+    "kept": "50181671",
+    "dba": "ORIGINAL JOE'S PIZZA",
+    "address": "2136 Williamsbridge Road",
+    "borough": "Bronx",
+    "last_inspection": "2025-08-27"
+   },
+   {
+    "dropped": "50119703",
+    "kept": "50180742",
+    "dba": "GOLDEN FOUNTAIN CHINESE KITCHEN",
+    "address": "116-16 Metropolitan Avenue",
+    "borough": "Queens",
+    "last_inspection": "2025-05-15"
+   },
+   {
+    "dropped": "50119971",
+    "kept": "50185504",
+    "dba": "MCDONALD'S RESTAURANT",
+    "address": "2065 Jerome Avenue",
+    "borough": "Bronx",
+    "last_inspection": "2026-02-18"
+   },
+   {
+    "dropped": "50122897",
+    "kept": "50189701",
+    "dba": "HALAL MIX",
+    "address": "255-19 Hillside Avenue",
+    "borough": "Queens",
+    "last_inspection": "2023-02-27"
+   },
+   {
+    "dropped": "50123068",
+    "kept": "50183930",
+    "dba": "MR. SUSHI",
+    "address": "58-12 Myrtle Avenue",
+    "borough": "Queens",
+    "last_inspection": "2025-08-06"
+   },
+   {
+    "dropped": "50123180",
+    "kept": "50172761",
+    "dba": "THAI SOCIAL",
+    "address": "215-01 73 Avenue",
+    "borough": "Queens",
+    "last_inspection": "2025-06-05"
+   },
+   {
+    "dropped": "50150724",
+    "kept": "50191917",
+    "dba": "SABORES DE MI TIERRA",
+    "address": "276 Knickerbocker Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2026-02-06"
+   },
+   {
+    "dropped": "50127617",
+    "kept": "50172379",
+    "dba": "PEARL STREET",
+    "address": "147 Front Street",
+    "borough": "Brooklyn",
+    "last_inspection": "2024-10-27"
+   },
+   {
+    "dropped": "50128034",
+    "kept": "50176970",
+    "dba": "WINGSTOP",
+    "address": "217-90 Hempstead Avenue",
+    "borough": "Queens",
+    "last_inspection": "2025-01-02"
+   },
+   {
+    "dropped": "50129368",
+    "kept": "50181550",
+    "dba": "THE MULBERRY",
+    "address": "240 Mulberry Street",
+    "borough": "Manhattan",
+    "last_inspection": "2025-03-04"
+   },
+   {
+    "dropped": "50129720",
+    "kept": "50186908",
+    "dba": "LA DONNA RE'S",
+    "address": "325 Lewis Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-11-06"
+   },
+   {
+    "dropped": "50130363",
+    "kept": "50143415",
+    "dba": "PFIZER",
+    "address": "66 Hudson Blvd East",
+    "borough": "Manhattan",
+    "last_inspection": "2025-08-20"
+   },
+   {
+    "dropped": "50130479",
+    "kept": "50189950",
+    "dba": "DIMSUM PALACE",
+    "address": "27 Division Street",
+    "borough": "Manhattan",
+    "last_inspection": "2026-03-03"
+   },
+   {
+    "dropped": "50131309",
+    "kept": "50186290",
+    "dba": "NO 1 WOK",
+    "address": "3706 3 Avenue",
+    "borough": "Bronx",
+    "last_inspection": "2025-05-28"
+   },
+   {
+    "dropped": "50131441",
+    "kept": "50185340",
+    "dba": "CHARLEY'S",
+    "address": "939 Pennsylvania Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-08-18"
+   },
+   {
+    "dropped": "50131886",
+    "kept": "50178467",
+    "dba": "IPIZZA NY",
+    "address": "351 West 125 Street",
+    "borough": "Manhattan",
+    "last_inspection": "2025-03-04"
+   },
+   {
+    "dropped": "50132124",
+    "kept": "50171386",
+    "dba": "TACO MIX",
+    "address": "234 East 116 Street",
+    "borough": "Manhattan",
+    "last_inspection": "2025-09-11"
+   },
+   {
+    "dropped": "50132370",
+    "kept": "50168365",
+    "dba": "MANGO SEED",
+    "address": "755 Flatbush Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2024-05-16"
+   },
+   {
+    "dropped": "50134025",
+    "kept": "50183991",
+    "dba": "TORINO PIZZA & PASTA",
+    "address": "1694 Richmond Road",
+    "borough": "Staten Island",
+    "last_inspection": "2025-01-29"
+   },
+   {
+    "dropped": "50134273",
+    "kept": "50148180",
+    "dba": "HUDSON MARKET AT SHERATON NEW YORK TIMES SQUARE",
+    "address": "811 7 Avenue",
+    "borough": "Manhattan",
+    "last_inspection": "2026-03-24"
+   },
+   {
+    "dropped": "50134341",
+    "kept": "50148180",
+    "dba": "LIBRARY BAR AT SHERATON NEW YORK TIMES SQUARE",
+    "address": "811 7 Avenue",
+    "borough": "Manhattan",
+    "last_inspection": "2026-07-30"
+   },
+   {
+    "dropped": "50135347",
+    "kept": "50170515",
+    "dba": "EL REY DE OROS",
+    "address": "150 Port Richmond Avenue",
+    "borough": "Staten Island",
+    "last_inspection": "2023-08-10"
+   },
+   {
+    "dropped": "50135600",
+    "kept": "50170362",
+    "dba": "LA CABRA",
+    "address": "284 Lafayette Street",
+    "borough": "Manhattan",
+    "last_inspection": "2025-06-27"
+   },
+   {
+    "dropped": "50136385",
+    "kept": "50179647",
+    "dba": "KORN'S BAKERY",
+    "address": "454 Bedford Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-08-18"
+   },
+   {
+    "dropped": "50138716",
+    "kept": "50165416",
+    "dba": "BISCOTTI",
+    "address": "701 Bedford Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-01-31"
+   },
+   {
+    "dropped": "50140247",
+    "kept": "50181503",
+    "dba": "LAZA DESSERT CAFE",
+    "address": "6740 5 Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-09-10"
+   },
+   {
+    "dropped": "50142782",
+    "kept": "50183215",
+    "dba": "GHOROA HALAL FOOD",
+    "address": "168-41 Hillside Avenue",
+    "borough": "Queens",
+    "last_inspection": "2025-10-25"
+   },
+   {
+    "dropped": "50145700",
+    "kept": "50174789",
+    "dba": "HOLY SHNITZEL",
+    "address": "819 Avenue U",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-04-03"
+   },
+   {
+    "dropped": "50145991",
+    "kept": "50181641",
+    "dba": "MUNCH STREET FOOD",
+    "address": "1376 Coney Island Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-12-22"
+   },
+   {
+    "dropped": "50146736",
+    "kept": "50177371",
+    "dba": "RAN VIET",
+    "address": "930 Hylan Boulevard",
+    "borough": "Staten Island",
+    "last_inspection": "2025-08-12"
+   },
+   {
+    "dropped": "50146790",
+    "kept": "50174512",
+    "dba": "BOMBAY GRILL",
+    "address": "8716 3 Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-07-15"
+   },
+   {
+    "dropped": "50147815",
+    "kept": "50180063",
+    "dba": "CLOUDY DONUT CO.",
+    "address": "14 Columbia Place",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-07-11"
+   },
+   {
+    "dropped": "50147979",
+    "kept": "50165756",
+    "dba": "RARE STEAK & LOBSTER",
+    "address": "1005 Surf Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2024-08-06"
+   },
+   {
+    "dropped": "50154894",
+    "kept": "50180731",
+    "dba": "NAMUDOL",
+    "address": "48-18 Northern Boulevard",
+    "borough": "Queens",
+    "last_inspection": "2025-12-17"
+   },
+   {
+    "dropped": "50148994",
+    "kept": "50184934",
+    "dba": "GELATOVILLE",
+    "address": "692 9 Avenue",
+    "borough": "Manhattan",
+    "last_inspection": "2025-09-10"
+   },
+   {
+    "dropped": "50150789",
+    "kept": "50184483",
+    "dba": "LATOYA'S KITCHEN",
+    "address": "2492 Adam Clayton Powell Jr Boulevard",
+    "borough": "Manhattan",
+    "last_inspection": "2026-01-06"
+   },
+   {
+    "dropped": "50151280",
+    "kept": "50188207",
+    "dba": "HA BO KITCHEN",
+    "address": "102-11 Springfield Boulevard",
+    "borough": "Queens",
+    "last_inspection": "2026-06-11"
+   },
+   {
+    "dropped": "50152799",
+    "kept": "50173916",
+    "dba": "YAWNING COBRA",
+    "address": "356 Bowery",
+    "borough": "Manhattan",
+    "last_inspection": "2025-11-21"
+   },
+   {
+    "dropped": "50154405",
+    "kept": "50179669",
+    "dba": "SUPREME PIZZA",
+    "address": "472 Fulton Street",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-03-19"
+   },
+   {
+    "dropped": "50156713",
+    "kept": "50180712",
+    "dba": "QUE RICO",
+    "address": "221 East 23 Street",
+    "borough": "Manhattan",
+    "last_inspection": "2025-03-25"
+   },
+   {
+    "dropped": "50158297",
+    "kept": "50180359",
+    "dba": "IHOP",
+    "address": "4168 Broadway",
+    "borough": "Manhattan",
+    "last_inspection": "2025-02-24"
+   },
+   {
+    "dropped": "50159428",
+    "kept": "50179836",
+    "dba": "CHIFLEZ",
+    "address": "95-02 Roosevelt Avenue",
+    "borough": "Queens",
+    "last_inspection": "2025-09-22"
+   },
+   {
+    "dropped": "50160556",
+    "kept": "50175659",
+    "dba": "GUANG HUI",
+    "address": "125 Dreiser Loop",
+    "borough": "Bronx",
+    "last_inspection": "2025-03-20"
+   },
+   {
+    "dropped": "50168317",
+    "kept": "50186460",
+    "dba": "STACKED SANDWICH SHOP",
+    "address": "68-60 Austin Street",
+    "borough": "Queens",
+    "last_inspection": "2025-09-03"
+   },
+   {
+    "dropped": "50161310",
+    "kept": "50186866",
+    "dba": "KENNEDY FRIED CHICKEN",
+    "address": "548 East 138 Street",
+    "borough": "Bronx",
+    "last_inspection": "2026-04-01"
+   },
+   {
+    "dropped": "50161673",
+    "kept": "50167445",
+    "dba": "WIN HING",
+    "address": "9816 4 Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-07-09"
+   },
+   {
+    "dropped": "50163383",
+    "kept": "50188063",
+    "dba": "FRIED DAY",
+    "address": "229 Broad Street",
+    "borough": "Staten Island",
+    "last_inspection": "2026-03-12"
+   },
+   {
+    "dropped": "50164354",
+    "kept": "50177179",
+    "dba": "YOYO CHICKEN",
+    "address": "49-14 30 Avenue",
+    "borough": "Queens",
+    "last_inspection": "2025-02-19"
+   },
+   {
+    "dropped": "50165193",
+    "kept": "50190446",
+    "dba": "SARKU JAPAN",
+    "address": "11114A Flatlands Avenue",
+    "borough": "Brooklyn",
+    "last_inspection": "2026-08-03"
+   },
+   {
+    "dropped": "50165671",
+    "kept": "50178505",
+    "dba": "SOHNA PUNJAB",
+    "address": "117-10 Atlantic Avenue",
+    "borough": "Queens",
+    "last_inspection": "2025-04-07"
+   },
+   {
+    "dropped": "50170539",
+    "kept": "50183999",
+    "dba": "FINI PATIO BAR",
+    "address": "159 Bridge Park Drive",
+    "borough": "Brooklyn",
+    "last_inspection": "2025-07-18"
+   },
+   {
+    "dropped": "50176235",
+    "kept": "50181233",
+    "dba": "PARTAKE",
+    "address": "10-29 44 Road",
+    "borough": "Queens",
+    "last_inspection": "2026-03-25"
+   }
+  ],
+  "dohmh_in_cuisines": 496,
   "dohmh_dropped_stale": 4,
-  "dohmh_added": 490,
-  "dohmh_merged_with_csv": 8,
+  "dohmh_added": 485,
+  "dohmh_merged_with_csv": 7,
   "no_neighborhood": 8,
-  "restaurants": 590,
+  "restaurants": 585,
   "dohmh_fetched_at": "2026-09-23T18:42:05Z"
  },
  "restaurants": [
@@ -1758,7 +2944,7 @@
    "lat": 40.725681,
    "lng": -73.977689,
    "nta": "MN28",
-   "neighborhood": "Lower East Side",
+   "neighborhood": "Lower East Side-Alphabet City",
    "nta_source": "dohmh",
    "cuisine": "American",
    "last_inspection": "2025-07-08",
@@ -1812,7 +2998,7 @@
    "lat": 40.726713,
    "lng": -73.977678,
    "nta": "MN28",
-   "neighborhood": "Lower East Side",
+   "neighborhood": "Lower East Side-Alphabet City",
    "nta_source": "dohmh",
    "cuisine": "American",
    "last_inspection": "2025-12-16",
@@ -1866,7 +3052,7 @@
    "lat": 40.720001,
    "lng": -73.987464,
    "nta": "MN27",
-   "neighborhood": "Chinatown",
+   "neighborhood": "Chinatown-Lower East Side",
    "nta_source": "dohmh",
    "cuisine": "American",
    "last_inspection": "2026-09-19",
@@ -1878,7 +3064,7 @@
    "csv_notes": "Smash burger specialist",
    "match": {
     "score": 100.0,
-    "method": "name",
+    "method": "name+neighborhood",
     "dba": "GOTHAM BURGER SOCIAL CLUB"
    }
   },
@@ -1893,7 +3079,7 @@
    "lat": 40.714751,
    "lng": -73.991393,
    "nta": "MN27",
-   "neighborhood": "Chinatown",
+   "neighborhood": "Chinatown-Lower East Side",
    "nta_source": "dohmh",
    "cuisine": "Seafood",
    "last_inspection": "2025-11-25",
@@ -1905,7 +3091,7 @@
    "csv_notes": "Iberian spot, lamb burger (not beef)",
    "match": {
     "score": 100.0,
-    "method": "name",
+    "method": "name+neighborhood",
     "dba": "CERVO'S"
    }
   },
@@ -1920,7 +3106,7 @@
    "lat": 40.718064,
    "lng": -73.99202,
    "nta": "MN27",
-   "neighborhood": "Chinatown",
+   "neighborhood": "Chinatown-Lower East Side",
    "nta_source": "dohmh",
    "cuisine": "American",
    "last_inspection": "2025-07-15",
@@ -1932,7 +3118,7 @@
    "csv_notes": "Retro bar, dry-aged burgers",
    "match": {
     "score": 100.0,
-    "method": "name",
+    "method": "name+neighborhood",
     "dba": "THE FLOWER SHOP"
    }
   },
@@ -1947,7 +3133,7 @@
    "lat": 40.717866,
    "lng": -73.990375,
    "nta": "MN27",
-   "neighborhood": "Chinatown",
+   "neighborhood": "Chinatown-Lower East Side",
    "nta_source": "dohmh",
    "cuisine": "Australian",
    "last_inspection": "2026-06-01",
@@ -1959,7 +3145,7 @@
    "csv_notes": "Australian pub, Bronte burger",
    "match": {
     "score": 100.0,
-    "method": "name",
+    "method": "name+neighborhood",
     "dba": "DUDLEY'S"
    }
   },
@@ -2284,20 +3470,20 @@
    }
   },
   {
-   "key": "camis:50116365",
-   "camis": "50116365",
-   "dba": "BURGER JOINT",
+   "key": "camis:50092105",
+   "camis": "50092105",
+   "dba": "THOMPSON NEW YORK HOTEL (Burger Joint)",
    "name": "Burger Joint",
-   "address": "383 West 31 Street",
+   "address": "118 West 57 Street",
    "borough": "Manhattan",
-   "zipcode": "10001",
-   "lat": 40.751174,
-   "lng": -73.996925,
-   "nta": "MN13",
-   "neighborhood": "Hudson Yards-Chelsea-Flat Iron-Union Square",
+   "zipcode": "10019",
+   "lat": 40.764657,
+   "lng": -73.978033,
+   "nta": "MN17",
+   "neighborhood": "Midtown-Midtown South",
    "nta_source": "dohmh",
-   "cuisine": "Hamburgers",
-   "last_inspection": "2026-04-28",
+   "cuisine": "American",
+   "last_inspection": "2024-12-10",
    "website": "https://www.burgerjointny.com/",
    "menu_url": null,
    "csv": true,
@@ -2305,9 +3491,9 @@
    "csv_neighborhood": "Midtown",
    "csv_notes": "Hidden hotel burger counter",
    "match": {
-    "score": 100.0,
-    "method": "name",
-    "dba": "BURGER JOINT"
+    "score": 90.0,
+    "method": "name+neighborhood",
+    "dba": "THOMPSON NEW YORK HOTEL (Burger Joint)"
    }
   },
   {
@@ -2348,7 +3534,7 @@
    "lat": 40.70998,
    "lng": -73.962512,
    "nta": "BK73",
-   "neighborhood": "North Side-South Side",
+   "neighborhood": "Williamsburg",
    "nta_source": "dohmh",
    "cuisine": "Steakhouse",
    "last_inspection": "2026-04-06",
@@ -2360,7 +3546,7 @@
    "csv_notes": "Legendary lunch-only steakhouse burger",
    "match": {
     "score": 100.0,
-    "method": "name",
+    "method": "name+neighborhood",
     "dba": "PETER LUGER STEAKHOUSE"
    }
   },
@@ -2375,7 +3561,7 @@
    "lat": 40.710511,
    "lng": -73.965737,
    "nta": "BK73",
-   "neighborhood": "North Side-South Side",
+   "neighborhood": "Williamsburg",
    "nta_source": "dohmh",
    "cuisine": "New American",
    "last_inspection": "2026-08-29",
@@ -2387,7 +3573,7 @@
    "csv_notes": "Grass-fed burger in dining car",
    "match": {
     "score": 100.0,
-    "method": "name",
+    "method": "name+neighborhood",
     "dba": "DINER"
    }
   },
@@ -2402,7 +3588,7 @@
    "lat": 40.714073,
    "lng": -73.955804,
    "nta": "BK73",
-   "neighborhood": "North Side-South Side",
+   "neighborhood": "Williamsburg",
    "nta_source": "dohmh",
    "cuisine": "Chicken",
    "last_inspection": "2025-08-20",
@@ -2414,7 +3600,7 @@
    "csv_notes": "Southern pub classic hamburger",
    "match": {
     "score": 100.0,
-    "method": "name",
+    "method": "name+neighborhood",
     "dba": "THE COMMODORE"
    }
   },
@@ -2879,7 +4065,7 @@
    "lat": 40.721634,
    "lng": -73.988441,
    "nta": "MN27",
-   "neighborhood": "Chinatown",
+   "neighborhood": "Chinatown-Lower East Side",
    "nta_source": "dohmh",
    "cuisine": "Hamburgers",
    "last_inspection": "2026-03-09",
@@ -3224,7 +4410,7 @@
    "lat": 40.720297,
    "lng": -73.988229,
    "nta": "MN27",
-   "neighborhood": "Chinatown",
+   "neighborhood": "Chinatown-Lower East Side",
    "nta_source": "dohmh",
    "cuisine": "Hamburgers",
    "last_inspection": "2025-07-09",
@@ -3247,10 +4433,33 @@
    "lat": 40.718338,
    "lng": -73.99443,
    "nta": "MN27",
-   "neighborhood": "Chinatown",
+   "neighborhood": "Chinatown-Lower East Side",
    "nta_source": "dohmh",
    "cuisine": "Hamburgers",
    "last_inspection": "2025-12-03",
+   "website": null,
+   "menu_url": null,
+   "csv": false,
+   "csv_name": null,
+   "csv_neighborhood": null,
+   "csv_notes": null,
+   "match": null
+  },
+  {
+   "key": "camis:50116365",
+   "camis": "50116365",
+   "dba": "BURGER JOINT",
+   "name": "Burger Joint",
+   "address": "383 West 31 Street",
+   "borough": "Manhattan",
+   "zipcode": "10001",
+   "lat": 40.751174,
+   "lng": -73.996925,
+   "nta": "MN13",
+   "neighborhood": "Hudson Yards-Chelsea-Flat Iron-Union Square",
+   "nta_source": "dohmh",
+   "cuisine": "Hamburgers",
+   "last_inspection": "2026-04-28",
    "website": null,
    "menu_url": null,
    "csv": false,
@@ -3408,7 +4617,7 @@
    "lat": 40.718027,
    "lng": -73.986638,
    "nta": "MN28",
-   "neighborhood": "Lower East Side",
+   "neighborhood": "Lower East Side-Alphabet City",
    "nta_source": "dohmh",
    "cuisine": "Hamburgers",
    "last_inspection": "2026-03-18",
@@ -3983,7 +5192,7 @@
    "lat": 40.719085,
    "lng": -73.991494,
    "nta": "MN27",
-   "neighborhood": "Chinatown",
+   "neighborhood": "Chinatown-Lower East Side",
    "nta_source": "dohmh",
    "cuisine": "Hamburgers",
    "last_inspection": "2026-07-29",
@@ -4075,7 +5284,7 @@
    "lat": 40.714503,
    "lng": -73.990625,
    "nta": "MN28",
-   "neighborhood": "Lower East Side",
+   "neighborhood": "Lower East Side-Alphabet City",
    "nta_source": "dohmh",
    "cuisine": "Hamburgers",
    "last_inspection": "2026-09-10",
@@ -4364,29 +5573,6 @@
    "match": null
   },
   {
-   "key": "camis:50087334",
-   "camis": "50087334",
-   "dba": "JUMBO HAMBURGER PLACE",
-   "name": "Jumbo Hamburger Place",
-   "address": "112 West 116 Street",
-   "borough": "Manhattan",
-   "zipcode": "10026",
-   "lat": 40.802367,
-   "lng": -73.950537,
-   "nta": "MN11",
-   "neighborhood": "Central Harlem South",
-   "nta_source": "dohmh",
-   "cuisine": "Hamburgers",
-   "last_inspection": "2025-10-03",
-   "website": null,
-   "menu_url": null,
-   "csv": false,
-   "csv_name": null,
-   "csv_neighborhood": null,
-   "csv_notes": null,
-   "match": null
-  },
-  {
    "key": "camis:50185072",
    "camis": "50185072",
    "dba": "JUMBO HAMBURGERS",
@@ -4443,7 +5629,7 @@
    "lat": 40.714446,
    "lng": -73.993879,
    "nta": "MN27",
-   "neighborhood": "Chinatown",
+   "neighborhood": "Chinatown-Lower East Side",
    "nta_source": "dohmh",
    "cuisine": "Hamburgers",
    "last_inspection": "2026-07-14",
@@ -4502,29 +5688,6 @@
    "match": null
   },
   {
-   "key": "camis:40538662",
-   "camis": "40538662",
-   "dba": "MCDONALD'S",
-   "name": "McDonald's",
-   "address": "4040 Broadway",
-   "borough": "Manhattan",
-   "zipcode": "10032",
-   "lat": 40.84255,
-   "lng": -73.939231,
-   "nta": "MN36",
-   "neighborhood": "Washington Heights South",
-   "nta_source": "dohmh",
-   "cuisine": "Hamburgers",
-   "last_inspection": "2025-03-04",
-   "website": null,
-   "menu_url": null,
-   "csv": false,
-   "csv_name": null,
-   "csv_neighborhood": null,
-   "csv_notes": null,
-   "match": null
-  },
-  {
    "key": "camis:40800557",
    "camis": "40800557",
    "dba": "MCDONALD'S",
@@ -4539,29 +5702,6 @@
    "nta_source": "dohmh",
    "cuisine": "Hamburgers",
    "last_inspection": "2026-09-18",
-   "website": null,
-   "menu_url": null,
-   "csv": false,
-   "csv_name": null,
-   "csv_neighborhood": null,
-   "csv_notes": null,
-   "match": null
-  },
-  {
-   "key": "camis:41211622",
-   "camis": "41211622",
-   "dba": "MCDONALD'S",
-   "name": "McDonald's",
-   "address": "2726 Broadway",
-   "borough": "Manhattan",
-   "zipcode": "10025",
-   "lat": 40.800086,
-   "lng": -73.968089,
-   "nta": "MN12",
-   "neighborhood": "Upper West Side",
-   "nta_source": "dohmh",
-   "cuisine": "Hamburgers",
-   "last_inspection": "2026-04-08",
    "website": null,
    "menu_url": null,
    "csv": false,
@@ -4640,29 +5780,6 @@
    "match": null
   },
   {
-   "key": "camis:41463516",
-   "camis": "41463516",
-   "dba": "MCDONALD'S",
-   "name": "McDonald's",
-   "address": "404 East 14 Street",
-   "borough": "Manhattan",
-   "zipcode": "10009",
-   "lat": 40.731218,
-   "lng": -73.982259,
-   "nta": "MN22",
-   "neighborhood": "East Village",
-   "nta_source": "dohmh",
-   "cuisine": "Hamburgers",
-   "last_inspection": "2025-12-31",
-   "website": null,
-   "menu_url": null,
-   "csv": false,
-   "csv_name": null,
-   "csv_neighborhood": null,
-   "csv_notes": null,
-   "match": null
-  },
-  {
    "key": "camis:41578619",
    "camis": "41578619",
    "dba": "MCDONALD'S",
@@ -4677,29 +5794,6 @@
    "nta_source": "dohmh",
    "cuisine": "Hamburgers",
    "last_inspection": "2025-06-18",
-   "website": null,
-   "menu_url": null,
-   "csv": false,
-   "csv_name": null,
-   "csv_neighborhood": null,
-   "csv_notes": null,
-   "match": null
-  },
-  {
-   "key": "camis:50001148",
-   "camis": "50001148",
-   "dba": "MCDONALD'S",
-   "name": "McDonald's",
-   "address": "148 West 125 Street",
-   "borough": "Manhattan",
-   "zipcode": "10027",
-   "lat": 40.808538,
-   "lng": -73.947335,
-   "nta": "MN11",
-   "neighborhood": "Central Harlem South",
-   "nta_source": "dohmh",
-   "cuisine": "Hamburgers",
-   "last_inspection": "2025-08-05",
    "website": null,
    "menu_url": null,
    "csv": false,
@@ -4811,7 +5905,7 @@
    "lat": 40.718593,
    "lng": -73.988319,
    "nta": "MN27",
-   "neighborhood": "Chinatown",
+   "neighborhood": "Chinatown-Lower East Side",
    "nta_source": "dohmh",
    "cuisine": "Hamburgers",
    "last_inspection": "2025-09-18",
@@ -5777,7 +6871,7 @@
    "lat": 40.71954,
    "lng": -73.986627,
    "nta": "MN28",
-   "neighborhood": "Lower East Side",
+   "neighborhood": "Lower East Side-Alphabet City",
    "nta_source": "dohmh",
    "cuisine": "Hamburgers",
    "last_inspection": "2026-03-03",
@@ -6076,7 +7170,7 @@
    "lat": 40.71805,
    "lng": -73.957472,
    "nta": "BK73",
-   "neighborhood": "North Side-South Side",
+   "neighborhood": "Williamsburg",
    "nta_source": "dohmh",
    "cuisine": "Hamburgers",
    "last_inspection": "2025-11-05",
@@ -6835,7 +7929,7 @@
    "lat": 40.713636,
    "lng": -73.961857,
    "nta": "BK73",
-   "neighborhood": "North Side-South Side",
+   "neighborhood": "Williamsburg",
    "nta_source": "dohmh",
    "cuisine": "Hamburgers",
    "last_inspection": "2026-02-28",
@@ -6996,7 +8090,7 @@
    "lat": 40.712699,
    "lng": -73.958734,
    "nta": "BK73",
-   "neighborhood": "North Side-South Side",
+   "neighborhood": "Williamsburg",
    "nta_source": "dohmh",
    "cuisine": "Hamburgers",
    "last_inspection": "2026-01-20",
@@ -7594,7 +8688,7 @@
    "lat": 40.708812,
    "lng": -73.958986,
    "nta": "BK73",
-   "neighborhood": "North Side-South Side",
+   "neighborhood": "Williamsburg",
    "nta_source": "dohmh",
    "cuisine": "Hamburgers",
    "last_inspection": "2026-04-17",
@@ -8123,7 +9217,7 @@
    "lat": 40.719409,
    "lng": -73.956039,
    "nta": "BK73",
-   "neighborhood": "North Side-South Side",
+   "neighborhood": "Williamsburg",
    "nta_source": "dohmh",
    "cuisine": "Hamburgers",
    "last_inspection": "2026-05-19",
@@ -8330,7 +9424,7 @@
    "lat": 40.717357,
    "lng": -73.960387,
    "nta": "BK73",
-   "neighborhood": "North Side-South Side",
+   "neighborhood": "Williamsburg",
    "nta_source": "dohmh",
    "cuisine": "Hamburgers",
    "last_inspection": "2025-12-01",
@@ -8698,7 +9792,7 @@
    "lat": 40.708708,
    "lng": -73.958693,
    "nta": "BK73",
-   "neighborhood": "North Side-South Side",
+   "neighborhood": "Williamsburg",
    "nta_source": "dohmh",
    "cuisine": "Hamburgers",
    "last_inspection": "2026-04-16",
@@ -9599,29 +10693,6 @@
    "nta_source": "dohmh",
    "cuisine": "Hamburgers",
    "last_inspection": "2025-12-04",
-   "website": null,
-   "menu_url": null,
-   "csv": false,
-   "csv_name": null,
-   "csv_neighborhood": null,
-   "csv_notes": null,
-   "match": null
-  },
-  {
-   "key": "camis:41390152",
-   "camis": "41390152",
-   "dba": "FIVE GUYS FAMOUS BURGERS AND FRIES",
-   "name": "Five Guys",
-   "address": "73-25 Woodhaven Boulevard",
-   "borough": "Queens",
-   "zipcode": "11385",
-   "lat": 40.709947,
-   "lng": -73.859561,
-   "nta": "QN19",
-   "neighborhood": "Glendale",
-   "nta_source": "dohmh",
-   "cuisine": "Hamburgers",
-   "last_inspection": "2025-10-23",
    "website": null,
    "menu_url": null,
    "csv": false,

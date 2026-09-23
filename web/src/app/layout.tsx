@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Big_Shoulders, Libre_Franklin, Newsreader } from "next/font/google";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { getDataSource, getGeneratedAt, getIndexMedian, getStats } from "@/lib/data";
-import { formatPrice } from "@/lib/format";
+import { getDataSource, getGeneratedAt, getIndexMedian, getMenuCounts, getStats } from "@/lib/data";
+import { formatPrice, pluralize } from "@/lib/format";
 import { OG_IMAGE, SITE_URL } from "@/lib/metadata";
 import { SITE_NAME } from "@/lib/site";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme-script";
@@ -16,7 +16,7 @@ const ui = Libre_Franklin({ subsets: ["latin"], display: "swap", variable: "--lf
 const median = getIndexMedian();
 const description =
   median !== null
-    ? `The NYC Burger Index: the median New York restaurant charges ${formatPrice(median)} for its cheapest beef burger. Every burger we priced, by borough, neighborhood and restaurant.`
+    ? `The NYC Burger Index: ${formatPrice(median)} is the median price of the cheapest beef burger across ${pluralize(getMenuCounts().menus, "New York menu")}, each chain counted once. Every burger we priced, by borough, neighborhood and restaurant.`
     : "What a burger costs in New York: every burger we priced, by borough, neighborhood and restaurant.";
 
 export const metadata: Metadata = {
@@ -71,7 +71,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main id="main" tabIndex={-1} className="outline-none">
           {children}
         </main>
-        <SiteFooter generatedAt={getGeneratedAt()} priced={getStats().restaurants_priced} />
+        <SiteFooter generatedAt={getGeneratedAt()} menus={getMenuCounts().menus} locations={getStats().restaurants_priced} />
       </body>
     </html>
   );

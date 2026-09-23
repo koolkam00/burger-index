@@ -1,7 +1,8 @@
 """Chain grouping and scrape targets.
 
 A chain is priced once: one NYC menu source is resolved + scraped per brand and its
-burgers are applied to every location. Everything else is one target per restaurant.
+burgers are applied to every location (except airport concessions, which price
+differently). Everything else is one target per restaurant.
 """
 
 from __future__ import annotations
@@ -20,22 +21,28 @@ class ChainDef:
     pattern: re.Pattern
     # False for chains whose own site shows no prices without picking a store (skip it).
     official_has_prices: bool = True
+    # The chain's cheapest regular burger as norm_name() words. A delivery-app page without it
+    # is treated as a partial (lazy-loaded) menu and the target keeps looking.
+    cheapest_item: str | None = None
+    # A known-good NYC menu page to scrape first (e.g. a full store page on Grubhub).
+    menu_url: str | None = None
 
 
-def _c(slug: str, display: str, pattern: str, official_has_prices: bool = True) -> ChainDef:
-    return ChainDef(slug, display, re.compile(pattern), official_has_prices)
+def _c(slug: str, display: str, pattern: str, official_has_prices: bool = True, *, cheapest_item: str | None = None,
+       menu_url: str | None = None) -> ChainDef:
+    return ChainDef(slug, display, re.compile(pattern), official_has_prices, cheapest_item, menu_url)
 
 
 # Patterns match norm_name(strip_store_number(dba)) — lowercase, apostrophes dropped, '&' -> 'and'.
 CURATED_CHAINS: tuple[ChainDef, ...] = (
-    _c("mcdonalds", "McDonald's", r"^mc ?donalds\b", False),
-    _c("burger-king", "Burger King", r"^burger king\b", False),  # incl. 'BURGER KING, POPEYES'
+    _c("mcdonalds", "McDonald's", r"^mc ?donalds\b", False, cheapest_item="hamburger"),
+    _c("burger-king", "Burger King", r"^burger king\b", False, cheapest_item="hamburger"),  # incl. 'BURGER KING, POPEYES'
     _c("shake-shack", "Shake Shack", r"^shake shack\b", False),
-    _c("wendys", "Wendy's", r"^wendys\b", False),
-    _c("white-castle", "White Castle", r"^white castle\b", False),
+    _c("wendys", "Wendy's", r"^wendys\b", False, cheapest_item="jr hamburger"),
+    _c("white-castle", "White Castle", r"^white castle\b", False, cheapest_item="original slider"),
     _c("7th-street-burger", "7th Street Burger", r"^7th street burger\b"),
     _c("checkers", "Checkers", r"^checkers\b", False),
-    _c("five-guys", "Five Guys", r"^five guys\b", False),  # incl. FIVE GUYS FAMOUS BURGERS AND FRIES
+    _c("five-guys", "Five Guys", r"^five guys\b", False, cheapest_item="little hamburger"),  # incl. FIVE GUYS FAMOUS BURGERS AND FRIES
     _c("jimbos-hamburger-palace", "Jimbo's Hamburger Palace", r"^(the )?(famous )?jimbos hamburger"),
     _c("bareburger", "Bareburger", r"^bareburger\b"),
     _c("smashburger", "Smashburger", r"^smashburger\b", False),
@@ -75,6 +82,8 @@ class ChainGroup:
     display: str
     official_has_prices: bool
     members: list[dict] = field(default_factory=list)
+    cheapest_item: str | None = None
+    menu_url: str | None = None
 
 
 def group_chains(
@@ -93,7 +102,8 @@ def group_chains(
     for key, members in buckets.items():
         cd = defs.get(key)
         if cd and len(members) >= min_curated:
-            chains[cd.slug] = ChainGroup(cd.slug, cd.display, cd.official_has_prices, list(members))
+            chains[cd.slug] = ChainGroup(cd.slug, cd.display, cd.official_has_prices, list(members), cd.cheapest_item,
+                                         cd.menu_url)
         elif not cd and len(members) >= min_auto:
             slug = slugify(key)
             names = Counter(display_name(m.get("dba") or m["name"]) for m in members)
@@ -111,8 +121,9 @@ class Target:
     chain: str | None
     members: list[dict]
     rep: dict  # location used for the search query and the "different location" check
-    csv_urls: list[tuple[str, str]]  # (url, origin) from the pilot CSV, in priority order
+    csv_urls: list[tuple[str, str]]  # (url, origin) from the pilot CSV (or a pinned chain menu), in priority order
     official_has_prices: bool = True
+    cheapest_item: str | None = None  # curated chains: see ChainDef.cheapest_item
 
     @property
     def search_names(self) -> list[str]:
@@ -120,6 +131,18 @@ class Target:
         if self.rep.get("dba"):
             names.append(display_name(self.rep["dba"]))
         return [n for n in dict.fromkeys(n for n in names if n)]
+
+
+AIRPORT_ZIPS = {"11430", "11371"}  # JFK, LaGuardia
+_AIRPORT_RE = re.compile(r"\b(jfk|laguardia|la guardia|airport)\b")
+
+
+def is_airport(rec: dict) -> bool:
+    """An airport concession (JFK / LaGuardia): its prices are not the chain's street prices."""
+    text = norm_name(f"{rec.get('address') or ''} {rec.get('dba') or ''}")
+    if rec.get("zipcode") in AIRPORT_ZIPS or _AIRPORT_RE.search(text):
+        return True
+    return rec.get("borough") == "Queens" and bool(re.search(r"\bterminal\b", text))
 
 
 def choose_rep(members: list[dict]) -> dict:
@@ -131,7 +154,8 @@ def choose_rep(members: list[dict]) -> dict:
         return csv_members[0]
     return sorted(
         members,
-        key=lambda m: (m["borough"] != "Manhattan", m.get("address") is None, m.get("lat") is None, m.get("camis") or ""),
+        key=lambda m: (is_airport(m), m["borough"] != "Manhattan", m.get("address") is None, m.get("lat") is None,
+                       m.get("camis") or ""),
     )[0]
 
 
@@ -161,9 +185,11 @@ def build_targets(restaurants: list[dict], chains: dict[str, ChainGroup] | None 
                 continue
             emitted.add(slug)
             g = chains[slug]
+            pinned = [(g.menu_url, "chain menu_url")] if g.menu_url else []
             targets.append(Target(
                 key=f"chain:{slug}", name=g.display, chain=slug, members=g.members, rep=choose_rep(g.members),
-                csv_urls=_csv_urls(g.members), official_has_prices=g.official_has_prices,
+                csv_urls=pinned + [(u, o) for u, o in _csv_urls(g.members) if u != g.menu_url],
+                official_has_prices=g.official_has_prices, cheapest_item=g.cheapest_item,
             ))
         else:
             targets.append(Target(key=r["key"], name=r["name"], chain=None, members=[r], rep=r, csv_urls=_csv_urls([r])))

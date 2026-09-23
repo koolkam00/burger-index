@@ -68,7 +68,9 @@ const NEIGHBORHOODS = {
 // [name, neighborhood | null, borough (when neighborhood is null), status, price_source, opts]
 const R = [
   // Manhattan: West Village (6 priced)
-  ["Halloran's Tavern", "West Village", null, "priced", "official_site"],
+  ["Halloran's Tavern", "West Village", null, "priced", "official_site", {
+    handCheck: "the scrape read the lunch menu; the dinner menu lists the same burgers, and the index uses dinner prices.",
+  }],
   ["Bleecker Griddle", "West Village", null, "priced", "official_site"],
   ["Perry Street Grill", "West Village", null, "priced", "official_pdf"],
   ["Marlowe's Luncheonette", "West Village", null, "priced", "delivery_app"],
@@ -289,7 +291,14 @@ for (const [name, nb, boroughIn, status, source, opts = {}] of R) {
       burgers,
       price_source: status === "priced" || status === "no_prices" || status === "no_burgers" ? source : null,
       menu_url: status === "no_menu_found" ? null : menuUrlFor(name, source ?? "official_site"),
-      status_detail: status === "priced" ? null : Array.isArray(STATUS_DETAIL[status]) ? pick(STATUS_DETAIL[status]) : STATUS_DETAIL[status],
+      status_detail:
+        status === "priced"
+          ? opts.handCheck
+            ? `Prices corrected by hand after re-checking the menu on 2026-09-20: ${opts.handCheck}` // pipeline/corrections.py wording
+            : null
+          : Array.isArray(STATUS_DETAIL[status])
+            ? pick(STATUS_DETAIL[status])
+            : STATUS_DETAIL[status],
       scraped_at: status === "no_menu_found" && rand() < 0.5 ? null : scrapedAt(Math.floor(rand() * 3)),
     },
   });
@@ -396,14 +405,30 @@ function percentile(sorted, q) {
   const hi = Math.ceil(pos);
   return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
 }
-const idxPrices = restaurants.filter((r) => r.index_price !== null).map((r) => r.index_price).sort((a, b) => a - b);
+// Chains count once (pipeline/build.py menu_index_prices): one index price per distinct menu, each
+// chain once, every other restaurant once, and the same inside every area.
+function menuIndexPrices(rs) {
+  const perMenu = new Map();
+  for (const r of rs) if (r.index_price !== null && !perMenu.has(r.chain ? `chain:${r.chain}` : r.id)) perMenu.set(r.chain ? `chain:${r.chain}` : r.id, r.index_price);
+  return [...perMenu.values()].sort((a, b) => a - b);
+}
+// Rows whose burgers stand for a distinct menu: each chain's first location, every other restaurant.
+const seenChains = new Set();
+const menuSources = restaurants.filter((r) => {
+  if (!r.chain) return true;
+  if (seenChains.has(r.chain)) return false;
+  seenChains.add(r.chain);
+  return true;
+});
+const idxPrices = menuIndexPrices(restaurants);
 const pricedBurgers = restaurants.flatMap((r) => r.burgers.filter((b) => b.price !== null).map((b) => [b.price, b.id]));
-const allPrices = pricedBurgers.map(([p]) => p).sort((a, b) => a - b);
-const byCheap = [...pricedBurgers].sort((a, b) => a[0] - b[0] || (a[1] < b[1] ? -1 : 1));
-const byDear = [...pricedBurgers].sort((a, b) => b[0] - a[0] || (a[1] < b[1] ? -1 : 1));
+const distinctBurgers = menuSources.flatMap((r) => r.burgers.filter((b) => b.price !== null).map((b) => [b.price, b.id]));
+const allPrices = distinctBurgers.map(([p]) => p).sort((a, b) => a - b);
+const byCheap = [...distinctBurgers].sort((a, b) => a[0] - b[0] || (a[1] < b[1] ? -1 : 1));
+const byDear = [...distinctBurgers].sort((a, b) => b[0] - a[0] || (a[1] < b[1] ? -1 : 1));
 const stats = {
   restaurants_scanned: restaurants.length,
-  restaurants_priced: idxPrices.length,
+  restaurants_priced: restaurants.filter((r) => r.index_price !== null).length,
   burgers: pricedBurgers.length,
   beef_burgers: restaurants.flatMap((r) => r.burgers).filter((b) => b.price !== null && b.protein === "beef").length,
   index_median: money(median(idxPrices)),
@@ -432,7 +457,7 @@ function areaSummaries(level) {
   }
   const out = [];
   for (const [slug, { name, rs }] of groups) {
-    const prices = rs.filter((r) => r.index_price !== null).map((r) => r.index_price).sort((a, b) => a - b);
+    const prices = menuIndexPrices(rs); // a chain counts at most once per area
     const tally = new Map();
     rs.forEach((r) => tally.set(r.borough, (tally.get(r.borough) || 0) + 1));
     const borough = [...tally.entries()].sort((a, b) => b[1] - a[1])[0][0];
@@ -441,7 +466,7 @@ function areaSummaries(level) {
       name,
       borough,
       restaurants: rs.length,
-      restaurants_priced: prices.length,
+      restaurants_priced: rs.filter((r) => r.index_price !== null).length,
       burgers: rs.reduce((s, r) => s + r.burgers.filter((b) => b.price !== null).length, 0),
       index_median: prices.length ? money(median(prices)) : null,
       index_min: prices.length ? money(prices[0]) : null,
@@ -458,7 +483,7 @@ const dataset = {
   currency: "USD",
   methodology: {
     index_price_rule:
-      "A restaurant's index price is its cheapest beef burger: the burger by itself (no combo or meal upgrade, no add-ons), single/standard size, at the dinner or all-day menu price when a menu lists several. The Burger Index is the median index price across priced restaurants.",
+      "A restaurant's index price is its cheapest beef burger: the burger by itself (no combo or meal upgrade, no add-ons), single/standard size, at its dinner or all-day menu price. Lunch, brunch or late-night prices count only when no beef burger on the menu has a dinner or all-day price; happy-hour prices are left out. The Burger Index is the median index price across distinct menus: every independent restaurant counts once and each chain counts once, however many locations it has (they share one scraped menu). Borough and neighborhood figures count a chain at most once per area.",
     sources: [
       "NYC DOHMH Restaurant Inspection Results (NYC Open Data 43nn-pn8j): restaurant list, addresses, coordinates, cuisine.",
       "2010 Neighborhood Tabulation Areas (NYC Open Data 8ius-dhrr): neighborhood names.",

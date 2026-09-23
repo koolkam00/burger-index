@@ -14,7 +14,8 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "fixture": "node scripts/generate-fixture.mjs && node scripts/validate-contract.mjs fixtures/burger_index.sample.json",
-    "validate:data": "node scripts/validate-contract.mjs"
+    "validate:data": "node scripts/validate-contract.mjs",
+    "test": "node --experimental-strip-types --conditions=react-server --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./test/resolve-ts.mjs --test test/*.test.ts"
   },
   "dependencies": {
     "@fontsource/big-shoulders": "^5.3.0",

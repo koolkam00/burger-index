@@ -80,3 +80,14 @@ def test_index_item_cheapest_beef_first_on_ties():
     assert extract.index_item(burgers) == 2
     assert extract.index_item([{"name": "Veg", "price": 9, "protein": "veggie"}]) is None
     assert extract.index_item([]) is None
+
+
+def test_index_item_prefers_dinner_and_never_happy_hour():
+    m = extract.normalize_menu(menu(("Tavern Burger", 26, "beef", "dinner"), ("Bar Burger", 12, "beef", "happy_hour"),
+                                    ("Brunch Burger", 19, "beef", "brunch")))
+    assert m["burgers"][extract.index_item(m["burgers"])]["name"] == "Tavern Burger"
+    # no dinner / all-day price: the next period counts, happy hour still never does
+    m = extract.normalize_menu(menu(("Bar Burger", 12, "beef", "happy_hour"), ("Lunch Burger", 17, "beef", "lunch")))
+    assert m["burgers"][extract.index_item(m["burgers"])]["name"] == "Lunch Burger"
+    m = extract.normalize_menu(menu(("Bar Burger", 12, "beef", "happy_hour")))
+    assert extract.index_item(m["burgers"]) is None and extract.classify_menu(m) == "no_prices"

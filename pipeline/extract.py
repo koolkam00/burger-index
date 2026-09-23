@@ -3,6 +3,10 @@
 Lunch vs dinner: a burger listed on several menus keeps its dinner / all-day price;
 late-night, lunch, brunch and "other" prices are used only (in that order) when the burger
 is not on the dinner menu; happy-hour prices last; kids'-menu items are dropped.
+
+The index item follows the same order across burgers: the cheapest beef burger with a
+dinner / all-day price; only when no beef burger has one, the cheapest from the next menu
+period; never a happy-hour price.
 """
 
 from __future__ import annotations
@@ -166,20 +170,31 @@ def normalize_menu(data: Any) -> dict:
 def classify_menu(menu: dict) -> str:
     """priced | nonbeef | no_prices | no_burgers | not_menu."""
     burgers = menu["burgers"]
-    if any(b["protein"] == "beef" and b["price"] is not None for b in burgers):
+    if index_item(burgers) is not None:
         return "priced"
-    if any(b["price"] is not None for b in burgers):
+    if any(b["price"] is not None and b["protein"] != "beef" for b in burgers):
         return "nonbeef"
     if burgers:
-        return "no_prices"
+        return "no_prices"  # incl. beef burgers priced only on a happy-hour menu
     return "no_burgers" if menu["is_menu"] else "not_menu"
 
 
+# Index-price tiers by menu period (see the module docstring). Happy hour never sets the index.
+INDEX_PERIOD_TIER = {None: 0, "all_day": 0, "dinner": 0, "late_night": 1, "lunch": 2, "brunch": 3, "other": 4}
+
+
 def index_item(burgers: list[dict]) -> int | None:
-    """Position of the cheapest priced beef burger (first one on ties), or None."""
+    """Position of the cheapest priced beef burger from the best menu period that has one
+    (first one on ties), or None."""
     best: int | None = None
+    best_key: tuple | None = None
     for i, b in enumerate(burgers):
-        if b.get("protein") == "beef" and b.get("price") is not None:
-            if best is None or b["price"] < burgers[best]["price"]:
-                best = i
+        if b.get("protein") != "beef" or b.get("price") is None:
+            continue
+        tier = INDEX_PERIOD_TIER.get(b.get("menu_period"))
+        if tier is None:  # happy_hour (and anything unknown)
+            continue
+        key = (tier, b["price"])
+        if best_key is None or key < best_key:
+            best, best_key = i, key
     return best

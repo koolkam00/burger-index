@@ -1,0 +1,14 @@
+# Vercel uploads the whole repo when you deploy from the root (Root Directory = web) and it does NOT
+# read .gitignore. Allowlist only what the site build needs, so .env (the Context.dev key), .venv/
+# and the scrape cache never leave this machine.
+/*
+!web
+!data
+!contract
+!DESIGN.md
+data/*
+!data/burger_index.json
+web/node_modules
+web/.next
+web/out
+web/.env*

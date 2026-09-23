@@ -7,6 +7,7 @@ import { BOROUGH_META, boroughBySlug, type BoroughSlug } from "@/lib/boroughs";
 import {
   activeFilterCount,
   EMPTY_FILTERS,
+  MAX_QUERY,
   normalize,
   parseFilters,
   queryTokens,
@@ -17,10 +18,11 @@ import {
   type SortKey,
   type SourceKey,
 } from "@/lib/explorer";
-import { formatCount, formatPrice } from "@/lib/format";
+import { formatCount, formatPrice, pluralize } from "@/lib/format";
 import { DELIVERY_NOTE, PRICE_SOURCE_NAME, PROTEIN_LABEL } from "@/lib/labels";
 import { binRanges } from "@/lib/price-bins";
 import type { Protein } from "@/lib/schema";
+import { useMediaQuery } from "../charts/hooks";
 import { BoroughDot } from "../ui";
 import { BurgerTable, type TableRow } from "./BurgerTable";
 import { CheckList, FilterPopover, PriceInput } from "./controls";
@@ -42,21 +44,39 @@ function priceLabel(min: number | null, max: number | null) {
 
 export function BurgerExplorer({ data }: { data: ExplorerData }) {
   const searchParams = useSearchParams();
+  const neighborhoodSlugs = useMemo(() => new Set(data.neighborhoods.map((n) => n.slug)), [data.neighborhoods]);
   // The URL is the source of truth for filters; the search box keeps local state so typing stays
   // instant, and is written to the URL after a short pause.
-  const urlFilters = useMemo(() => parseFilters(searchParams), [searchParams]);
+  const urlFilters = useMemo(() => parseFilters(searchParams, neighborhoodSlugs), [searchParams, neighborhoodSlugs]);
   const [query, setQuery] = useState(urlFilters.q);
+  // `written` is the q this explorer last put in the URL. When the URL's q changes to anything else
+  // (a nav link to /burgers while the explorer stays mounted), the search box follows the URL.
+  // Our own writes are skipped, so a trailing space the URL trims away is not taken back mid-typing.
+  const [written, setWritten] = useState(urlFilters.q);
+  const [seenQ, setSeenQ] = useState(urlFilters.q);
+  if (urlFilters.q !== seenQ) {
+    setSeenQ(urlFilters.q);
+    if (urlFilters.q !== written) {
+      setWritten(urlFilters.q);
+      setQuery(urlFilters.q);
+    }
+  }
   const [limit, setLimit] = useState(PAGE);
   const inputRef = useRef<HTMLInputElement>(null);
   const sheetRef = useRef<HTMLDialogElement>(null);
   const uid = useId();
+  const wide = useMediaQuery("(min-width: 640px)", true);
   const filters: Filters = useMemo(() => ({ ...urlFilters, q: query }), [urlFilters, query]);
 
-  const commit = useCallback((next: Filters) => {
-    const qs = serializeFilters(next);
-    window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
-    setLimit(PAGE);
-  }, []);
+  const commit = useCallback(
+    (next: Filters) => {
+      const qs = serializeFilters(next);
+      setWritten(parseFilters(new URLSearchParams(qs), neighborhoodSlugs).q);
+      window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
+      setLimit(PAGE);
+    },
+    [neighborhoodSlugs],
+  );
   const update = (patch: Partial<Filters>) => commit({ ...filters, ...patch });
 
   // Debounced write of the search box to the URL.
@@ -96,12 +116,13 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
     const bset = new Set<string>(urlFilters.boroughs);
     const pset = new Set<string>(urlFilters.proteins);
     const sset = new Set<string>(urlFilters.sources);
-    const { min, max, neighborhood, indexOnly, sort } = urlFilters;
+    const { min, max, neighborhood, indexOnly, sort, hideDelivery } = urlFilters;
     const out = rows.filter(({ b, r, hay }) => {
       if (bset.size && !bset.has(BOROUGH_META.find((m) => m.name === r.borough)!.slug)) return false;
       if (neighborhood && r.nbSlug !== neighborhood) return false;
       if (pset.size && !pset.has(b.protein)) return false;
       if (sset.size && !sset.has(r.source ?? "unknown")) return false;
+      if (hideDelivery && r.source === "delivery_app") return false;
       if (indexOnly && !b.idx) return false;
       if (min !== null && (b.price === null || b.price < min)) return false;
       if (max !== null && (b.price === null || b.price > max)) return false;
@@ -132,7 +153,6 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
   const shown = results.slice(0, limit);
   const nActive = activeFilterCount(filters);
   const anyDelivery = shown.some((row) => row.r.source === "delivery_app" && row.b.price !== null);
-  const hideDelivery = filters.sources.length > 0 && !filters.sources.includes("delivery_app");
   const bins = data.median !== null ? binRanges(data.median) : [];
   const neighborhoods = useMemo(() => {
     const allowed = new Set(filters.boroughs.map((s) => boroughBySlug(s)!.name));
@@ -142,15 +162,12 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
   }, [data.neighborhoods, filters.boroughs]);
   const selectedNeighborhood = data.neighborhoods.find((n) => n.slug === filters.neighborhood);
 
-  const setHideDelivery = (on: boolean) => {
-    if (on) {
-      const base = filters.sources.length ? filters.sources : data.sources;
-      update({ sources: base.filter((s) => s !== "delivery_app") });
-    } else {
-      const next = [...new Set<SourceKey>([...filters.sources, "delivery_app"])];
-      update({ sources: next.length >= data.sources.length ? [] : next });
-    }
-  };
+  // Hiding delivery-app prices is its own exclusion, not a rewrite of the Source list. Choosing it
+  // drops "Delivery app" from that list, and ticking "Delivery app" there un-hides, so the two never
+  // contradict each other.
+  const setHideDelivery = (on: boolean) => update({ hideDelivery: on, sources: on ? filters.sources.filter((s) => s !== "delivery_app") : filters.sources });
+  const setSources = (next: SourceKey[]) =>
+    update({ sources: next.length >= data.sources.length ? [] : next, hideDelivery: filters.hideDelivery && !next.includes("delivery_app") });
   const clearAll = () => {
     setQuery("");
     commit({ ...EMPTY_FILTERS, sort: filters.sort });
@@ -192,7 +209,7 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
       hideLegend={hideLegend}
       options={data.sources.map((s) => ({ value: s, label: sourceLabel(s) }))}
       selected={filters.sources}
-      onChange={(next) => update({ sources: next.length >= data.sources.length ? [] : next })}
+      onChange={setSources}
     />
   );
   const priceGroup = (prefix: string) => (
@@ -271,7 +288,7 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
       </label>
       {data.sources.includes("delivery_app") ? (
         <label className="t-ui-m flex min-h-11 cursor-pointer items-center gap-2">
-          <input type="checkbox" className="checkbox" checked={hideDelivery} onChange={(e) => setHideDelivery(e.target.checked)} />
+          <input type="checkbox" className="checkbox" checked={filters.hideDelivery} onChange={(e) => setHideDelivery(e.target.checked)} />
           Hide delivery-app prices
         </label>
       ) : null}
@@ -285,6 +302,7 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
     ...(filters.min !== null || filters.max !== null ? [{ key: "price", label: priceLabel(filters.min, filters.max), clear: () => update({ min: null, max: null }) }] : []),
     ...filters.proteins.map((p) => ({ key: `p-${p}`, label: PROTEIN_LABEL[p], clear: () => update({ proteins: filters.proteins.filter((x) => x !== p) }) })),
     ...filters.sources.map((s) => ({ key: `s-${s}`, label: sourceLabel(s), clear: () => update({ sources: filters.sources.filter((x) => x !== s) }) })),
+    ...(filters.hideDelivery ? [{ key: "no-delivery", label: "Delivery-app prices hidden", clear: () => update({ hideDelivery: false }) }] : []),
     ...(filters.indexOnly ? [{ key: "idx", label: "Index burgers only", clear: () => update({ indexOnly: false }) }] : []),
   ];
 
@@ -312,8 +330,9 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
               ref={inputRef}
               id="search"
               type="search"
-              className="input pr-20 pl-10 [&::-webkit-search-cancel-button]:hidden"
-              placeholder="Search burgers, restaurants, neighborhoods"
+              className={`input pl-10 [&::-webkit-search-cancel-button]:hidden ${query ? "pr-12" : "pr-3 lg:pr-12"}`}
+              placeholder={wide ? "Search burgers, restaurants, neighborhoods" : "Search burgers, restaurants"}
+              maxLength={MAX_QUERY}
               autoComplete="off"
               spellCheck={false}
               value={query}
@@ -429,7 +448,7 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
               Clear all
             </button>
             <button type="button" className="btn btn-primary" onClick={() => sheetRef.current?.close()}>
-              Show {formatCount(results.length)} burgers
+              Show {pluralize(results.length, "burger")}
             </button>
           </div>
         </div>
@@ -437,7 +456,7 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
 
       {/* ---- Results ---- */}
       <p className="t-ui-m muted mt-6 mb-3" aria-live="polite">
-        {results.length ? `Showing ${formatCount(shown.length)} of ${formatCount(results.length)} burgers` : "No burgers to show"}
+        {results.length ? `Showing ${formatCount(shown.length)} of ${pluralize(results.length, "burger")}` : "No burgers to show"}
         {results.length !== rows.length ? ` (filtered from ${formatCount(rows.length)})` : ""}
       </p>
 

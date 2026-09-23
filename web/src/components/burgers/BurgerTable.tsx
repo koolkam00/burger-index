@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import type { ExBurger, ExRestaurant, SortKey } from "@/lib/explorer";
 import { formatDelta, formatPrice } from "@/lib/format";
 import { PROTEIN_LABEL } from "@/lib/labels";
-import { IndexTag, PriceChip, SourceBadge } from "../ui";
+import { Dagger, IndexTag, PriceChip, SourceBadge, Swatch } from "../ui";
 
 export type TableRow = { b: ExBurger; r: ExRestaurant };
 
@@ -83,9 +83,6 @@ export function BurgerTable({
         <tr>
           <SortHeader label="Burger" keyAsc="name" sort={sort} onSort={onSort} />
           <SortHeader label="Restaurant" keyAsc="restaurant" sort={sort} onSort={onSort} className="hidden sm:table-cell" />
-          <th scope="col" className="hidden lg:table-cell">
-            Source
-          </th>
           <SortHeader label="Price" keyAsc="price" keyDesc="-price" sort={sort} onSort={onSort} className="num" />
           <th scope="col" className="num hidden sm:table-cell">
             vs NYC
@@ -111,7 +108,7 @@ export function BurgerTable({
                 </div>
                 <div className="t-ui-s muted hidden sm:block">{PROTEIN_LABEL[b.protein]}</div>
                 {r.source ? (
-                  <div className="mt-1 lg:hidden">
+                  <div className="mt-1">
                     <SourceBadge source={r.source} />
                   </div>
                 ) : null}
@@ -125,16 +122,14 @@ export function BurgerTable({
                   {r.nb ? ` · ${r.borough}` : ""}
                 </div>
               </td>
-              <td className="hidden lg:table-cell">
-                <SourceBadge source={r.source} />
-              </td>
               <td className="num">
                 <span className="sm:hidden">
-                  <PriceChip price={b.price} median={median} dagger={delivery} suffix="" />
+                  <PriceChip price={b.price} median={median} dagger={delivery} suffix="" narrowWrap />
                 </span>
-                <span className="t-num-m hidden whitespace-nowrap sm:inline">
+                <span className="t-num-m hidden items-center justify-end gap-2 whitespace-nowrap sm:inline-flex">
+                  {b.price !== null && median !== null ? <Swatch price={b.price} median={median} /> : null}
                   {b.price === null ? <span className="t-ui-s muted">No price</span> : formatPrice(b.price, { cents: "always" })}
-                  {delivery && b.price !== null ? <span aria-label=" (delivery app price)">†</span> : null}
+                  {delivery && b.price !== null ? <Dagger /> : null}
                 </span>
               </td>
               <td className="num t-num-s muted hidden whitespace-nowrap sm:table-cell">{b.price === null ? "—" : formatDelta(b.price, median)}</td>

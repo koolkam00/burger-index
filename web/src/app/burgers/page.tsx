@@ -15,19 +15,19 @@ export const metadata = pageMetadata({
 export default function BurgersPage() {
   const data = buildExplorerData();
   const priced = data.burgers.filter((b) => b.price !== null).length;
-  // Static first paint (and the no-JS view): the 100 cheapest burgers. The filterable explorer
+  // Static first paint (and the no-JS view): the 50 cheapest burgers. The filterable explorer
   // reads the URL, so it renders on the client inside <Suspense>.
   const preview: TableRow[] = data.burgers
     .filter((b) => b.price !== null)
     .sort((a, b) => (a.price as number) - (b.price as number) || a.name.localeCompare(b.name))
-    .slice(0, 100)
+    .slice(0, 50)
     .map((b) => ({ b, r: data.restaurants[b.r] }));
 
   return (
     <div className="wrap">
       <PageHeader
         title="Every burger."
-        lede={`All ${formatCount(data.burgers.length)} burgers we found on New York menus, ${formatCount(priced)} of them with a price. Search by name, restaurant or neighborhood; the index price is the cheapest beef burger at each place.`}
+        lede={`All ${formatCount(data.burgers.length)} burgers we found on New York menus, ${formatCount(priced)} of them with a price, one row per location: a chain's menu repeats at each of its locations. Search by name, restaurant or neighborhood; the index price is the cheapest beef burger at each place.`}
       />
       <div className="mt-8">
         <Suspense

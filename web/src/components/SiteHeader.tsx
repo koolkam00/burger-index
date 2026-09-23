@@ -49,7 +49,21 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-1">
-          <Link href="/burgers#search" className="icon-btn" aria-label="Search burgers" title="Search burgers">
+          <Link
+            href="/burgers#search"
+            className="icon-btn"
+            aria-label="Search burgers"
+            title="Search burgers"
+            onClick={(e) => {
+              // Already on /burgers: just focus the search box.
+              const input = document.getElementById("search");
+              if (pathname === "/burgers" && input) {
+                e.preventDefault();
+                input.focus();
+                input.scrollIntoView({ block: "center" });
+              }
+            }}
+          >
             <Search strokeWidth={1.75} aria-hidden="true" />
           </Link>
           <ThemeToggle />

@@ -2,7 +2,8 @@ import "server-only";
 
 import { getNeighborhoods, getRestaurants, getStats } from "./data";
 import type { ExBurger, ExplorerData, ExRestaurant, SourceKey } from "./explorer";
-import { PRICE_SOURCES, PROTEINS, type Protein } from "./schema";
+import { PRICE_SOURCES, PROTEINS } from "./enums";
+import type { Protein } from "./schema";
 
 /** Compact payload for the /burgers explorer: every burger, restaurants referenced by index. */
 export function buildExplorerData(): ExplorerData {

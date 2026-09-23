@@ -2,7 +2,8 @@
 // payload (short keys, restaurants referenced by index) so thousands of rows stay light.
 import type { BoroughSlug } from "./boroughs";
 import { BOROUGH_META } from "./boroughs";
-import { PRICE_SOURCES, PROTEINS, type Borough, type PriceSource, type Protein } from "./schema";
+import { PRICE_SOURCES, PROTEINS } from "./enums";
+import type { Borough, PriceSource, Protein } from "./schema";
 
 export type ExRestaurant = {
   /** restaurant id (URL slug) */
@@ -52,7 +53,10 @@ export type Filters = {
   boroughs: BoroughSlug[];
   neighborhood: string;
   proteins: Protein[];
+  /** Inclusion list: only these sources (empty = all). */
   sources: SourceKey[];
+  /** Exclusion, separate from `sources`: one choice, one chip, one active filter. */
+  hideDelivery: boolean;
   min: number | null;
   max: number | null;
   indexOnly: boolean;
@@ -65,6 +69,7 @@ export const EMPTY_FILTERS: Filters = {
   neighborhood: "",
   proteins: [],
   sources: [],
+  hideDelivery: false,
   min: null,
   max: null,
   indexOnly: false,
@@ -85,14 +90,21 @@ function num(v: string | null): number | null {
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
-/** URL → filters. Unknown values are dropped, so a hand-edited URL can't break the page. */
-export function parseFilters(sp: { get(name: string): string | null }): Filters {
+export const MAX_QUERY = 120;
+
+/**
+ * URL → filters. Unknown values are dropped, so a hand-edited URL (or a stale link to a neighborhood
+ * a rebuild no longer has) can't leave the page filtered by something it can't show.
+ */
+export function parseFilters(sp: { get(name: string): string | null }, neighborhoods: ReadonlySet<string>): Filters {
+  const neighborhood = sp.get("neighborhood") ?? "";
   return {
-    q: (sp.get("q") ?? "").slice(0, 120),
+    q: (sp.get("q") ?? "").slice(0, MAX_QUERY),
     boroughs: list(sp.get("borough")).filter((s): s is BoroughSlug => BOROUGH_SLUGS.has(s)),
-    neighborhood: sp.get("neighborhood") ?? "",
+    neighborhood: neighborhoods.has(neighborhood) ? neighborhood : "",
     proteins: list(sp.get("protein")).filter((s): s is Protein => PROTEIN_SET.has(s)),
     sources: list(sp.get("source")).filter((s): s is SourceKey => SOURCE_SET.has(s)),
+    hideDelivery: list(sp.get("hide")).includes("delivery_app"),
     min: num(sp.get("min")),
     max: num(sp.get("max")),
     indexOnly: sp.get("index") === "1",
@@ -108,6 +120,7 @@ export function serializeFilters(f: Filters): string {
   if (f.neighborhood) p.set("neighborhood", f.neighborhood);
   if (f.proteins.length) p.set("protein", f.proteins.join(","));
   if (f.sources.length) p.set("source", f.sources.join(","));
+  if (f.hideDelivery) p.set("hide", "delivery_app");
   if (f.min !== null) p.set("min", String(f.min));
   if (f.max !== null) p.set("max", String(f.max));
   if (f.indexOnly) p.set("index", "1");
@@ -137,6 +150,7 @@ export function activeFilterCount(f: Filters): number {
     (f.neighborhood ? 1 : 0) +
     f.proteins.length +
     f.sources.length +
+    (f.hideDelivery ? 1 : 0) +
     (f.min !== null || f.max !== null ? 1 : 0) +
     (f.indexOnly ? 1 : 0)
   );

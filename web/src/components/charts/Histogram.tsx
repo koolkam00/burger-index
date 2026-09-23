@@ -19,7 +19,7 @@ function barPath(x: number, y: number, w: number, h: number): string {
 }
 
 /**
- * Distribution of restaurant index prices. $1 bins at ≥768px, $2 below. Bars take the price-ramp
+ * Distribution of index prices, one per distinct menu (a chain counts once). $1 bins at ≥768px, $2 below. Bars take the price-ramp
  * color of their midpoint (vs the citywide median), so the chart doubles as the map legend.
  * One tab stop; ←/→ move between bars and show the same tooltip as hover.
  */
@@ -70,7 +70,7 @@ export function Histogram({
   const describe = (i: number) => {
     const b = bins[i];
     const mid = (b.lo + b.hi) / 2;
-    return { value: pluralize(b.count, "restaurant"), context: `${binRangeLabel(b)} · ${binFor(mid, median).name}`, color: binFor(mid, median).color };
+    return { value: pluralize(b.count, "menu"), context: `${binRangeLabel(b)} · ${binFor(mid, median).name}`, color: binFor(mid, median).color };
   };
 
   const onPointer = (e: PointerEvent<HTMLDivElement>) => {
@@ -129,7 +129,7 @@ export function Histogram({
           {bins.map((b, i) => {
             const bx = xs(b.lo) + 1;
             const bw = Math.max(1, xs(b.hi) - xs(b.lo) - 2);
-            const by = ys(b.count);
+            const by = b.count > 0 ? Math.min(ys(b.count), baseline - 2) : baseline; // keep 1-menu bins visible
             const mid = (b.lo + b.hi) / 2;
             return (
               <path

@@ -22,6 +22,7 @@ from typing import Any, Iterable
 from rapidfuzz import fuzz, process
 
 from . import config
+from .chains import brand_of
 from .names import display_case, display_name, norm_name, slugify
 
 DOHMH_DATASET = "43nn-pn8j"
@@ -36,6 +37,9 @@ DOHMH_GROUP_FIELDS = (
 )
 SOCRATA_PAGE = 50_000
 NOT_INSPECTED = "1900-01-01"
+# CAMIS ids are issued in sequence; venue stands permitted together are a few numbers apart,
+# a re-permit months or years later is thousands apart.
+SAME_ISSUE_CAMIS_GAP = 1000
 
 # CSV neighborhoods no 2010 NTA name contains -> NTA code (only used for unmatched CSV rows).
 NEIGHBORHOOD_ALIASES = {
@@ -52,6 +56,17 @@ NEIGHBORHOOD_ALIASES = {
     ("Brooklyn", "bed-stuy"): "BK75",
     ("Brooklyn", "bedford-stuyvesant"): "BK75",
     ("Queens", "long island city"): "QN31",
+}
+
+# 2010 NTA names that mislead today, shown as current usage. MN27 'Chinatown' also covers the
+# Lower East Side west of Essex (Orchard, Ludlow, Eldridge); MN28 'Lower East Side' is the LES
+# east of Essex plus Alphabet City (Avenues B-D); BK73 'North Side-South Side' is what everyone
+# calls Williamsburg, and BK72 'Williamsburg' is South Williamsburg.
+NTA_DISPLAY_OVERRIDES = {
+    "MN27": "Chinatown-Lower East Side",
+    "MN28": "Lower East Side-Alphabet City",
+    "BK72": "South Williamsburg",
+    "BK73": "Williamsburg",
 }
 
 _log_lock = threading.Lock()
@@ -141,7 +156,11 @@ def fetch_nta2010(path: Path = config.NTA_PATH) -> dict:
 
 
 def load_nta_map(path: Path = config.NTA_PATH) -> dict[str, dict]:
-    return json.loads(Path(path).read_text())["ntas"]
+    ntas = json.loads(Path(path).read_text())["ntas"]
+    for code, name in NTA_DISPLAY_OVERRIDES.items():
+        if code in ntas:
+            ntas[code] = {**ntas[code], "name": name}
+    return ntas
 
 
 # ---------------------------------------------------------------------------------------
@@ -382,12 +401,62 @@ def match_csv_row(
             s = max(s, 82.0)
         accept = s >= 86 or lifted or (s >= 80 and url_ok)
         scored.append((s + bonus, s, accept, nb_ok, url_ok, rec["camis"], rec))
+    # An acceptable candidate in the pilot row's neighborhood (or at the address its URL names)
+    # beats any name match elsewhere: 'Burger Joint', Midtown is the hotel counter on W 57th St,
+    # not the BURGER JOINT on W 31st St.
+    located = [x for x in scored if x[2] and (x[3] or x[4])]
+    if located:
+        scored = located
     scored.sort(key=lambda t: (-t[0], t[5]))
     total, s, accept, nb_ok, url_ok, _, rec = scored[0]
     if not accept:
         return None, s, f"best candidate {rec['dba']!r} scored {s:.0f}"
     method = "name" + ("+neighborhood" if nb_ok else "") + ("+url-address" if url_ok else "")
     return rec, s, method
+
+
+# ---------------------------------------------------------------------------------------
+# Re-permitted restaurants
+
+
+def _same_brand(a: dict, b: dict) -> bool:
+    ka, kb = brand_of(a)[0], brand_of(b)[0]
+    if ka and ka == kb:
+        return True
+    na, nb = norm_name(a.get("dba")), norm_name(b.get("dba"))
+    return min(len(na), len(nb)) >= 5 and fuzz.partial_ratio(na, nb) >= 90
+
+
+def drop_superseded_permits(records: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Drop the old permit (CAMIS) of a restaurant that was re-permitted at the same address.
+
+    Same brand (or near-same name) at the same building + street + borough, where the older-numbered
+    CAMIS was last inspected before the newer one and the two permits were not issued together.
+    Stands that share a venue address (4 Penn Plaza, 620 Atlantic Ave) are issued together and
+    inspected on the same day, so they stay. Returns (kept records, report of dropped ones)."""
+    by_addr: dict[tuple, list[dict]] = defaultdict(list)
+    for r in records:
+        if r.get("address") and re.match(r"^\d", r["address"]):
+            by_addr[(norm_name(r["address"]), r["borough"])].append(r)
+    dropped: dict[str, dict] = {}
+    for group in by_addr.values():
+        if len(group) < 2:
+            continue
+        group = sorted(group, key=lambda r: int(r["camis"]) if r["camis"].isdigit() else 0)
+        for i, old in enumerate(group):
+            for new in group[i + 1:]:
+                if not (old["camis"].isdigit() and new["camis"].isdigit()):
+                    continue
+                issued_apart = int(new["camis"]) - int(old["camis"]) > SAME_ISSUE_CAMIS_GAP
+                last_old, last_new = old.get("last_inspection"), new.get("last_inspection")
+                inspected_before = bool(last_old and last_new) and NOT_INSPECTED not in (last_old, last_new) \
+                    and last_old < last_new
+                if issued_apart and inspected_before and _same_brand(old, new):
+                    dropped[old["camis"]] = {"dropped": old["camis"], "kept": new["camis"], "dba": old["dba"],
+                                             "address": old["address"], "borough": old["borough"],
+                                             "last_inspection": old.get("last_inspection")}
+                    break
+    return [r for r in records if r["camis"] not in dropped], list(dropped.values())
 
 
 # ---------------------------------------------------------------------------------------
@@ -407,16 +476,19 @@ def build_restaurants(
     latest = latest_per_camis(dohmh_rows)
     zip_nta = zip_to_nta(latest)
     records = [r for r in (normalize_dohmh(x, nta_map, zip_nta) for x in latest) if r]
+    records, repermits = drop_superseded_permits(records)
     by_boro: dict[str, list[tuple[str, dict]]] = defaultdict(list)
     for r in records:
         by_boro[r["borough"]].append((norm_name(r["dba"]), r))
 
     report: dict[str, Any] = {
         "csv_rows": len(csv_rows), "csv_matched": 0, "csv_unmatched": [], "csv_duplicate_matches": [],
-        "dohmh_records": len(records), "dohmh_dropped_boro": len(latest) - len(records),
+        "dohmh_records": len(records), "dohmh_dropped_boro": len(latest) - len(records) - len(repermits),
+        "dohmh_superseded_permits": repermits,
     }
     out: list[dict] = []
     seen: set[str] = set()
+    keys: set[str] = set()
     for row in csv_rows:
         rec, score, method = match_csv_row(row, by_boro.get(row["borough"], []), nta_map, min_date)
         if rec is not None and rec["camis"] in seen:
@@ -438,8 +510,11 @@ def build_restaurants(
             report["csv_matched"] += 1
         else:
             nta = neighborhood_to_nta(row["neighborhood"], row["borough"], nta_map)
+            key = f"csv:{slugify(row['name'])}-{slugify(row['borough'])}"
+            if key in keys:  # same name and borough as an earlier row: keep keys (and results) apart
+                key = f"{key}-{slugify(row['neighborhood']) or 'row'}-{row['row']}"
             r = {
-                "key": f"csv:{slugify(row['name'])}-{slugify(row['borough'])}",
+                "key": key,
                 "camis": None, "dba": None, "name": row["name"], "address": None, "borough": row["borough"],
                 "zipcode": None, "lat": None, "lng": None, "nta": nta,
                 "neighborhood": nta_map[nta]["name"] if nta else row["neighborhood"],
@@ -449,6 +524,7 @@ def build_restaurants(
                 "match": None,
             }
             report["csv_unmatched"].append({"row": row["row"], "name": row["name"], "why": method})
+        keys.add(r["key"])
         out.append(r)
 
     in_scope = [r for r in records if (r["cuisine"] or "").lower() in cuisines]
@@ -466,6 +542,9 @@ def build_restaurants(
     report["dohmh_merged_with_csv"] = len(recent) - added
     report["no_neighborhood"] = sum(1 for r in out if not r["neighborhood"])
     report["restaurants"] = len(out)
+    dupes = [k for k, n in Counter(r["key"] for r in out).items() if n > 1]
+    if dupes:  # results are keyed by restaurant key: a shared key would publish one's menu for both
+        raise ValueError(f"duplicate restaurant keys: {dupes[:5]}")
     return out, report
 
 

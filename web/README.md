@@ -1,34 +1,111 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# The Burger Index: website
 
-## Getting Started
+The public site for the NYC Burger Index: the median price of the cheapest beef burger at every New York restaurant we could price.
+It is a fully static Next.js site (App Router, TypeScript strict, Tailwind v4, zod). There is no server code and no API key: the Python
+pipeline writes one JSON file, and `next build` turns it into plain HTML in `out/`.
 
-First, run the development server:
+Design rules live in [`../DESIGN.md`](../DESIGN.md) (fonts, color tokens, components, voice). Read it before changing anything visual.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## How data gets in
+
+```
+pipeline (Python) ──> ../data/burger_index.json ──> npm run sync-data ──> src/data/burger_index.json ──> next build ──> out/
+                          (contract: ../contract/burger_index.schema.json)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. `scripts/sync-data.mjs` runs automatically before `dev` and `build`. It copies `../data/burger_index.json` into
+   `src/data/`. If the pipeline hasn't written that file yet, it copies `fixtures/burger_index.sample.json` instead, prints a loud
+   warning, and every page shows a "Sample data" banner.
+2. The same script validates the file against the JSON Schema contract (ajv, draft 2020-12 with formats). Invalid data stops the build.
+3. `src/lib/data.ts` (server-only) parses it again with the zod mirror in `src/lib/schema.ts` and checks the invariants (unique ids,
+   exactly one index burger per priced restaurant). All pages read data through its typed selectors: `getStats()`,
+   `getRestaurant(id)`, `getNeighborhood(slug)`, `getBorough(slug)`, `allBurgers()`, and others.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`src/data/` and `public/vendor/` are generated; both are gitignored.
 
-## Learn More
+## Run it locally
 
-To learn more about Next.js, take a look at the following resources:
+Requires Node 20.9 or later.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+cd web
+npm install
+npm run dev            # http://localhost:3000, uses ../data/burger_index.json if it exists
+npm run dev:sample     # force the sample fixture
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Build and preview the static export:
 
-## Deploy on Vercel
+```bash
+npm run build          # writes out/
+npm run preview        # serves out/ at http://localhost:4173
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Checks (all must pass with zero errors):
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run lint
+npm run typecheck      # next typegen && tsc --noEmit
+npm test               # node:test on the TypeScript in src/lib (test/*.test.ts, no extra deps)
+npm run build
+```
+
+Other scripts:
+
+| Script | What it does |
+|---|---|
+| `npm run sync-data` | Copy and validate the dataset (runs before dev and build) |
+| `npm run build:sample` | Build with the sample fixture, even if pipeline data exists |
+| `npm run validate:data [file]` | Validate a dataset against the contract (defaults to the fixture) |
+| `npm run fixture` | Regenerate `fixtures/burger_index.sample.json` (deterministic, fictional restaurants on `.example` domains) and validate it |
+
+## Deploy to Vercel
+
+The Vercel project uses **Root Directory** `web`, **Build Command** `npm run build`, **Output Directory** `out`. Either:
+
+- Import the repo on Vercel with those settings (every push to the production branch deploys), or
+- From the CLI, **run it from the repo root, not from `web/`** (Vercel's monorepo rule; `sync-data` also needs `../data` and
+  `../contract` in the upload): `npx vercel link` once (set Root Directory to `web`), then `npx vercel --prod`.
+
+Notes:
+
+- The build reads `../data/burger_index.json` and `../contract/burger_index.schema.json`, both outside `web/`. Commit the dataset, and
+  keep Vercel's "Include files outside the root directory in the Build Step" setting on (the default for new projects).
+- The repo-root `.vercelignore` is an allowlist (`web/`, `contract/`, `data/burger_index.json`, `DESIGN.md`). Vercel does not read
+  `.gitignore`, so without it a CLI deploy from the root would upload `.env` (the Context.dev key), `.venv/` and the scrape cache.
+- Set `NEXT_PUBLIC_SITE_URL` (for example `https://burgerindex.nyc`) so canonical URLs, the sitemap and Open Graph tags point at your
+  domain. When it is unset, Vercel's production URL is used, then `https://burgerindex.nyc`.
+- Any static host works: upload `out/`. Routes are emitted as `name.html` files, so the host needs clean URLs (`/map` → `map.html`),
+  which Vercel, Netlify and `serve` handle by default.
+
+## What's in the site
+
+| Route | Page |
+|---|---|
+| `/` | The headline index on the Letterboard, typical range, counts, price histogram, borough bars, cheapest and priciest, neighborhood ranking |
+| `/burgers` | Every burger: search, filters (borough, neighborhood, price, protein, price source, index-only), sort, all synced to the URL |
+| `/restaurants/[id]` | Menu board, index price vs neighborhood and NYC, price source, menu link, scrape date, chain note, locator map |
+| `/neighborhoods`, `/neighborhoods/[slug]` | Sortable ranking (areas with at least 5 distinct priced menus; a chain counts once) and area pages |
+| `/boroughs`, `/boroughs/[slug]` | Borough comparison and borough pages |
+| `/map` | MapLibre GL map, pins colored by price level, legend, list view, restaurants without coordinates |
+| `/methodology` | The rule, sources, price-source meanings, statuses, exclusions, biases, update date |
+| `/data/burger_index.json` | The validated dataset, for download |
+| `/og.png`, `/sitemap.xml`, `/robots.txt` | Open Graph image (the Letterboard), sitemap, robots |
+
+## Notes for maintainers
+
+- **Types:** the contract is the source of truth. If it changes, update `src/lib/schema.ts` (zod) to match; `npm run typecheck` then shows
+  every page that needs attention.
+- **Menus, not locations:** the index counts each distinct menu once (every independent restaurant, each chain once citywide
+  and at most once per area). Anything the site derives itself (histograms, typical range, rankings, cheapest/priciest lists,
+  the `MIN_RANKED` / `MIN_HISTOGRAM` thresholds, "N menus" copy) goes through `src/lib/menus.ts` (`menuKey`, `pricedMenus`,
+  `menuIndexPrices`, `menuCounts`, `isChainOnly`, `isRankable`). Location counts (`restaurants_priced`, map pins, table rows)
+  stay per location. An area priced only from chain menus is labelled "Chain prices only" and never compared like for like.
+  Hand corrections (`status_detail` "Prices corrected by hand / withheld after re-checking…") are parsed by `src/lib/hand-checks.ts`.
+- **Price colors** (Steal → Splurge) are always measured against the citywide median, never a filtered subset. See `src/lib/price-bins.ts`.
+- **Map:** tiles and styles come from [OpenFreeMap](https://openfreemap.org) (`positron` for light, `dark` for dark), recolored to the
+  DESIGN.md map tokens at runtime. MapLibre v6 loads its worker relative to its own module URL, which bundling breaks, so `sync-data`
+  copies the worker into `public/vendor/maplibre/`. If the tiles can't load, pins are drawn on a blank basemap and the list view
+  still has every restaurant.
+- **Theme:** light and dark follow the system; the toggle stores `bi-theme` in `localStorage`, and an inline `<head>` script applies it
+  before first paint. "Use system setting" in the footer clears it.

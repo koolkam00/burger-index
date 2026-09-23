@@ -14,7 +14,19 @@ export const NAV: readonly NavItem[] = [
   { href: "/methodology", label: "Methodology" },
 ];
 
-/** Minimum priced restaurants for an area to be ranked (DESIGN.md "Neighborhood plot"). */
+/** Minimum distinct priced menus (a chain counts once) for an area to be ranked (DESIGN.md "Neighborhood plot"). */
 export const MIN_RANKED = 5;
-/** Minimum priced restaurants in a slice before a histogram is drawn (DESIGN.md "Minimums"). */
+/** Minimum distinct priced menus in a slice before a histogram is drawn (DESIGN.md "Minimums"). */
 export const MIN_HISTOGRAM = 20;
+
+/**
+ * `output: "export"` fails the build when a generateStaticParams returns an empty list, and a dataset
+ * written before the first scrape has no restaurants or neighborhoods. Dynamic routes then build this
+ * one placeholder instead: it can't be a real id or slug (those match ^[a-z0-9-]+$), so the page's
+ * lookup misses and it renders the 404. The sitemap maps the real lists, so it never lists it.
+ */
+export const PLACEHOLDER_PARAM = "_none";
+
+export function atLeastOneParam<T>(params: T[], placeholder: T): T[] {
+  return params.length ? params : [placeholder];
+}

@@ -1,15 +1,51 @@
 // zod mirror of contract/burger_index.schema.json. Keep in sync with the contract and
 // pipeline/models.py. Every object is strict (additionalProperties: false in the contract).
-import { z } from "zod";
+//
+// Server-only: zod is ~90 KB gzipped. Client components import the enum lists from ./enums and
+// only types from here (`import type`), which the bundler erases.
+import "server-only";
 
-export const BOROUGHS = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"] as const;
-export const PROTEINS = ["beef", "chicken", "turkey", "fish", "veggie", "lamb", "pork", "other"] as const;
-export const STATUSES = ["priced", "no_burgers", "no_prices", "no_menu_found", "error"] as const;
-export const PRICE_SOURCES = ["official_site", "official_pdf", "online_ordering", "delivery_app", "menu_aggregator"] as const;
+import { z } from "zod";
+import { BOROUGHS, PRICE_SOURCES, PROTEINS, STATUSES } from "./enums";
 
 const Slug = z.string().regex(/^[a-z0-9-]+$/, "must match ^[a-z0-9-]+$");
-// JSON Schema "format": "date-time" is RFC 3339: a UTC "Z" or a numeric offset is required.
-const DateTime = z.iso.datetime({ offset: true });
+
+const DATE = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
+const TIME = /^(\d\d):(\d\d):(\d\d(?:\.\d+)?)(z|([+-])(\d\d)(?::?(\d\d))?)?$/i;
+const DAYS_IN_MONTH = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+/**
+ * JSON Schema "format": "date-time", checked exactly as ajv-formats checks it in
+ * scripts/sync-data.mjs, so a dataset that passes sync-data never fails here at build. That is
+ * RFC 3339 read leniently: "T", "t" or a space between date and time, a required "Z"/"z" or
+ * numeric offset (+HH:MM, +HHMM or +HH), and a leap second only at 23:59:60 UTC.
+ */
+export function isDateTime(value: string): boolean {
+  const parts = value.split(/t|\s/i);
+  if (parts.length !== 2) return false;
+  const d = DATE.exec(parts[0]);
+  if (!d) return false;
+  const year = +d[1];
+  const month = +d[2];
+  const day = +d[3];
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  if (month < 1 || month > 12 || day < 1 || day > (month === 2 && leapYear ? 29 : DAYS_IN_MONTH[month])) return false;
+  const t = TIME.exec(parts[1]);
+  if (!t || !t[4]) return false;
+  const hour = +t[1];
+  const minute = +t[2];
+  const second = +t[3];
+  const sign = t[5] === "-" ? -1 : 1;
+  const tzHour = +(t[6] || 0);
+  const tzMinute = +(t[7] || 0);
+  if (tzHour > 23 || tzMinute > 59) return false;
+  if (hour <= 23 && minute <= 59 && second < 60) return true;
+  const utcMinute = minute - tzMinute * sign;
+  const utcHour = hour - tzHour * sign - (utcMinute < 0 ? 1 : 0);
+  return (utcHour === 23 || utcHour === -1) && (utcMinute === 59 || utcMinute === -1) && second < 61;
+}
+
+const DateTime = z.string().refine(isDateTime, "must be an RFC 3339 date-time with a UTC offset");
 
 export const MoneySchema = z.number().min(0).nullable();
 export const BoroughSchema = z.enum(BOROUGHS);

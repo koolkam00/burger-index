@@ -38,11 +38,8 @@ export function useSeenOnce<T extends HTMLElement>(): [RefObject<T | null>, bool
   const [seen, setSeen] = useState(false);
   useEffect(() => {
     const el = ref.current;
+    // IntersectionObserver is in every browser Next 16 supports.
     if (!el || seen) return;
-    if (typeof IntersectionObserver === "undefined") {
-      setSeen(true);
-      return;
-    }
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {

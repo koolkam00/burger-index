@@ -13,20 +13,23 @@ export function PriceDistribution({
   cityMedian,
   sliceMedian,
   sliceName = "NYC",
+  chainOnly = false,
 }: {
   id: string;
-  /** Index prices in the slice, ascending. */
+  /** Index prices in the slice, one per distinct menu (menuIndexPrices), ascending. */
   prices: number[];
   cityMedian: number | null;
   sliceMedian: number | null;
   sliceName?: string;
+  /** The slice is priced from chain menus only: its takeaway says so first. */
+  chainOnly?: boolean;
 }) {
   if (prices.length < MIN_HISTOGRAM || cityMedian === null || sliceMedian === null) {
     return (
       <ChartEmpty height={296}>
         {prices.length === 0
-          ? "No priced restaurants here yet."
-          : `Only ${pluralize(prices.length, "priced restaurant")} here. Not enough to draw a distribution.`}
+          ? "No priced menus here yet."
+          : `Only ${pluralize(prices.length, "priced menu")} here. Not enough to draw a distribution.`}
       </ChartEmpty>
     );
   }
@@ -39,8 +42,8 @@ export function PriceDistribution({
   return (
     <ChartFigure
       id={id}
-      title={`Index prices at ${formatCount(prices.length)} restaurants`}
-      takeaway={`${spread}; the median is ${formatPrice(sliceMedian, { cents: "always" })}. Bars are colored by price level against the NYC median.`}
+      title={`Index prices on ${formatCount(prices.length)} menus`}
+      takeaway={`${chainOnly ? "Chain prices only. " : ""}${spread}; the median is ${formatPrice(sliceMedian, { cents: "always" })}. Bars count menus, so a chain counts once; they are colored by price level against the NYC median.`}
       chart={<Histogram prices={prices} median={cityMedian} mark={{ value: sliceMedian, label: `${sliceName} median` }} labelledBy={`${id}-title ${id}-desc`} />}
       table={
         <table className="data-table">
@@ -48,7 +51,7 @@ export function PriceDistribution({
             <tr>
               <th scope="col">Index price</th>
               <th scope="col" className="num">
-                Restaurants
+                Menus
               </th>
               <th scope="col">Price level</th>
             </tr>

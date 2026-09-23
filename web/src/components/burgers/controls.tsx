@@ -62,7 +62,11 @@ export function FilterPopover({ label, count, children }: { label: string; count
         <ChevronDown strokeWidth={1.75} aria-hidden="true" />
       </button>
       {open ? (
-        <div ref={panelRef} id={id} className="popover" role="group" aria-label={label}>
+        // tabIndex -1: a mousedown on anything inside that the browser won't focus (label text,
+        // legends, and in Safari even checkboxes and buttons) moves focus to the nearest focusable
+        // ancestor. Without this that ancestor is <main tabindex="-1">, the blur above sees focus
+        // leave, and the panel closes before the click lands.
+        <div ref={panelRef} id={id} className="popover outline-none" role="group" aria-label={label} tabIndex={-1}>
           {children}
         </div>
       ) : null}

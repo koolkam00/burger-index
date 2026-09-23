@@ -6,6 +6,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";
 import { BOROUGH_META, boroughBySlug, type BoroughMeta } from "./boroughs";
+import { handCheckedMenus, type HandCheckedMenu } from "./hand-checks";
+import { isRankable, menuCounts, NO_MENUS, type AreaWithMenus, type MenuCounts } from "./menus";
 import {
   BurgerIndexSchema,
   type AreaSummary,
@@ -69,6 +71,23 @@ const BOROUGHS_BY_SLUG = new Map(DATA.boroughs.map((b) => [b.slug, b]));
 const BURGERS_BY_ID = new Map<string, BurgerRow>();
 for (const r of DATA.restaurants) for (const b of r.burgers) BURGERS_BY_ID.set(b.id, { burger: b, restaurant: r });
 
+// Distinct priced menus per area: a chain counts once citywide and at most once per area.
+function groupBy<K>(key: (r: Restaurant) => K | null): Map<K, Restaurant[]> {
+  const out = new Map<K, Restaurant[]>();
+  for (const r of DATA.restaurants) {
+    const k = key(r);
+    if (k === null) continue;
+    const list = out.get(k);
+    if (list) list.push(r);
+    else out.set(k, [r]);
+  }
+  return out;
+}
+const CITY_MENUS = menuCounts(DATA.restaurants);
+const BOROUGH_MENUS = new Map([...groupBy((r) => r.borough)].map(([k, list]) => [k, menuCounts(list)]));
+const NEIGHBORHOOD_MENUS = new Map([...groupBy((r) => r.neighborhood_slug)].map(([k, list]) => [k, menuCounts(list)]));
+const HAND_CHECKED = handCheckedMenus(DATA.restaurants);
+
 export type BurgerRow = { burger: Burger; restaurant: Restaurant };
 
 // ---- dataset-level ---------------------------------------------------------------------------
@@ -92,6 +111,14 @@ export function getGeneratedAt(): string {
 export function getIndexMedian(): number | null {
   return DATA.stats.index_median;
 }
+/** Distinct priced menus citywide (the count behind the index), with independents, chains and locations. */
+export function getMenuCounts(): MenuCounts {
+  return CITY_MENUS;
+}
+/** Menus whose prices were corrected or withheld after a manual re-check (one entry per chain). */
+export function getHandCheckedMenus(): readonly HandCheckedMenu[] {
+  return HAND_CHECKED;
+}
 
 // ---- restaurants -------------------------------------------------------------------------------
 
@@ -101,17 +128,12 @@ export function getRestaurants(): readonly Restaurant[] {
 export function getRestaurant(id: string): Restaurant | undefined {
   return RESTAURANTS_BY_ID.get(id);
 }
-export function pricedRestaurants(list: readonly Restaurant[] = DATA.restaurants): Restaurant[] {
+/**
+ * Priced LOCATIONS (every chain copy included): for map pins and location tables. Anything that
+ * ranks, bins or counts prices uses the per-menu helpers in ./menus instead.
+ */
+export function pricedLocations(list: readonly Restaurant[] = DATA.restaurants): Restaurant[] {
   return list.filter((r) => r.index_price !== null);
-}
-/** Priced restaurants, cheapest index price first (ties by name). */
-export function byIndexPrice(list: readonly Restaurant[] = DATA.restaurants): Restaurant[] {
-  return pricedRestaurants(list).sort((a, b) => (a.index_price ?? 0) - (b.index_price ?? 0) || a.name.localeCompare(b.name));
-}
-export function indexPrices(list: readonly Restaurant[] = DATA.restaurants): number[] {
-  return pricedRestaurants(list)
-    .map((r) => r.index_price as number)
-    .sort((a, b) => a - b);
 }
 export function getIndexBurger(r: Restaurant): Burger | undefined {
   return r.burgers.find((b) => b.is_index_item);
@@ -132,36 +154,53 @@ export function getBurger(id: string | null): BurgerRow | undefined {
 
 // ---- neighborhoods -------------------------------------------------------------------------------
 
+export type { AreaWithMenus };
+
 export function getNeighborhoods(): readonly AreaSummary[] {
   return DATA.neighborhoods;
 }
 export function getNeighborhood(slug: string): AreaSummary | undefined {
   return NEIGHBORHOODS_BY_SLUG.get(slug);
 }
+export function neighborhoodMenuCounts(slug: string): MenuCounts {
+  return NEIGHBORHOOD_MENUS.get(slug) ?? NO_MENUS;
+}
+/** Neighborhood summaries with their distinct-menu counts attached. */
+export function withMenuCounts(list: readonly AreaSummary[] = DATA.neighborhoods): AreaWithMenus[] {
+  return list.map((n) => ({ ...n, menuCounts: neighborhoodMenuCounts(n.slug) }));
+}
 export function getRestaurantsInNeighborhood(slug: string): Restaurant[] {
   return DATA.restaurants.filter((r) => r.neighborhood_slug === slug);
 }
-/** Neighborhoods with enough priced restaurants to rank, priciest median first. */
-export function rankedNeighborhoods(list: readonly AreaSummary[] = DATA.neighborhoods): AreaSummary[] {
-  return list
-    .filter((n) => n.restaurants_priced >= MIN_RANKED && n.index_median !== null)
+/**
+ * Neighborhoods with at least MIN_RANKED distinct priced menus (a chain counts once per area),
+ * priciest median first. Chain-only ones can qualify; every ranking labels them.
+ */
+export function rankedNeighborhoods(list: readonly AreaSummary[] = DATA.neighborhoods): AreaWithMenus[] {
+  return withMenuCounts(list)
+    .filter((n) => isRankable(n.menuCounts, n.index_median, MIN_RANKED))
     .sort((a, b) => (b.index_median ?? 0) - (a.index_median ?? 0) || a.name.localeCompare(b.name));
 }
-export function unrankedNeighborhoods(list: readonly AreaSummary[] = DATA.neighborhoods): AreaSummary[] {
-  return list.filter((n) => n.restaurants_priced < MIN_RANKED || n.index_median === null).sort((a, b) => a.name.localeCompare(b.name));
+export function unrankedNeighborhoods(list: readonly AreaSummary[] = DATA.neighborhoods): AreaWithMenus[] {
+  return withMenuCounts(list)
+    .filter((n) => !isRankable(n.menuCounts, n.index_median, MIN_RANKED))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 // ---- boroughs ------------------------------------------------------------------------------------
 
-export type BoroughEntry = BoroughMeta & { summary: AreaSummary | null };
+export type BoroughEntry = BoroughMeta & { summary: AreaSummary | null; menuCounts: MenuCounts };
 
+function boroughEntry(meta: BoroughMeta): BoroughEntry {
+  return { ...meta, summary: BOROUGHS_BY_SLUG.get(meta.slug) ?? null, menuCounts: BOROUGH_MENUS.get(meta.name) ?? NO_MENUS };
+}
 /** All five boroughs in DESIGN.md order, with their summary when the dataset has one. */
 export function getBoroughs(): BoroughEntry[] {
-  return BOROUGH_META.map((meta) => ({ ...meta, summary: BOROUGHS_BY_SLUG.get(meta.slug) ?? null }));
+  return BOROUGH_META.map(boroughEntry);
 }
 export function getBorough(slug: string): BoroughEntry | undefined {
   const meta = boroughBySlug(slug);
-  return meta ? { ...meta, summary: BOROUGHS_BY_SLUG.get(meta.slug) ?? null } : undefined;
+  return meta ? boroughEntry(meta) : undefined;
 }
 export function getRestaurantsInBorough(name: Borough): Restaurant[] {
   return DATA.restaurants.filter((r) => r.borough === name);
