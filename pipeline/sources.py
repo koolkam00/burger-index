@@ -16,15 +16,20 @@ import re
 import sys
 import threading
 from collections import Counter, defaultdict
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from rapidfuzz import fuzz, process
 
 from . import config
 from .chains import brand_of, is_national_chain
-from .names import address_in_text, display_case, display_name, norm_name, slugify
+from .names import (
+    address_in_text, address_tokens, at_address, display_case, display_name, named_addresses, norm_name, slugify,
+    strip_store_number,
+)
 
 DOHMH_DATASET = "43nn-pn8j"
 DOHMH_URL = f"https://data.cityofnewyork.us/resource/{DOHMH_DATASET}.json"
@@ -42,22 +47,69 @@ NOT_INSPECTED = "1900-01-01"
 # a re-permit months or years later is thousands apart.
 SAME_ISSUE_CAMIS_GAP = 1000
 
-# CSV neighborhoods no 2010 NTA name contains -> NTA code (only used for unmatched CSV rows).
-NEIGHBORHOOD_ALIASES = {
-    ("Manhattan", "greenwich village"): "MN23",
-    ("Manhattan", "meatpacking"): "MN23",
-    ("Manhattan", "meatpacking district"): "MN23",
-    ("Manhattan", "flatiron"): "MN13",
-    ("Manhattan", "nolita"): "MN24",
-    ("Manhattan", "financial district"): "MN25",
-    ("Manhattan", "hell's kitchen"): "MN15",
-    ("Manhattan", "hells kitchen"): "MN15",
-    ("Manhattan", "koreatown"): "MN17",
-    ("Manhattan", "noho"): "MN22",
-    ("Brooklyn", "bed-stuy"): "BK75",
-    ("Brooklyn", "bedford-stuyvesant"): "BK75",
-    ("Queens", "long island city"): "QN31",
+# CSV neighborhoods -> the 2010 NTAs they cover, primary first (keys are norm_name()d). Used to map
+# unmatched rows onto one NTA name (the primary) and, when matching a row to DOHMH, to decide whether a
+# record is "in the row's neighborhood" (any of them). Colloquial neighborhoods straddle NTA lines:
+# Court St is the Cobble Hill / Boerum Hill (BK38) / Carroll Gardens (BK33) line, DOHMH puts NoHo's
+# Great Jones and Elizabeth Streets in MN23, the UES is three NTAs. Only NTAs of the row's borough.
+NEIGHBORHOOD_ALIASES: dict[tuple[str, str], tuple[str, ...]] = {
+    ("Manhattan", "greenwich village"): ("MN23",),
+    ("Manhattan", "meatpacking"): ("MN23", "MN13"),
+    ("Manhattan", "meatpacking district"): ("MN23", "MN13"),
+    ("Manhattan", "west chelsea"): ("MN13",),
+    ("Manhattan", "chelsea"): ("MN13", "MN17"),
+    ("Manhattan", "flatiron"): ("MN13",),
+    ("Manhattan", "nomad"): ("MN13", "MN17"),
+    ("Manhattan", "nolita"): ("MN24",),
+    ("Manhattan", "noho"): ("MN23", "MN22"),
+    ("Manhattan", "east village"): ("MN22", "MN28"),
+    ("Manhattan", "lower east side"): ("MN27", "MN28"),
+    ("Manhattan", "les"): ("MN27", "MN28"),
+    ("Manhattan", "financial district"): ("MN25",),
+    ("Manhattan", "fidi"): ("MN25",),
+    ("Manhattan", "hells kitchen"): ("MN15", "MN17"),
+    ("Manhattan", "koreatown"): ("MN17",),
+    ("Manhattan", "midtown"): ("MN17", "MN19", "MN15"),
+    ("Manhattan", "midtown west"): ("MN17", "MN15"),
+    ("Manhattan", "times square"): ("MN17", "MN15"),
+    ("Manhattan", "theater district"): ("MN17", "MN15"),
+    ("Manhattan", "midtown east"): ("MN19", "MN20"),
+    ("Manhattan", "kips bay"): ("MN20", "MN21"),
+    ("Manhattan", "upper east side"): ("MN40", "MN31", "MN32"),
+    ("Manhattan", "ues"): ("MN40", "MN31", "MN32"),
+    ("Manhattan", "upper west side"): ("MN12", "MN14"),
+    ("Manhattan", "uws"): ("MN12", "MN14"),
+    ("Manhattan", "harlem"): ("MN11", "MN03", "MN06"),
+    ("Manhattan", "central harlem"): ("MN11", "MN03"),
+    ("Manhattan", "west harlem"): ("MN06", "MN04"),
+    ("Manhattan", "east harlem"): ("MN33", "MN34"),
+    ("Manhattan", "washington heights"): ("MN35", "MN36"),
+    ("Manhattan", "inwood"): ("MN01", "MN35"),
+    ("Brooklyn", "bed stuy"): ("BK75", "BK35"),
+    ("Brooklyn", "bedford stuyvesant"): ("BK75", "BK35"),
+    ("Brooklyn", "cobble hill"): ("BK09", "BK38", "BK33"),
+    ("Brooklyn", "carroll gardens"): ("BK33", "BK38"),
+    ("Brooklyn", "boerum hill"): ("BK38",),
+    ("Brooklyn", "williamsburg"): ("BK73", "BK72", "BK90"),
+    ("Brooklyn", "flatbush"): ("BK42", "BK60"),
+    ("Bronx", "throggs neck"): ("BX52",),
+    ("Bronx", "throgs neck"): ("BX52",),
+    ("Bronx", "fordham"): ("BX40", "BX05"),
+    ("Bronx", "concourse"): ("BX63", "BX14"),
+    ("Bronx", "kingsbridge"): ("BX29", "BX30"),
+    ("Bronx", "riverdale"): ("BX22", "BX29"),
+    ("Bronx", "south bronx"): ("BX39", "BX34", "BX35", "BX33", "BX27", "BX63", "BX14"),
+    ("Queens", "long island city"): ("QN31", "QN68"),
+    ("Queens", "lic"): ("QN31", "QN68"),
+    ("Queens", "astoria"): ("QN70", "QN71", "QN72"),
+    ("Queens", "flushing"): ("QN22", "QN52"),
+    ("Staten Island", "west brighton"): ("SI35", "SI22"),
+    ("Staten Island", "new springville"): ("SI05", "SI24"),
+    ("Staten Island", "grant city"): ("SI45", "SI24"),
+    ("Staten Island", "eltingville"): ("SI01", "SI54"),
 }
+_BOROUGH_WORDS = frozenset({"manhattan", "brooklyn", "queens", "bronx", "the bronx", "staten island", "nyc",
+                            "new york", "new york city"})
 
 # 2010 NTA names that mislead today, shown as current usage. MN27 'Chinatown' also covers the
 # Lower East Side west of Essex (Orchard, Ludlow, Eldridge); MN28 'Lower East Side' is the LES
@@ -253,6 +305,7 @@ def normalize_dohmh(row: dict, nta_map: dict[str, dict], zip_nta: dict[str, str]
         "csv_name": None,
         "csv_neighborhood": None,
         "csv_notes": None,
+        "csv_row": None,
         "match": None,
     }
 
@@ -299,37 +352,87 @@ def load_csv(path: Path = config.RESTAURANT_LIST_CSV) -> list[dict]:
     return out
 
 
-def neighborhood_to_nta(name: str | None, borough: str, nta_map: dict[str, dict]) -> str | None:
-    """Map a free-text neighborhood ("West Village") onto the 2010 NTA whose name contains it."""
-    if not name:
-        return None
+def _is_park_nta(code: str, v: dict) -> bool:
+    return code.endswith("99") or "park-cemetery" in (v.get("name") or "")
+
+
+def neighborhood_ntas(name: str | None, borough: str, nta_map: dict[str, dict]) -> tuple[str, ...]:
+    """Every 2010 NTA a free-text neighborhood ("Upper East Side", "UES", "Harlem") covers, primary first.
+
+    Curated aliases first (NEIGHBORHOOD_ALIASES), then an NTA named exactly that, then NTAs with a
+    name segment equal to it ('Lower East Side' -> MN27, MN28), then NTAs whose name contains it
+    (shortest first). A borough's own name and the park-cemetery NTAs never match."""
+    if not name or not name.strip():
+        return ()
+    key = norm_name(name)
+    if key in _BOROUGH_WORDS:
+        return ()
+    if (borough, key) in NEIGHBORHOOD_ALIASES:
+        return tuple(c for c in NEIGHBORHOOD_ALIASES[(borough, key)] if c in nta_map)
     n = name.strip().lower()
-    code = NEIGHBORHOOD_ALIASES.get((borough, n))
-    if code in nta_map:
-        return code
-    cands = [(c, v["name"]) for c, v in nta_map.items() if v.get("borough") == borough]
-    for c, nm in cands:
-        if nm.lower() == n:
-            return c
-    for c, nm in cands:
-        if n in [seg.strip().lower() for seg in nm.split("-")]:
-            return c
-    contains = sorted((len(nm), c) for c, nm in cands if n in nm.lower())
-    return contains[0][1] if contains else None
+    cands = sorted((c, v["name"]) for c, v in nta_map.items() if v.get("borough") == borough and not _is_park_nta(c, v))
+    exact = tuple(c for c, nm in cands if nm.lower() == n)
+    if exact:
+        return exact
+    segments = tuple(c for c, nm in cands if n in [seg.strip().lower() for seg in nm.split("-")])
+    if segments:
+        return segments
+    return tuple(c for _, c in sorted((len(nm), c) for c, nm in cands if n in nm.lower()))
+
+
+def neighborhood_to_nta(name: str | None, borough: str, nta_map: dict[str, dict]) -> str | None:
+    """The primary 2010 NTA for a free-text neighborhood ("West Village" -> MN23), or None."""
+    codes = neighborhood_ntas(name, borough, nta_map)
+    return codes[0] if codes else None
 
 
 # ---------------------------------------------------------------------------------------
 # CSV <-> DOHMH matching
 
 
-def _name_variants(row: dict) -> list[str]:
-    base = norm_name(row["name"])
+# Words that say what kind of place it is, not which one. They are dropped before two names are compared,
+# so 'PJ Brady's Bar and Restaurant' is P.J. BRADY'S TAVERN and not BRASAS RESTAURANT & BAR.
+GENERIC_NAME_WORDS = frozenset({
+    "the", "and", "a", "an", "of", "at", "n", "restaurant", "restaurants", "bar", "grill", "grille", "cafe", "kitchen",
+    "pub", "tavern", "lounge", "bistro", "diner", "eatery", "steakhouse", "nyc", "ny", "llc", "inc", "corp", "co",
+})
+# Ordinary words that never carry a match on their own (SPRING is not 'Spring Cafe', THE OFFICE is not 'At The
+# Office', THE JUNCTION is not 'The Junction Bar') and don't count as the word a renamed restaurant shares with
+# its row. Any word in COMMON_WORD_DF or more DOHMH names is common too (Matcher.df).
+COMMON_NAME_WORDS = GENERIC_NAME_WORDS | {
+    "spring", "bedford", "office", "junction", "burger", "burgers", "hamburger", "hamburgers", "beer", "pizza",
+    "chicken", "wings", "house", "hall", "club", "room", "social", "park", "corner", "square", "street", "avenue",
+    "new", "york", "city", "village", "hill", "heights", "brooklyn", "queens", "bronx", "manhattan", "island",
+    "american", "little", "big", "blue", "black", "golden", "royal", "king", "famous", "original", "classic", "best",
+    "good", "great", "fresh", "express", "deli", "shop", "market", "garden", "food", "coffee", "bakery", "juice",
+    "tea", "sushi", "taco", "tacos", "bbq", "steak", "prime", "smash", "craft", "brewery", "brewing", "cocktail",
+}
+COMMON_WORD_DF = 10
+NAME_ACCEPT = 86.0  # a name this similar is the same restaurant, when the location agrees
+NAME_AT_ADDRESS = 80.0  # ...and this similar is enough at the address the row names
+LIFTED = 82.0  # a multi-word name contained in the other, confirmed by the location
+
+
+def _paren_hints(name: str) -> tuple[str, list[str]]:
+    """'Emmy Squared (UES)' -> ('Emmy Squared', ['UES'])."""
+    hints = [h.strip() for h in re.findall(r"\(([^)]*)\)", name or "") if h.strip()]
+    return re.sub(r"\s*\([^)]*\)", " ", name or "").strip(), hints
+
+
+def _name_variants(row: dict, places: Iterable[str] = ()) -> list[str]:
+    """Normalized names to compare a row with: parenthetical qualifiers ('(UES)', '(Archer Hotel)') dropped,
+    then trailing neighborhood / hint / city / borough words ('Smashed NYC West Village' -> 'smashed nyc' ->
+    'smashed', 'SluttyVegan Brooklyn' -> 'sluttyvegan', 'Burgerology Midtown' -> 'burgerology' when `places`,
+    the row's NTA names, include Midtown), then a leading 'the'."""
+    bare, hints = _paren_hints(row["name"])
+    base = norm_name(bare) or norm_name(row["name"])
     variants = [base]
-    nb = norm_name(row.get("neighborhood"))
+    suffixes = [s for s in (norm_name(row.get("neighborhood")), *map(norm_name, hints), *map(norm_name, places),
+                            "nyc", "new york", "ny", *_BOROUGH_WORDS) if s]
     v, changed = base, True
-    while changed:  # "Smashed NYC West Village" -> "smashed nyc" -> "smashed"
+    while changed:
         changed = False
-        for suffix in filter(None, (nb, "nyc", "new york", "ny")):
+        for suffix in suffixes:
             if v.endswith(" " + suffix):
                 v = v[: -len(suffix) - 1].strip()
                 variants.append(v)
@@ -340,8 +443,35 @@ def _name_variants(row: dict) -> list[str]:
     return [v for v in dict.fromkeys(variants) if v]
 
 
+def _record_names(dba: str) -> list[str]:
+    """Normalized names of a DOHMH record: the dba, without store numbers, and each part of a combined dba
+    ('ACME / THE NINES', 'THE HIGH NOTE / POPCHEW', 'THOMPSON NEW YORK HOTEL (Burger Joint)')."""
+    parts = [dba, strip_store_number(dba)]
+    if "/" in dba:
+        parts += [strip_store_number(p) for p in dba.split("/")]
+    parts += re.findall(r"\(([^)]*)\)", dba)
+    names = (_strip_city(norm_name(p)) for p in parts)
+    return [n for n in dict.fromkeys(names) if len(n.replace(" ", "")) >= 2]
+
+
 def _strip_city(n: str) -> str:
     return re.sub(r"\s+(nyc|ny|new york)$", "", n)
+
+
+def _core(n: str) -> str:
+    return " ".join(w for w in n.split() if w not in GENERIC_NAME_WORDS)
+
+
+def _compact(n: str) -> str:
+    return n.replace(" ", "")
+
+
+def _sim(a: str, b: str) -> float:
+    return max(fuzz.token_sort_ratio(a, b), fuzz.ratio(_compact(a), _compact(b)))
+
+
+def _is_common(word: str, df: Mapping[str, int] | None = None) -> bool:
+    return word in COMMON_NAME_WORDS or len(word) <= 2 or (df is not None and df.get(word, 0) >= COMMON_WORD_DF)
 
 
 def _words_in_order(short: list[str], long: list[str]) -> bool:
@@ -349,20 +479,68 @@ def _words_in_order(short: list[str], long: list[str]) -> bool:
     return all(w in rest for w in short)
 
 
-def name_score(a: str, b: str) -> float:
-    """max(token_sort_ratio, ratio ignoring spaces), lifted to 90 when one multi-word name is
-    contained in the other: as a phrase ('peter luger' in 'peter luger steak house', 'the nines' in
-    'acme the nines'), or word by word in order from the same first word ('benjamin prime' in
-    'benjamin steakhouse prime'). Scattered shared words don't count: 'american bar' is not
-    "guy fieris american kitchen and bar", 'the club' is not 'the lambs club'."""
-    s = max(fuzz.token_sort_ratio(a, b), fuzz.ratio(a.replace(" ", ""), b.replace(" ", "")))
-    short, long = sorted((a, b), key=len)
-    ws, wl = re.sub(r"^the ", "", short).split(), re.sub(r"^the ", "", long).split()
-    if len(short.split()) >= 2 and len(short) >= 8 and (
-            re.search(rf"\b{re.escape(short)}\b", long)
-            or (len(ws) >= 2 and ws[0] == wl[0] and _words_in_order(ws, wl))):
+def _cores(a: str, b: str) -> tuple[str, str]:
+    """Both names without generic words, or both whole (minus a leading 'the') when that leaves too little."""
+    ca, cb = _core(a), _core(b)
+    if len(_compact(ca)) < 3 or len(_compact(cb)) < 3:
+        return re.sub(r"^the ", "", a), re.sub(r"^the ", "", b)
+    return ca, cb
+
+
+def name_score(a: str, b: str, df: Mapping[str, int] | None = None) -> float:
+    """How alike two normalized names are, 0-100, compared without generic words (bar, restaurant, the...).
+
+    max(token_sort_ratio, ratio ignoring spaces), lifted to 90 when one multi-word name starts the other or
+    runs through it word by word from the same first word ('peter luger' / 'peter luger steak house',
+    'benjamin prime' / 'benjamin steakhouse prime'). Containment anywhere else doesn't count ('burgers and
+    beer' is not 'black tap craft burgers and beer', 'american bar' is not "guy fieris american kitchen and
+    bar"), and a match that rests on one ordinary word is kept below the accept line ('spring cafe' /
+    'spring', 'the junction bar' / 'the junction'). Identical names always score 100."""
+    if _compact(a) == _compact(b):
+        return 100.0
+    ca, cb = _cores(a, b)
+    s = _sim(ca, cb)
+    ws, wl = sorted((ca.split(), cb.split()), key=len)
+    if len(ws) == 1 and _is_common(ws[0], df):
+        s = min(s, NAME_AT_ADDRESS - 1)
+    if len(ws) >= 2 and len(" ".join(ws)) >= 8 and ws[0] == wl[0] and _words_in_order(ws, wl):
         s = max(s, 90.0)
     return s
+
+
+def _contained(a: str, b: str) -> bool:
+    """One name's words (two or more, generic words aside) all appear in the other: 'blue collar' in
+    'blue collar burger'. The shorter name alone isn't enough evidence; the location has to agree."""
+    ca, cb = _cores(a, b)
+    ws, wl = sorted((ca.split(), cb.split()), key=len)
+    return len(ws) >= 2 and set(ws) <= set(wl)
+
+
+def _same_name(a: str, b: str, df: Mapping[str, int] | None = None) -> bool:
+    """The same name, spacing, punctuation and generic words aside ('pj bradys bar and restaurant' /
+    'p j bradys tavern', 'the nines' / 'nines'), and more than one ordinary word ('spring' / 'spring')."""
+    ca, cb = _cores(a, b)
+    if _compact(ca) != _compact(cb) and _compact(a) != _compact(b):
+        return False
+    words = ca.split()
+    return len(words) >= 2 or not _is_common(words[0], df)
+
+
+def _shares_word(a: str, b: str) -> bool:
+    """A renamed or company-registered restaurant at the row's address still shares a real word with it:
+    'Holy Cow' / HOLY BURGER, 'Cask Bar & Kitchen' / CASK, 'Popchew Burger' / THE HIGH NOTE / POPCHEW, or an
+    initialism ('SI Diner' / STATEN ISLAND DINER)."""
+    wa, wb = a.split(), b.split()
+    if {w for w in wa if len(w) >= 3 and w not in COMMON_NAME_WORDS} & set(wb):
+        return True
+    for short, long in ((wa, wb), (wb, wa)):
+        words = [w for w in long if w != "the"]
+        for t in short:
+            n = len(t)
+            if 2 <= n <= 4 and t.isalpha() and any(
+                    "".join(w[0] for w in words[i:i + n]) == t for i in range(len(words) - n + 1)):
+                return True
+    return False
 
 
 def _address_in_urls(rec: dict, urls: str) -> bool:
@@ -375,64 +553,199 @@ def _address_in_urls(rec: dict, urls: str) -> bool:
     return bool(re.search(rf"(?<!\d){number}(?!\d)", urls)) and (word is None or word in urls)
 
 
-def match_csv_row(
-    row: dict,
-    candidates: list[tuple[str, dict]],
-    nta_map: dict[str, dict],
-    min_date: str,
-) -> tuple[dict | None, float, str]:
-    """Best DOHMH record for a restaurant-list row (same borough), or None. Returns (record, score, method)."""
-    if not candidates:
-        return None, 0.0, "no candidates"
-    choices = [_strip_city(c[0]) for c in candidates]
-    compact = [c.replace(" ", "") for c in choices]
-    pool: dict[int, float] = {}
-    subset: set[int] = set()  # one name fully contained in the other
-    for v in _name_variants(row):
-        hits = {idx: ts for _, ts, idx in process.extract(v, choices, scorer=fuzz.token_set_ratio, score_cutoff=80, limit=None)}
-        for _, _, idx in process.extract(v.replace(" ", ""), compact, scorer=fuzz.ratio, score_cutoff=85, limit=None):
-            hits.setdefault(idx, 0.0)
-        for idx, ts in hits.items():
-            s = name_score(v, choices[idx])
-            pool[idx] = max(pool.get(idx, 0.0), s)
-            if ts == 100 and min(len(v), len(choices[idx])) >= 5:
-                subset.add(idx)
-    if not pool:
-        return None, 0.0, "no similar name"
-    csv_nta = neighborhood_to_nta(row.get("neighborhood"), row["borough"], nta_map)
-    csv_nb = (row.get("neighborhood") or "").lower()
-    urls = " ".join(filter(None, (row.get("website"), row.get("menu_url")))).lower()
-    scored = []
-    for idx, s in pool.items():
-        rec = candidates[idx][1]
-        bonus = 0.0
-        nb_ok = bool(rec.get("nta") and (rec["nta"] == csv_nta or (csv_nb and csv_nb in (rec.get("neighborhood") or "").lower())))
-        # the pilot URL names this exact address (e.g. /296-bleecker-st), or its notes do ('at 320 W 36th')
-        url_ok = _address_in_urls(rec, urls)
-        notes_ok = not url_ok and address_in_text(rec.get("address"), row.get("notes"))
-        addr_ok = url_ok or notes_ok
-        bonus += 6 if nb_ok else 0
-        bonus += 15 if addr_ok else 0
-        bonus += 2 if is_recent(rec, min_date) else -5
-        bonus += 3 if choices[idx] in _name_variants(row) else 0
-        lifted = idx in subset and (nb_ok or addr_ok)  # "Keens" vs "KEENS STEAKHOUSE" in the same NTA
-        if lifted:
-            s = max(s, 82.0)
-        accept = s >= 86 or lifted or (s >= 80 and addr_ok)
-        scored.append((s + bonus, s, accept, nb_ok, addr_ok, rec["camis"], rec, url_ok))
-    # An acceptable candidate in the pilot row's neighborhood (or at the address its URL or notes
-    # name) beats any name match elsewhere: 'Burger Joint', Midtown is the hotel counter on
-    # W 57th St, not the BURGER JOINT on W 31st St.
-    located = [x for x in scored if x[2] and (x[3] or x[4])]
-    if located:
-        scored = located
-    scored.sort(key=lambda t: (-t[0], t[5]))
-    total, s, accept, nb_ok, addr_ok, _, rec, url_ok = scored[0]
-    if not accept:
-        return None, s, f"best candidate {rec['dba']!r} scored {s:.0f}"
-    method = ("name" + ("+neighborhood" if nb_ok else "") + ("+url-address" if url_ok else "")
-              + ("+notes-address" if addr_ok and not url_ok else ""))
-    return rec, s, method
+@dataclass
+class _Pool:
+    """DOHMH records a row may match: one borough (or all of NYC) and one national-chain status."""
+
+    records: list[dict] = field(default_factory=list)
+    names: list[str] = field(default_factory=list)  # every record name, flattened
+    owner: list[int] = field(default_factory=list)  # names[i] belongs to records[owner[i]]
+    record_names: list[list[str]] = field(default_factory=list)
+    by_address: dict[tuple[str, ...], list[int]] = field(default_factory=lambda: defaultdict(list))
+
+    def add(self, rec: dict) -> None:
+        i = len(self.records)
+        self.records.append(rec)
+        rn = _record_names(rec["dba"])
+        self.record_names.append(rn)
+        for n in rn:
+            self.names.append(n)
+            self.owner.append(i)
+        tokens = address_tokens(rec.get("address"))
+        if len(tokens) >= 2 and tokens[0].isdigit():
+            self.by_address[tuple(tokens[:2])].append(i)
+
+    def finish(self) -> None:
+        self.compact = [_compact(n) for n in self.names]
+        self.core_compact = [_compact(_core(n)) for n in self.names]
+
+    def similar(self, variants: list[str], df: Mapping[str, int]) -> dict[int, float]:
+        """Records whose name is anywhere near one of the row's names -> best name_score."""
+        idx: set[int] = set()
+        for v in variants:
+            idx.update(i for _, _, i in process.extract(v, self.names, scorer=fuzz.token_set_ratio, score_cutoff=80,
+                                                        limit=None))
+            idx.update(i for _, _, i in process.extract(_compact(v), self.compact, scorer=fuzz.ratio, score_cutoff=85,
+                                                        limit=None))
+            core = _compact(_core(v))
+            if len(core) >= 3:
+                idx.update(i for _, _, i in process.extract(core, self.core_compact, scorer=fuzz.ratio,
+                                                            score_cutoff=90, limit=None))
+        return {r: max(name_score(v, n, df) for v in variants for n in self.record_names[r])
+                for r in {self.owner[i] for i in idx}}
+
+    def at(self, key: list[str]) -> list[int]:
+        return [i for i in self.by_address.get(tuple(key[:2]), []) if at_address(self.records[i].get("address"), key)]
+
+
+@dataclass
+class _Candidate:
+    row: int  # index into csv_rows
+    rec: dict
+    score: float  # name score
+    tier: int  # 2 at the address the row names, 1 in its neighborhood, 0 a unique name elsewhere
+    total: float  # ranks candidates within a tier
+    method: str
+
+    @property
+    def key(self) -> tuple[int, float]:
+        return self.tier, round(self.total, 1)
+
+
+def _describe(rec: dict) -> dict:
+    return {"camis": rec["camis"], "dba": rec["dba"], "address": rec.get("address"),
+            "neighborhood": rec.get("neighborhood")}
+
+
+class Matcher:
+    """Scores restaurant-list rows against DOHMH records (same borough, same national-chain status).
+
+    A candidate is accepted when the location agrees and the name is close enough:
+    - tier 2: at an address the row's notes or URLs name (a renamed restaurant or one registered under a
+      company name counts when it still shares a real word with the row: 'Holy Cow' / HOLY BURGER);
+    - tier 1: in one of the row's neighborhood NTAs (its CSV neighborhood and parenthetical hints) with a
+      name score >= NAME_ACCEPT, or a multi-word name contained in the other;
+    - tier 0: elsewhere in the borough only when the name is the same and no other DOHMH record in NYC has
+      it (a one-location restaurant whose CSV neighborhood is off), and never a not-yet-inspected permit.
+    A row that names an address never matches a record somewhere else."""
+
+    def __init__(self, records: list[dict], nta_map: dict[str, dict], min_date: str):
+        self.nta_map, self.min_date = nta_map, min_date
+        self.df = Counter(w for r in records for w in set(norm_name(r["dba"]).split()))
+        self.pools: dict[tuple[str | None, str | None], _Pool] = defaultdict(_Pool)
+        for r in records:
+            slug = _national_slug(r)
+            self.pools[(r["borough"], slug)].add(r)
+            self.pools[(None, slug)].add(r)  # all of NYC: is a name unique?
+        for p in self.pools.values():
+            p.finish()
+
+    def row_ntas(self, row: dict) -> set[str]:
+        codes = set(neighborhood_ntas(row.get("neighborhood"), row["borough"], self.nta_map))
+        for hint in _paren_hints(row["name"])[1]:
+            codes.update(neighborhood_ntas(hint, row["borough"], self.nta_map))
+        return codes
+
+    def candidates(self, i: int, row: dict) -> tuple[list[_Candidate], str, dict]:
+        """(accepted candidates, why none was when empty, {'named': [...], 'at_address': [...]})."""
+        slug = _national_slug({"csv_name": row["name"], "name": row["name"]})
+        pool = self.pools.get((row["borough"], slug))
+        info: dict[str, Any] = {"named": [], "at_address": []}
+        if pool is None:
+            return [], "no candidates", info
+        ntas = self.row_ntas(row)
+        places = {seg for c in ntas for seg in self.nta_map[c]["name"].split("-")}
+        variants = _name_variants(row, sorted(places, key=len, reverse=True))
+        urls = " ".join(filter(None, (row.get("website"), row.get("menu_url"))))
+        notes = row.get("notes") or ""
+        named_notes, named_urls = named_addresses(notes), named_addresses(urls)
+        named = named_notes + [k for k in named_urls if k not in named_notes]
+        info["named"] = [" ".join(k) for k in named]
+        scores = pool.similar(variants, self.df)
+        for key in named:
+            for r in pool.at(key):
+                info["at_address"].append(_describe(pool.records[r]))
+                if r not in scores:
+                    scores[r] = max(name_score(v, n, self.df) for v in variants for n in pool.record_names[r])
+        if not scores:
+            return [], "no similar name", info
+        out: list[_Candidate] = []
+        rejected: list[tuple[float, str]] = []
+        for r, s in scores.items():
+            rec, names = pool.records[r], pool.record_names[r]
+            pairs = [(v, n) for v in variants for n in names]
+            nb_ok = bool(rec.get("nta")) and rec["nta"] in ntas
+            url_ok = _address_in_urls(rec, urls.lower()) or any(at_address(rec.get("address"), k) for k in named_urls)
+            notes_ok = address_in_text(rec.get("address"), notes) or any(at_address(rec.get("address"), k)
+                                                                         for k in named_notes)
+            addr_ok = url_ok or notes_ok
+            contained = any(_contained(v, n) for v, n in pairs)
+            where = f"{rec['dba']!r} ({rec.get('address')}, {rec.get('neighborhood')})"
+            if addr_ok and (s >= NAME_AT_ADDRESS or contained or any(_shares_word(v, n) for v, n in pairs)):
+                tier, how = 2, ("name" if s >= NAME_AT_ADDRESS or contained else "name-word")
+            elif named and not addr_ok:
+                rejected.append((s, f"{where} is not at the address the row names ({'; '.join(info['named'])})"))
+                continue
+            elif nb_ok and (s >= NAME_ACCEPT or contained):
+                tier, how = 1, "name"
+                s = max(s, LIFTED)
+            elif nb_ok or s < NAME_ACCEPT:
+                rejected.append((s, f"best candidate {rec['dba']!r} scored {s:.0f}"))
+                continue
+            elif rec.get("last_inspection") in (None, NOT_INSPECTED):
+                rejected.append((s, f"{where} is outside the row's neighborhood and not yet inspected"))
+                continue
+            elif not any(_same_name(v, n, self.df) for v, n in pairs) or not self._unique(variants, slug):
+                rejected.append((s, f"{where} is only a name match outside the row's neighborhood"))
+                continue
+            else:
+                tier, how = 0, "name-unique"
+            total = (s + (6 if nb_ok else 0) + (15 if addr_ok else 0) + (2 if is_recent(rec, self.min_date) else -5)
+                     + (3 if any(v == n for v, n in pairs) else 0))
+            method = how + ("+neighborhood" if nb_ok else "") + ("+url-address" if url_ok else "") + (
+                "+notes-address" if notes_ok and not url_ok else "")
+            out.append(_Candidate(i, rec, s, tier, total, method))
+        if out:
+            return out, "", info
+        best = max(rejected, key=lambda t: t[0])
+        return [], best[1], info
+
+    def _unique(self, variants: list[str], slug: str | None) -> bool:
+        """Exactly one DOHMH record in NYC (same national-chain status) has this name or a near one."""
+        return sum(1 for s in self.pools[(None, slug)].similar(variants, self.df).values() if s >= NAME_ACCEPT) == 1
+
+
+def assign_matches(cands: list[_Candidate]) -> tuple[dict[int, _Candidate], dict[int, list[_Candidate]],
+                                                     dict[int, tuple[_Candidate, int]]]:
+    """Give each DOHMH record to at most one row, strongest evidence first, independent of CSV order.
+
+    Every (row, record) pair is ranked by (tier, total); pairs are taken best first. A row whose best
+    record was already taken falls back to its next one (claimed records excluded). When a row's best
+    remaining records tie, it is ambiguous: none is taken for it. Returns (row -> match, row -> tied
+    candidates, row -> (best candidate, the row that took it)) for rows left without a record."""
+    by_row: dict[int, list[_Candidate]] = defaultdict(list)
+    for c in cands:
+        by_row[c.row].append(c)
+    order = sorted(cands, key=lambda c: (-c.tier, -c.total, c.row, int(c.rec["camis"]) if c.rec["camis"].isdigit()
+                                         else 0))
+    claimed: dict[str, int] = {}
+    matched: dict[int, _Candidate] = {}
+    ambiguous: dict[int, list[_Candidate]] = {}
+    for c in order:
+        if c.row in matched or c.row in ambiguous or c.rec["camis"] in claimed:
+            continue
+        tied = [o for o in by_row[c.row] if o.key == c.key and o.rec["camis"] not in claimed]
+        if len(tied) > 1:
+            ambiguous[c.row] = tied
+            continue
+        matched[c.row] = c
+        claimed[c.rec["camis"]] = c.row
+    lost: dict[int, tuple[_Candidate, int]] = {}
+    for row, cs in by_row.items():  # every record this row could take went to a stronger claim
+        if row not in matched and row not in ambiguous:
+            best = min(cs, key=lambda c: (-c.tier, -c.total))
+            lost[row] = (best, claimed[best.rec["camis"]])
+    return matched, ambiguous, lost
 
 
 # ---------------------------------------------------------------------------------------
@@ -519,26 +832,23 @@ def build_restaurants(
         raise ScopeError(f"--cuisines: no DOHMH restaurant has cuisine {', '.join(hints)}; "
                          "values must match cuisine_description exactly (case-insensitive)")
     records, repermits = drop_superseded_permits(records)
-    by_boro: dict[tuple[str, str | None], list[tuple[str, dict]]] = defaultdict(list)
-    for r in records:
-        by_boro[(r["borough"], _national_slug(r))].append((norm_name(r["dba"]), r))
+    matcher = Matcher(records, nta_map, min_date)
+    found = [matcher.candidates(i, row) for i, row in enumerate(csv_rows)]
+    matched, ambiguous, lost = assign_matches([c for cands, _, _ in found for c in cands])
 
     report: dict[str, Any] = {
         "csv_rows": len(csv_rows), "csv_matched": 0, "csv_unmatched": [], "csv_duplicate_matches": [],
+        "csv_ambiguous": [], "csv_stale_matches": [], "csv_address_now_other_business": [],
         "dohmh_records": len(records), "dohmh_dropped_boro": len(latest) - len(records) - len(repermits),
         "dohmh_superseded_permits": repermits,
     }
     out: list[dict] = []
     seen: set[str] = set()
     keys: set[str] = set()
-    for row in csv_rows:
-        pool = by_boro.get((row["borough"], _national_slug({"csv_name": row["name"], "name": row["name"]})), [])
-        rec, score, method = match_csv_row(row, pool, nta_map, min_date)
-        if rec is not None and rec["camis"] in seen:
-            report["csv_duplicate_matches"].append({"row": row["row"], "name": row["name"], "camis": rec["camis"]})
-            rec = None
-            method = "duplicate match"
-        if rec is not None:
+    for i, row in enumerate(csv_rows):
+        c = matched.get(i)
+        if c is not None:
+            rec = c.rec
             r = dict(rec)
             if not r["nta"]:  # DOHMH record without NTA/zip: fall back to the CSV neighborhood
                 nta = neighborhood_to_nta(row["neighborhood"], row["borough"], nta_map)
@@ -547,12 +857,32 @@ def build_restaurants(
             r.update(
                 name=row["name"], website=row["website"], menu_url=row["menu_url"], csv=True,
                 csv_name=row["name"], csv_neighborhood=row["neighborhood"], csv_notes=row["notes"],
-                match={"score": round(score, 1), "method": method, "dba": rec["dba"]},
+                csv_row=row["row"], match={"score": round(c.score, 1), "method": c.method, "dba": rec["dba"]},
             )
             seen.add(rec["camis"])
             report["csv_matched"] += 1
+            last = rec.get("last_inspection")
+            if last and last != NOT_INSPECTED and last < min_date:  # flagged, not dropped: it may still be open
+                report["csv_stale_matches"].append({"row": row["row"], "name": row["name"], "camis": rec["camis"],
+                                                    "dba": rec["dba"], "last_inspection": last})
         else:
-            nta = neighborhood_to_nta(row["neighborhood"], row["borough"], nta_map)
+            _, why, info = found[i]
+            if i in ambiguous:
+                tied = ambiguous[i]
+                report["csv_ambiguous"].append({"row": row["row"], "name": row["name"],
+                                                "candidates": [_describe(o.rec) for o in tied]})
+                why = f"ambiguous: {len(tied)} records tie"
+            elif i in lost:
+                best, first = lost[i]
+                report["csv_duplicate_matches"].append({"row": row["row"], "name": row["name"],
+                                                        "camis": best.rec["camis"], "first_row": csv_rows[first]["row"]})
+                why = "duplicate match"
+            elif info["at_address"]:  # the address the row names now holds another business
+                report["csv_address_now_other_business"].append({
+                    "row": row["row"], "name": row["name"], "address": "; ".join(info["named"]),
+                    "now": [f"{d['dba']} ({d['camis']})" for d in info["at_address"]]})
+            nta = neighborhood_to_nta(row["neighborhood"], row["borough"], nta_map) or next(
+                (x for h in _paren_hints(row["name"])[1] for x in neighborhood_ntas(h, row["borough"], nta_map)), None)
             key = f"csv:{slugify(row['name'])}-{slugify(row['borough'])}"
             if key in keys:  # same name and borough as an earlier row: keep keys (and results) apart
                 key = f"{key}-{slugify(row['neighborhood']) or 'row'}-{row['row']}"
@@ -564,9 +894,9 @@ def build_restaurants(
                 "nta_source": "csv-neighborhood" if nta else None,
                 "cuisine": None, "last_inspection": None, "website": row["website"], "menu_url": row["menu_url"],
                 "csv": True, "csv_name": row["name"], "csv_neighborhood": row["neighborhood"], "csv_notes": row["notes"],
-                "match": None,
+                "csv_row": row["row"], "match": None,
             }
-            report["csv_unmatched"].append({"row": row["row"], "name": row["name"], "why": method})
+            report["csv_unmatched"].append({"row": row["row"], "name": row["name"], "why": why})
         keys.add(r["key"])
         out.append(r)
 

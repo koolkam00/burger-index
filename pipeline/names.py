@@ -138,3 +138,40 @@ def address_in_text(address: str | None, text: str | None) -> bool:
     key = a[:3]
     t = address_tokens(text)
     return any(t[i:i + len(key)] == key for i in range(len(t) - len(key) + 1))
+
+
+_DIR = r"(?:[nsew]\.?|north|south|east|west)"
+_STREET_TYPE = (r"(?:st|street|ave|avenue|av|blvd|boulevard|rd|road|pl|place|ln|lane|dr|drive|pkwy|parkway|plaza|"
+                r"terrace|ter|tpke|turnpike|sq|square)\b")
+# A street address written out in free text or a URL slug. The street must look like one: a direction
+# and a numbered street ('320 W 36th', '133 W 33rd'), a numbered street with a type ('153 8th Ave',
+# '23-14 36th Ave'), one or two words with a type ('549 Main St', '301 South End Ave', '34-canal-st'),
+# or Broadway / the Bowery. '4 oz patties', '24-hour diner' and 'since 1987' are not addresses.
+_NOT_STREET = r"(?:on|in|at|the|and|of|near|off|by|to|from|for|with|since|our)\b"
+_ADDRESS_RE = re.compile(
+    rf"\b\d{{1,5}}(?:-\d{{1,3}})?\s+(?:"
+    rf"{_DIR}\s+\d{{1,3}}(?:st|nd|rd|th)?\b(?:\s+{_STREET_TYPE})?"
+    rf"|\d{{1,3}}(?:st|nd|rd|th)?\s+{_STREET_TYPE}"
+    rf"|(?:{_DIR}\s+)?(?!{_NOT_STREET})[a-z]{{2,}}(?:\s+(?!{_NOT_STREET})[a-z]{{2,}})?\s+{_STREET_TYPE}"
+    rf"|(?:broadway|bowery)\b)",
+    re.I,
+)
+
+
+def named_addresses(text: str | None) -> list[list[str]]:
+    """Street addresses a note or URL names, as address_tokens() keys (house number + up to two street
+    words): 'Craft beer hall at 1125 1st Ave' -> [['1125', '1', 'ave']];
+    '.../holy-cow-lower-east-side-34-canal-st' -> [['34', 'canal', 'st']]."""
+    text = re.sub(r"[-_/.?=&+]+(?=[a-z])|(?<=[a-z])[-_/.?=&+]+", " ", text or "", flags=re.I)  # URL slugs
+    keys = []
+    for m in _ADDRESS_RE.finditer(text):
+        key = address_tokens(m.group(0))[:3]
+        if len(key) >= 2 and key not in keys:
+            keys.append(key)
+    return keys
+
+
+def at_address(address: str | None, key: list[str]) -> bool:
+    """True when a DOHMH address ('1125 1 Avenue') is the address a named_addresses() key names."""
+    a = address_tokens(address)
+    return len(key) >= 2 and a[: len(key)] == key
