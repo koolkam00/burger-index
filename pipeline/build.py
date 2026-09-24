@@ -7,13 +7,14 @@ import math
 import os
 import statistics
 import threading
-from decimal import ROUND_HALF_UP, Decimal
 from collections import Counter, defaultdict
+from collections.abc import Iterable, Mapping
 from datetime import datetime, timezone
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
-from typing import Iterable
 
-from . import config, corrections as corrections_mod, extract
+from . import config, extract
+from . import corrections as corrections_mod
 from .chains import Target, is_airport
 from .models import AreaSummary, Burger, BurgerIndex, Restaurant, Stats
 from .names import slugify
@@ -27,14 +28,21 @@ INDEX_PRICE_RULE = (
     "and each chain counts once, however many locations it has (they share one scraped menu). Borough and "
     "neighborhood figures count a chain at most once per area."
 )
-SOURCES = [
-    "NYC DOHMH Restaurant Inspection Results (NYC Open Data 43nn-pn8j): restaurant list, addresses, coordinates, cuisine.",
+# methodology.sources: our list first, then what each dataset supplies (sources() words DOHMH's part
+# from the scope: with the list only, DOHMH adds no restaurants).
+LIST_SOURCE = "The Burger Index restaurant list: a curated list of NYC burger restaurants."
+DOHMH_SOURCE = "NYC DOHMH Restaurant Inspection Results (NYC Open Data 43nn-pn8j)"
+DOHMH_MATCHED = "addresses, coordinates, neighborhoods and cuisine for the restaurants on our list that match its records"
+NTA_SOURCE = (
     "2010 Neighborhood Tabulation Areas (NYC Open Data 8ius-dhrr): neighborhood names, a few relabeled to current "
-    "usage (" + ", ".join(f"{code} as {name}" for code, name in NTA_DISPLAY_OVERRIDES.items()) + ").",
-    "The Burger Index restaurant list: a curated list of NYC burger restaurants.",
+    "usage (" + ", ".join(f"{code} as {name}" for code, name in NTA_DISPLAY_OVERRIDES.items()) + ")."
+)
+MENU_SOURCE = (
     "Menu prices from each restaurant's own site or menu PDF, online-ordering pages, menu aggregators and "
-    "delivery apps, read with Context.dev web scraping.",
-]
+    "delivery apps, read with Context.dev web scraping."
+)
+# How many excluded national chains coverage_note names (most locations on the list first).
+NATIONAL_EXAMPLES = 4
 
 
 class DatasetInvalid(RuntimeError):
@@ -181,9 +189,42 @@ def area_summaries(restaurants: list[Restaurant], level: str) -> list[AreaSummar
     return out
 
 
-def coverage_note(meta: dict, n_restaurants: int, n_pending: int, n_airport: int = 0) -> str:
-    """n_restaurants: rows in the dataset; n_pending: restaurants in scope but not yet scraped."""
-    cuisines = ", ".join(meta["cuisines"] if isinstance(meta.get("cuisines"), list) else config.DEFAULT_CUISINES)
+def _cuisines(meta: dict) -> list[str]:
+    """DOHMH cuisines added to the list (meta['cuisines']; [] = the list only)."""
+    return list(meta["cuisines"]) if isinstance(meta.get("cuisines"), list) else list(config.DEFAULT_CUISINES)
+
+
+def sources(meta: dict) -> list[str]:
+    """methodology.sources for this scope: the curated list first, then DOHMH, which only matches the
+    list's rows (address, coordinates, neighborhood, cuisine) unless --cuisines adds its restaurants."""
+    cuisines = _cuisines(meta)
+    if cuisines:
+        since = meta.get("min_inspection_date") or config.DEFAULT_MIN_INSPECTION
+        dohmh = (f"{DOHMH_SOURCE}: every restaurant it lists under '{', '.join(cuisines)}' with an inspection since "
+                 f"{since} (or not yet inspected), and {DOHMH_MATCHED}.")
+    else:
+        dohmh = f"{DOHMH_SOURCE}: {DOHMH_MATCHED}."
+    return [LIST_SOURCE, dohmh, NTA_SOURCE, MENU_SOURCE]
+
+
+def national_chain_examples(excluded: Mapping[str, int] | None, n: int = NATIONAL_EXAMPLES) -> str | None:
+    """'Shake Shack, Five Guys, McDonald's, White Castle and the like': the n national chains with the
+    most locations left out (report.national_chains_excluded: display name -> locations), or None."""
+    ranked = sorted((excluded or {}).items(), key=lambda kv: (-kv[1], kv[0].casefold()))
+    # web/src/lib/scope.ts reads the examples back as the text inside one pair of parentheses
+    names = [name for name, _ in ranked if "(" not in name and ")" not in name][:n]
+    return f"{', '.join(names)} and the like" if names else None
+
+
+def coverage_note(meta: dict, n_restaurants: int, n_pending: int, n_airport: int = 0, *,
+                  national_excluded: Mapping[str, int] | None = None, matched: int | None = None) -> str:
+    """n_restaurants: rows in the dataset; n_pending: restaurants in scope but not yet scraped;
+    national_excluded: report.national_chains_excluded (named as examples); matched: restaurants in
+    scope with a DOHMH record (said for the list-only scope, where every restaurant is a list row).
+
+    web/src/lib/scope.ts parses this note (its LIST_ONLY, WITH_CUISINES, NATIONAL and PENDING
+    patterns and the leading count): keep those phrases when rewording it."""
+    cuisines = ", ".join(_cuisines(meta))
     in_scope = n_restaurants + n_pending
     note = f"{in_scope} restaurant{'s' if in_scope != 1 else ''}{' in scope' if n_pending else ''}: "
     if cuisines:
@@ -192,10 +233,13 @@ def coverage_note(meta: dict, n_restaurants: int, n_pending: int, n_airport: int
                  "(or not yet inspected)")
     else:
         note += ("our curated list of NYC burger restaurants, matched to NYC DOHMH inspection records for address "
-                 "and location")
+                 "and location where possible")
+        if matched is not None:
+            note += f" ({matched} of {in_scope})"
     if (meta.get("national_chains") or config.DEFAULT_NATIONAL_CHAINS) == "exclude":
-        note += (", except national fast-food chains (McDonald's, Burger King, Wendy's, Shake Shack and the "
-                 "like). NYC's own small chains stay in. ")
+        examples = national_chain_examples(national_excluded)
+        note += (", except national fast-food chains" + (f" ({examples})" if examples else "")
+                 + ". NYC's own small chains stay in. ")
     else:
         note += ". "
     if n_pending:
@@ -233,9 +277,12 @@ def assemble(
     generated_at: str | None = None,
     n_pending_restaurants: int = 0,
     corrections: list[dict] | None = None,
+    report: dict | None = None,
 ) -> BurgerIndex:
     """corrections: hand-checked fixes (pipeline/corrections.py) applied on top of the scraped
-    results; the CLI passes pipeline/data/corrections.json, tests pass their own."""
+    results; the CLI passes pipeline/data/corrections.json, tests pass their own.
+    report: the match report from data/restaurants.json (national_chains_excluded names the chains
+    the coverage note gives as examples)."""
     results = corrections_mod.apply(results, corrections or [])
     # Ids are assigned over every restaurant in scope, scraped or not, so an id does not change
     # when a namesake in the same neighborhood gets scraped later (/restaurants/<id> permalinks).
@@ -287,14 +334,18 @@ def assemble(
         })
     restaurants.sort(key=lambda r: r["id"])
     generated_at = generated_at or datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    meta = meta or {}
+    note = coverage_note(meta, len(restaurants), n_pending_restaurants, n_airport,
+                         national_excluded=(report or {}).get("national_chains_excluded"),
+                         matched=sum(1 for m, _, _ in everyone if m.get("camis")))
     return {
         "version": 1,
         "generated_at": generated_at,
         "currency": "USD",
         "methodology": {
             "index_price_rule": INDEX_PRICE_RULE,
-            "sources": SOURCES,
-            "coverage_note": coverage_note(meta or {}, len(restaurants), n_pending_restaurants, n_airport),
+            "sources": sources(meta),
+            "coverage_note": note,
         },
         "stats": compute_stats(restaurants, menu_sources),
         "boroughs": area_summaries(restaurants, "borough"),

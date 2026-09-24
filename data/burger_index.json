@@ -1,16 +1,16 @@
 {
  "version": 1,
- "generated_at": "2026-09-24T02:12:01Z",
+ "generated_at": "2026-09-24T07:01:27Z",
  "currency": "USD",
  "methodology": {
   "index_price_rule": "A restaurant's index price is its cheapest beef burger: the burger by itself (no combo or meal upgrade, no add-ons), single/standard size, at its dinner or all-day menu price. Lunch, brunch or late-night prices count only when no beef burger on the menu has a dinner or all-day price; happy-hour prices are left out. The Burger Index is the median index price across distinct menus: every independent restaurant counts once and each chain counts once, however many locations it has (they share one scraped menu). Borough and neighborhood figures count a chain at most once per area.",
   "sources": [
-   "NYC DOHMH Restaurant Inspection Results (NYC Open Data 43nn-pn8j): restaurant list, addresses, coordinates, cuisine.",
-   "2010 Neighborhood Tabulation Areas (NYC Open Data 8ius-dhrr): neighborhood names, a few relabeled to current usage (MN27 as Chinatown-Lower East Side, MN28 as Lower East Side-Alphabet City, BK72 as South Williamsburg, BK73 as Williamsburg).",
    "The Burger Index restaurant list: a curated list of NYC burger restaurants.",
+   "NYC DOHMH Restaurant Inspection Results (NYC Open Data 43nn-pn8j): addresses, coordinates, neighborhoods and cuisine for the restaurants on our list that match its records.",
+   "2010 Neighborhood Tabulation Areas (NYC Open Data 8ius-dhrr): neighborhood names, a few relabeled to current usage (MN27 as Chinatown-Lower East Side, MN28 as Lower East Side-Alphabet City, BK72 as South Williamsburg, BK73 as Williamsburg).",
    "Menu prices from each restaurant's own site or menu PDF, online-ordering pages, menu aggregators and delivery apps, read with Context.dev web scraping."
   ],
-  "coverage_note": "658 restaurants in scope: our curated list of NYC burger restaurants, matched to NYC DOHMH inspection records for address and location, except national fast-food chains (McDonald's, Burger King, Wendy's, Shake Shack and the like). NYC's own small chains stay in. 80 of them are in this dataset; the other 578 are not yet scraped. Chain locations share one menu price scraped from a single NYC location. Delivery-app prices usually run above in-store prices."
+  "coverage_note": "608 restaurants in scope: our curated list of NYC burger restaurants, matched to NYC DOHMH inspection records for address and location where possible (500 of 608), except national fast-food chains (Shake Shack, Five Guys, McDonald's, Tex's Chicken & Burgers and the like). NYC's own small chains stay in. 80 of them are in this dataset; the other 528 are not yet scraped. Chain locations share one menu price scraped from a single NYC location. Delivery-app prices usually run above in-store prices."
  },
  "stats": {
   "restaurants_scanned": 80,
@@ -109,12 +109,12 @@
    "slug": "soho-tribeca-civic-center-little-italy",
    "name": "SoHo-TriBeCa-Civic Center-Little Italy",
    "borough": "Manhattan",
-   "restaurants": 4,
-   "restaurants_priced": 2,
-   "burgers": 6,
-   "index_median": 12.43,
+   "restaurants": 5,
+   "restaurants_priced": 3,
+   "burgers": 9,
+   "index_median": 12.85,
    "index_min": 12.0,
-   "index_max": 12.85
+   "index_max": 18.0
   },
   {
    "slug": "turtle-bay-east-midtown",
@@ -131,10 +131,10 @@
    "slug": "west-village",
    "name": "West Village",
    "borough": "Manhattan",
-   "restaurants": 57,
-   "restaurants_priced": 44,
-   "burgers": 143,
-   "index_median": 22.86,
+   "restaurants": 56,
+   "restaurants_priced": 43,
+   "burgers": 140,
+   "index_median": 23.71,
    "index_min": 6.75,
    "index_max": 38.99
   },
@@ -2827,13 +2827,13 @@
    "camis": "41668282",
    "name": "Rosemary's",
    "chain": null,
-   "address": "1820 Greenwich Avenue",
+   "address": "18 Greenwich Avenue",
    "borough": "Manhattan",
    "neighborhood": "West Village",
    "neighborhood_slug": "west-village",
-   "zipcode": null,
-   "lat": null,
-   "lng": null,
+   "zipcode": "10011",
+   "lat": 40.734885,
+   "lng": -73.999713,
    "cuisine": "Italian",
    "website": "https://www.rosemarysnyc.com/location/rosemarys-west-village/",
    "menu_url": "https://www.rosemarysnyc.com/west-village-menu/",
@@ -3936,18 +3936,18 @@
    "burgers": []
   },
   {
-   "id": "westville-hudson-west-village",
-   "camis": null,
+   "id": "westville-hudson-soho",
+   "camis": "50120993",
    "name": "Westville Hudson",
    "chain": null,
-   "address": null,
+   "address": "333 Hudson Street",
    "borough": "Manhattan",
-   "neighborhood": "West Village",
-   "neighborhood_slug": "west-village",
-   "zipcode": null,
-   "lat": null,
-   "lng": null,
-   "cuisine": null,
+   "neighborhood": "SoHo-TriBeCa-Civic Center-Little Italy",
+   "neighborhood_slug": "soho-tribeca-civic-center-little-italy",
+   "zipcode": "10013",
+   "lat": 40.727022,
+   "lng": -74.007378,
+   "cuisine": "Californian",
    "website": "https://westville.com/",
    "menu_url": "https://westville.com/menu/dinner/",
    "price_source": "official_site",
@@ -3957,7 +3957,7 @@
    "index_price": 18.0,
    "burgers": [
     {
-     "id": "westville-hudson-west-village--hamburger",
+     "id": "westville-hudson-soho--hamburger",
      "name": "Hamburger",
      "price": 18.0,
      "description": "8 oz char-grilled burger on a portuguese muffin, served w/ fries or arugula & marinated red onion salad",
@@ -3965,7 +3965,7 @@
      "is_index_item": true
     },
     {
-     "id": "westville-hudson-west-village--cast-iron-turkey-burger",
+     "id": "westville-hudson-soho--cast-iron-turkey-burger",
      "name": "Cast Iron Turkey Burger",
      "price": 18.0,
      "description": "fresh ground turkey breast patty on a portuguese muffin, served w/ fries or arugula & marinated red onion salad",
@@ -3973,7 +3973,7 @@
      "is_index_item": false
     },
     {
-     "id": "westville-hudson-west-village--homemade-veggie-burger",
+     "id": "westville-hudson-soho--homemade-veggie-burger",
      "name": "Homemade Veggie Burger",
      "price": 16.0,
      "description": "crispy quinoa, black beans and corn patty w/ russian dressing served on a potato bun.",

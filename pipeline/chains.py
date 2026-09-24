@@ -26,8 +26,9 @@ class ChainDef:
     cheapest_item: str | None = None
     # A known-good NYC menu page to scrape first (e.g. a full store page on Grubhub).
     menu_url: str | None = None
-    # National fast-food chain: left out of the index entirely (product decision 2026-09-23);
-    # NYC's own small chains (7th Street Burger, Jackson Hole...) stay. See is_national_chain().
+    # National fast-food chain: left out of the index entirely (product decision 2026-09-23), and so is
+    # the NY-area fast-food chain Tex's / Texas Chicken & Burgers; NYC's own small chains (7th Street
+    # Burger, Jackson Hole, Black Tap...) stay. See is_national_chain().
     national: bool = False
 
 
@@ -62,12 +63,14 @@ CURATED_CHAINS: tuple[ChainDef, ...] = (
     _c("applebees", "Applebee's", r"^applebees\b", False, national=True),
 )
 # More national burger/fast-food and casual-dining brands, so widening --cuisines (American,
-# Steakhouse...) or a bigger pilot list never lets them in. Not grouped as chains here (they're
+# Steakhouse...) or a bigger restaurant list never lets them in. Not grouped as chains here (they're
 # excluded before grouping); patterns match norm_name() like the list above. Only checked when no
 # curated pattern matched, so a slug shared with a curated chain merges its report counts.
-# Deliberately NOT here (NYC-born or NY-area groups stay, like 7th Street): Burgerology, Nathan's,
-# Texas / Tex's Chicken & Burgers. Upscale groups (Capital Grille, Del Frisco's, Morton's...),
-# entertainment venues and Wonder wait on a user decision.
+# Deliberately NOT here (user decisions, 2026-09-23): NYC-born or NY-area groups (Burgerology,
+# Nathan's, Black Tap), national upscale / sit-down restaurants (Del Frisco's, Smith & Wollensky, STK,
+# Hillstone, Burger & Lobster, and the like: Capital Grille, Morton's...) and the Swingers and Puttery
+# venues all stay. Tex's / Texas Chicken & Burgers is NY-area but fast food (~35 NYC permits), so it
+# goes like the national fast-food chains.
 NATIONAL_ONLY: tuple[ChainDef, ...] = tuple(
     _c(slug, display, pattern, False, national=True) for slug, display, pattern in (
         # stands whose DBA doesn't start with the brand: 'CITI FIELD SHAKE SHACK - STAND 139',
@@ -107,6 +110,9 @@ NATIONAL_ONLY: tuple[ChainDef, ...] = tuple(
         ("yard-house", "Yard House", r"^yard house\b"),
         ("millers-ale-house", "Miller's Ale House", r"^millers ale house\b"),
         ("uno", "Uno Pizzeria & Grill", r"^(pizzeria )?uno (chicago grill|pizzeria)\b"),  # not 'UNO OF ASTORIA'
+        # TEX'S CHICKEN & BURGERS, TEX*S CHICKEN & BURGERS, TEXAS CHICKEN & BURGER(S), TEX'S CHICKEN AND
+        # BURGER; not Tex-Mex places, NEW TEXAS FRIED CHICKEN or NEW TEXAS CHICKEN & GRILL
+        ("texas-chicken-and-burgers", "Tex's Chicken & Burgers", r"^(texas|tex ?s) chicken (and )?burgers?\b"),
     )
 )
 MIN_AUTO_LOCATIONS = 3

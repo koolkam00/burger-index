@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from collections.abc import Iterable
 
 # Words kept upper-case when proper-casing DOHMH's ALL-CAPS names.
 ACRONYMS = {
@@ -35,8 +36,13 @@ DISPLAY_OVERRIDES = {
 }
 
 
+# Letters NFKD doesn't decompose: 'Tørst' -> 'Torst', not 'Trst'.
+_FOLD = str.maketrans({"ø": "o", "Ø": "O", "æ": "ae", "Æ": "AE", "œ": "oe", "Œ": "OE", "ß": "ss", "ł": "l", "Ł": "L",
+                       "đ": "d", "Đ": "D", "ı": "i"})
+
+
 def ascii_fold(s: str) -> str:
-    return unicodedata.normalize("NFKD", s or "").encode("ascii", "ignore").decode()
+    return unicodedata.normalize("NFKD", (s or "").translate(_FOLD)).encode("ascii", "ignore").decode()
 
 
 def norm_name(s: str | None) -> str:
@@ -117,6 +123,7 @@ def display_name(dba: str | None) -> str:
 _ADDRESS_WORDS = {
     "west": "w", "east": "e", "north": "n", "south": "s", "street": "st", "avenue": "ave", "av": "ave",
     "road": "rd", "boulevard": "blvd", "place": "pl", "drive": "dr", "parkway": "pkwy", "lane": "ln",
+    "terrace": "ter", "turnpike": "tpke", "court": "ct", "square": "sq", "expressway": "expy", "highway": "hwy",
     "first": "1", "second": "2", "third": "3", "fourth": "4", "fifth": "5", "sixth": "6", "seventh": "7",
     "eighth": "8", "ninth": "9", "tenth": "10",
 }
@@ -158,13 +165,17 @@ _ADDRESS_RE = re.compile(
 )
 
 
+def _unslug(text: str | None) -> str:
+    """URL slugs and dotted abbreviations as words: '34-canal-st' -> '34 canal st', 'W. 36th' -> 'W 36th'."""
+    return re.sub(r"[-_/.?=&+]+(?=[a-z])|(?<=[a-z])[-_/.?=&+]+", " ", text or "", flags=re.I)
+
+
 def named_addresses(text: str | None) -> list[list[str]]:
     """Street addresses a note or URL names, as address_tokens() keys (house number + up to two street
     words): 'Craft beer hall at 1125 1st Ave' -> [['1125', '1', 'ave']];
     '.../holy-cow-lower-east-side-34-canal-st' -> [['34', 'canal', 'st']]."""
-    text = re.sub(r"[-_/.?=&+]+(?=[a-z])|(?<=[a-z])[-_/.?=&+]+", " ", text or "", flags=re.I)  # URL slugs
     keys = []
-    for m in _ADDRESS_RE.finditer(text):
+    for m in _ADDRESS_RE.finditer(_unslug(text)):
         key = address_tokens(m.group(0))[:3]
         if len(key) >= 2 and key not in keys:
             keys.append(key)
@@ -175,3 +186,38 @@ def at_address(address: str | None, key: list[str]) -> bool:
     """True when a DOHMH address ('1125 1 Avenue') is the address a named_addresses() key names."""
     a = address_tokens(address)
     return len(key) >= 2 and a[: len(key)] == key
+
+
+def street_in_text(address: str | None, text: str | None) -> bool:
+    """True when `text` names the street of this address, house number aside: "Blue Collar's Court St
+    outpost" names 187 Court Street, 'on 5th Ave' names 5219 5 Avenue, '.../18-greenwich-avenue-new-york'
+    names Greenwich Avenue. Streets of one word ('Broadway') are too long to say where a place is."""
+    m = re.match(r"^\s*\d+(?:-\d+)?[a-z]?\s+(.+)$", address or "", flags=re.I)
+    street = address_tokens(m.group(1)) if m else []
+    if len(street) < 2:
+        return False
+    t = address_tokens(_unslug(text))
+    return any(t[i:i + len(street)] == street for i in range(len(t) - len(street) + 1))
+
+
+_STREET_TYPE_TOKENS = frozenset({"st", "ave", "blvd", "rd", "pl", "ln", "dr", "pkwy", "ter", "tpke", "ct", "sq", "expy",
+                                 "hwy", "plaza"})
+
+
+def street_in_name(address: str | None, name: str | None, ignore: Iterable[str] = ()) -> bool:
+    """True when a restaurant-list name says which street or place the location is on: 'Westville Hudson'
+    names 333 Hudson Street, 'Shake Shack (Madison Square Park)' names the stand whose DOHMH address is
+    'Madison Square Park'. The whole street must be in the name ('madison sq park'), or the name must end
+    with it, its type left out ('westville hudson'), so 'Madison Square Park' doesn't name Madison Avenue.
+    Numbered streets and streets of one word ('Broadway') say too little, and so does a street word in
+    `ignore` (the record's own name: TREADWELL PARK on Park Avenue)."""
+    m = re.match(r"^\s*\d+(?:-\d+)?[a-z]?\s+(.+)$", address or "", flags=re.I)
+    street = [w for w in address_tokens(m.group(1) if m else address) if w not in ("n", "s", "e", "w")]
+    words = {w for w in street if w.isalpha() and w not in _STREET_TYPE_TOKENS}
+    if len(street) < 2 or not words or words & set(ignore):
+        return False
+    t = address_tokens(name)
+    if any(t[i:i + len(street)] == street for i in range(len(t) - len(street) + 1)):
+        return True
+    bare = street[:-1] if street[-1] in _STREET_TYPE_TOKENS else street
+    return len(t) > len(bare) and t[-len(bare):] == bare

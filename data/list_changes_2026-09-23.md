@@ -1,12 +1,12 @@
 # burger-list-master.csv changes, 2026-09-23
 
-Cleaned with the user's approval, from the list audit and free web checks. Rows before: 687; after: 635. Deleted 52, relabeled 13 (name/neighborhood, with the street address added to notes), notes-updated 7 (street address only, so the DOHMH matcher can place the row).
+Cleaned with the user's approval, from the list audit and free web checks. Rows before: 687; after: 635. Deleted 52, relabeled 13 (name/neighborhood, with the street address added to notes), notes-updated 7 (street address only, so the DOHMH matcher can place the row). A second pass on 2026-09-24 (last section) restored Hillstone and fixed 7 more labels: 636 rows.
 
-Row numbers are the ORIGINAL 1-based data rows (row 1 = first line after the header), as in `pipeline.sources.load_csv`. "DOHMH" means the cached NYC restaurant-inspection snapshot; "audit" is the offline match audit of 2026-09-23.
+Row numbers are the ORIGINAL 1-based data rows (row 1 = first line after the header), as in `pipeline.sources.load_csv`; the 2026-09-24 section uses the 635-row list's numbers instead. "DOHMH" means the cached NYC restaurant-inspection snapshot; "audit" is the offline match audit of 2026-09-23.
 
-Still mis-matched after this cleanup (needs the matcher fix, not a list edit): 367 At The Office still takes THE OFFICE (1744 2nd Ave, Yorkville), and 441 Treadwell Park (UES, notes 1125 1st Ave) still takes the closed Battery Park City permit, because DOHMH spells the UES shop "MERCHANTS CIGAR BAR / TRADEWELL PARK".
+Two mis-matches this cleanup left were fixed afterwards in the matcher, with no list edit: 367 At The Office no longer takes THE OFFICE (1744 2nd Ave, Yorkville) and stays CSV-only (the one permit at 160 E 38th St is The Consulate's, not yet inspected), and 441 Treadwell Park (UES, notes 1125 1st Ave) now takes the UES shop, 40918355 "MERCHANTS CIGAR BAR / TRADEWELL PARK" at 1125 1st Ave, instead of the closed Battery Park City permit.
 
-Not changed on purpose: the ~60 "burger assumed" rows (the scrape will tell); national-chain rows (the pipeline excludes them, and they document the exclusion), including Tex's Chicken & Burgers (538, 638) and Shake Shack; upscale chains and venues (Del Frisco's, Smith & Wollensky, STK, Burger & Lobster, Swingers, Puttery); Black Tap 103/372; Rory's Rooftop (239) and Puttery (252), two venues on one permit; Houston Hall (28), still open.
+Not changed on purpose, unless closed or a duplicate: the ~60 "burger assumed" rows (the scrape will tell), except 11 whose place closed and which are deleted below (253, 257, 298, 306, 313, 369, 380, 395, 414, 464, 473, each with its DOHMH evidence); national-chain rows (the pipeline excludes them, and they document the exclusion), including Tex's Chicken & Burgers (538, 638) and Shake Shack, except 137 Umami Burger and 675 Cheeburger Cheeburger (closed) and 165 PLNT Burger (a duplicate of 384); upscale chains and venues (Del Frisco's, Smith & Wollensky, STK, Burger & Lobster, Swingers, Puttery; Hillstone's listed shop closed, so 329 is deleted below and the open shop was added back on 2026-09-24); Black Tap 103/372; Rory's Rooftop (239) and Puttery (252), two venues on one permit; Houston Hall (28), still open.
 
 ## Deleted
 
@@ -18,7 +18,7 @@ Not changed on purpose: the ~60 "burger assumed" rows (the scrape will tell); na
 - **151** Bareburger (Chelsea, Manhattan): deleted. Why: 153 8th Ave is now SOM BO. Source: audit + DOHMH snapshot.
 - **164** Bronx Brewery (East Village, Manhattan): deleted. Why: closed: the 64 2nd Ave taproom shut in Feb 2025 (the row had matched the Hudson Yards taproom by name). Source: https://evgrieve.com/2025/02/bronx-brewery-has-closed-on-2nd-avenue.html.
 - **165** PLNT Burger (East Village, Manhattan): deleted. Why: duplicate of row 384; the only NYC PLNT permit is 1147 Broadway, NoMad. Source: audit + DOHMH snapshot.
-- **171** Max Brenner (East Village, Manhattan): deleted. Why: a chocolate restaurant, not a burger place (the row had matched a 1 Herald Square holiday-market stall). Source: audit + DOHMH snapshot.
+- **171** Max Brenner (East Village, Manhattan): deleted. Why: closed. Its Union Square restaurant at 841 Broadway (DOHMH 41188824, last inspected 2026-03-03) served the "Brenner burger" the notes name, but its operator, Max NY Union Square LLC, filed for Chapter 11 on 2026-02-10, and Yelp now lists the restaurant as closed; the other DOHMH Max Brenner permits are a 1 Herald Square holiday-market stall (which the row had matched) and 42 W 42nd St, last inspected 2022. (Corrected 2026-09-24: this entry first said it was not a burger place.) Source: https://www.yelp.com/biz/max-brenner-new-york-new-york-2 ; https://whatnow.com/news/trending/iconic-union-square-dessert-destination-operator-files-for-chapter-11-bankruptcy/ ; https://bkdata.com/business-bankruptcies/manhattan-newyork/02-10-2026/max-square-10275.
 - **208** The Beatrice Inn (West Village, Manhattan): deleted. Why: 285 W 12th St is now DO NOT DISTURB; no Beatrice record. Source: audit + DOHMH snapshot.
 - **212** Blue Ribbon Bakery (West Village, Manhattan): deleted. Why: the 35 Downing St bakery is gone; the space is now Emily (row 204). Source: audit + DOHMH snapshot.
 - **216** Hamburger America (Greenwich Village) (Greenwich Village, Manhattan): deleted. Why: duplicate of row 105: one shop at 51 MacDougal St (DOHMH 50143115, the only Hamburger America). Source: audit + DOHMH snapshot.
@@ -39,7 +39,7 @@ Not changed on purpose: the ~60 "burger assumed" rows (the scrape will tell); na
 - **313** Uptown Social (Inwood, Manhattan): deleted. Why: 186 Dyckman St is now EL JEFE CANTINA SPORTS BAR. Source: audit + DOHMH snapshot.
 - **317** Grass Cow (Kips Bay, Manhattan): deleted. Why: 347 3rd Ave is now FOREFEATHERS. Source: audit + DOHMH snapshot.
 - **324** Three Hens (Kips Bay, Manhattan): deleted. Why: 115 Lexington Ave is now CHOTE NAWAB. Source: audit + DOHMH snapshot.
-- **329** Hillstone (Midtown East, Manhattan): deleted. Why: 153 E 53rd St is now ETC VENUES; the only DOHMH Hillstone is 378 Park Ave S (not on the list). Source: audit + DOHMH snapshot.
+- **329** Hillstone (Midtown East, Manhattan): deleted. Why: 153 E 53rd St is now ETC VENUES; the only DOHMH Hillstone is 378 Park Ave S (not on the list). Source: audit + DOHMH snapshot. Restored on 2026-09-24 as the open Park Ave S shop (row 636), because the user keeps Hillstone: see the last section.
 - **361** 5 Napkin Burger (Morningside Heights, Manhattan): deleted. Why: duplicate of row 442 (2315 Broadway, DOHMH 41460077); no 5 Napkin in Morningside Heights. Source: audit + DOHMH snapshot.
 - **363** Mel's Burger Bar (Morningside Heights, Manhattan): deleted. Why: 2850 Broadway is now RAISING CANE'S; no Mel's anywhere in DOHMH. Source: audit + DOHMH snapshot.
 - **369** Barking Dog (Murray Hill, Manhattan): deleted. Why: no Barking Dog in Murray Hill in DOHMH (only 1678 3rd Ave UES and 329 W 49th St); closed. Source: audit + DOHMH snapshot.
@@ -88,3 +88,35 @@ Not changed on purpose: the ~60 "burger assumed" rows (the scrape will tell); na
 - **416** Bareburger (Upper East Side, Manhattan): notes-updated. notes → "Organic burger chain at 1681 1st Ave (beef, bison, veggie)". Why: 1370 1st Ave is now B&B Bagels; the current UES Bareburger is 1681 1st Ave (DOHMH 50172916). Source: audit + DOHMH snapshot.
 - **504** Blue Collar Cobble Hill (Cobble Hill, Brooklyn): notes-updated. notes → "Blue Collar's outpost at 187 Court St". Why: the Cobble Hill shop is 187 Court St (DOHMH 50114194). Source: audit + DOHMH snapshot.
 - **547** Holy Burger (Astoria, Queens): notes-updated. notes → "Smash burgers and late-night bites at 23-14 36th Ave". Why: the Astoria shop is 23-14 36th Ave (DOHMH 50166387); the row had matched a Jamaica permit. Source: https://www.holyburger.nyc/holyburger-astoria-location.
+
+## Second pass, 2026-09-24 (re-audit)
+
+With the user's approval (clean the list from the audit, fix wrong neighborhoods and labels; keep Hillstone and STK, the upscale national chains). Row numbers in this section are those of the 635-row list above; the restored row is appended as row 636, so no other row number changes. Rows before: 635; after: 636. Added back 1, relabeled 2, notes-updated 5, deleted 0.
+
+### Restored
+
+- **636** Hillstone (NoMad, Manhattan): restored, relabeled to the open shop. name "Hillstone"; neighborhood "NoMad"; notes → "American restaurant at 378 Park Ave S famous for its burgers (the chain's one NYC location)". Why: the user keeps Hillstone. Its listed shop at 153 E 53rd St closed (old row 329, deleted above), and the chain's one NYC restaurant is 378 Park Ave S (DOHMH 40726517 HILLSTONE MANHATTAN, inspected 2025-08-18), so it is handled like Burger & Lobster (old row 143). Source: https://hillstonerestaurant.com/locations/nyc-parkavenuesouth/ ; https://www.theinfatuation.com/new-york/reviews/hillstone-park-avenue.
+
+### Relabeled
+
+- **315** Benjamin Steakhouse Prime (Midtown West, Manhattan): relabeled. neighborhood: "Midtown West" → "Murray Hill"; notes: "Steakhouse at 52nd & 6th; steakhouses serve lunch burgers" → "Steakhouse at 23 E 40th St; steakhouses serve lunch burgers". Why: the restaurant is at 23 E 40th St (DOHMH 50056360 BENJAMIN PRIME, NTA Murray Hill-Kips Bay), which the row already matched by name; the label and notes contradicted the match. Source: https://www.yelp.com/biz/benjamin-steakhouse-prime-new-york-4 ; https://benjaminsteakhouse.com/prime/.
+- **631** Bravo Pizza & Sports Bar (Staten Island, Staten Island): relabeled. neighborhood: "Staten Island" → "New Dorp"; notes: "Pizza sports bar advertising fresh Angus burgers" → "Pizza sports bar at 413 New Dorp Ln advertising fresh Angus burgers". Why: a borough is not a neighborhood, so the matcher had nowhere to look and the row lost its match. The bar (its site is bravopizzasi.com) is at 413 New Dorp Ln, DOHMH 50102975 BRAVO PIZZA, the only Bravo Pizza in Staten Island. Source: https://bravopizzasi.com/ ; https://www.yelp.com/biz/bravo-pizza-staten-island.
+
+### Notes updated
+
+- **226** STK Meatpacking (Meatpacking District, Manhattan): notes: "Steakhouse; Wagyu burger" → "Steakhouse at 412 W 15th St (moved there from Little W 12th St); Wagyu burger". Why: the user keeps STK. The 2006 Meatpacking STK on Little W 12th St has closed (DOHMH 41211538, last inspected 2025-10-09), and its new flagship is 412 W 15th St, opposite Chelsea Market (DOHMH 50185271 STK STEAKHOUSE, not yet inspected). Name and neighborhood kept: the Meatpacking District alias covers both NTAs. Source: https://www.theinfatuation.com/new-york/reviews/stk-chelsea ; https://commercialobserver.com/2025/10/stk-bringing-new-steakhouse-meatpacking-district/.
+- **369** Red Flame Diner (Times Square, Manhattan): notes: "Long-running Theater District diner (241 W 44th); classic diner burgers" → "Long-running Midtown diner (67 W 44th St); classic diner burgers". Why: the diner the row matched, DOHMH 40368313 RED FLAME DINER, is at 67 W 44th St, between 5th and 6th Ave (not the Theater District). Source: DOHMH snapshot.
+- **409** Maison Pickle (Upper West Side, Manhattan): notes: "... at 2315 Broadway" → "... at 2309 Broadway". Why: 2315 Broadway is 5 Napkin Burger (row 400); Maison Pickle is 2309 Broadway (DOHMH 50056586). Source: DOHMH snapshot.
+- **415** Tessa (Upper West Side, Manhattan): notes: "... at 518 Amsterdam Ave" → "... at 349 Amsterdam Ave". Why: the restaurant the row matched, DOHMH 50007925 TESSA, is 349 Amsterdam Ave. Source: DOHMH snapshot.
+- **594** O'Neill's (West Brighton, Staten Island): notes: "Irish pub; burgers are house specialty per reviews" → "Irish pub at 1614 Forest Ave; burgers are house specialty per reviews". Why: the pub is 1614 Forest Ave (DOHMH 50016261 O'NEILL'S RESTAURANT & BAR, the only O'Neill's in Staten Island, filed in the Port Richmond NTA next to West Brighton); without the address the matcher couldn't place it. Source: https://oneillsstatenisland.com/ ; https://www.yelp.com/biz/o-neills-staten-island-2.
+
+### Fixed in the matcher (no list edit)
+
+- **59** Jack's Wife Freda, **136** Cafeteria and **317** Brooklyn Diner each tied between two permits with their name in their NTA and went CSV-only. A tie now breaks on the address the notes name, placed from the DOHMH records on that street (Brooklyn Diner, "212 W 57th" → 40401934 at its corner address, 888 7th Ave), or, with no address named, on the neighborhood's ZIP codes (Jack's Wife Freda, West Village → 50017903 at 50 Carmine St, 10014, not 72 University Pl; Cafeteria, Chelsea → 40619544 at 119 7th Ave, 10011, not 1 Madison Ave).
+- **335** At The Office is no longer reported as "address now holds another business": its notes name The Consulate as the business that shares 160 E 38th St.
+
+### Left for the user
+
+- **233** The Standard Plaza takes no permit of its own: 50071497 (THE STANDARD BIERGARTEN / THE STANDARD GRILL / THE STANDARD SODA SHOP, 848 Washington St) goes to row 33 The Standard Grill. Delete it as a duplicate, or keep it as a separate menu?
+- **224** Rory's Rooftop and **234** Puttery share one permit (50146477, 446 W 14th St); Rory's Rooftop takes it and Puttery is left CSV-only. Two menus, or one?
+- **3** Skinny Louie West Village and **350** Skinny Louie (NoMad): a fast-casual smash-burger chain from Miami (founded in Wynwood in 2023; shops across South Florida, and in NYC in NoMad, the West Village, the Upper East Side and the East Village, with more planned). Exclude it like PLNT Burger and Slutty Vegan, or keep it? Source: https://whatnow.com/new-york/restaurants/miamis-award-winning-smash-burger-chain-lands-in-the-penn-district/ ; https://www.qsrmagazine.com/news/skinny-louie-to-open-in-new-york-citys-upper-east-side-neighborhood/.

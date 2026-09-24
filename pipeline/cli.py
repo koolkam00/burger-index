@@ -196,11 +196,11 @@ def cmd_plan(args) -> int:
     return 0
 
 
-def _build(targets, meta, *, output: Path) -> dict:
+def _build(targets, meta, *, output: Path, report: dict | None = None) -> dict:
     api = Api(DiskCache(config.CACHE_DIR), offline=True)
     results, pending = replay(targets, api)
     dataset = assemble(targets, results, meta=meta, n_pending_restaurants=sum(len(t.members) for t in pending),
-                       corrections=corrections.load())
+                       corrections=corrections.load(), report=report)
     write_dataset(dataset, output, config.CONTRACT_PATH)
     s = dataset["stats"]
     summary = {
@@ -219,9 +219,9 @@ def _build(targets, meta, *, output: Path) -> dict:
 
 
 def cmd_build(args) -> int:
-    restaurants, _report, meta = _scope(args, offline=True)
+    restaurants, report, meta = _scope(args, offline=True)
     targets = build_targets(restaurants)
-    summary = _build(targets, meta, output=Path(args.output) if args.output else config.OUTPUT_PATH)
+    summary = _build(targets, meta, output=Path(args.output) if args.output else config.OUTPUT_PATH, report=report)
     log(f"build: {summary['restaurants']} restaurants ({summary['restaurants_priced']} priced) -> {summary['written']}; "
         f"{summary['targets_not_yet_scraped']} targets not yet scraped")
     _print(summary)
@@ -248,7 +248,7 @@ def cmd_run(args) -> int:
     if summary["capped"]:
         log(f"run: stopped at --max-credits {args.max_credits}; finished targets are cached and kept")
     if not args.no_build:
-        summary["build"] = _build(targets, meta, output=config.OUTPUT_PATH)
+        summary["build"] = _build(targets, meta, output=config.OUTPUT_PATH, report=report)
     _print(summary)
     return 1 if summary["fatal"] else 0
 

@@ -224,7 +224,7 @@ Caroll Place,Greenwich Village,Manhattan,,,Wine bar and gastropub,downtown
 Old Homestead Steakhouse,Meatpacking District,Manhattan,https://www.theoldhomesteadsteakhouse.com/,,Steakhouse; multiple burgers,downtown
 Rory's Rooftop,Meatpacking District,Manhattan,http://rorysrooftop.com/,,American rooftop bar; smash/Rodeo burger,downtown
 Sirrah,Meatpacking District,Manhattan,https://sirrahny.com/,,Modern French steakhouse; Sirrah Burger,downtown
-STK Meatpacking,Meatpacking District,Manhattan,,,Steakhouse; Wagyu burger,downtown
+STK Meatpacking,Meatpacking District,Manhattan,,,Steakhouse at 412 W 15th St (moved there from Little W 12th St); Wagyu burger,downtown
 BFB Highline,Meatpacking District,Manhattan,,,Burger spot,downtown
 Gansevoort Rooftop,Meatpacking District,Manhattan,https://www.gansevoorthotelgroup.com/gansevoort-meatpacking-nyc/eat-drink/gansevoort-rooftop,,Hotel rooftop; House Burger,downtown
 Brass Monkey,Meatpacking District,Manhattan,,,Bar; Char Grilled Beef Burger,downtown
@@ -313,7 +313,7 @@ Townhouse Diner,Midtown East,Manhattan,https://townhousediner.netwaiter.com/,,Cl
 Turtle Bay Tavern,Midtown East,Manhattan,,,Elevated sports bar; reviewers call its smash burger among the best in NYC,uptown
 AKB (Archer Hotel),Midtown West,Manhattan,https://archerhotel.com/new-york/akb-hotel-bar,,Archer Hotel bar and restaurant (45 W 38th); runs a weekly Burger Monday special,uptown
 American Whiskey,Midtown West,Manhattan,,,Whiskey bar (247 W 30th); bar food centered on burgers,uptown
-Benjamin Steakhouse Prime,Midtown West,Manhattan,,,Steakhouse at 52nd & 6th; steakhouses serve lunch burgers,uptown
+Benjamin Steakhouse Prime,Murray Hill,Manhattan,,,Steakhouse at 23 E 40th St; steakhouses serve lunch burgers,uptown
 Benoit New York,Midtown West,Manhattan,,,Upscale French bistro (60 W 55th); its cheeseburger with bacon and caramelized onions is a known highlight,uptown
 Brooklyn Diner,Midtown West,Manhattan,,,Classic NYC diner at 212 W 57th; burgers are a staple,uptown
 Bryant Park Grill,Midtown West,Manhattan,,,American restaurant at Bryant Park; burgers are core to its American menu,uptown
@@ -367,7 +367,7 @@ Jimmy's Corner,Times Square,Manhattan,,,Boxing dive bar at 140 W 44th; simple pu
 Joe Allen,Times Square,Manhattan,,,Classic Theater District restaurant; famous burgers for the pre-theater crowd,uptown
 Junior's Restaurant,Times Square,Manhattan,,,Times Square institution at 1515 Broadway; deli-style burgers standard on the menu,uptown
 McHale's Bar & Grill,Times Square,Manhattan,,,Sports bar at 251 W 50th; bar-and-grill menus always include burgers,uptown
-Red Flame Diner,Times Square,Manhattan,,,Long-running Theater District diner (241 W 44th); classic diner burgers,uptown
+Red Flame Diner,Times Square,Manhattan,,,Long-running Midtown diner (67 W 44th St); classic diner burgers,uptown
 Sardi's,Times Square,Manhattan,,,Old-school Theater District haunt (234 W 44th); lunch burgers served to the Broadway crowd,uptown
 The Lambs Club,Times Square,Manhattan,,,Chatwal hotel American restaurant; New American restaurants of this type nearly always serve a burger,uptown
 The Mean Fiddler,Times Square,Manhattan,,,Irish pub on Restaurant Row (266 W 47th); pubs like this serve burgers,uptown
@@ -407,13 +407,13 @@ Fred's,Upper West Side,Manhattan,,,Cozy American bistro and neighborhood bar at 
 Holy Cow Burgers,Upper West Side,Manhattan,,,Halal smashburger chain at 23 W 100th St,uptown
 Jacob's Pickles,Upper West Side,Manhattan,,,Southern comfort spot at 680 Columbus Ave; smashburger on the menu per reviews,uptown
 Lion's Head Tavern,Upper West Side,Manhattan,http://www.lionsheadnyc.com/,,Gastropub/sports tavern at 995 Amsterdam Ave; signature Lion's Head Burger,uptown
-Maison Pickle,Upper West Side,Manhattan,,,American bistro with patty melt and comfort food at 2315 Broadway,uptown
+Maison Pickle,Upper West Side,Manhattan,,,American bistro with patty melt and comfort food at 2309 Broadway,uptown
 Malachy's Irish Pub,Upper West Side,Manhattan,https://www.malachysirishpub.com/,,"Classic Irish pub at 103 W 72nd St; serves a 1/4 lb burger, well-reviewed burgers",uptown
 McAleer's Pub,Upper West Side,Manhattan,,,UWS Irish pub; its Bacon Bacon Burger was reviewed by Burger Weekly,uptown
 Sarabeth's (UWS),Upper West Side,Manhattan,,,American staple at 423 Amsterdam Ave; brunch/lunch menu with burgers likely,uptown
 Shake Shack (UWS),Upper West Side,Manhattan,https://shakeshack.com/location/upper-west-side-ny,,Angus burgers at 366 Columbus Ave; called 'best burger slinger the UWS has ever seen',uptown
 Tavern on the Green,Upper West Side,Manhattan,,,Classic Central Park tavern in W 67th St; quintessential American tavern fare,uptown
-Tessa,Upper West Side,Manhattan,,,Modern American restaurant with Mediterranean influences at 518 Amsterdam Ave,uptown
+Tessa,Upper West Side,Manhattan,,,Modern American restaurant with Mediterranean influences at 349 Amsterdam Ave,uptown
 The Milling Room,Upper West Side,Manhattan,,,American bistro at 446 Columbus Ave,uptown
 The Ribbon,Upper West Side,Manhattan,,,Neighborhood American restaurant with broad menu at 20 W 72nd St,uptown
 Viand Cafe,Upper West Side,Manhattan,http://www.viandnyc.com,,Classic old-school coffee-shop diner at 2130 Broadway; diner burgers,uptown
@@ -592,7 +592,7 @@ Jolly Tinker,Bedford Park,Bronx,,,Cozy spot at 2875 Webster Ave known for juicy 
 Tex's Chicken & Burgers,Fordham,Bronx,,,Fast-food chicken and burger chain location,outer
 Duffy's Tavern,West Brighton,Staten Island,,,Irish pub since 1985; famous flame-broiled cheeseburger on English muffin,outer
 Jody's Club Forest,West Brighton,Staten Island,https://www.jodysclubforest.com/,,Irish-American pub; Barstool Sports praised its burger,outer
-O'Neill's,West Brighton,Staten Island,,,Irish pub; burgers are house specialty per reviews,outer
+O'Neill's,West Brighton,Staten Island,,,Irish pub at 1614 Forest Ave; burgers are house specialty per reviews,outer
 G&G American Grill,West Brighton,Staten Island,,,American grill/diner at 891 Manor Rd,outer
 8 Bit Bites,West Brighton,Staten Island,,,Smashburgers at 1419 Forest Ave; viral on TikTok,outer
 Supreme Burger Company,West Brighton,Staten Island,,,Smash burgers at 646 Forest Ave,outer
@@ -629,8 +629,9 @@ Joe Broadway's Billiards & Sports Pub,Graniteville,Staten Island,,,Sports pub at
 PepperJack Grill,Castleton Corners,Staten Island,,,Grill at 316 Manor Rd,outer
 West Shore Inn,Chelsea,Staten Island,,,Inn/bar at 3955 Victory Blvd,outer
 Adobe Blues,New Brighton,Staten Island,,,Southwest restaurant at 63 Lafayette Ave,outer
-Bravo Pizza & Sports Bar,Staten Island,Staten Island,https://bravopizzasi.com/,,Pizza sports bar advertising fresh Angus burgers,outer
+Bravo Pizza & Sports Bar,New Dorp,Staten Island,https://bravopizzasi.com/,,Pizza sports bar at 413 New Dorp Ln advertising fresh Angus burgers,outer
 Five Guys (Flushing),Flushing,Queens,,,Chain customizable beef burger; distinct location from West Village pilot entry,outer
 Five Guys (New Springville),New Springville,Staten Island,,,Chain customizable beef burger; distinct location from West Village pilot entry,outer
 7th Street Burger (Astoria),Astoria,Queens,,,Smashburger chain; distinct location from East Village pilot entry,outer
 7th Street Burger (Forest Hills),Forest Hills,Queens,,,Smashburger chain; distinct location from East Village pilot entry,outer
+Hillstone,NoMad,Manhattan,,,American restaurant at 378 Park Ave S famous for its burgers (the chain's one NYC location),uptown
