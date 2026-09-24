@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generated_at": "2026-09-24T13:24:15Z",
+ "generated_at": "2026-09-24T21:56:32Z",
  "currency": "USD",
  "methodology": {
   "index_price_rule": "A restaurant's index price is its cheapest beef burger: the burger by itself (no combo or meal upgrade, no add-ons), single/standard size, at its dinner or all-day menu price. Lunch, brunch or late-night prices count only when no beef burger on the menu has a dinner or all-day price; happy-hour prices are left out. The Burger Index is the median index price across distinct menus: every independent restaurant counts once and each chain counts once, however many locations it has (they share one scraped menu). Borough and neighborhood figures count a chain at most once per area.",
@@ -10,19 +10,19 @@
    "2010 Neighborhood Tabulation Areas (NYC Open Data 8ius-dhrr): neighborhood names, a few relabeled to current usage (MN27 as Chinatown-Lower East Side, MN28 as Lower East Side-Alphabet City, BK72 as South Williamsburg, BK73 as Williamsburg).",
    "Menu prices from each restaurant's own site or menu PDF, online-ordering pages, menu aggregators and delivery apps, read with Context.dev web scraping."
   ],
-  "coverage_note": "604 restaurants in scope: our curated list of NYC burger restaurants, matched to NYC DOHMH inspection records for address and location where possible (500 of 604), except national fast-food chains (Shake Shack, Five Guys, McDonald's, Tex's Chicken & Burgers and the like). NYC's own small chains stay in. 545 of them are in this dataset; the other 59 are not yet scraped. Chain locations share one menu price scraped from a single NYC location. Delivery-app prices usually run above in-store prices."
+  "coverage_note": "604 restaurants: our curated list of NYC burger restaurants, matched to NYC DOHMH inspection records for address and location where possible (500 of 604), except national fast-food chains (Shake Shack, Five Guys, McDonald's, Tex's Chicken & Burgers and the like). NYC's own small chains stay in. Chain locations share one menu price scraped from a single NYC location. Delivery-app prices usually run above in-store prices."
  },
  "stats": {
-  "restaurants_scanned": 545,
-  "restaurants_priced": 272,
-  "burgers": 1397,
-  "beef_burgers": 1053,
+  "restaurants_scanned": 604,
+  "restaurants_priced": 323,
+  "burgers": 1767,
+  "beef_burgers": 1352,
   "index_median": 18.0,
-  "index_mean": 19.0,
-  "index_p10": 8.98,
-  "index_p90": 28.4,
+  "index_mean": 18.55,
+  "index_p10": 8.95,
+  "index_p90": 28.0,
   "all_burgers_median": 17.0,
-  "cheapest_burger_id": "johnnys-reef-pelham-bay--hamburger",
+  "cheapest_burger_id": "smacking-burger-west-village--the-pup-patty-patty-for-puppy",
   "priciest_burger_id": "boeuf-and-bun-crown-heights-north--double-trouble-burger"
  },
  "boroughs": [
@@ -30,21 +30,21 @@
    "slug": "manhattan",
    "name": "Manhattan",
    "borough": "Manhattan",
-   "restaurants": 368,
-   "restaurants_priced": 190,
-   "burgers": 854,
-   "index_median": 20.0,
-   "index_min": 6.5,
+   "restaurants": 398,
+   "restaurants_priced": 218,
+   "burgers": 1053,
+   "index_median": 19.95,
+   "index_min": 4.0,
    "index_max": 38.99
   },
   {
    "slug": "brooklyn",
    "name": "Brooklyn",
    "borough": "Brooklyn",
-   "restaurants": 67,
-   "restaurants_priced": 31,
-   "burgers": 179,
-   "index_median": 18.9,
+   "restaurants": 77,
+   "restaurants_priced": 40,
+   "burgers": 263,
+   "index_median": 17.5,
    "index_min": 6.88,
    "index_max": 34.0
   },
@@ -52,20 +52,20 @@
    "slug": "queens",
    "name": "Queens",
    "borough": "Queens",
-   "restaurants": 44,
-   "restaurants_priced": 21,
-   "burgers": 200,
+   "restaurants": 53,
+   "restaurants_priced": 27,
+   "burgers": 233,
    "index_median": 15.0,
    "index_min": 6.5,
-   "index_max": 23.5
+   "index_max": 24.0
   },
   {
    "slug": "bronx",
    "name": "Bronx",
    "borough": "Bronx",
-   "restaurants": 35,
-   "restaurants_priced": 14,
-   "burgers": 73,
+   "restaurants": 40,
+   "restaurants_priced": 19,
+   "burgers": 99,
    "index_median": 15.0,
    "index_min": 5.0,
    "index_max": 25.0
@@ -74,10 +74,10 @@
    "slug": "staten-island",
    "name": "Staten Island",
    "borough": "Staten Island",
-   "restaurants": 31,
-   "restaurants_priced": 16,
-   "burgers": 91,
-   "index_median": 11.55,
+   "restaurants": 36,
+   "restaurants_priced": 19,
+   "burgers": 119,
+   "index_median": 12.0,
    "index_min": 6.65,
    "index_max": 18.5
   }
@@ -87,10 +87,10 @@
    "slug": "battery-park-city-lower-manhattan",
    "name": "Battery Park City-Lower Manhattan",
    "borough": "Manhattan",
-   "restaurants": 14,
-   "restaurants_priced": 7,
-   "burgers": 29,
-   "index_median": 23.95,
+   "restaurants": 16,
+   "restaurants_priced": 9,
+   "burgers": 61,
+   "index_median": 18.0,
    "index_min": 12.95,
    "index_max": 35.0
   },
@@ -120,10 +120,10 @@
    "slug": "chinatown-lower-east-side",
    "name": "Chinatown-Lower East Side",
    "borough": "Manhattan",
-   "restaurants": 17,
-   "restaurants_priced": 9,
-   "burgers": 40,
-   "index_median": 13.0,
+   "restaurants": 18,
+   "restaurants_priced": 10,
+   "burgers": 45,
+   "index_median": 12.25,
    "index_min": 6.99,
    "index_max": 21.0
   },
@@ -131,11 +131,11 @@
    "slug": "clinton",
    "name": "Clinton",
    "borough": "Manhattan",
-   "restaurants": 10,
-   "restaurants_priced": 2,
-   "burgers": 8,
-   "index_median": 20.48,
-   "index_min": 14.95,
+   "restaurants": 11,
+   "restaurants_priced": 3,
+   "burgers": 9,
+   "index_median": 14.95,
+   "index_min": 13.95,
    "index_max": 26.0
   },
   {
@@ -164,10 +164,10 @@
    "slug": "east-village",
    "name": "East Village",
    "borough": "Manhattan",
-   "restaurants": 28,
-   "restaurants_priced": 7,
-   "burgers": 63,
-   "index_median": 17.53,
+   "restaurants": 30,
+   "restaurants_priced": 9,
+   "burgers": 68,
+   "index_median": 18.4,
    "index_min": 6.5,
    "index_max": 38.0
   },
@@ -183,12 +183,23 @@
    "index_max": 22.0
   },
   {
+   "slug": "hamilton-heights",
+   "name": "Hamilton Heights",
+   "borough": "Manhattan",
+   "restaurants": 1,
+   "restaurants_priced": 1,
+   "burgers": 9,
+   "index_median": 17.0,
+   "index_min": 17.0,
+   "index_max": 17.0
+  },
+  {
    "slug": "hudson-yards-chelsea-flat-iron-union-square",
    "name": "Hudson Yards-Chelsea-Flat Iron-Union Square",
    "borough": "Manhattan",
-   "restaurants": 34,
-   "restaurants_priced": 17,
-   "burgers": 66,
+   "restaurants": 35,
+   "restaurants_priced": 18,
+   "burgers": 84,
    "index_median": 24.0,
    "index_min": 11.5,
    "index_max": 35.0
@@ -197,10 +208,10 @@
    "slug": "lenox-hill-roosevelt-island",
    "name": "Lenox Hill-Roosevelt Island",
    "borough": "Manhattan",
-   "restaurants": 14,
-   "restaurants_priced": 7,
-   "burgers": 76,
-   "index_median": 18.0,
+   "restaurants": 15,
+   "restaurants_priced": 8,
+   "burgers": 122,
+   "index_median": 17.0,
    "index_min": 11.0,
    "index_max": 25.0
   },
@@ -241,22 +252,22 @@
    "slug": "marble-hill-inwood",
    "name": "Marble Hill-Inwood",
    "borough": "Manhattan",
-   "restaurants": 4,
-   "restaurants_priced": 1,
-   "burgers": 11,
-   "index_median": 18.0,
-   "index_min": 18.0,
+   "restaurants": 5,
+   "restaurants_priced": 2,
+   "burgers": 17,
+   "index_median": 16.0,
+   "index_min": 14.0,
    "index_max": 18.0
   },
   {
    "slug": "midtown-midtown-south",
    "name": "Midtown-Midtown South",
    "borough": "Manhattan",
-   "restaurants": 32,
-   "restaurants_priced": 18,
-   "burgers": 81,
-   "index_median": 21.2,
-   "index_min": 11.99,
+   "restaurants": 35,
+   "restaurants_priced": 20,
+   "burgers": 91,
+   "index_median": 20.2,
+   "index_min": 8.0,
    "index_max": 29.99
   },
   {
@@ -274,9 +285,9 @@
    "slug": "murray-hill-kips-bay",
    "name": "Murray Hill-Kips Bay",
    "borough": "Manhattan",
-   "restaurants": 17,
-   "restaurants_priced": 9,
-   "burgers": 49,
+   "restaurants": 18,
+   "restaurants_priced": 10,
+   "burgers": 50,
    "index_median": 18.0,
    "index_min": 11.0,
    "index_max": 25.0
@@ -285,10 +296,10 @@
    "slug": "soho-tribeca-civic-center-little-italy",
    "name": "SoHo-TriBeCa-Civic Center-Little Italy",
    "borough": "Manhattan",
-   "restaurants": 20,
-   "restaurants_priced": 12,
-   "burgers": 55,
-   "index_median": 18.0,
+   "restaurants": 24,
+   "restaurants_priced": 15,
+   "burgers": 60,
+   "index_median": 22.0,
    "index_min": 7.5,
    "index_max": 31.0
   },
@@ -296,12 +307,12 @@
    "slug": "turtle-bay-east-midtown",
    "name": "Turtle Bay-East Midtown",
    "borough": "Manhattan",
-   "restaurants": 9,
-   "restaurants_priced": 6,
-   "burgers": 18,
+   "restaurants": 12,
+   "restaurants_priced": 9,
+   "burgers": 28,
    "index_median": 18.0,
-   "index_min": 13.0,
-   "index_max": 25.0
+   "index_min": 11.35,
+   "index_max": 36.0
   },
   {
    "slug": "upper-east-side-carnegie-hill",
@@ -318,23 +329,23 @@
    "slug": "upper-west-side",
    "name": "Upper West Side",
    "borough": "Manhattan",
-   "restaurants": 13,
-   "restaurants_priced": 7,
-   "burgers": 24,
-   "index_median": 25.0,
-   "index_min": 16.5,
+   "restaurants": 14,
+   "restaurants_priced": 8,
+   "burgers": 31,
+   "index_median": 24.5,
+   "index_min": 11.35,
    "index_max": 35.0
   },
   {
    "slug": "washington-heights-north",
    "name": "Washington Heights North",
    "borough": "Manhattan",
-   "restaurants": 3,
-   "restaurants_priced": 2,
-   "burgers": 12,
-   "index_median": 12.5,
+   "restaurants": 5,
+   "restaurants_priced": 4,
+   "burgers": 25,
+   "index_median": 17.5,
    "index_min": 7.99,
-   "index_max": 17.0
+   "index_max": 18.0
   },
   {
    "slug": "washington-heights-south",
@@ -351,21 +362,21 @@
    "slug": "west-village",
    "name": "West Village",
    "borough": "Manhattan",
-   "restaurants": 96,
-   "restaurants_priced": 57,
-   "burgers": 168,
+   "restaurants": 101,
+   "restaurants_priced": 62,
+   "burgers": 185,
    "index_median": 22.0,
-   "index_min": 6.75,
+   "index_min": 4.0,
    "index_max": 38.99
   },
   {
    "slug": "yorkville",
    "name": "Yorkville",
    "borough": "Manhattan",
-   "restaurants": 6,
-   "restaurants_priced": 4,
-   "burgers": 16,
-   "index_median": 21.0,
+   "restaurants": 7,
+   "restaurants_priced": 5,
+   "burgers": 30,
+   "index_median": 19.0,
    "index_min": 14.5,
    "index_max": 23.81
   },
@@ -373,11 +384,11 @@
    "slug": "bay-ridge",
    "name": "Bay Ridge",
    "borough": "Brooklyn",
-   "restaurants": 2,
-   "restaurants_priced": 1,
-   "burgers": 14,
-   "index_median": 18.95,
-   "index_min": 18.95,
+   "restaurants": 4,
+   "restaurants_priced": 3,
+   "burgers": 51,
+   "index_median": 13.0,
+   "index_min": 7.0,
    "index_max": 18.95
   },
   {
@@ -395,12 +406,12 @@
    "slug": "bensonhurst-west",
    "name": "Bensonhurst West",
    "borough": "Brooklyn",
-   "restaurants": 1,
-   "restaurants_priced": 0,
-   "burgers": 0,
-   "index_median": null,
-   "index_min": null,
-   "index_max": null
+   "restaurants": 2,
+   "restaurants_priced": 1,
+   "burgers": 10,
+   "index_median": 6.99,
+   "index_min": 6.99,
+   "index_max": 6.99
   },
   {
    "slug": "brooklyn-heights-cobble-hill",
@@ -439,10 +450,10 @@
    "slug": "carroll-gardens-columbia-street-red-hook",
    "name": "Carroll Gardens-Columbia Street-Red Hook",
    "borough": "Brooklyn",
-   "restaurants": 10,
-   "restaurants_priced": 4,
-   "burgers": 10,
-   "index_median": 25.0,
+   "restaurants": 11,
+   "restaurants_priced": 5,
+   "burgers": 14,
+   "index_median": 24.0,
    "index_min": 18.0,
    "index_max": 34.0
   },
@@ -461,12 +472,12 @@
    "slug": "crown-heights-north",
    "name": "Crown Heights North",
    "borough": "Brooklyn",
-   "restaurants": 1,
-   "restaurants_priced": 1,
-   "burgers": 15,
+   "restaurants": 3,
+   "restaurants_priced": 3,
+   "burgers": 23,
    "index_median": 23.21,
-   "index_min": 23.21,
-   "index_max": 23.21
+   "index_min": 11.0,
+   "index_max": 24.0
   },
   {
    "slug": "dumbo-vinegar-hill-downtown-brooklyn-boerum-hill",
@@ -494,12 +505,12 @@
    "slug": "flatbush",
    "name": "Flatbush",
    "borough": "Brooklyn",
-   "restaurants": 1,
-   "restaurants_priced": 0,
-   "burgers": 0,
-   "index_median": null,
-   "index_min": null,
-   "index_max": null
+   "restaurants": 2,
+   "restaurants_priced": 1,
+   "burgers": 7,
+   "index_median": 7.99,
+   "index_min": 7.99,
+   "index_max": 7.99
   },
   {
    "slug": "fort-greene",
@@ -527,7 +538,7 @@
    "slug": "park-slope-gowanus",
    "name": "Park Slope-Gowanus",
    "borough": "Brooklyn",
-   "restaurants": 5,
+   "restaurants": 6,
    "restaurants_priced": 3,
    "burgers": 28,
    "index_median": 14.0,
@@ -544,6 +555,17 @@
    "index_median": 17.0,
    "index_min": 10.0,
    "index_max": 27.0
+  },
+  {
+   "slug": "prospect-lefferts-gardens-wingate",
+   "name": "Prospect Lefferts Gardens-Wingate",
+   "borough": "Brooklyn",
+   "restaurants": 1,
+   "restaurants_priced": 1,
+   "burgers": 16,
+   "index_median": 8.99,
+   "index_min": 8.99,
+   "index_max": 8.99
   },
   {
    "slug": "seagate-coney-island",
@@ -571,10 +593,10 @@
    "slug": "williamsburg",
    "name": "Williamsburg",
    "borough": "Brooklyn",
-   "restaurants": 9,
-   "restaurants_priced": 3,
-   "burgers": 16,
-   "index_median": 12.0,
+   "restaurants": 10,
+   "restaurants_priced": 4,
+   "burgers": 18,
+   "index_median": 15.63,
    "index_min": 6.88,
    "index_max": 22.0
   },
@@ -582,7 +604,7 @@
    "slug": "astoria",
    "name": "Astoria",
    "borough": "Queens",
-   "restaurants": 7,
+   "restaurants": 8,
    "restaurants_priced": 3,
    "burgers": 43,
    "index_median": 12.5,
@@ -601,24 +623,35 @@
    "index_max": 20.77
   },
   {
+   "slug": "elmhurst",
+   "name": "Elmhurst",
+   "borough": "Queens",
+   "restaurants": 1,
+   "restaurants_priced": 0,
+   "burgers": 0,
+   "index_median": null,
+   "index_min": null,
+   "index_max": null
+  },
+  {
    "slug": "flushing",
    "name": "Flushing",
    "borough": "Queens",
-   "restaurants": 4,
-   "restaurants_priced": 1,
-   "burgers": 7,
-   "index_median": 9.0,
+   "restaurants": 5,
+   "restaurants_priced": 2,
+   "burgers": 12,
+   "index_median": 12.46,
    "index_min": 9.0,
-   "index_max": 9.0
+   "index_max": 15.91
   },
   {
    "slug": "forest-hills",
    "name": "Forest Hills",
    "borough": "Queens",
-   "restaurants": 7,
-   "restaurants_priced": 5,
-   "burgers": 31,
-   "index_median": 16.95,
+   "restaurants": 8,
+   "restaurants_priced": 6,
+   "burgers": 41,
+   "index_median": 14.22,
    "index_min": 6.5,
    "index_max": 23.5
   },
@@ -626,10 +659,10 @@
    "slug": "hunters-point-sunnyside-west-maspeth",
    "name": "Hunters Point-Sunnyside-West Maspeth",
    "borough": "Queens",
-   "restaurants": 14,
-   "restaurants_priced": 4,
-   "burgers": 46,
-   "index_median": 11.73,
+   "restaurants": 17,
+   "restaurants_priced": 6,
+   "burgers": 61,
+   "index_median": 11.98,
    "index_min": 7.49,
    "index_max": 17.0
   },
@@ -637,12 +670,12 @@
    "slug": "jackson-heights",
    "name": "Jackson Heights",
    "borough": "Queens",
-   "restaurants": 4,
-   "restaurants_priced": 3,
-   "burgers": 30,
-   "index_median": 11.95,
+   "restaurants": 5,
+   "restaurants_priced": 4,
+   "burgers": 31,
+   "index_median": 16.48,
    "index_min": 11.25,
-   "index_max": 21.0
+   "index_max": 24.0
   },
   {
    "slug": "old-astoria",
@@ -659,11 +692,11 @@
    "slug": "queensbridge-ravenswood-long-island-city",
    "name": "Queensbridge-Ravenswood-Long Island City",
    "borough": "Queens",
-   "restaurants": 1,
-   "restaurants_priced": 1,
-   "burgers": 4,
-   "index_median": 15.0,
-   "index_min": 15.0,
+   "restaurants": 2,
+   "restaurants_priced": 2,
+   "burgers": 6,
+   "index_median": 13.18,
+   "index_min": 11.35,
    "index_max": 15.0
   },
   {
@@ -736,34 +769,45 @@
    "slug": "mott-haven-port-morris",
    "name": "Mott Haven-Port Morris",
    "borough": "Bronx",
-   "restaurants": 5,
-   "restaurants_priced": 4,
-   "burgers": 9,
-   "index_median": 19.0,
-   "index_min": 11.95,
+   "restaurants": 6,
+   "restaurants_priced": 5,
+   "burgers": 19,
+   "index_median": 17.0,
+   "index_min": 11.0,
    "index_max": 25.0
   },
   {
    "slug": "north-riverdale-fieldston-riverdale",
    "name": "North Riverdale-Fieldston-Riverdale",
    "borough": "Bronx",
-   "restaurants": 4,
-   "restaurants_priced": 1,
-   "burgers": 3,
-   "index_median": 15.0,
-   "index_min": 15.0,
+   "restaurants": 5,
+   "restaurants_priced": 2,
+   "burgers": 9,
+   "index_median": 14.0,
+   "index_min": 13.0,
    "index_max": 15.0
+  },
+  {
+   "slug": "parkchester",
+   "name": "Parkchester",
+   "borough": "Bronx",
+   "restaurants": 1,
+   "restaurants_priced": 1,
+   "burgers": 1,
+   "index_median": 24.0,
+   "index_min": 24.0,
+   "index_max": 24.0
   },
   {
    "slug": "pelham-bay-country-club-city-island",
    "name": "Pelham Bay-Country Club-City Island",
    "borough": "Bronx",
-   "restaurants": 2,
-   "restaurants_priced": 2,
-   "burgers": 3,
-   "index_median": 7.5,
+   "restaurants": 3,
+   "restaurants_priced": 3,
+   "burgers": 10,
+   "index_median": 10.0,
    "index_min": 5.0,
-   "index_max": 10.0
+   "index_max": 18.99
   },
   {
    "slug": "schuylerville-throgs-neck-edgewater-park",
@@ -791,10 +835,10 @@
    "slug": "spuyten-duyvil-kingsbridge",
    "name": "Spuyten Duyvil-Kingsbridge",
    "borough": "Bronx",
-   "restaurants": 5,
-   "restaurants_priced": 2,
-   "burgers": 19,
-   "index_median": 13.33,
+   "restaurants": 6,
+   "restaurants_priced": 3,
+   "burgers": 21,
+   "index_median": 16.0,
    "index_min": 8.65,
    "index_max": 18.0
   },
@@ -879,11 +923,11 @@
    "slug": "great-kills",
    "name": "Great Kills",
    "borough": "Staten Island",
-   "restaurants": 3,
-   "restaurants_priced": 2,
-   "burgers": 9,
-   "index_median": 16.25,
-   "index_min": 16.0,
+   "restaurants": 6,
+   "restaurants_priced": 4,
+   "burgers": 29,
+   "index_median": 15.48,
+   "index_min": 9.95,
    "index_max": 16.5
   },
   {
@@ -912,7 +956,7 @@
    "slug": "new-dorp-midland-beach",
    "name": "New Dorp-Midland Beach",
    "borough": "Staten Island",
-   "restaurants": 5,
+   "restaurants": 6,
    "restaurants_priced": 2,
    "burgers": 12,
    "index_median": 12.58,
@@ -967,12 +1011,12 @@
    "slug": "todt-hill-emerson-hill-heartland-village-lighthouse-hill",
    "name": "Todt Hill-Emerson Hill-Heartland Village-Lighthouse Hill",
    "borough": "Staten Island",
-   "restaurants": 2,
-   "restaurants_priced": 1,
-   "burgers": 1,
-   "index_median": 16.0,
+   "restaurants": 3,
+   "restaurants_priced": 2,
+   "burgers": 9,
+   "index_median": 17.0,
    "index_min": 16.0,
-   "index_max": 16.0
+   "index_max": 18.0
   },
   {
    "slug": "west-new-brighton-new-brighton-st-george",
@@ -1125,6 +1169,157 @@
    "scraped_at": null,
    "index_price": null,
    "burgers": []
+  },
+  {
+   "id": "77-burger-battery-park-city",
+   "camis": "50088377",
+   "name": "77 Burger",
+   "chain": null,
+   "address": "77 Pearl Street",
+   "borough": "Manhattan",
+   "neighborhood": "Battery Park City-Lower Manhattan",
+   "neighborhood_slug": "battery-park-city-lower-manhattan",
+   "zipcode": "10004",
+   "lat": 40.703947,
+   "lng": -74.010297,
+   "cuisine": "Hamburgers",
+   "website": null,
+   "menu_url": "https://perkchops.com/77-burger-77-pearl-st-new-york-ny-10004",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (perkchops.com).",
+   "scraped_at": "2026-09-24T21:50:49Z",
+   "index_price": 15.75,
+   "burgers": [
+    {
+     "id": "77-burger-battery-park-city--bacon-cheese-burger",
+     "name": "Bacon Cheese Burger",
+     "price": 17.25,
+     "description": "Juicy beef burger on a bun with bacon and melted cheese.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "77-burger-battery-park-city--cheese-burger",
+     "name": "Cheese Burger",
+     "price": 16.25,
+     "description": "Beef burger with melted cheese, served on a bun.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "77-burger-battery-park-city--bacon-fried-egg-and-cheese-burger",
+     "name": "Bacon, Fried Egg and Cheese Burger",
+     "price": 17.75,
+     "description": "Beef patty, pepper jack, fried egg and turkey bacon burger.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "77-burger-battery-park-city--turkey-burger",
+     "name": "Turkey Burger",
+     "price": 16.25,
+     "description": "Turkey burger with lettuce, tomato, and herbed mayo.",
+     "protein": "turkey",
+     "is_index_item": false
+    },
+    {
+     "id": "77-burger-battery-park-city--double-cheese-burger",
+     "name": "Double Cheese Burger",
+     "price": 21.75,
+     "description": "Cheese burger with lettuce, tomato and onion.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "77-burger-battery-park-city--chipotle-burger",
+     "name": "Chipotle Burger",
+     "price": 18.25,
+     "description": "Chipotle BBQ sauce, pepper jack cheese, onion, and jalapeno.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "77-burger-battery-park-city--angus-beef-burger",
+     "name": "Angus Beef Burger",
+     "price": 15.75,
+     "description": "Beef burger with lettuce and tomato.",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "77-burger-battery-park-city--impossible-vegan-burger",
+     "name": "Impossible Vegan Burger",
+     "price": 17.0,
+     "description": "Vegan burger with lettuce and tomato.",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "77-burger-battery-park-city--bison-burger",
+     "name": "Bison Burger",
+     "price": 20.0,
+     "description": "Grilled red onion and grilled tomato.",
+     "protein": "other",
+     "is_index_item": false
+    },
+    {
+     "id": "77-burger-battery-park-city--california-burger",
+     "name": "California Burger",
+     "price": 18.25,
+     "description": "Guacamole, crispy fried onions, and chipotle mayo.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "77-burger-battery-park-city--the-new-yorker-burger",
+     "name": "The New Yorker Burger",
+     "price": 17.75,
+     "description": "Swiss cheese, sauteed onion, mushrooms, and sour cream.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "77-burger-battery-park-city--mexican-burger",
+     "name": "Mexican Burger",
+     "price": 17.75,
+     "description": "Mexican burger with pepper jack, jalapeno, and guacamole.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "77-burger-battery-park-city--sliders",
+     "name": "Sliders",
+     "price": 17.75,
+     "description": "Three 2 oz mini burgers.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "77-burger-battery-park-city--texas-bbq-burger",
+     "name": "Texas BBQ Burger",
+     "price": 15.75,
+     "description": "Burger with smoked bbq sauce and melted blue cheese.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "77-burger-battery-park-city--vegan-burger",
+     "name": "Vegan Burger",
+     "price": 16.5,
+     "description": "Vegetable patty with caramelized onion on a bun.",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "77-burger-battery-park-city--chicken-burger",
+     "name": "Chicken Burger",
+     "price": 16.25,
+     "description": "Chicken burger with avocado, lettuce, tomato, and onion.",
+     "protein": "chicken",
+     "is_index_item": false
+    }
+   ]
   },
   {
    "id": "7th-street-burger-astoria",
@@ -1527,6 +1722,28 @@
      "is_index_item": false
     }
    ]
+  },
+  {
+   "id": "98k-burger-new-dorp",
+   "camis": null,
+   "name": "98K Burger",
+   "chain": null,
+   "address": null,
+   "borough": "Staten Island",
+   "neighborhood": "New Dorp-Midland Beach",
+   "neighborhood_slug": "new-dorp-midland-beach",
+   "zipcode": null,
+   "lat": null,
+   "lng": null,
+   "cuisine": null,
+   "website": null,
+   "menu_url": "https://www.seamless.com/menu/98k-hamburgers-357a-new-dorp-ln-staten-island/7838424",
+   "price_source": "delivery_app",
+   "status": "no_burgers",
+   "status_detail": "Found a menu but no beef burger on it. Tried: seamless.com (menu without burgers). No more candidate pages.",
+   "scraped_at": "2026-09-24T21:53:29Z",
+   "index_price": null,
+   "burgers": []
   },
   {
    "id": "abbey-tavern-gramercy",
@@ -2015,6 +2232,125 @@
    ]
   },
   {
+   "id": "andrews-diner-great-kills",
+   "camis": "40720393",
+   "name": "Andrew's Diner",
+   "chain": null,
+   "address": "4160 Hylan Boulevard",
+   "borough": "Staten Island",
+   "neighborhood": "Great Kills",
+   "neighborhood_slug": "great-kills",
+   "zipcode": "10308",
+   "lat": 40.538488,
+   "lng": -74.149201,
+   "cuisine": "American",
+   "website": "https://andrewsdiner.com/",
+   "menu_url": "https://andrewsdiner.com/wp-content/uploads/2022/07/Andrews-Main-Menu-01-22-3.pdf",
+   "price_source": "official_pdf",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's menu PDF (andrewsdiner.com). The menu file dates from July 2022, so prices may have changed; no newer menu was found.",
+   "scraped_at": "2026-09-24T21:53:20Z",
+   "index_price": 9.95,
+   "burgers": [
+    {
+     "id": "andrews-diner-great-kills--avocado-burger",
+     "name": "Avocado Burger",
+     "price": 14.95,
+     "description": "Avocado, bacon & jack cheese Reg. 14.95 • Dlx. 18.45",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "andrews-diner-great-kills--california-burger",
+     "name": "California Burger",
+     "price": 10.95,
+     "description": "American cheese, lettuce, tomato, chopped onions & mayo Reg. 10.95 • Dlx. 14.45",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "andrews-diner-great-kills--mushroom-burger",
+     "name": "Mushroom Burger",
+     "price": 11.95,
+     "description": "Topped with swiss, lots of mushrooms & fried onions Reg. 11.95 • Dlx. 15.45",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "andrews-diner-great-kills--greek-burger",
+     "name": "Greek Burger",
+     "price": 11.95,
+     "description": "Served on pita bread with greek sauce, lettuce, tomato, chopped onions & feta cheese Reg. 11.95 • Dlx. 15.45",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "andrews-diner-great-kills--pizza-burger",
+     "name": "Pizza Burger",
+     "price": 10.95,
+     "description": "Topped with melted mozzarella & tasty pizza sauce Reg. 10.95 • Dlx. 14.45",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "andrews-diner-great-kills--texas-burger",
+     "name": "Texas Burger",
+     "price": 11.95,
+     "description": "Topped with american cheese, bacon & one fried or scrambled egg Reg. 11.95 • Dlx. 15.45",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "andrews-diner-great-kills--patty-melt",
+     "name": "Patty Melt",
+     "price": 11.95,
+     "description": "Swiss cheese & fried onions on grilled rye Reg. 11.95 • Dlx. 15.45",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "andrews-diner-great-kills--portabella-burger",
+     "name": "Portabella Burger",
+     "price": 12.95,
+     "description": "Topped with roasted peppers, swiss cheese & portabella mushrooms Reg. 12.95 • Dlx. 16.45",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "andrews-diner-great-kills--classic-burger",
+     "name": "Classic Burger",
+     "price": 9.95,
+     "description": "Reg. 9.95 • Dlx. 13.45",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "andrews-diner-great-kills--turkey-burger",
+     "name": "Turkey Burger",
+     "price": 10.95,
+     "description": "Reg. 10.95 • Dlx. 14.45",
+     "protein": "turkey",
+     "is_index_item": false
+    },
+    {
+     "id": "andrews-diner-great-kills--veggie-burger",
+     "name": "Veggie Burger",
+     "price": 9.95,
+     "description": "Reg. 9.95 • Dlx. 13.45",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "andrews-diner-great-kills--buffalo-burger",
+     "name": "Buffalo Burger",
+     "price": 12.95,
+     "description": "Reg. 12.95 • Dlx. 16.45",
+     "protein": "other",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "angel-of-harlem-central-harlem-south",
    "camis": "50033699",
    "name": "Angel of Harlem",
@@ -2392,6 +2728,61 @@
    "burgers": []
   },
   {
+   "id": "bantry-bay-publick-house-hunters-point",
+   "camis": "41107259",
+   "name": "Bantry Bay Publick House",
+   "chain": null,
+   "address": "33-01 Greenpoint Avenue",
+   "borough": "Queens",
+   "neighborhood": "Hunters Point-Sunnyside-West Maspeth",
+   "neighborhood_slug": "hunters-point-sunnyside-west-maspeth",
+   "zipcode": "11101",
+   "lat": 40.735672,
+   "lng": -73.934464,
+   "cuisine": "Irish",
+   "website": "https://www.bantrybaypub.com",
+   "menu_url": "https://bantrybaynyc.com/long-island-city-blissville-bantry-bay-food-menu",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (bantrybaynyc.com).",
+   "scraped_at": "2026-09-24T21:52:35Z",
+   "index_price": 15.0,
+   "burgers": [
+    {
+     "id": "bantry-bay-publick-house-hunters-point--house-deluxe-burger",
+     "name": "House Deluxe Burger",
+     "price": 15.0,
+     "description": "Choice: fresh mozzarella, American, Swiss, pepper jack or smoked gouda",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "bantry-bay-publick-house-hunters-point--honey-siriracha-bacon-jam-burger",
+     "name": "Honey Siriracha bacon Jam burger",
+     "price": 18.0,
+     "description": "Oversized English toasted with rendered bacon, honey & siriracha, choice of cheese",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bantry-bay-publick-house-hunters-point--steak-burger",
+     "name": "Steak Burger",
+     "price": 20.0,
+     "description": "Built with chunks of our marinated flank, choice of cheese",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bantry-bay-publick-house-hunters-point--seared-seeded-tuna-steak-burger",
+     "name": "Seared Seeded Tuna Steak Burger",
+     "price": 20.0,
+     "description": "Everything bagel seeds, Thai ginger slaw & wasabi mayo, oversized English muffin",
+     "protein": "fish",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "bar-bacon-clinton",
    "camis": null,
    "name": "Bar Bacon",
@@ -2461,6 +2852,28 @@
      "is_index_item": false
     }
    ]
+  },
+  {
+   "id": "bar-burger-elmhurst",
+   "camis": "50127892",
+   "name": "Bar Burger",
+   "chain": null,
+   "address": "85-16 Roosevelt Avenue",
+   "borough": "Queens",
+   "neighborhood": "Elmhurst",
+   "neighborhood_slug": "elmhurst",
+   "zipcode": "11372",
+   "lat": 40.747939,
+   "lng": -73.88089,
+   "cuisine": "Latin American",
+   "website": "https://www.barburgerjacksonheights.com/",
+   "menu_url": "https://www.barburgerjacksonheights.com/order",
+   "price_source": "official_site",
+   "status": "no_burgers",
+   "status_detail": "Found a menu but no beef burger on it. Tried: barburgerjacksonheights.com (menu without burgers); barburgerjacksonheights.com (not a menu). No more candidate pages.",
+   "scraped_at": "2026-09-24T21:52:56Z",
+   "index_price": null,
+   "burgers": []
   },
   {
    "id": "bar-revival-chinatown",
@@ -3405,6 +3818,69 @@
    "burgers": []
   },
   {
+   "id": "bay-ridge-house-of-wings-bay-ridge",
+   "camis": "50135016",
+   "name": "Bay Ridge House of Wings",
+   "chain": null,
+   "address": "8812 3 Avenue",
+   "borough": "Brooklyn",
+   "neighborhood": "Bay Ridge",
+   "neighborhood_slug": "bay-ridge",
+   "zipcode": "11209",
+   "lat": 40.621882,
+   "lng": -74.031714,
+   "cuisine": "Chicken",
+   "website": null,
+   "menu_url": "https://www.houseofwingsnyc.com/order/brooklyn",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (houseofwingsnyc.com).",
+   "scraped_at": "2026-09-24T21:52:24Z",
+   "index_price": 7.0,
+   "burgers": [
+    {
+     "id": "bay-ridge-house-of-wings-bay-ridge--smash-burger",
+     "name": "Smash Burger",
+     "price": 7.0,
+     "description": "Smash patty with cheese, lettuce, tomato, grilled onions, pickles and house sauce.",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "bay-ridge-house-of-wings-bay-ridge--double-patty-smash-burger",
+     "name": "Double Patty Smash Burger",
+     "price": 10.0,
+     "description": "Double smash patty with cheese, lettuce, tomato, grilled onions, pickles and house sauce.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bay-ridge-house-of-wings-bay-ridge--the-mac-burger",
+     "name": "The Mac Burger",
+     "price": 10.0,
+     "description": "Our signature smash burger but topped with a cheesy scoop of mac and cheese!",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bay-ridge-house-of-wings-bay-ridge--the-spicy-smash",
+     "name": "The Spicy Smash",
+     "price": 8.0,
+     "description": "Smash patty with cheese, lettuce, tomato, grilled onions, pickles and jalapeno peppers, topped with our spicy house sauce.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bay-ridge-house-of-wings-bay-ridge--grilled-cheese-burger-double-patty",
+     "name": "Grilled Cheese Burger (Double Patty)",
+     "price": 11.0,
+     "description": "L&T, Grilled Onions, Pickles and House Sauce (mild)",
+     "protein": "beef",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "bayards-ale-house-west-village",
    "camis": "41225392",
    "name": "Bayard's Ale House",
@@ -3503,6 +3979,285 @@
      "price": 13.95,
      "description": "Served on Whole Wheat Toast. Served with French Fries and Housemade Chipotle Mayo...",
      "protein": "veggie",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
+   "id": "bean-post-pub-bay-ridge",
+   "camis": "41052309",
+   "name": "Bean Post Pub",
+   "chain": null,
+   "address": "7525 5 Avenue",
+   "borough": "Brooklyn",
+   "neighborhood": "Bay Ridge",
+   "neighborhood_slug": "bay-ridge",
+   "zipcode": "11209",
+   "lat": 40.629224,
+   "lng": -74.022733,
+   "cuisine": "American",
+   "website": "http://beanpostpub.com/",
+   "menu_url": "https://www.beanpostpub.com/menu",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (beanpostpub.com).",
+   "scraped_at": "2026-09-24T21:52:26Z",
+   "index_price": 13.0,
+   "burgers": [
+    {
+     "id": "bean-post-pub-bay-ridge--beef-burger",
+     "name": "Beef Burger",
+     "price": 13.0,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--classic-cheeseburger",
+     "name": "Classic Cheeseburger",
+     "price": 14.0,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--turkey-burger",
+     "name": "Turkey Burger",
+     "price": 15.0,
+     "description": null,
+     "protein": "turkey",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--jalapeno-cheeseburger",
+     "name": "Jalapeno Cheeseburger",
+     "price": 15.5,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--veggie-burger",
+     "name": "Veggie Burger",
+     "price": 16.0,
+     "description": null,
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--mushroom-cheeseburger",
+     "name": "Mushroom Cheeseburger",
+     "price": 15.5,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--beyond-burger",
+     "name": "Beyond Burger",
+     "price": 17.5,
+     "description": null,
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--bacon-cheeseburger",
+     "name": "Bacon Cheeseburger",
+     "price": 16.5,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--pizza-burger",
+     "name": "Pizza Burger",
+     "price": 16.0,
+     "description": "Melted Mozzarella, Marinara Sauce & Italian Seasonings",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--4-a-m-burger",
+     "name": "4 A.M. Burger",
+     "price": 16.5,
+     "description": "Waffle Fries Soaked in Brown Gravy with Melted Mozzarella",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--mexican-burger",
+     "name": "Mexican Burger",
+     "price": 16.5,
+     "description": "Mexican Cheese Blend Cooked into our Burger and Topped with Jalapenos & Salsa",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--buffalo-burger",
+     "name": "Buffalo Burger",
+     "price": 16.5,
+     "description": "Covered in Your Choice of any of Our Famous Buffalo Flavors",
+     "protein": "other",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--chili-burger",
+     "name": "Chili Burger",
+     "price": 17.0,
+     "description": "Homemade Beef Chili & your Choice of Cheese",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--owners-favorite-burger",
+     "name": "Owner's Favorite Burger",
+     "price": 17.0,
+     "description": "Bacon, Mozzarella & Bean Post BBQ Sauce",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--bean-post-burger",
+     "name": "Bean Post Burger",
+     "price": 17.5,
+     "description": "Grilled Peppers, Onions, Mushrooms & Mozzarella",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--hawaiian-burger",
+     "name": "Hawaiian Burger",
+     "price": 17.5,
+     "description": "Hawaiian Skyy Teriyaki Sauce topped with a Grilled Pineapple Ring",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--caliente-burger",
+     "name": "Caliente Burger",
+     "price": 18.0,
+     "description": "Bell, Banana & Jalapeno Peppers, Pepper Jack and our Specialty Hot Sauce",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--cowboy-burger",
+     "name": "Cowboy Burger",
+     "price": 18.5,
+     "description": "Onion Ring, Bacon, Cheddar & Bean Post BBQ Sauce",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--land-and-sea-burger",
+     "name": "Land & Sea Burger",
+     "price": 18.5,
+     "description": "Topped with a Delicious Crab Cake with Tarter or Cocktail Sauce",
+     "protein": "fish",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--jacked-up-burger",
+     "name": "Jacked Up Burger",
+     "price": 18.5,
+     "description": "Bacon, Jalapenos, Pepper Jack & Spicy BBQ Sauce",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--west-coast-burger",
+     "name": "West Coast Burger",
+     "price": 19.5,
+     "description": "Bacon, Sliced Avocado & Pepper Jack",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--nyc-breakfast-burger",
+     "name": "NYC Breakfast Burger",
+     "price": 19.5,
+     "description": "The Famous NYC Breakfast Staple of Bacon, Egg & Cheese is Destined to Make this Burger Famous",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--pulled-pork-burger",
+     "name": "Pulled Pork Burger",
+     "price": 19.5,
+     "description": "Pulled Pork Piled High Served with Homemade Cole Slaw",
+     "protein": "pork",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--mac-and-cheese-wedge-burger",
+     "name": "Mac & Cheese Wedge Burger",
+     "price": 19.0,
+     "description": "Melted American Cheese, Mac & Cheese Wedges & Cheddar Cheese Sauce",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--mac-and-cheese-burger",
+     "name": "Mac & Cheese Burger",
+     "price": 20.5,
+     "description": "Homemade Mac & Cheese Encased in Cheddar Cheese & Topped with Crumbled Bacon",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--grilled-cheese-burger",
+     "name": "Grilled Cheese Burger",
+     "price": 21.5,
+     "description": "Burger Served Between Two Grilled Cheese Sandwiches",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--reuben-burger",
+     "name": "Reuben Burger",
+     "price": 21.5,
+     "description": "Corned Beef, Swiss, Sauerkraut & Russian Dressing",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--pastrami-burger",
+     "name": "Pastrami Burger",
+     "price": 21.5,
+     "description": "Topped with Hand Cut Hot Pastrami Piled High",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--caribbean-burger",
+     "name": "Caribbean Burger",
+     "price": 21.5,
+     "description": "Jamaican Jerk Sauce, Bacon, Jalapenos, Crushed Pineapple, Coconut Flakes & Pepper Jack",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--monster-burger",
+     "name": "Monster Burger",
+     "price": 27.5,
+     "description": "One Pound Burger with Choice of Cheese; Beef Patty",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--ccs-cardiac-burger",
+     "name": "CC's Cardiac Burger",
+     "price": 29.5,
+     "description": "Our Massive Grilled Cheese Burger Made with Bacon in the Grilled Cheese & Topped with Hot Pastrami",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bean-post-pub-bay-ridge--burger",
+     "name": "Burger",
+     "price": 13.5,
+     "description": null,
+     "protein": "beef",
      "is_index_item": false
     }
    ]
@@ -4020,6 +4775,157 @@
    ]
   },
   {
+   "id": "bills-bar-and-burger-downtown-battery-park-city",
+   "camis": "50000726",
+   "name": "Bill's Bar & Burger Downtown",
+   "chain": null,
+   "address": "85 West Street",
+   "borough": "Manhattan",
+   "neighborhood": "Battery Park City-Lower Manhattan",
+   "neighborhood_slug": "battery-park-city-lower-manhattan",
+   "zipcode": "10006",
+   "lat": 40.709669,
+   "lng": -74.014929,
+   "cuisine": "Hamburgers",
+   "website": null,
+   "menu_url": "https://www.billsbarandburger.com/location/bills-bar-and-burger-downtown-nyc/",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (billsbarandburger.com).",
+   "scraped_at": "2026-09-24T21:50:46Z",
+   "index_price": 15.99,
+   "burgers": [
+    {
+     "id": "bills-bar-and-burger-downtown-battery-park-city--the-bills-burger",
+     "name": "The Bill’s Burger",
+     "price": 16.99,
+     "description": "the classic with american cheese, ltp, special sauce",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bills-bar-and-burger-downtown-battery-park-city--fat-cat-cnn-top-10-burger-award",
+     "name": "Fat Cat CNN Top 10 Burger Award",
+     "price": 16.99,
+     "description": "caramelized onion, american cheese, special sauce, english muffin, ltp",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bills-bar-and-burger-downtown-battery-park-city--big-cat",
+     "name": "Big Cat",
+     "price": 19.99,
+     "description": "caramelized onions, american cheese, pulled pork, bbq bacon, fried egg, special sauce, english muffin, ltp",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bills-bar-and-burger-downtown-battery-park-city--south-of-the-burger",
+     "name": "South of The Burger",
+     "price": 18.99,
+     "description": "guacamole, caramelized onions, pepper jack cheese, queso sauce, chipotle aioli, pico de gallo, jalapeño, lettuce, tomato",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bills-bar-and-burger-downtown-battery-park-city--mini-bs",
+     "name": "Mini B’s",
+     "price": 15.99,
+     "description": "three sliders, caramelized onion, american cheese, special sauce, pickles",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "bills-bar-and-burger-downtown-battery-park-city--ranch-hand",
+     "name": "Ranch Hand",
+     "price": 19.99,
+     "description": "applewood bacon, onion mayo, vermont white cheddar, bbq sauce, pretzel bun, ltp",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bills-bar-and-burger-downtown-battery-park-city--beyond-burger",
+     "name": "Beyond Burger",
+     "price": 19.99,
+     "description": "deliciousness of a burger made entirely from plants, special sauce, vermont white cheddar, whole wheat bun, ltp",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "bills-bar-and-burger-downtown-battery-park-city--the-big-mamoooo",
+     "name": "The Big Mamoooo",
+     "price": 19.99,
+     "description": "mac & cheese, bbq brisket, vermont white cheddar, lettuce, tomato, onion, mayo",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bills-bar-and-burger-downtown-battery-park-city--ultimate-cheeseburger",
+     "name": "Ultimate Cheeseburger",
+     "price": 21.99,
+     "description": "9oz triple decker, vermont white cheddar, provolone, american cheese, special sauce, ltp",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bills-bar-and-burger-downtown-battery-park-city--keto-my-heart",
+     "name": "Keto My Heart",
+     "price": 19.99,
+     "description": "bunless, beef patties, shaved ham, brisket, bacon, vermont white cheddar, avocado, caramelized onions, red onions, chipotle aioli, fried egg, ltp",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bills-bar-and-burger-downtown-battery-park-city--mushroom-swiss-burger",
+     "name": "Mushroom Swiss Burger",
+     "price": 18.99,
+     "description": "swiss cheese, sautéed mushroom, ltp, roasted garlic mayo, crispy onions",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bills-bar-and-burger-downtown-battery-park-city--the-rock",
+     "name": "The Rock",
+     "price": 19.99,
+     "description": "9oz triple decker, brisket, vermont white cheddar, onion rings, bacon, caramelized onion, ltp, rock sauce",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bills-bar-and-burger-downtown-battery-park-city--blt-burger",
+     "name": "BLT Burger",
+     "price": 18.99,
+     "description": "bacon, lettuce, tomato, black pepper mayo, provolone, Texas toast",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bills-bar-and-burger-downtown-battery-park-city--mmmmmelt",
+     "name": "Mmmmmelt",
+     "price": 17.99,
+     "description": "American cheese, caramelized onions, pickles, 1000 island, Texas toast",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bills-bar-and-burger-downtown-battery-park-city--the-gobbler",
+     "name": "The Gobbler",
+     "price": 17.99,
+     "description": "oregano-spiced turkey patty, provolone cheese, basil aioli, roasted red pepper, ltp",
+     "protein": "turkey",
+     "is_index_item": false
+    },
+    {
+     "id": "bills-bar-and-burger-downtown-battery-park-city--breakfast-burger",
+     "name": "Breakfast Burger",
+     "price": 18.99,
+     "description": "White Cheddar, Fried Egg, LTP, Hashbrown, Bacon, Mayo, Applewood Bacon, English Muffin",
+     "protein": "beef",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "bite-burger-great-kills",
    "camis": null,
    "name": "Bite Burger",
@@ -4424,6 +5330,45 @@
      "name": "Grilled 8 oz. Burger",
      "price": 10.0,
      "description": "with French Fries",
+     "protein": "beef",
+     "is_index_item": true
+    }
+   ]
+  },
+  {
+   "id": "blackstone-bar-and-grill-spuyten-duyvil",
+   "camis": "50009539",
+   "name": "Blackstone Bar & Grill",
+   "chain": null,
+   "address": "3713 Riverdale Avenue",
+   "borough": "Bronx",
+   "neighborhood": "Spuyten Duyvil-Kingsbridge",
+   "neighborhood_slug": "spuyten-duyvil-kingsbridge",
+   "zipcode": "10463",
+   "lat": 40.887204,
+   "lng": -73.907135,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://www.seamless.com/menu/blackstone-bar--grill-3713-riverdale-ave-the-bronx/313711",
+   "price_source": "delivery_app",
+   "status": "priced",
+   "status_detail": "Prices from a delivery app (seamless.com). Delivery-app prices usually run above in-store prices.",
+   "scraped_at": "2026-09-24T21:53:14Z",
+   "index_price": 16.0,
+   "burgers": [
+    {
+     "id": "blackstone-bar-and-grill-spuyten-duyvil--classic-burger",
+     "name": "Classic Burger",
+     "price": 18.0,
+     "description": "Lettuc, tomato, brioche with fries.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "blackstone-bar-and-grill-spuyten-duyvil--sliders",
+     "name": "Sliders",
+     "price": 16.0,
+     "description": "Three cheeseburger sliders or shredded chicken with American cheese.",
      "protein": "beef",
      "is_index_item": true
     }
@@ -5220,7 +6165,7 @@
    "menu_url": null,
    "price_source": null,
    "status": "no_menu_found",
-   "status_detail": "The pages found were not menus. A Context.dev call (site map of bravopizzasi.com) failed temporarily on 2 separate runs, so this is the best result without it; later runs still retry it. Tried: sirved.com (not a menu); bravopizzasi.com (not a menu). No more candidate pages.",
+   "status_detail": "The pages found were not menus. A Context.dev call (site map of bravopizzasi.com) failed temporarily on 3 separate runs, so this is the best result without it; later runs still retry it. Tried: sirved.com (not a menu); bravopizzasi.com (not a menu). No more candidate pages.",
    "scraped_at": null,
    "index_price": null,
    "burgers": []
@@ -5538,6 +6483,85 @@
    ]
   },
   {
+   "id": "bronx-burger-house-north-riverdale",
+   "camis": "41577394",
+   "name": "Bronx Burger House",
+   "chain": null,
+   "address": "5816 Mosholu Avenue",
+   "borough": "Bronx",
+   "neighborhood": "North Riverdale-Fieldston-Riverdale",
+   "neighborhood_slug": "north-riverdale-fieldston-riverdale",
+   "zipcode": "10471",
+   "lat": 40.904638,
+   "lng": -73.896598,
+   "cuisine": "American",
+   "website": "https://bronxburgerhouse.com",
+   "menu_url": "https://www.seamless.com/menu/bronx-burger-house-5816-mosholu-ave-the-bronx/1784191",
+   "price_source": "delivery_app",
+   "status": "priced",
+   "status_detail": "Prices from a delivery app (seamless.com). Delivery-app prices usually run above in-store prices.",
+   "scraped_at": "2026-09-24T21:53:12Z",
+   "index_price": 13.0,
+   "burgers": [
+    {
+     "id": "bronx-burger-house-north-riverdale--thomas-monster-burger",
+     "name": "Thomas Monster Burger",
+     "price": 19.0,
+     "description": "2 burgers, special sauce, American cheese and bacon.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bronx-burger-house-north-riverdale--pony-burger",
+     "name": "Pony Burger",
+     "price": 13.0,
+     "description": "Small burger with french fries",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "bronx-burger-house-north-riverdale--pony-bacon-cheeseburger",
+     "name": "Pony Bacon Cheeseburger",
+     "price": 14.0,
+     "description": "Small burger with American cheese, bacon and french fries.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bronx-burger-house-north-riverdale--classic-burger",
+     "name": "Classic Burger",
+     "price": 15.0,
+     "description": "Lettuce and tomato.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bronx-burger-house-north-riverdale--old-english-burger",
+     "name": "Old English Burger",
+     "price": 19.0,
+     "description": "Applewood smoked bacon, cheddar cheese served on an English muffin.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bronx-burger-house-north-riverdale--big-bleu-burger",
+     "name": "Big Bleu Burger",
+     "price": 19.0,
+     "description": "Caramelized onion, bleu cheese and bacon.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "bronx-burger-house-north-riverdale--impossible-burger",
+     "name": "Impossible burger",
+     "price": null,
+     "description": null,
+     "protein": "veggie",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "brooklyn-beef-n-cheese-battery-park-city",
    "camis": null,
    "name": "Brooklyn Beef N' Cheese",
@@ -5845,6 +6869,107 @@
      "description": "Oklahoma Style, Angus beef patty with grill onion, pickles, American cheese, and Haus sauce.",
      "protein": "beef",
      "is_index_item": true
+    }
+   ]
+  },
+  {
+   "id": "burger-and-lobster-midtown",
+   "camis": "50065601",
+   "name": "Burger & Lobster",
+   "chain": null,
+   "address": "132 West 43 Street",
+   "borough": "Manhattan",
+   "neighborhood": "Midtown-Midtown South",
+   "neighborhood_slug": "midtown-midtown-south",
+   "zipcode": "10036",
+   "lat": 40.755897,
+   "lng": -73.984569,
+   "cuisine": "Seafood",
+   "website": "https://www.burgerandlobster.com/",
+   "menu_url": null,
+   "price_source": null,
+   "status": "no_menu_found",
+   "status_detail": "The pages found were not menus. Tried: burgerandlobster.com (not a menu); burgerandlobster.com (not a menu); burgerandlobster.com (not a menu). Stopped at the 3-scrape cap.",
+   "scraped_at": null,
+   "index_price": null,
+   "burgers": []
+  },
+  {
+   "id": "burger-bhai-flatbush",
+   "camis": "50165320",
+   "name": "Burger Bhai",
+   "chain": null,
+   "address": "1017 Cortelyou Road",
+   "borough": "Brooklyn",
+   "neighborhood": "Flatbush",
+   "neighborhood_slug": "flatbush",
+   "zipcode": "11218",
+   "lat": 40.639361,
+   "lng": -73.968562,
+   "cuisine": "Hamburgers",
+   "website": null,
+   "menu_url": "https://burgerbhaii.com/",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (burgerbhaii.com).",
+   "scraped_at": "2026-09-24T21:52:02Z",
+   "index_price": 7.99,
+   "burgers": [
+    {
+     "id": "burger-bhai-flatbush--classic-smash-burger",
+     "name": "Classic Smash Burger",
+     "price": 7.99,
+     "description": "Grass-fed beef, American cheese, sautéed onions, pickles & Bhai Sauce on a Potato roll.",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "burger-bhai-flatbush--bhai-ka-burger",
+     "name": "Bhai Ka Burger",
+     "price": 14.99,
+     "description": "Minced beef & turkey bacon patty, spicy jalapeños, pepper jack cheese, Bhai sauce on brioche bun.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-bhai-flatbush--chick-a-tikka-burger",
+     "name": "Chick-A-Tikka Burger",
+     "price": 8.99,
+     "description": "Tikka-marinated chicken thigh, pepper jack, lettuce & mint sauce on Potato roll.",
+     "protein": "chicken",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-bhai-flatbush--chapli-kebab-burger",
+     "name": "Chapli Kebab Burger",
+     "price": 9.99,
+     "description": "Spiced grilled chicken patty, crispy lettuce, pepper jack, tangy yogurt sauce on softbun.",
+     "protein": "chicken",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-bhai-flatbush--aloo-tikki-burger",
+     "name": "Aloo Tikki Burger",
+     "price": 7.99,
+     "description": "Fresh aloo tikki, masala sauce, lettuce & onions on potato roll. Vegan option.",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-bhai-flatbush--bhai-double-stack",
+     "name": "Bhai Double Stack",
+     "price": 11.99,
+     "description": "Two smash patties, pepper jack, jalapeños, turkey bacon, Bhai Sauce on brioche bun.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-bhai-flatbush--lalo-burger",
+     "name": "Lalo Burger",
+     "price": 20.99,
+     "description": "Bhai Ka beef patty + smash patty, sunny-side egg, turkey bacon, Bhai Sauce on brioche.",
+     "protein": "beef",
+     "is_index_item": false
     }
    ]
   },
@@ -6402,6 +7527,109 @@
    ]
   },
   {
+   "id": "burger-spot-forest-hills",
+   "camis": "50168958",
+   "name": "Burger Spot",
+   "chain": null,
+   "address": "64-29 108 Street",
+   "borough": "Queens",
+   "neighborhood": "Forest Hills",
+   "neighborhood_slug": "forest-hills",
+   "zipcode": "11375",
+   "lat": 40.732161,
+   "lng": -73.849195,
+   "cuisine": "Jewish/Kosher",
+   "website": "https://www.burgerspotny.com/menu/",
+   "menu_url": "https://order.toasttab.com/online/burgerspot",
+   "price_source": "online_ordering",
+   "status": "priced",
+   "status_detail": "Prices from an online-ordering page (order.toasttab.com).",
+   "scraped_at": "2026-09-24T21:52:52Z",
+   "index_price": 11.49,
+   "burgers": [
+    {
+     "id": "burger-spot-forest-hills--burger",
+     "name": "Burger",
+     "price": 15.99,
+     "description": "(8oz) Two 100% Beef all natural fresh, hand-formed smashed patties hot off the grill and served on a soft, toasted brioche bun with a choice of your toppings.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-spot-forest-hills--little-burger",
+     "name": "Little Burger",
+     "price": 11.49,
+     "description": "(4 oz) One 100% Beef all natural fresh, hand-formed smashed patty hot off the grill and served on a soft, toasted brioche bun with a choice of your toppings.",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "burger-spot-forest-hills--cheese-burger",
+     "name": "Cheese Burger",
+     "price": 18.99,
+     "description": "(8 oz) American-style vegan cheese melted between two fresh patties and placed on a soft, toasted brioche bun with a choice of your toppings",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-spot-forest-hills--little-cheese-burger",
+     "name": "Little Cheese Burger",
+     "price": 13.49,
+     "description": "(4oz) American-style vegan cheese melted over one fresh patty and placed on a soft, toasted brioche bun with a choice of your toppings",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-spot-forest-hills--oklahoma-onion-burger",
+     "name": "Oklahoma Onion Burger",
+     "price": 16.99,
+     "description": "(8 oz) Freshly chopped onions smashed into both patties on the grill. Adding a charred, yet caramelized flavor to the burger. Served on a soft, toasted brioche bun with a choice of your toppings.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-spot-forest-hills--little-oklahoma-onion-burger",
+     "name": "Little Oklahoma Onion Burger",
+     "price": 13.49,
+     "description": "(4 oz) Freshly chopped onions smashed into the patty on the grill. Adding a charred, yet caramelized flavor to the burger. Served on a soft, toasted brioche bun with a choice of your toppings.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-spot-forest-hills--power-stack-chick-n-beef-burger",
+     "name": "Power Stack (Chick N' Beef Burger)",
+     "price": 19.99,
+     "description": "Hmm, can't decide between chicken or beef? Have both together! This is a Juicy Crispy Chicken cutlet topped with a 4oz Beef patty. Served on a soft, toasted brioche bun with a choice of your toppings.",
+     "protein": "other",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-spot-forest-hills--ceo-burger",
+     "name": "CEO Burger",
+     "price": 23.99,
+     "description": "Juicy burger patty loaded with grilled onions, grilled pastrami, a crispy onion ring, vegan cheese, garlic mayo & spicy mayo. Topped off with BBQ sauce.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-spot-forest-hills--brisket-bbq-burger",
+     "name": "Brisket BBQ Burger",
+     "price": 17.99,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-spot-forest-hills--beyond-burger",
+     "name": "Beyond Burger",
+     "price": 13.99,
+     "description": "(4oz) 100% Plant-Based Beyond Burger® From Beyond Meat® served on a soft, toasted brioche bun with a choice of your toppings.",
+     "protein": "veggie",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "burger-time-van-nest",
    "camis": null,
    "name": "Burger Time",
@@ -6422,6 +7650,173 @@
    "scraped_at": null,
    "index_price": null,
    "burgers": []
+  },
+  {
+   "id": "burger-village-soho",
+   "camis": "50123103",
+   "name": "Burger Village",
+   "chain": null,
+   "address": "120 Church Street",
+   "borough": "Manhattan",
+   "neighborhood": "SoHo-TriBeCa-Civic Center-Little Italy",
+   "neighborhood_slug": "soho-tribeca-civic-center-little-italy",
+   "zipcode": "10007",
+   "lat": 40.713603,
+   "lng": -74.008989,
+   "cuisine": "Hamburgers",
+   "website": "https://www.burgervillage.com/",
+   "menu_url": "https://www.burgervillage.com/new-york-menu/",
+   "price_source": "official_site",
+   "status": "no_prices",
+   "status_detail": "Found burgers but no prices on the menu. Tried: burgervillage.thefastbite.com (menu without burgers); burgervillage.com (menu without burgers); burgervillage.com (burgers without prices). Stopped at the 3-scrape cap.",
+   "scraped_at": "2026-09-24T11:43:49Z",
+   "index_price": null,
+   "burgers": [
+    {
+     "id": "burger-village-soho--beef-burger",
+     "name": "Beef Burger",
+     "price": null,
+     "description": "Included in Lunch Special.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-village-soho--veggie-burger",
+     "name": "Veggie Burger",
+     "price": null,
+     "description": "Included in Lunch Special.",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-village-soho--superior-choice-village-beef-burger",
+     "name": "Superior Choice Village Beef Burger",
+     "price": null,
+     "description": "Organic, grass-fed, antibiotic and hormone free, hand formed patty. American cheese, lettuce, pickles, sautéed onions and signature sauce.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-village-soho--the-game-changer-village-smash-burger",
+     "name": "The Game Changer Village Smash Burger",
+     "price": null,
+     "description": "Organic, grass-fed, antibiotic and hormone free, hand formed patty. American cheese, pickles, sautéed onions, and signature sauce.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-village-soho--california-mystery-village-beef-burger",
+     "name": "California Mystery Village Beef Burger",
+     "price": null,
+     "description": "Organic, grass-fed, antibiotic and hormone free, hand formed patty. American cheese, lettuce, tomato, roasted red peppers, guacamole and signature sauce.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-village-soho--jalo-pkwy-village-bison-burger",
+     "name": "Jalo Pkwy Village Bison Burger",
+     "price": null,
+     "description": "Grass-fed, antibiotic and hormone free, hand formed patty with smoked mozzarella, lettuce, tomato, fried egg, sautéed onions, fresh jalapenos and BBQ sauce.",
+     "protein": "other",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-village-soho--the-wagyu-royale-burger",
+     "name": "The Wagyu Royale Burger",
+     "price": null,
+     "description": "All-natural 100% American wagyu beef, served with gouda cheese, lettuce, tomatoes, sautéed onions and garlic aioli.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-village-soho--my-deer-village-elk-burger",
+     "name": "My Deer Village Elk Burger",
+     "price": null,
+     "description": "All-natural antibiotic and hormone free. Pepper jack cheese, lettuce, tomato, sautéed mushrooms, fresh jalapenos and signature sauce.",
+     "protein": "other",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-village-soho--pyramids-village-lamb-burger",
+     "name": "Pyramids Village Lamb Burger",
+     "price": null,
+     "description": "All-natural grass fed, antibiotic and hormone free. Goat cheese, lettuce, tomato, sautéed onions, cilantro, green peppers and tzatziki sauce.",
+     "protein": "lamb",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-village-soho--wild-terrific-pacific-village-salmon-burger",
+     "name": "Wild Terrific Pacific Village Salmon Burger",
+     "price": null,
+     "description": "Wild caught, hormone and antibiotics free. Lettuce, tomato, red onions, avocado, cilantro, tartar sauce and signature sauce.",
+     "protein": "fish",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-village-soho--gobble-gobble-village-turkey-burger",
+     "name": "Gobble Gobble Village Turkey Burger",
+     "price": null,
+     "description": "Organic, cage free, humanely raised, antibiotic and hormone free. Pepper jack cheese, baby arugula, pico de gallo, applewood smoked bacon and honey mustard.",
+     "protein": "turkey",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-village-soho--garden-grub-village-gluten-free-veggie-burger",
+     "name": "Garden Grub Village Gluten Free Veggie Burger",
+     "price": null,
+     "description": "Non GMO verified handcrafted vegan burger. Vegan cheddar cheese, lettuce, tomato, sautéed onions, sautéed mushrooms and spicy vegenaise sauce.",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-village-soho--slippery-puffball-village-falafel-burger",
+     "name": "Slippery Puffball Village Falafel Burger",
+     "price": null,
+     "description": "Handcrafted falafel patty. Vegan cheddar cheese, lettuce, tomato, cucumbers, sautéed onions and spicy vegenaise sauce.",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-village-soho--spicy-vegan-village-veggie-burger",
+     "name": "Spicy Vegan Village Veggie Burger",
+     "price": null,
+     "description": "Non GMO verified vegan burger. Vegan cheddar cheese, pico de gallo, sautéed onions, sautéed mushrooms and chipotle ketchup.",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-village-soho--the-above-and-beyond-burger",
+     "name": "The Above & Beyond Burger",
+     "price": null,
+     "description": "Plant-based burger. Vegan cheddar cheese, lettuce, tomato, sautéed onions, fresh jalapeños and BBQ sauce.",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-village-soho--the-beanstalk-village-black-bean-burger",
+     "name": "The Beanstalk Village Black Bean Burger",
+     "price": null,
+     "description": "Non GMO verified vegan burger. Vegan cheddar cheese, lettuce, tomato, red onions, grilled jalapeños, avocado and spicy vegenaise sauce.",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-village-soho--the-i-m-possible-burger",
+     "name": "The I-M-Possible Burger",
+     "price": null,
+     "description": "Handcrafted plant based impossible™ burger. Vegan cheddar cheese, lettuce, tomato, sautéed mushrooms, sautéed onions, fresh jalapeños and spicy vegenaise sauce.",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "burger-village-soho--burger-village-patty-melt",
+     "name": "Burger Village Patty Melt",
+     "price": null,
+     "description": "Organic beef, Swiss cheese, sauteed onions & served on rye bread.",
+     "protein": "beef",
+     "is_index_item": false
+    }
+   ]
   },
   {
    "id": "burgerhead-west-village",
@@ -6881,6 +8276,109 @@
    "burgers": []
   },
   {
+   "id": "butchers-burger-bensonhurst-west",
+   "camis": "50153065",
+   "name": "Butcher's Burger",
+   "chain": null,
+   "address": "7501 New Utrecht Avenue",
+   "borough": "Brooklyn",
+   "neighborhood": "Bensonhurst West",
+   "neighborhood_slug": "bensonhurst-west",
+   "zipcode": "11214",
+   "lat": 40.615648,
+   "lng": -73.999968,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://www.butchersburger.com/images/FILE_7086.pdf",
+   "price_source": "official_pdf",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's menu PDF (butchersburger.com).",
+   "scraped_at": "2026-09-24T21:52:23Z",
+   "index_price": 6.99,
+   "burgers": [
+    {
+     "id": "butchers-burger-bensonhurst-west--classic-single-chicken-burger-smash",
+     "name": "Classic Single Chicken Burger Smash",
+     "price": 6.99,
+     "description": null,
+     "protein": "chicken",
+     "is_index_item": false
+    },
+    {
+     "id": "butchers-burger-bensonhurst-west--double-chicken-burger-smash",
+     "name": "Double Chicken Burger Smash",
+     "price": 8.99,
+     "description": null,
+     "protein": "chicken",
+     "is_index_item": false
+    },
+    {
+     "id": "butchers-burger-bensonhurst-west--triple-chicken-burger-smash",
+     "name": "Triple Chicken Burger Smash",
+     "price": 10.99,
+     "description": null,
+     "protein": "chicken",
+     "is_index_item": false
+    },
+    {
+     "id": "butchers-burger-bensonhurst-west--grand-chicken-burger-smash",
+     "name": "Grand Chicken Burger Smash",
+     "price": 12.99,
+     "description": null,
+     "protein": "chicken",
+     "is_index_item": false
+    },
+    {
+     "id": "butchers-burger-bensonhurst-west--romeo-5-stack-chicken-burger-smash",
+     "name": "Romeo 5 Stack Chicken Burger Smash",
+     "price": 14.99,
+     "description": null,
+     "protein": "chicken",
+     "is_index_item": false
+    },
+    {
+     "id": "butchers-burger-bensonhurst-west--classic-single-steak-burger-smash",
+     "name": "Classic Single Steak Burger Smash",
+     "price": 6.99,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "butchers-burger-bensonhurst-west--double-steak-burger-smash",
+     "name": "Double Steak Burger Smash",
+     "price": 8.99,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "butchers-burger-bensonhurst-west--triple-steak-burger-smash",
+     "name": "Triple Steak Burger Smash",
+     "price": 10.99,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "butchers-burger-bensonhurst-west--grand-steak-burger-smash",
+     "name": "Grand Steak Burger Smash",
+     "price": 12.99,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "butchers-burger-bensonhurst-west--romeo-5-stack-steak-burger-smash",
+     "name": "Romeo 5 Stack Steak Burger Smash",
+     "price": 14.99,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "butter-smashburgers-west-village",
    "camis": "50153520",
    "name": "Butter Smashburgers",
@@ -7195,6 +8693,45 @@
      "price": 27.0,
      "description": "Redefine™ burger, brioche bun, lettuce, tomato, caramelized onion, sliced dill pickle, chipotle mayonnaise",
      "protein": "veggie",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
+   "id": "cafe-rue-dix-crown-heights-north",
+   "camis": "41713405",
+   "name": "Café Rue Dix",
+   "chain": null,
+   "address": "1451 Bedford Avenue",
+   "borough": "Brooklyn",
+   "neighborhood": "Crown Heights North",
+   "neighborhood_slug": "crown-heights-north",
+   "zipcode": "11216",
+   "lat": 40.67349,
+   "lng": -73.954036,
+   "cuisine": "African",
+   "website": null,
+   "menu_url": "https://www.ruedixbrooklyn.com/menus",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (ruedixbrooklyn.com).",
+   "scraped_at": "2026-09-24T21:52:16Z",
+   "index_price": 24.0,
+   "burgers": [
+    {
+     "id": "cafe-rue-dix-crown-heights-north--rue-dix-burger",
+     "name": "Rue Dix Burger",
+     "price": 24.0,
+     "description": "spiced ground rib eye. choice of cheddar, bleu, or swiss cheese. choice of fries or salad. (+egg $3 +avocado $4)",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "cafe-rue-dix-crown-heights-north--tuna-burger",
+     "name": "Tuna Burger",
+     "price": 26.0,
+     "description": "spiced yellow fin tuna, shredded kale, pickle mayo. Choice of fries or green salad.",
+     "protein": "fish",
      "is_index_item": false
     }
    ]
@@ -7674,6 +9211,173 @@
    ]
   },
   {
+   "id": "chelsea-square-restaurant-hudson-yards",
+   "camis": "40852659",
+   "name": "Chelsea Square Restaurant",
+   "chain": null,
+   "address": "368 West 23 Street",
+   "borough": "Manhattan",
+   "neighborhood": "Hudson Yards-Chelsea-Flat Iron-Union Square",
+   "neighborhood_slug": "hudson-yards-chelsea-flat-iron-union-square",
+   "zipcode": "10011",
+   "lat": 40.746041,
+   "lng": -74.0003,
+   "cuisine": "American",
+   "website": "https://www.chelseasquarediner.com/",
+   "menu_url": "https://menupages.com/chelsea-square-restaurant/368-w-23rd-st-new-york",
+   "price_source": "menu_aggregator",
+   "status": "priced",
+   "status_detail": "Prices from a menu aggregator (menupages.com).",
+   "scraped_at": "2026-09-24T21:50:48Z",
+   "index_price": 15.0,
+   "burgers": [
+    {
+     "id": "chelsea-square-restaurant-hudson-yards--broiled-jumbo-beefburger",
+     "name": "Broiled Jumbo Beefburger",
+     "price": 15.0,
+     "description": "Served with coleslaw and pickles.",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "chelsea-square-restaurant-hudson-yards--jumbo-american-cheeseburger",
+     "name": "Jumbo American Cheeseburger",
+     "price": 17.0,
+     "description": "Served with coleslaw and pickles.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "chelsea-square-restaurant-hudson-yards--swiss-cheeseburger",
+     "name": "Swiss Cheeseburger",
+     "price": 17.0,
+     "description": "Served with coleslaw and pickles.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "chelsea-square-restaurant-hudson-yards--mozzarella-cheeseburger",
+     "name": "Mozzarella Cheeseburger",
+     "price": 17.0,
+     "description": "Served with coleslaw and pickles.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "chelsea-square-restaurant-hudson-yards--muenster-cheeseburger",
+     "name": "Muenster Cheeseburger",
+     "price": 17.0,
+     "description": "Served with coleslaw and pickles.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "chelsea-square-restaurant-hudson-yards--cheddar-cheeseburger",
+     "name": "Cheddar Cheeseburger",
+     "price": 17.0,
+     "description": "Served with coleslaw and pickles.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "chelsea-square-restaurant-hudson-yards--pizza-burger",
+     "name": "Pizza Burger",
+     "price": 16.65,
+     "description": "Topped with pizza sauce and mozzarella cheese. Served with coleslaw and pickles.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "chelsea-square-restaurant-hudson-yards--beyond-burger-vegan",
+     "name": "Beyond Burger! (Vegan)",
+     "price": 16.0,
+     "description": "Served with coleslaw and pickles. Vegetarian.",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "chelsea-square-restaurant-hudson-yards--texan-burger",
+     "name": "Texan Burger",
+     "price": 17.0,
+     "description": "Topped with fried egg. Served with coleslaw and pickles.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "chelsea-square-restaurant-hudson-yards--california-burger",
+     "name": "California Burger",
+     "price": 17.5,
+     "description": "With lettuce, tomato, onion and mayo. Served with coleslaw and pickles.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "chelsea-square-restaurant-hudson-yards--soho-burger",
+     "name": "Soho Burger",
+     "price": 22.0,
+     "description": "Served with bacon, pepper & onion",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "chelsea-square-restaurant-hudson-yards--avocado-burger",
+     "name": "Avocado Burger",
+     "price": 20.0,
+     "description": "Topped with sliced avocado. Served with coleslaw and pickles.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "chelsea-square-restaurant-hudson-yards--louisiana-burger",
+     "name": "Louisiana Burger",
+     "price": 20.0,
+     "description": "With fried onions, peppers and Swiss cheese topped with BBQ sauce and served on a hard roll. Served with coleslaw and pickles.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "chelsea-square-restaurant-hudson-yards--san-francisco-burger",
+     "name": "San Francisco Burger",
+     "price": 20.0,
+     "description": "With Swiss cheese, grilled onions, mushrooms, lettuce and tomato. Served with coleslaw and pickles.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "chelsea-square-restaurant-hudson-yards--turkey-burger",
+     "name": "Turkey Burger",
+     "price": 16.0,
+     "description": "Served with coleslaw and pickles.",
+     "protein": "turkey",
+     "is_index_item": false
+    },
+    {
+     "id": "chelsea-square-restaurant-hudson-yards--chipotle-burger",
+     "name": "Chipotle Burger",
+     "price": 22.5,
+     "description": "With jack cheese, bacon, chipotle mayo, lettuce & tomato",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "chelsea-square-restaurant-hudson-yards--hamburger-diet-delights",
+     "name": "Hamburger Diet Delights",
+     "price": 18.4,
+     "description": "Cottage cheese, lettuce and tomato. Served with Melba toast.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "chelsea-square-restaurant-hudson-yards--turkey-burger-diet-delights",
+     "name": "Turkey Burger Diet Delights",
+     "price": 18.4,
+     "description": "Cottage cheese lettuce and tomato. Served with Melba toast.",
+     "protein": "turkey",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "chez-margaux-west-village",
    "camis": "50161952",
    "name": "Chez Margaux",
@@ -7747,6 +9451,85 @@
    "scraped_at": "2026-09-24T11:47:55Z",
    "index_price": null,
    "burgers": []
+  },
+  {
+   "id": "city-island-diner-pelham-bay",
+   "camis": "40604207",
+   "name": "City Island Diner",
+   "chain": null,
+   "address": "304 City Island Avenue",
+   "borough": "Bronx",
+   "neighborhood": "Pelham Bay-Country Club-City Island",
+   "neighborhood_slug": "pelham-bay-country-club-city-island",
+   "zipcode": "10464",
+   "lat": 40.847047,
+   "lng": -73.786407,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://order.chownow.com/order/32443/locations/48237?cn_channel=cn_website",
+   "price_source": "online_ordering",
+   "status": "priced",
+   "status_detail": "Prices from an online-ordering page (order.chownow.com).",
+   "scraped_at": "2026-09-24T21:53:22Z",
+   "index_price": 18.99,
+   "burgers": [
+    {
+     "id": "city-island-diner-pelham-bay--cheeseburger-deluxe",
+     "name": "Cheeseburger Deluxe",
+     "price": 18.99,
+     "description": "Served with a choice of coleslaw, macaroni salad, or fries.",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "city-island-diner-pelham-bay--turkey-burger",
+     "name": "Turkey Burger",
+     "price": 18.99,
+     "description": "With lettuce, tomato and onion, salad, coleslaw, macaroni salad, or fries.",
+     "protein": "turkey",
+     "is_index_item": false
+    },
+    {
+     "id": "city-island-diner-pelham-bay--roasted-portabello-burger",
+     "name": "Roasted Portabello Burger",
+     "price": 19.99,
+     "description": "With lettuce, tomato, onion, avocado, chipotle mayo, coleslaw, macaroni salad, or fries.",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "city-island-diner-pelham-bay--south-western-burger",
+     "name": "South Western Burger",
+     "price": 19.99,
+     "description": "Homemade chili and Cheddar. Served with coleslaw, macaroni salad and fries.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "city-island-diner-pelham-bay--da-bronx-burger",
+     "name": "Da Bronx Burger",
+     "price": 19.99,
+     "description": "American cheese, bacon, and sauteed onions. Served with coleslaw, macaroni salad and fries.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "city-island-diner-pelham-bay--great-lakes-burger",
+     "name": "Great Lakes Burger",
+     "price": 19.99,
+     "description": "Swiss cheese, sauteed mushrooms, and onions. Served with coleslaw, macaroni salad and fries.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "city-island-diner-pelham-bay--double-smash-burger",
+     "name": "Double Smash Burger",
+     "price": 19.99,
+     "description": "2 smashed patty's with American cheese, pickles, chopped onions, special sauce. Served with coleslaw, macaroni salad and fries.",
+     "protein": "beef",
+     "is_index_item": false
+    }
+   ]
   },
   {
    "id": "clemente-bar-hudson-yards",
@@ -8202,6 +9985,117 @@
      "name": "Corner Brunch Burger",
      "price": null,
      "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
+   "id": "court-square-diner-hunters-point",
+   "camis": "40393395",
+   "name": "Court Square Diner",
+   "chain": null,
+   "address": "45-30 23 Street",
+   "borough": "Queens",
+   "neighborhood": "Hunters Point-Sunnyside-West Maspeth",
+   "neighborhood_slug": "hunters-point-sunnyside-west-maspeth",
+   "zipcode": "11101",
+   "lat": 40.746149,
+   "lng": -73.945562,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://www.courtsquarediner.com/sandwiches-wraps-and-burgers",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (courtsquarediner.com).",
+   "scraped_at": "2026-09-24T21:52:48Z",
+   "index_price": 8.95,
+   "burgers": [
+    {
+     "id": "court-square-diner-hunters-point--burger",
+     "name": "Burger",
+     "price": 8.95,
+     "description": "Make it Deluxe, +$5.00",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "court-square-diner-hunters-point--burger-with-melted-cheese",
+     "name": "Burger With Melted Cheese",
+     "price": 9.45,
+     "description": "Make it Deluxe, +$5.00",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "court-square-diner-hunters-point--pizza-burger",
+     "name": "Pizza Burger",
+     "price": 9.95,
+     "description": "Make it Deluxe, +$5.00",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "court-square-diner-hunters-point--low-calorie-burger",
+     "name": "Low-Calorie Burger",
+     "price": 16.45,
+     "description": "Choice of Beef, Turkey or Garden. Served with Cottage Cheese, Lettuce and Tomato.",
+     "protein": "other",
+     "is_index_item": false
+    },
+    {
+     "id": "court-square-diner-hunters-point--court-burger",
+     "name": "Court Burger",
+     "price": 15.95,
+     "description": "Burger on a Toasted Roll with Sauteed Onions, Peppers and Mushrooms with French Fries, Onion Rings, Lettuce and Tomato.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "court-square-diner-hunters-point--court-burger-with-melted-cheese",
+     "name": "Court Burger With Melted Cheese",
+     "price": 16.95,
+     "description": "Burger on a Toasted Roll with Sauteed Onions, Peppers and Mushrooms with French Fries, Onion Rings, Lettuce and Tomato.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "court-square-diner-hunters-point--tex-mex-burger",
+     "name": "Tex-Mex Burger",
+     "price": 16.45,
+     "description": "With Black Pepper Jack Cheese, Sliced Jalapeños, Shredded Lettuce, Chopped Tomatoes, Salsa and Guacamole, Served with French Fries.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "court-square-diner-hunters-point--california-burger",
+     "name": "California Burger",
+     "price": 18.45,
+     "description": "Topped With Avocado, Bacon, Lettuce, Tomato and Melted Cheddar with Chipotle Mayonnaise, Served with French Fries.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "court-square-diner-hunters-point--patty-duke-melt-burger",
+     "name": "Patty Duke Melt Burger",
+     "price": 17.45,
+     "description": "A Flame Broiled Burger on Grilled Rye Bread with Melted Swiss Cheese and Grilled Onion, Served with French Fries.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "court-square-diner-hunters-point--twin-burger-platter-deluxe",
+     "name": "Twin Burger Platter Deluxe",
+     "price": 18.95,
+     "description": "Two Burgers on Two Toasted Buns with French Fries, Fried Onion Rings, Lettuce, Tomato, Coleslaw and Pickle.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "court-square-diner-hunters-point--twin-burger-platter-deluxe-with-melted-cheese",
+     "name": "Twin Burger Platter Deluxe With Melted Cheese",
+     "price": 19.95,
+     "description": "Two Burgers on Two Toasted Buns with French Fries, Fried Onion Rings, Lettuce, Tomato, Coleslaw and Pickle.",
      "protein": "beef",
      "is_index_item": false
     }
@@ -9381,6 +11275,116 @@
    ]
   },
   {
+   "id": "dumont-burger-williamsburg",
+   "camis": "50064635",
+   "name": "DuMont Burger",
+   "chain": null,
+   "address": "314 Bedford Avenue",
+   "borough": "Brooklyn",
+   "neighborhood": "Williamsburg",
+   "neighborhood_slug": "williamsburg",
+   "zipcode": "11249",
+   "lat": 40.713636,
+   "lng": -73.961857,
+   "cuisine": "Hamburgers",
+   "website": "http://www.dumontburger.com/",
+   "menu_url": "https://www.seamless.com/menu/dumont-burger-314-bedford-ave-brooklyn/392718",
+   "price_source": "delivery_app",
+   "status": "priced",
+   "status_detail": "Prices from a delivery app (seamless.com). Delivery-app prices usually run above in-store prices.",
+   "scraped_at": "2026-09-24T21:52:04Z",
+   "index_price": 19.25,
+   "burgers": [
+    {
+     "id": "dumont-burger-williamsburg--dumac-and-cheese-burger",
+     "name": "DuMac & Cheese Burger",
+     "price": 21.73,
+     "description": "Butcher blend, dumac & cheese, lettuce, tomato, red onion, house made pickles. Served with choice of fries, onion ring, mixed greens, or soup.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "dumont-burger-williamsburg--dumont-burger",
+     "name": "Dumont Burger",
+     "price": 19.25,
+     "description": "Butcher blend, lettuce, tomato, red onion house made pickles. Served with choice of fries, onion ring, mixed greens, or soup. *8oz served on a brioche bun * 5oz served on a potato bun.",
+     "protein": "beef",
+     "is_index_item": true
+    }
+   ]
+  },
+  {
+   "id": "dutch-boy-burger-crown-heights-north",
+   "camis": "41329576",
+   "name": "Dutch Boy Burger",
+   "chain": null,
+   "address": "618 St Johns Place",
+   "borough": "Brooklyn",
+   "neighborhood": "Crown Heights North",
+   "neighborhood_slug": "crown-heights-north",
+   "zipcode": "11238",
+   "lat": 40.672496,
+   "lng": -73.957804,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://www.seamless.com/menu/franklin-park-766-franklin-ave-brooklyn/2878081",
+   "price_source": "delivery_app",
+   "status": "priced",
+   "status_detail": "Prices from a delivery app (seamless.com). Delivery-app prices usually run above in-store prices.",
+   "scraped_at": "2026-09-24T21:52:17Z",
+   "index_price": 11.0,
+   "burgers": [
+    {
+     "id": "dutch-boy-burger-crown-heights-north--classic-smash-burger",
+     "name": "Classic Smash Burger",
+     "price": 11.0,
+     "description": "Served with Lettuce, Tomato, Onions and Pickles on a Martin's Potato Bun",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "dutch-boy-burger-crown-heights-north--the-dutch-boy",
+     "name": "The Dutch Boy",
+     "price": 14.0,
+     "description": "Classic Smashed Burger with Caramelized Onions, Mushrooms, Cheddar Cheese and House Sauce on the side",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "dutch-boy-burger-crown-heights-north--the-cowboy",
+     "name": "The Cowboy",
+     "price": 17.0,
+     "description": "Smashed Burger with Show String Crispy Onions, Cheddar, Applewood Bacon, BBQ Sauce",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "dutch-boy-burger-crown-heights-north--the-hangover",
+     "name": "The Hangover",
+     "price": 18.0,
+     "description": "Smashed Burger with Applewood Smoked Bacon, Fried Egg, Cheese on a Potato Bun and Hot Sauce on the side",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "dutch-boy-burger-crown-heights-north--the-bad-boy",
+     "name": "The Bad Boy",
+     "price": 15.0,
+     "description": "Topped with Hot Cherry Peppers, Provolone and Roasted Garlic Aioli on Potato Bun",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "dutch-boy-burger-crown-heights-north--housemade-turkey-burger",
+     "name": "Housemade Turkey Burger",
+     "price": 16.0,
+     "description": "Housemade Turkey Patty with herbed mayo and LTOP",
+     "protein": "turkey",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "dyckman-dogs-marble-hill",
    "camis": "50060883",
    "name": "Dyckman Dogs",
@@ -10333,6 +12337,99 @@
    ]
   },
   {
+   "id": "first-stop-bar-and-grill-hunters-point",
+   "camis": "50063906",
+   "name": "First Stop Bar & Grill",
+   "chain": null,
+   "address": "27-08 Queens Plaza South",
+   "borough": "Queens",
+   "neighborhood": "Hunters Point-Sunnyside-West Maspeth",
+   "neighborhood_slug": "hunters-point-sunnyside-west-maspeth",
+   "zipcode": "11101",
+   "lat": 40.750088,
+   "lng": -73.939673,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://www.seamless.com/menu/first-stop-bar-and-grill-27-08-queens-plaza-south-queens/6645216",
+   "price_source": "delivery_app",
+   "status": "no_burgers",
+   "status_detail": "Found a menu but no beef burger on it. Tried: seamless.com (menu without burgers). No more candidate pages.",
+   "scraped_at": "2026-09-24T21:52:49Z",
+   "index_price": null,
+   "burgers": []
+  },
+  {
+   "id": "flanagans-tavern-great-kills",
+   "camis": null,
+   "name": "Flanagan's Tavern",
+   "chain": null,
+   "address": null,
+   "borough": "Staten Island",
+   "neighborhood": "Great Kills",
+   "neighborhood_slug": "great-kills",
+   "zipcode": null,
+   "lat": null,
+   "lng": null,
+   "cuisine": null,
+   "website": "http://www.jdstavern.net/",
+   "menu_url": "https://jdstavern.net/menu/",
+   "price_source": "official_site",
+   "status": "no_prices",
+   "status_detail": "Found burgers but no prices on the menu. Tried: seamless.com (menu without burgers); jdstavern.net (burgers without prices); jdstavern.net (menu without burgers). Stopped at the 3-scrape cap.",
+   "scraped_at": "2026-09-24T12:27:00Z",
+   "index_price": null,
+   "burgers": [
+    {
+     "id": "flanagans-tavern-great-kills--jds-burger",
+     "name": "JD'S Burger",
+     "price": null,
+     "description": "Classic",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "flanagans-tavern-great-kills--cheeseburger",
+     "name": "Cheeseburger",
+     "price": null,
+     "description": "Classic, pick your cheese",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "flanagans-tavern-great-kills--bbq-bacon-cheeseburger",
+     "name": "BBQ Bacon Cheeseburger",
+     "price": null,
+     "description": "Topped with BBQ Sauce, Fried Onion Straws, Cheddar Cheese and Bacon",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "flanagans-tavern-great-kills--irish-prime-rib-burger",
+     "name": "Irish Prime Rib Burger",
+     "price": null,
+     "description": "Angus Beef mixed with Prime Rib & topped with Dublin Cheddar",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "flanagans-tavern-great-kills--j9-burger",
+     "name": "J9 Burger",
+     "price": null,
+     "description": "Mixed with Bacon & Cheese topped with Bacon, Cheddar & Mozzarella",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "flanagans-tavern-great-kills--veggie-burger",
+     "name": "Veggie Burger",
+     "price": null,
+     "description": "Freshly made Vegetable Patty on a Toasted Roll",
+     "protein": "veggie",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "florentin-upper-west-side",
    "camis": "50135466",
    "name": "Florentin",
@@ -10858,6 +12955,37 @@
      "description": null,
      "protein": "beef",
      "is_index_item": false
+    }
+   ]
+  },
+  {
+   "id": "galaxy-diner-clinton",
+   "camis": "41151163",
+   "name": "Galaxy Diner",
+   "chain": null,
+   "address": "665 9 Avenue",
+   "borough": "Manhattan",
+   "neighborhood": "Clinton",
+   "neighborhood_slug": "clinton",
+   "zipcode": "10036",
+   "lat": 40.761082,
+   "lng": -73.990701,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://www.seamless.com/menu/galaxy-diner-665-9th-ave-new-york/65634",
+   "price_source": "delivery_app",
+   "status": "priced",
+   "status_detail": "Prices from a delivery app (seamless.com). Delivery-app prices usually run above in-store prices.",
+   "scraped_at": "2026-09-24T21:51:15Z",
+   "index_price": 13.95,
+   "burgers": [
+    {
+     "id": "galaxy-diner-clinton--8-oz-country-beef-burger-plain",
+     "name": "8 oz. Country Beef Burger - Plain",
+     "price": 13.95,
+     "description": "Charcoal grilled fresh ground beef served on our fresh sesame bun with lettuce, tomato and pickle.",
+     "protein": "beef",
+     "is_index_item": true
     }
    ]
   },
@@ -11440,6 +13568,141 @@
    ]
   },
   {
+   "id": "gracie-mews-diner-yorkville",
+   "camis": "41386105",
+   "name": "Gracie Mews Diner",
+   "chain": null,
+   "address": "1550 1 Avenue",
+   "borough": "Manhattan",
+   "neighborhood": "Yorkville",
+   "neighborhood_slug": "yorkville",
+   "zipcode": "10028",
+   "lat": 40.77344,
+   "lng": -73.951865,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://graciemews.hngr.co/menu",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (graciemews.hngr.co).",
+   "scraped_at": "2026-09-24T21:51:36Z",
+   "index_price": 15.0,
+   "burgers": [
+    {
+     "id": "gracie-mews-diner-yorkville--angus-sliders",
+     "name": "Angus Sliders",
+     "price": 18.0,
+     "description": "3 mini burgers with melted American cheese, lettuce, and tomato",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "gracie-mews-diner-yorkville--the-new-gracie-burger",
+     "name": "The New Gracie Burger",
+     "price": 19.0,
+     "description": "Mushroom blend, Swiss cheese, and grilled onions. Served with lettuce, tomato, onion, pickle and cole slaw.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "gracie-mews-diner-yorkville--old-school-burger",
+     "name": "Old School Burger",
+     "price": 21.0,
+     "description": "Bacon, and cheddar cheese. Served with lettuce, tomato, onion, pickle and cole slaw.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "gracie-mews-diner-yorkville--hot-stuff-burger",
+     "name": "Hot Stuff Burger",
+     "price": 19.0,
+     "description": "Fresh Jalapeños, pepper jack cheese, sriracha aioli. Served with lettuce, tomato, onion, pickle and cole slaw.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "gracie-mews-diner-yorkville--mr-french-burger",
+     "name": "MR. French Burger",
+     "price": 19.0,
+     "description": "Caramelized onions, and gruyere cheese. Served with lettuce, tomato, onion, pickle and cole slaw.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "gracie-mews-diner-yorkville--italian-burger",
+     "name": "Italian Burger",
+     "price": 19.0,
+     "description": "With fresh mozzarella cheese, tomato, and basil. Served with lettuce, tomato, onion, pickle and cole slaw.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "gracie-mews-diner-yorkville--mexican-burger",
+     "name": "Mexican Burger",
+     "price": 19.0,
+     "description": "Melted cheddar cheese, grilled mushrooms, sliced avocado. Served with lettuce, tomato, onion, pickle and cole slaw.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "gracie-mews-diner-yorkville--greek-burger",
+     "name": "Greek Burger",
+     "price": 19.0,
+     "description": "Feta, tomatoes, and onions on pita. Served with lettuce, tomato, onion, pickle and cole slaw.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "gracie-mews-diner-yorkville--ranch-burger",
+     "name": "Ranch Burger",
+     "price": 21.0,
+     "description": "Melted muenster cheese, bacon, and mushrooms. Served with lettuce, tomato, onion, pickle and cole slaw.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "gracie-mews-diner-yorkville--chorizo-burger",
+     "name": "Chorizo Burger",
+     "price": 21.0,
+     "description": "topped with melted cheddar cheese, grilled onions, chorizo & chipotle mayo. Served with lettuce, tomato, onion, pickle and cole slaw.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "gracie-mews-diner-yorkville--angus-beef-burger",
+     "name": "Angus Beef Burger",
+     "price": 15.0,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "gracie-mews-diner-yorkville--turkey-burger",
+     "name": "Turkey Burger",
+     "price": 15.0,
+     "description": null,
+     "protein": "turkey",
+     "is_index_item": false
+    },
+    {
+     "id": "gracie-mews-diner-yorkville--garden-burger",
+     "name": "Garden Burger",
+     "price": 16.0,
+     "description": null,
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "gracie-mews-diner-yorkville--beyond-burger",
+     "name": "Beyond Burger",
+     "price": 16.0,
+     "description": null,
+     "protein": "veggie",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "gramercy-tavern-hudson-yards",
    "camis": "41664978",
    "name": "Gramercy Tavern",
@@ -11949,6 +14212,196 @@
    ]
   },
   {
+   "id": "handcraft-burgers-and-brew-midtown",
+   "camis": "50116518",
+   "name": "Handcraft Burgers and Brew",
+   "chain": null,
+   "address": "110 West 40 Street",
+   "borough": "Manhattan",
+   "neighborhood": "Midtown-Midtown South",
+   "neighborhood_slug": "midtown-midtown-south",
+   "zipcode": "10018",
+   "lat": 40.753811,
+   "lng": -73.985696,
+   "cuisine": "American",
+   "website": "https://handcraftburgers.com/",
+   "menu_url": "https://www.seamless.com/menu/handcraft-burgers--brew-110-w-40th-st-new-york/3040499",
+   "price_source": "delivery_app",
+   "status": "priced",
+   "status_detail": "Prices from a delivery app (seamless.com). Delivery-app prices usually run above in-store prices.",
+   "scraped_at": "2026-09-24T21:51:40Z",
+   "index_price": 8.0,
+   "burgers": [
+    {
+     "id": "handcraft-burgers-and-brew-midtown--the-6-6",
+     "name": "The 6.6",
+     "price": 18.5,
+     "description": "Two Oklahoma Style Smashed Beef Patties Smashed with Shaved Onions, Sharp American Cheddar, Handcraft Sauce, Extra Pickles, Griddled Brioche Bun.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "handcraft-burgers-and-brew-midtown--single-ultimate-smash-d",
+     "name": "Single Ultimate Smash D",
+     "price": 8.0,
+     "description": "One 3 oz Smashed Beef Patty with Shaved Onions, Sharp American Cheddar Cheese, Handcraft Sauce, Pickles on a Potato Roll",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "handcraft-burgers-and-brew-midtown--2-for-15-single-ultimate-smash-d",
+     "name": "2 for $15 Single Ultimate Smash D",
+     "price": 15.0,
+     "description": "2 ultimate smash - One 3 oz Smashed with Shaved Onions Beef Patty, Sharp Cheddar Cheese, Handcraft Sauce, Pickles on a Toasted Potato Bun",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "handcraft-burgers-and-brew-midtown--15-smash-cheeseburger-combo-d",
+     "name": "$15 Smash Cheeseburger Combo D",
+     "price": null,
+     "description": "Single Smashed Beef Patty , Sharp American Cheddar Cheese, Mayo, Ketchup, Yellow Mustard, Pickles, Brioche Bun with choice of side & drink",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "handcraft-burgers-and-brew-midtown--the-og-combo",
+     "name": "The OG Combo",
+     "price": null,
+     "description": "Double Smashed Beef Patties, Sharp American Cheddar, Handcraft Sauce, Shredded Romaine Lettuce, Tomato, Brioche Bun with choice of side & drink.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "handcraft-burgers-and-brew-midtown--single-og-combo",
+     "name": "Single OG Combo",
+     "price": null,
+     "description": "Single Smashed Beef Patties, Sharp American Cheddar, Handcraft Sauce, Shredded Romaine Lettuce, Tomato, Brioche Bun with choice of side & drink",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "handcraft-burgers-and-brew-midtown--the-oklahoma-combo",
+     "name": "The Oklahoma Combo",
+     "price": null,
+     "description": "Single Smashed Beef Patty Smashed With Shaved Onions, Sharp American Cheddar Cheese, Mayo, Dijon Mustard, Pickles, Brioche Bun with choice of side & drink",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "handcraft-burgers-and-brew-midtown--the-green-chile-combo",
+     "name": "The Green Chile Combo",
+     "price": null,
+     "description": "Single Smashed Beef Patty, House Spice Blend, Monterey Jack Cheese, Roasted Hatch Chile, Avocado, Lime Aioli, Brioche Bun with choice of side & drink",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "handcraft-burgers-and-brew-midtown--the-truffle-shuffle-combo",
+     "name": "The Truffle Shuffle Combo",
+     "price": null,
+     "description": "Single Smashed Beef Patty, Umami Truffle Spice, Swiss Cheese, Sauteed Mushrooms, Truffle Herb Aioli, Brioche Bun with choice of side & drink",
+     "protein": "beef",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
+   "id": "harlem-public-hamilton-heights",
+   "camis": "41645852",
+   "name": "Harlem Public",
+   "chain": null,
+   "address": "3612 Broadway",
+   "borough": "Manhattan",
+   "neighborhood": "Hamilton Heights",
+   "neighborhood_slug": "hamilton-heights",
+   "zipcode": "10031",
+   "lat": 40.828724,
+   "lng": -73.948757,
+   "cuisine": "American",
+   "website": "http://www.harlempublic.com",
+   "menu_url": "https://static1.squarespace.com/static/5bfc8b4070e8027e8f5f4e45/t/6a2c451d602ac50513fedc27/1781286174017/Harlem+Public+Menu+Summer+2026.pdf",
+   "price_source": "official_pdf",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's menu PDF (static1.squarespace.com).",
+   "scraped_at": "2026-09-24T21:51:04Z",
+   "index_price": 17.0,
+   "burgers": [
+    {
+     "id": "harlem-public-hamilton-heights--peanut-butter-burger",
+     "name": "Peanut Butter Burger",
+     "price": 17.0,
+     "description": "HOUSE-MADE PEANUT BUTTER, THICK CUT BACON, NEW YORK CHEDDAR, BRIOCHE",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "harlem-public-hamilton-heights--daddy-mac-will-make-you-jump",
+     "name": "Daddy Mac (Will Make You Jump)",
+     "price": 18.0,
+     "description": "AMERICAN CHEESE, FUNYUNS, PICKLES, RAW ONIONS, THOUSAND ISLAND, SHRETTUCE, TOMATO, BRIOCHE",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "harlem-public-hamilton-heights--wake-n-bake",
+     "name": "Wake n Bake",
+     "price": 18.0,
+     "description": "NY CHEDDAR, THICK CUT BACON, DRIPPY EGG, MICKY D'S HASHBROWN, BRIOCHE",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "harlem-public-hamilton-heights--spicetown-usa",
+     "name": "Spicetown, USA",
+     "price": 18.0,
+     "description": "CAJUN BURGER, PEPPERJACK, JALAPEÑO, FRIED ONION, CHIPOTLE MAYO, LETTUCE, TOMATO, BRIOCHE",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "harlem-public-hamilton-heights--the-meats",
+     "name": "The Meats",
+     "price": 20.0,
+     "description": "BEEF BURGER TOPPED WITH BBQ PULLED PORK, COLESLAW, THICK CUT ONION RINGS, BRIOCHE",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "harlem-public-hamilton-heights--the-buffalo-stance",
+     "name": "The Buffalo Stance",
+     "price": 18.0,
+     "description": "HOUSE TURKEY BURGER, BLUE CHEESE SLAV",
+     "protein": "turkey",
+     "is_index_item": false
+    },
+    {
+     "id": "harlem-public-hamilton-heights--sweet-thang-v",
+     "name": "Sweet Thang (V)",
+     "price": 16.0,
+     "description": "SWEET POTATO BLACK BEAN VEGGIE BURGER, VEGAN AMERICAN, SHRETTUCE, TOMATO, ONION.",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "harlem-public-hamilton-heights--vegan-patty-melt-v",
+     "name": "Vegan Patty Melt (V)",
+     "price": 18.0,
+     "description": "CHIPOTLE VEGANNAISE, VEGAN BRIOCHE BUN, BEYOND PATTY, VEGAN AMERICAN, SAUTEED ONIONS, SOURDOUGH, SIDE SALAD",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "harlem-public-hamilton-heights--build-it-your-damn-self",
+     "name": "Build It Your Damn Self",
+     "price": 13.0,
+     "description": "OUR HOUSE-GROUND BURGER BLENDS SERVED WITH PICKLES, LETTUCE, TOMATO, FRIES ON BRIOCHE. BEEF, TURKEY, BEYOND OR VEGAN SWEET POTATO.",
+     "protein": "other",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "harlem-shake-central-harlem-south",
    "camis": "41716448",
    "name": "Harlem Shake",
@@ -12132,6 +14585,61 @@
    "scraped_at": null,
    "index_price": null,
    "burgers": []
+  },
+  {
+   "id": "henry-public-carroll-gardens",
+   "camis": "41437865",
+   "name": "Henry Public",
+   "chain": null,
+   "address": "329 Henry Street",
+   "borough": "Brooklyn",
+   "neighborhood": "Carroll Gardens-Columbia Street-Red Hook",
+   "neighborhood_slug": "carroll-gardens-columbia-street-red-hook",
+   "zipcode": "11201",
+   "lat": 40.690364,
+   "lng": -73.996408,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://www.henrypublic.com/onlinemenu-supper",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (henrypublic.com).",
+   "scraped_at": "2026-09-24T21:52:12Z",
+   "index_price": 22.0,
+   "burgers": [
+    {
+     "id": "henry-public-carroll-gardens--hamburger-sandwich",
+     "name": "Hamburger Sandwich",
+     "price": 22.0,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "henry-public-carroll-gardens--with-cheese",
+     "name": "with cheese",
+     "price": 24.0,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "henry-public-carroll-gardens--with-berkshire-bacon",
+     "name": "with Berkshire bacon",
+     "price": 24.0,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "henry-public-carroll-gardens--with-cheese-and-bacon",
+     "name": "with cheese & bacon",
+     "price": 26.0,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    }
+   ]
   },
   {
    "id": "hibernia-bar-clinton",
@@ -12403,6 +14911,171 @@
      "price": 12.0,
      "description": "Beef Patty, Cheddar Cheese,Lettuce,Tomato,BBQ Sauce & Onion Rings.",
      "protein": "beef",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
+   "id": "holy-burger-queensbridge",
+   "camis": "50166387",
+   "name": "Holy Burger",
+   "chain": null,
+   "address": "23-14 36 Avenue",
+   "borough": "Queens",
+   "neighborhood": "Queensbridge-Ravenswood-Long Island City",
+   "neighborhood_slug": "queensbridge-ravenswood-long-island-city",
+   "zipcode": "11106",
+   "lat": 40.758937,
+   "lng": -73.934806,
+   "cuisine": null,
+   "website": "https://www.holyburger.nyc/holyburger-astoria-location",
+   "menu_url": "https://www.seamless.com/menu/holy-burgers-23-14-36th-avenue-astoria/10781928",
+   "price_source": "delivery_app",
+   "status": "priced",
+   "status_detail": "Prices from a delivery app (seamless.com). Delivery-app prices usually run above in-store prices.",
+   "scraped_at": "2026-09-24T21:52:37Z",
+   "index_price": 11.35,
+   "burgers": [
+    {
+     "id": "holy-burger-queensbridge--classic-burger",
+     "name": "Classic Burger",
+     "price": 11.35,
+     "description": "Classic Cheeseburger patty, topped with American cheese, Holy Sauce, lettuce, and onion.",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "holy-burger-queensbridge--holy-burger",
+     "name": "Holy Burger",
+     "price": 19.5,
+     "description": "Brisket and short rib blended patty, topped with American cheese, Holy Sauce, lettuce, and onion.",
+     "protein": "beef",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
+   "id": "holy-cow-burgers-turtle-bay",
+   "camis": "50164398",
+   "name": "Holy Cow Burgers",
+   "chain": null,
+   "address": "906 3 Avenue",
+   "borough": "Manhattan",
+   "neighborhood": "Turtle Bay-East Midtown",
+   "neighborhood_slug": "turtle-bay-east-midtown",
+   "zipcode": "10022",
+   "lat": 40.758745,
+   "lng": -73.968636,
+   "cuisine": "Hamburgers",
+   "website": null,
+   "menu_url": "https://www.seamless.com/menu/holy-burger-midtown-906-3rd-ave-new-york/10309136",
+   "price_source": "delivery_app",
+   "status": "priced",
+   "status_detail": "Prices from a delivery app (seamless.com). Delivery-app prices usually run above in-store prices.",
+   "scraped_at": "2026-09-24T21:51:25Z",
+   "index_price": 11.35,
+   "burgers": [
+    {
+     "id": "holy-cow-burgers-turtle-bay--holy-burger",
+     "name": "Holy Burger",
+     "price": 19.5,
+     "description": "Brisket/Short Rib Patty Topped with American cheese, holy sauce, lettuce, tomato and onion.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "holy-cow-burgers-turtle-bay--classic-burger",
+     "name": "Classic Burger",
+     "price": 11.35,
+     "description": "Classic Cheeseburger patty, topped with American cheese, Holy Sauce, lettuce, tomato and onion.",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "holy-cow-burgers-turtle-bay--double-smashed-onion-holy-burger",
+     "name": "Double Smashed Onion Holy Burger",
+     "price": 24.99,
+     "description": "TWO SMASHED BRISKET/SHORT RIB PATTIES, TOMATO WITH ONION.",
+     "protein": "beef",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
+   "id": "holy-cow-burgers-upper-west-side",
+   "camis": "50160423",
+   "name": "Holy Cow Burgers",
+   "chain": null,
+   "address": "23 West 100 Street",
+   "borough": "Manhattan",
+   "neighborhood": "Upper West Side",
+   "neighborhood_slug": "upper-west-side",
+   "zipcode": "10025",
+   "lat": 40.79445,
+   "lng": -73.963407,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://www.seamless.com/menu/holy-burger-upper-west-side-23-w-100th-st-new-york/8990232",
+   "price_source": "delivery_app",
+   "status": "priced",
+   "status_detail": "Prices from a delivery app (seamless.com). Delivery-app prices usually run above in-store prices.",
+   "scraped_at": "2026-09-24T21:51:52Z",
+   "index_price": 11.35,
+   "burgers": [
+    {
+     "id": "holy-cow-burgers-upper-west-side--classic-burger",
+     "name": "Classic Burger",
+     "price": 11.35,
+     "description": "Classic Cheeseburger patty, topped with American cheese, Holy Sauce, lettuce, and onion.",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "holy-cow-burgers-upper-west-side--holy-burger",
+     "name": "Holy Burger",
+     "price": 19.5,
+     "description": "Brisket and short rib blended patty, topped with American cheese, Holy Sauce, lettuce, and onion.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "holy-cow-burgers-upper-west-side--double-smashed-onion-holy-burger",
+     "name": "Double Smashed Onion Holy Burger",
+     "price": 19.5,
+     "description": "Two short rib and brisket beef blend patties, smashed and topped with onions and Holy Sauce.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "holy-cow-burgers-upper-west-side--chopped-cheese",
+     "name": "Chopped Cheese",
+     "price": 11.35,
+     "description": "100% all beef patty chopped with onions and American cheese, topped with lettuce and Holy Sauce. A New York Staple served on a roll or hero.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "holy-cow-burgers-upper-west-side--cheesy-chicken-chopped-cheese-roll-bun",
+     "name": "Cheesy Chicken Chopped Cheese (Roll-Bun)",
+     "price": 15.4,
+     "description": "100% CHICKEN CHOPPED ON THE GRILL WITH ONIONS AND CHEESE ON ROLL BUN WITH OUR SIGNATURE SAUCE.",
+     "protein": "chicken",
+     "is_index_item": false
+    },
+    {
+     "id": "holy-cow-burgers-upper-west-side--cheesy-chicken-chopped-cheese-hero-bun",
+     "name": "Cheesy Chicken Chopped Cheese (Hero- Bun)",
+     "price": 21.9,
+     "description": "100% CHICKEN CHOPPED ON GRILL WITH ONION AND CHEESE ON HERO BREAD WITH OUR SIGNATURE SAUCE.",
+     "protein": "chicken",
+     "is_index_item": false
+    },
+    {
+     "id": "holy-cow-burgers-upper-west-side--plant-based-chopped-cheese",
+     "name": "Plant-Based Chopped Cheese",
+     "price": 15.5,
+     "description": "Plant-based patty chopped with grilled onions, melted vegan American cheese, and vegan holy sauce. A New York Staple with a vegan twist.",
+     "protein": "veggie",
      "is_index_item": false
     }
    ]
@@ -13029,6 +15702,77 @@
    "scraped_at": null,
    "index_price": null,
    "burgers": []
+  },
+  {
+   "id": "inwood-bar-and-grill-marble-hill",
+   "camis": "50040374",
+   "name": "Inwood Bar & Grill",
+   "chain": null,
+   "address": "4892 Broadway",
+   "borough": "Manhattan",
+   "neighborhood": "Marble Hill-Inwood",
+   "neighborhood_slug": "marble-hill-inwood",
+   "zipcode": "10034",
+   "lat": 40.867204,
+   "lng": -73.922533,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://inwoodbarandgrill.com/new-york-inwood-inwood-bar-and-grill-food-menu",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (inwoodbarandgrill.com).",
+   "scraped_at": "2026-09-24T21:51:17Z",
+   "index_price": 14.0,
+   "burgers": [
+    {
+     "id": "inwood-bar-and-grill-marble-hill--inwood-burger",
+     "name": "Inwood Burger",
+     "price": 16.95,
+     "description": "Gouda cheese, caramelized onion, smoked bacon, lettuce, tomatoes and Inwood sauce",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "inwood-bar-and-grill-marble-hill--the-dominican-burger",
+     "name": "The Dominican Burger",
+     "price": 13.95,
+     "description": "Chimichurri: beef and pork combination with shredded cabbage, tomato, onions and spicy chipotle mayo",
+     "protein": "other",
+     "is_index_item": false
+    },
+    {
+     "id": "inwood-bar-and-grill-marble-hill--chicken-burger",
+     "name": "Chicken Burger",
+     "price": 14.0,
+     "description": "Gouda cheese, onion, smoked bacon, lettuce, tomatoes and Inwood sauce",
+     "protein": "chicken",
+     "is_index_item": false
+    },
+    {
+     "id": "inwood-bar-and-grill-marble-hill--vegan-burger",
+     "name": "Vegan Burger",
+     "price": 16.95,
+     "description": "Patty made out of sweet potatoes, corn and black beans. Accompanied by lettuce, tomatoes, onions and avocado.",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "inwood-bar-and-grill-marble-hill--keto-burger",
+     "name": "Keto Burger",
+     "price": 14.0,
+     "description": "Our delicious burger patty with prime beef, in between a zucchini bun. Accompanied by lettuce, tomato, onions, pickles, bacon and cheddar cheese",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "inwood-bar-and-grill-marble-hill--sliders",
+     "name": "Sliders",
+     "price": 13.0,
+     "description": "3 Sliders with your choice Chicken or Beef",
+     "protein": "chicken",
+     "is_index_item": false
+    }
+   ]
   },
   {
    "id": "inwood-local-marble-hill",
@@ -14525,6 +17269,93 @@
    ]
   },
   {
+   "id": "joyces-tavern-great-kills",
+   "camis": "50035412",
+   "name": "Joyce's Tavern",
+   "chain": null,
+   "address": "3823 Richmond Avenue",
+   "borough": "Staten Island",
+   "neighborhood": "Great Kills",
+   "neighborhood_slug": "great-kills",
+   "zipcode": "10312",
+   "lat": 40.544995,
+   "lng": -74.165597,
+   "cuisine": "Irish",
+   "website": "http://www.joycestavern.com/",
+   "menu_url": "https://www.joycestavern.com/app/download/971382449/Winter+2026-Daily+Menu-Final.pdf",
+   "price_source": "official_pdf",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's menu PDF (joycestavern.com).",
+   "scraped_at": "2026-09-24T21:53:24Z",
+   "index_price": 14.95,
+   "burgers": [
+    {
+     "id": "joyces-tavern-great-kills--sliders-4",
+     "name": "Sliders (4)",
+     "price": 14.95,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "joyces-tavern-great-kills--classic-hamburger-10oz-angus-beef",
+     "name": "Classic Hamburger (10oz. Angus Beef)",
+     "price": 14.95,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "joyces-tavern-great-kills--joyces-burger-mushroom-onion-and-mozzarella",
+     "name": "Joyce’s Burger - Mushroom, Onion and Mozzarella",
+     "price": 17.95,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "joyces-tavern-great-kills--turkey-burger",
+     "name": "Turkey Burger",
+     "price": 15.95,
+     "description": null,
+     "protein": "turkey",
+     "is_index_item": false
+    },
+    {
+     "id": "joyces-tavern-great-kills--mushroom-and-swiss-burger",
+     "name": "Mushroom & Swiss Burger",
+     "price": 15.95,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "joyces-tavern-great-kills--hangover-burger-w-bacon-egg-and-cheese",
+     "name": "Hangover Burger (w/ Bacon, Egg & Cheese)",
+     "price": 19.95,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "joyces-tavern-great-kills--the-irishman-angus-burger-w-corned-beef-and-swiss",
+     "name": "The Irishman (Angus Burger w/ Corned Beef & Swiss)",
+     "price": 19.95,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "joyces-tavern-great-kills--paddy-otoole-burger-bacon-and-cheddar-topped-w-crispy-onion-strings",
+     "name": "Paddy O'Toole Burger (Bacon & Cheddar, Topped w/ Crispy Onion Strings)",
+     "price": 18.95,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "juanchis-burger-williamsburg",
    "camis": null,
    "name": "Juanchi's Burger",
@@ -14652,6 +17483,85 @@
    ]
   },
   {
+   "id": "juniors-restaurant-midtown",
+   "camis": "41172734",
+   "name": "Junior's Restaurant",
+   "chain": null,
+   "address": "1515 Broadway",
+   "borough": "Manhattan",
+   "neighborhood": "Midtown-Midtown South",
+   "neighborhood_slug": "midtown-midtown-south",
+   "zipcode": "10036",
+   "lat": 40.757629,
+   "lng": -73.985803,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://cdn.shopify.com/s/files/1/0694/7517/2609/files/45th_Main_Menu_3.1.26.pdf",
+   "price_source": "official_pdf",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's menu PDF (cdn.shopify.com).",
+   "scraped_at": "2026-09-24T21:51:30Z",
+   "index_price": 16.25,
+   "burgers": [
+    {
+     "id": "juniors-restaurant-midtown--a-swiss-steakburger",
+     "name": "A Swiss Steakburger",
+     "price": 21.95,
+     "description": "with Sautéed Mushrooms, Onion Rings & Steak Fries",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "juniors-restaurant-midtown--b-steakburger",
+     "name": "B Steakburger",
+     "price": 16.25,
+     "description": "with Sautéed Onion or Bermuda Onion",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "juniors-restaurant-midtown--c-cheeseburger",
+     "name": "C Cheeseburger",
+     "price": 16.95,
+     "description": "with Sautéed Onion or Bermuda Onion",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "juniors-restaurant-midtown--d-cheeseburger",
+     "name": "D Cheeseburger",
+     "price": 21.75,
+     "description": "with Onion Rings & Steak Fries",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "juniors-restaurant-midtown--e-steakburger",
+     "name": "E Steakburger",
+     "price": 20.95,
+     "description": "with Onion Rings & Steak Fries",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "juniors-restaurant-midtown--f-bacon-cheeseburger",
+     "name": "F Bacon Cheeseburger",
+     "price": 23.95,
+     "description": "with Onion Rings & Steak Fries",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "juniors-restaurant-midtown--g-pastrami-swiss-cheeseburger",
+     "name": "G Pastrami-Swiss Cheeseburger",
+     "price": 24.95,
+     "description": "with Onion Rings & Steak Fries",
+     "protein": "beef",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "jus-bad-food-lenox-hill",
    "camis": null,
    "name": "Jus' Bad Food",
@@ -14672,6 +17582,69 @@
    "scraped_at": null,
    "index_price": null,
    "burgers": []
+  },
+  {
+   "id": "k-o-burger-chinatown",
+   "camis": "50143768",
+   "name": "K.O. Burger",
+   "chain": null,
+   "address": "1 Eldridge Street",
+   "borough": "Manhattan",
+   "neighborhood": "Chinatown-Lower East Side",
+   "neighborhood_slug": "chinatown-lower-east-side",
+   "zipcode": "10002",
+   "lat": 40.714446,
+   "lng": -73.993879,
+   "cuisine": "Hamburgers",
+   "website": null,
+   "menu_url": "https://www.seamless.com/menu/ko-burger-1-3-eldridge-street-new-york/7187728",
+   "price_source": "delivery_app",
+   "status": "priced",
+   "status_detail": "Prices from a delivery app (seamless.com). Delivery-app prices usually run above in-store prices.",
+   "scraped_at": "2026-09-24T21:51:03Z",
+   "index_price": 9.0,
+   "burgers": [
+    {
+     "id": "k-o-burger-chinatown--knockout-burger",
+     "name": "Knockout Burger",
+     "price": 9.0,
+     "description": "Potato Roll, Smashed Patty, American Cheese, Onions, K.O. Sauce, Ketchup, Mustard, Pickles, Pickled Jalapenos",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "k-o-burger-chinatown--the-contender",
+     "name": "The Contender",
+     "price": 9.0,
+     "description": "Potato Roll, Smashed Patty, American Cheese, Smash Sauce, Griddled Onions, Pickles",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "k-o-burger-chinatown--lights-out",
+     "name": "Lights Out",
+     "price": 9.0,
+     "description": "Potato Roll, Smashed Patty, American Cheese, \"Oklahoma-Style\" Griddled Onions, House Mustard, Pickles",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "k-o-burger-chinatown--meaty-boy",
+     "name": "Meaty Boy",
+     "price": 11.0,
+     "description": "Potato Roll, Smashed Patty, American Cheese, Chipotle Mayo, Applewood Smoked Bacon, Onions, Pickles",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "k-o-burger-chinatown--id-hit-that",
+     "name": "I'd Hit That",
+     "price": 11.0,
+     "description": "Potato Roll, Smashed Patty, White American Cheese, Black Truffle Mayo, Onions, Fried Shallots, Pickles",
+     "protein": "beef",
+     "is_index_item": false
+    }
+   ]
   },
   {
    "id": "katzs-delicatessen-chinatown",
@@ -14829,6 +17802,37 @@
    "scraped_at": null,
    "index_price": null,
    "burgers": []
+  },
+  {
+   "id": "knickerbocker-bar-and-grill-west-village",
+   "camis": "40369521",
+   "name": "Knickerbocker Bar & Grill",
+   "chain": null,
+   "address": "33 University Place",
+   "borough": "Manhattan",
+   "neighborhood": "West Village",
+   "neighborhood_slug": "west-village",
+   "zipcode": "10003",
+   "lat": 40.731969,
+   "lng": -73.994451,
+   "cuisine": "Steakhouse",
+   "website": null,
+   "menu_url": "https://www.knickerbockerbarandgrill.com/dinner",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (knickerbockerbarandgrill.com).",
+   "scraped_at": "2026-09-24T21:51:00Z",
+   "index_price": 28.5,
+   "burgers": [
+    {
+     "id": "knickerbocker-bar-and-grill-west-village--knickerbocker-9oz-house-blend-burger",
+     "name": "Knickerbocker 9oz House Blend Burger",
+     "price": 28.5,
+     "description": "cheese or bacon, fries, and field greens",
+     "protein": "beef",
+     "is_index_item": true
+    }
+   ]
   },
   {
    "id": "korzo-sunset-park-west",
@@ -15890,6 +18894,61 @@
    ]
   },
   {
+   "id": "locksmith-wine-and-burger-bar-washington-heights-north",
+   "camis": "41410066",
+   "name": "Locksmith Wine & Burger Bar",
+   "chain": null,
+   "address": "4463 Broadway",
+   "borough": "Manhattan",
+   "neighborhood": "Washington Heights North",
+   "neighborhood_slug": "washington-heights-north",
+   "zipcode": "10040",
+   "lat": 40.857337,
+   "lng": -73.932312,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://menu.locksmithbarnyc.com/",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (menu.locksmithbarnyc.com).",
+   "scraped_at": "2026-09-24T21:51:51Z",
+   "index_price": 18.0,
+   "burgers": [
+    {
+     "id": "locksmith-wine-and-burger-bar-washington-heights-north--locksmith-burger",
+     "name": "Locksmith Burger",
+     "price": 18.0,
+     "description": "8 oz Debragga blend with lettuce, tomato, onion, pickles and cheddar. Add bacon or avocado +$3.",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "locksmith-wine-and-burger-bar-washington-heights-north--my-boy-bleu-burger",
+     "name": "My Boy Bleu Burger",
+     "price": 18.0,
+     "description": "8 oz Debragga blend, bacon, bleu cheese, grilled onions, lettuce and tomato.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "locksmith-wine-and-burger-bar-washington-heights-north--shroom-burger",
+     "name": "Shroom Burger",
+     "price": 18.0,
+     "description": "8 oz Debragga blend, grilled mushrooms, grilled onions, Swiss and truffle aioli.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "locksmith-wine-and-burger-bar-washington-heights-north--beyond-burger",
+     "name": "Beyond Burger",
+     "price": 18.0,
+     "description": "100% vegan burger topped with avocado, lettuce and tomato.",
+     "protein": "veggie",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "london-and-martin-co-battery-park-city",
    "camis": "50133763",
    "name": "London & Martin Co.",
@@ -16544,6 +19603,172 @@
    ]
   },
   {
+   "id": "milk-burger-mott-haven",
+   "camis": "50088692",
+   "name": "Milk Burger",
+   "chain": null,
+   "address": "148 Bruckner Boulevard",
+   "borough": "Bronx",
+   "neighborhood": "Mott Haven-Port Morris",
+   "neighborhood_slug": "mott-haven-port-morris",
+   "zipcode": "10454",
+   "lat": 40.803692,
+   "lng": -73.92005,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://www.seamless.com/menu/milk-burger-148-bruckner-blvd-the-bronx/1733453",
+   "price_source": "delivery_app",
+   "status": "priced",
+   "status_detail": "Prices from a delivery app (seamless.com). Delivery-app prices usually run above in-store prices.",
+   "scraped_at": "2026-09-24T21:53:16Z",
+   "index_price": 11.0,
+   "burgers": [
+    {
+     "id": "milk-burger-mott-haven--milkburger",
+     "name": "Milkburger",
+     "price": 16.0,
+     "description": "American cheese, lettuce, tomato, pickles, onions and milk sauce.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "milk-burger-mott-haven--cheeseburger",
+     "name": "Cheeseburger",
+     "price": 15.0,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "milk-burger-mott-haven--hamburger",
+     "name": "Hamburger",
+     "price": 13.0,
+     "description": "Hamburger",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "milk-burger-mott-haven--jalapeno-burger",
+     "name": "Jalapeño Burger",
+     "price": 16.0,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "milk-burger-mott-haven--el-barrio",
+     "name": "El Barrio",
+     "price": 18.0,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "milk-burger-mott-haven--sriracha-burger",
+     "name": "Sriracha Burger",
+     "price": 15.0,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "milk-burger-mott-haven--falafel-burger",
+     "name": "Falafel Burger",
+     "price": 14.0,
+     "description": null,
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "milk-burger-mott-haven--smash-burger",
+     "name": "Smash Burger",
+     "price": 11.0,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "milk-burger-mott-haven--bronx-burger",
+     "name": "Bronx Burger",
+     "price": 16.0,
+     "description": "Black Angus Patty – Grilled to perfection and topped with our signature smoky Chipotle sauce, served on a soft Martin's potato roll with crisp lettuce, vine-ripened tomato, tangy pickles, and red onions.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "milk-burger-mott-haven--garlic-smash",
+     "name": "Garlic Smash",
+     "price": 11.0,
+     "description": "Smash Burger with our signature Garlic Chipotle Sauce",
+     "protein": "beef",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
+   "id": "millard-fillmore-tavern-flushing",
+   "camis": null,
+   "name": "Millard Fillmore Tavern",
+   "chain": null,
+   "address": null,
+   "borough": "Queens",
+   "neighborhood": "Flushing",
+   "neighborhood_slug": "flushing",
+   "zipcode": null,
+   "lat": null,
+   "lng": null,
+   "cuisine": null,
+   "website": null,
+   "menu_url": "https://fillmorestavern.com/new-york-flushing-fillmore-s-tavern-food-menu",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (fillmorestavern.com).",
+   "scraped_at": "2026-09-24T21:53:01Z",
+   "index_price": 15.91,
+   "burgers": [
+    {
+     "id": "millard-fillmore-tavern-flushing--the-fillmore-burger",
+     "name": "The Fillmore Burger",
+     "price": 16.78,
+     "description": "Certified black Angus beef hand formed, club roll, lettuce and tomato.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "millard-fillmore-tavern-flushing--black-and-bleu-burger",
+     "name": "Black & Bleu Burger",
+     "price": 17.65,
+     "description": "Our secret 13 Blackened spice rub, certified Angus, club roll, bleu cheese.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "millard-fillmore-tavern-flushing--grilled-tuna",
+     "name": "Grilled Tuna",
+     "price": 18.91,
+     "description": "Brushed with a sesame seed ginger sauce, club roll, lettuce and tomato.",
+     "protein": "fish",
+     "is_index_item": false
+    },
+    {
+     "id": "millard-fillmore-tavern-flushing--cowboy-burger",
+     "name": "Cowboy Burger",
+     "price": 18.91,
+     "description": "Our hand formed Angus burger with cheddar cheese, sautéed mushrooms, onions, bacon and BBQ sauce on a jumbo Martin's potato bun.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "millard-fillmore-tavern-flushing--sliders",
+     "name": "Sliders",
+     "price": 15.91,
+     "description": "Choice of Cheeseburger, Chicken Cordon Bleu or Buffalo Chicken.",
+     "protein": "beef",
+     "is_index_item": true
+    }
+   ]
+  },
+  {
    "id": "minetta-tavern-west-village",
    "camis": "50076528",
    "name": "Minetta Tavern",
@@ -16603,6 +19828,157 @@
    "scraped_at": "2026-09-24T12:22:55Z",
    "index_price": null,
    "burgers": []
+  },
+  {
+   "id": "moes-pastrami-and-burgers-prospect-lefferts-gardens",
+   "camis": "50180624",
+   "name": "Moes Pastrami & Burgers",
+   "chain": null,
+   "address": "569 Flatbush Avenue",
+   "borough": "Brooklyn",
+   "neighborhood": "Prospect Lefferts Gardens-Wingate",
+   "neighborhood_slug": "prospect-lefferts-gardens-wingate",
+   "zipcode": "11225",
+   "lat": 40.659783,
+   "lng": -73.960573,
+   "cuisine": "Hamburgers",
+   "website": null,
+   "menu_url": "https://www.getsauce.com/order/moes-pastrami-and-burgers/menu",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (getsauce.com).",
+   "scraped_at": "2026-09-24T21:52:31Z",
+   "index_price": 8.99,
+   "burgers": [
+    {
+     "id": "moes-pastrami-and-burgers-prospect-lefferts-gardens--texas-burger",
+     "name": "Texas Burger",
+     "price": 15.0,
+     "description": "Fresh Halal seasoned burger with beef, bacon, and fried egg hard, lettuce, tomato, pickles, Moe’s special sauce, and cheddar cheese on a potato bun",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "moes-pastrami-and-burgers-prospect-lefferts-gardens--hamburgers",
+     "name": "Hamburgers",
+     "price": 8.99,
+     "description": "HALAL FRESH GROUND BEEF SERVED ON A POTATO BUN WITH SAUCE, LETTUCE, TOMATO AND PICKLES.",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "moes-pastrami-and-burgers-prospect-lefferts-gardens--cheese-burger",
+     "name": "Cheese Burger",
+     "price": 9.99,
+     "description": "HALAL FRESH GROUND BEEF SERVED ON A POTATO BUN WITH house (SAUCE), LETTUCE, TOMATO, AND PICKLES.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "moes-pastrami-and-burgers-prospect-lefferts-gardens--bacon-cheese-burger",
+     "name": "Bacon Cheese Burger",
+     "price": 13.0,
+     "description": "(Top seller) HALAL FRESH GROUND BEEF, (SEASONED) WITH BEEF BACON, AND AMERICAN CHEESE SERVED ON A POTATO BUN WITH SAUCE, LETTUCE, TOMATO, AND PICKLES",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "moes-pastrami-and-burgers-prospect-lefferts-gardens--double-cheese-burger",
+     "name": "Double Cheese Burger",
+     "price": 15.5,
+     "description": "HALAL FRESH GROUND BEEF (double patty) SERVED ON A POTATO BUN WITH SAUCE, LETTUCE, TOMATO AND PICKLES",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "moes-pastrami-and-burgers-prospect-lefferts-gardens--bacon-double-cheese-burger",
+     "name": "Bacon Double Cheese Burger",
+     "price": 17.5,
+     "description": "Three halal seasoned ground beef patties with American cheese, sauce, lettuce, tomato, and pickles.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "moes-pastrami-and-burgers-prospect-lefferts-gardens--pastrami-burger",
+     "name": "Pastrami Burger",
+     "price": 15.0,
+     "description": "(Top seller) HALAL FRESH GROUND BEEF WITH TENDER PASTRAMI ON TOP, SERVED ON A POTATO BUN WITH SAUCE, LETTUCE, TOMATO, PICKLES WITH SWISS CHEESE",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "moes-pastrami-and-burgers-prospect-lefferts-gardens--brisket-burger",
+     "name": "Brisket Burger",
+     "price": 15.0,
+     "description": "HALAL FRESH GROUND BEEF WITH TENDER BRISKET. ON TOP. SERVED ON A POTATO BUN WITH SAUCE, LETTUCE, TOMATO, PICKLES, AND SWISS CHEESE.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "moes-pastrami-and-burgers-prospect-lefferts-gardens--corned-beef-burger",
+     "name": "Corned Beef Burger",
+     "price": 15.0,
+     "description": "HALAL FRESH GROUND BEEF (SEASONED) WITH TENDER CORNED BEEF ON TOP. SERVED ON A POTATO BUN WITH SAUCE, LETTUCE, TOMATO PICKLES AND SWISS CHEESE.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "moes-pastrami-and-burgers-prospect-lefferts-gardens--avocado-burger",
+     "name": "Avocado Burger",
+     "price": 11.99,
+     "description": "HALAL FRESH GROUND BEEF SERVED ON A POTATO BUN WITH SAUCE, LETTUCE, AVOCADO, TOMATO AND PICKLES WITH AMERICAN CHEESE",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "moes-pastrami-and-burgers-prospect-lefferts-gardens--everything-burger",
+     "name": "Everything Burger",
+     "price": 15.5,
+     "description": "HALAL FRESH GROUND BEEF SERVED ON A POTATO BUN WITH SAUCE, LETTUCE, TOMATO, PICKLES AVOCADO, BACON, ONION RINGS AND CHEDDAR CHEESE.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "moes-pastrami-and-burgers-prospect-lefferts-gardens--grilled-onion-peppers-burger",
+     "name": "Grilled Onion/Peppers Burger",
+     "price": 11.99,
+     "description": "HALAL FRESH GROUND BEEF SERVED ON A POTATO BUN WITH SAUCE, LETTUCE TOMATO, PICKLES AMERICAN CHEESE, AND GRILLED PEPPERS/ONIONS ON TOP",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "moes-pastrami-and-burgers-prospect-lefferts-gardens--jalapeno-burger",
+     "name": "Jalapeno Burger",
+     "price": 11.99,
+     "description": "HALAL FRESH GROUND BEEF SERVED ON A POTATO BUN WITH SAUCE, LETTUCE, TOMATO, PICKLES, JALAPEÑOS WITH AMERICAN CHEESE",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "moes-pastrami-and-burgers-prospect-lefferts-gardens--turkey-burger",
+     "name": "Turkey Burger",
+     "price": 8.99,
+     "description": "It comes with Moe’s special sauce, lettuce, tomato, and pickles",
+     "protein": "turkey",
+     "is_index_item": false
+    },
+    {
+     "id": "moes-pastrami-and-burgers-prospect-lefferts-gardens--salmon-burger",
+     "name": "Salmon Burger",
+     "price": 11.99,
+     "description": "It comes with Moe’s special sauce, lettuce, tomato, and pickles",
+     "protein": "fish",
+     "is_index_item": false
+    },
+    {
+     "id": "moes-pastrami-and-burgers-prospect-lefferts-gardens--vegan-burger",
+     "name": "Vegan Burger",
+     "price": 11.99,
+     "description": "VEGGIE BURGER SERVED ON A POTATO BUN WITH MOE’s SPECIAL SAUCE LETTUCE, TOMATO, PICKLES The special sauce has mayonnaise, please note if you want sauce or no sauce",
+     "protein": "veggie",
+     "is_index_item": false
+    }
+   ]
   },
   {
    "id": "mollys-shebeen-bar-restaurant-gramercy",
@@ -16966,6 +20342,77 @@
    "burgers": []
   },
   {
+   "id": "new-york-luncheonette-turtle-bay",
+   "camis": "50150993",
+   "name": "New York Luncheonette",
+   "chain": null,
+   "address": "135 East 50 Street",
+   "borough": "Manhattan",
+   "neighborhood": "Turtle Bay-East Midtown",
+   "neighborhood_slug": "turtle-bay-east-midtown",
+   "zipcode": "10022",
+   "lat": 40.756322,
+   "lng": -73.97194,
+   "cuisine": "American",
+   "website": "http://www.newyorkluncheonette.com/",
+   "menu_url": "https://uqrmecdn.s3.us-east-2.amazonaws.com/u/575141/989431-23979648d92e9a79c59cb83c5c2bff4f4295044.pdf",
+   "price_source": "official_pdf",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's menu PDF (uqrmecdn.s3.us-east-2.amazonaws.com).",
+   "scraped_at": "2026-09-24T21:51:21Z",
+   "index_price": 14.95,
+   "burgers": [
+    {
+     "id": "new-york-luncheonette-turtle-bay--new-york-chopped-cheese",
+     "name": "New York Chopped Cheese",
+     "price": 16.95,
+     "description": "with American Cheese served on a hero",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "new-york-luncheonette-turtle-bay--pizza-burger",
+     "name": "Pizza Burger",
+     "price": 16.95,
+     "description": "with Melted Mozzarella topped with our Homemade Marinara sauce",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "new-york-luncheonette-turtle-bay--spicy-mexican",
+     "name": "Spicy Mexican",
+     "price": 16.95,
+     "description": "with Pico de Gallo, Chipotle, and Pepper Jack",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "new-york-luncheonette-turtle-bay--san-francisco-burger",
+     "name": "San Francisco Burger",
+     "price": 17.95,
+     "description": "with Avocado, Swiss, and Bacon",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "new-york-luncheonette-turtle-bay--hamburger",
+     "name": "Hamburger",
+     "price": 14.95,
+     "description": "8oz Burger Served on a toasted Brioche Bun with Pickle on the side",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "new-york-luncheonette-turtle-bay--greek-burger",
+     "name": "Greek Burger",
+     "price": 17.95,
+     "description": "with Feta, Grilled Tomatoes, Onions, and Peppers served on a grilled Pita bread with Tzatziki sauce on the side",
+     "protein": "beef",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "nisi-bistro-lenox-hill",
    "camis": "50072130",
    "name": "NISI Bistro",
@@ -17211,6 +20658,28 @@
    "price_source": null,
    "status": "no_menu_found",
    "status_detail": "The pages found were not menus. Tried: stoop.bar (not a menu). No more candidate pages.",
+   "scraped_at": null,
+   "index_price": null,
+   "burgers": []
+  },
+  {
+   "id": "og-burger-box-astoria",
+   "camis": null,
+   "name": "OG Burger Box",
+   "chain": null,
+   "address": null,
+   "borough": "Queens",
+   "neighborhood": "Astoria",
+   "neighborhood_slug": "astoria",
+   "zipcode": null,
+   "lat": null,
+   "lng": null,
+   "cuisine": null,
+   "website": "https://ogburgerbox.com/",
+   "menu_url": null,
+   "price_source": null,
+   "status": "no_menu_found",
+   "status_detail": "The pages found were not menus. Tried: ogburgerbox.com (not a menu); ogburgerbox.com (not a menu); us.trabajo.org (not a menu).",
    "scraped_at": null,
    "index_price": null,
    "burgers": []
@@ -18240,6 +21709,69 @@
    ]
   },
   {
+   "id": "peculier-pub-west-village",
+   "camis": "40387277",
+   "name": "Peculier Pub",
+   "chain": null,
+   "address": "145 Bleecker Street",
+   "borough": "Manhattan",
+   "neighborhood": "West Village",
+   "neighborhood_slug": "west-village",
+   "zipcode": "10012",
+   "lat": 40.72817,
+   "lng": -73.999156,
+   "cuisine": "American",
+   "website": "http://www.peculierpub.com/",
+   "menu_url": "http://www.peculierpub.com/menu.pdf",
+   "price_source": "official_pdf",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's menu PDF (peculierpub.com).",
+   "scraped_at": "2026-09-24T21:50:54Z",
+   "index_price": 12.0,
+   "burgers": [
+    {
+     "id": "peculier-pub-west-village--hamburger",
+     "name": "Hamburger",
+     "price": 12.0,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "peculier-pub-west-village--beyond-burger",
+     "name": "Beyond Burger",
+     "price": 12.0,
+     "description": null,
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "peculier-pub-west-village--ultimate-burger",
+     "name": "Ultimate Burger",
+     "price": 15.0,
+     "description": "w/bacon & bleu cheese",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "peculier-pub-west-village--op-burger",
+     "name": "OP Burger",
+     "price": 15.0,
+     "description": "w/homemade beer chili & cheddar",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "peculier-pub-west-village--wonderland-burger",
+     "name": "Wonderland Burger",
+     "price": 15.0,
+     "description": "w/mushrooms & swiss",
+     "protein": "beef",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "penelope-murray-hill",
    "camis": null,
    "name": "Penelope",
@@ -18256,7 +21788,7 @@
    "menu_url": null,
    "price_source": null,
    "status": "no_menu_found",
-   "status_detail": "The pages found were not menus. A Context.dev call (site map of penelopenewyork.com) failed temporarily on 2 separate runs, so this is the best result without it; later runs still retry it. Tried: grubhub.com (not a menu); penelopenewyork.com (not a menu); postcard.inc (not a menu).",
+   "status_detail": "The pages found were not menus. A Context.dev call (site map of penelopenewyork.com) failed temporarily on 3 separate runs, so this is the best result without it; later runs still retry it. Tried: grubhub.com (not a menu); penelopenewyork.com (not a menu); postcard.inc (not a menu).",
    "scraped_at": null,
    "index_price": null,
    "burgers": []
@@ -19193,7 +22725,7 @@
    "menu_url": null,
    "price_source": null,
    "status": "no_menu_found",
-   "status_detail": "The pages found were not menus. A Context.dev call (site map of professorthoms.com) failed temporarily on 2 separate runs, so this is the best result without it; later runs still retry it. Tried: professorthoms.com (not a menu); manhattandigest.com (not a menu); beeradvocate.com (not a menu).",
+   "status_detail": "The pages found were not menus. A Context.dev call (site map of professorthoms.com) failed temporarily on 3 separate runs, so this is the best result without it; later runs still retry it. Tried: professorthoms.com (not a menu); manhattandigest.com (not a menu); beeradvocate.com (not a menu).",
    "scraped_at": null,
    "index_price": null,
    "burgers": []
@@ -19228,6 +22760,28 @@
      "is_index_item": false
     }
    ]
+  },
+  {
+   "id": "purity-diner-park-slope",
+   "camis": "40860723",
+   "name": "Purity Diner",
+   "chain": null,
+   "address": "289 7 Avenue",
+   "borough": "Brooklyn",
+   "neighborhood": "Park Slope-Gowanus",
+   "neighborhood_slug": "park-slope-gowanus",
+   "zipcode": "11215",
+   "lat": 40.668,
+   "lng": -73.980635,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://www.doordash.com/store/purity-diner-brooklyn-35756745/78412146/",
+   "price_source": "delivery_app",
+   "status": "no_burgers",
+   "status_detail": "Found a menu but no beef burger on it. Tried: doordash.com (menu without burgers); corner.inc (not a menu). No more candidate pages.",
+   "scraped_at": "2026-09-24T21:52:15Z",
+   "index_price": null,
+   "burgers": []
   },
   {
    "id": "putnams-pub-fort-greene",
@@ -19816,6 +23370,397 @@
      "name": "Smash Burger Supreme",
      "price": 19.0,
      "description": "2 angus beef patties, grilled onions, cheddar, thick cut bacon, butter, lettuce, tomato, pickles, Richmond sauce, potato bun",
+     "protein": "beef",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
+   "id": "ritz-diner-lenox-hill",
+   "camis": "50100549",
+   "name": "Ritz Diner",
+   "chain": null,
+   "address": "1133 1 Avenue",
+   "borough": "Manhattan",
+   "neighborhood": "Lenox Hill-Roosevelt Island",
+   "neighborhood_slug": "lenox-hill-roosevelt-island",
+   "zipcode": "10065",
+   "lat": 40.761575,
+   "lng": -73.960538,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://food.orders.co/jmzugxat/menu",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (food.orders.co).",
+   "scraped_at": "2026-09-24T21:51:49Z",
+   "index_price": 14.25,
+   "burgers": [
+    {
+     "id": "ritz-diner-lenox-hill--the-basics-burger",
+     "name": "The Basics Burger",
+     "price": 14.25,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "ritz-diner-lenox-hill--the-basics-burger-deluxe",
+     "name": "The Basics Burger Deluxe",
+     "price": 18.75,
+     "description": "Served with french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--american-style-burger",
+     "name": "American Style Burger",
+     "price": 15.45,
+     "description": "Served with american cheese.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--american-style-burger-deluxe",
+     "name": "American Style Burger Deluxe",
+     "price": 19.95,
+     "description": "Served with american cheese, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Add bacon or cheese for an additional charge.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--alpine-style-burger",
+     "name": "Alpine Style Burger",
+     "price": 15.45,
+     "description": "Served with swiss cheese.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--alpine-style-burger-deluxe",
+     "name": "Alpine Style Burger Deluxe",
+     "price": 19.95,
+     "description": "Served with swiss cheese, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--italian-style-burger",
+     "name": "Italian Style Burger",
+     "price": 15.45,
+     "description": "Served with mozzarella cheese.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--italian-style-burger-deluxe",
+     "name": "Italian Style Burger Deluxe",
+     "price": 19.95,
+     "description": "Served with mozzarella cheese, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--wisconsin-style-burger",
+     "name": "Wisconsin Style Burger",
+     "price": 15.45,
+     "description": "Served with cheddar cheese.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--wisconsin-style-burger-deluxe",
+     "name": "Wisconsin Style Burger Deluxe",
+     "price": 19.95,
+     "description": "Served with cheddar cheese, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--california-style-burger",
+     "name": "California Style Burger",
+     "price": 15.45,
+     "description": "Served with lettuce, tomatoes and mayo.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--california-style-burger-deluxe",
+     "name": "California Style Burger Deluxe",
+     "price": 19.95,
+     "description": "Served with lettuce, tomatoes and mayo, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--texas-style-burger",
+     "name": "Texas Style Burger",
+     "price": 16.0,
+     "description": "Served with american cheese and a fried egg.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--texas-style-burger-deluxe",
+     "name": "Texas Style Burger Deluxe",
+     "price": 20.5,
+     "description": "Served with american cheese and a fried egg, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--russian-style-burger",
+     "name": "Russian Style Burger",
+     "price": 16.0,
+     "description": "Served with American cheese and Russian dressing.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--russian-style-burger-deluxe",
+     "name": "Russian Style Burger Deluxe",
+     "price": 19.95,
+     "description": "Served with american cheese and Russian dressing, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--pizza-style-burger",
+     "name": "Pizza Style Burger",
+     "price": 15.45,
+     "description": "Served with mozzarella cheese and tomato sauce.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--pizza-style-burger-deluxe",
+     "name": "Pizza Style Burger Deluxe",
+     "price": 19.95,
+     "description": "Served with mozzarella cheese and tomato sauce, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--french-style-burger",
+     "name": "French Style Burger",
+     "price": 15.75,
+     "description": "Served with bleu cheese.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--french-style-burger-deluxe",
+     "name": "French Style Burger Deluxe",
+     "price": 20.25,
+     "description": "Served with bleu cheese, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--mushroom-style-burger",
+     "name": "Mushroom Style Burger",
+     "price": 15.25,
+     "description": "Served with mushrooms.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--mushroom-style-burger-deluxe",
+     "name": "Mushroom Style Burger Deluxe",
+     "price": 19.75,
+     "description": "Served with mushrooms, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--greek-style-burger",
+     "name": "Greek Style Burger",
+     "price": 16.25,
+     "description": "Served with feta cheese.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--greek-style-burger-deluxe",
+     "name": "Greek Style Burger Deluxe",
+     "price": 20.75,
+     "description": "Served with feta cheese, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--english-style-burger",
+     "name": "English Style Burger",
+     "price": 15.25,
+     "description": "Served on an english muffin.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--english-style-burger-deluxe",
+     "name": "English Style Burger Deluxe",
+     "price": 19.25,
+     "description": "Served on an english muffin, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--acapulco-style-burger",
+     "name": "Acapulco Style Burger",
+     "price": 16.25,
+     "description": "Served with roasted onions and jalapenos.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--acapulco-style-burger-deluxe",
+     "name": "Acapulco Style Burger Deluxe",
+     "price": 20.75,
+     "description": "Served with roasted onions and jalapenos, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--tijuana-style-burger",
+     "name": "Tijuana Style Burger",
+     "price": 16.45,
+     "description": "Served with guacamole.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--tijuana-style-burger-deluxe",
+     "name": "Tijuana Style Burger Deluxe",
+     "price": 20.95,
+     "description": "Served with guacamole, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--derby-style-burger",
+     "name": "Derby Style Burger",
+     "price": 18.75,
+     "description": "Served with bacon, bleu cheese and avocado.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--derby-style-burger-deluxe",
+     "name": "Derby Style Burger Deluxe",
+     "price": 22.25,
+     "description": "Served with bacon, bleu cheese, and avocado, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--al-fresco-burger",
+     "name": "Al Fresco Burger",
+     "price": 15.25,
+     "description": "Served on rye bread with american cheese and fried onions.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--al-fresco-burger-deluxe",
+     "name": "Al Fresco Burger Deluxe",
+     "price": 19.75,
+     "description": "Served on rye bread with american cheese and fried onions, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--bbq-burger",
+     "name": "BBQ Burger",
+     "price": 15.25,
+     "description": "Served with bbq sauce.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--bbq-burger-deluxe",
+     "name": "BBQ Burger Deluxe",
+     "price": 18.75,
+     "description": "Served with bbq sauce, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--louisiana-style-burger",
+     "name": "Louisiana Style Burger",
+     "price": 16.25,
+     "description": "Served with chili.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--louisiana-style-burger-deluxe",
+     "name": "Louisiana Style Burger Deluxe",
+     "price": 20.75,
+     "description": "Served with chili, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--west-coast-style-burger",
+     "name": "West Coast Style Burger",
+     "price": 16.75,
+     "description": "Served with avocado.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--west-coast-style-burger-deluxe",
+     "name": "West Coast Style Burger Deluxe",
+     "price": 20.25,
+     "description": "Served with avocado, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--veggie-burger",
+     "name": "Veggie Burger",
+     "price": 14.25,
+     "description": null,
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--veggie-burger-deluxe",
+     "name": "Veggie Burger Deluxe",
+     "price": 17.75,
+     "description": "Served with french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--turkey-burger",
+     "name": "Turkey Burger",
+     "price": 13.75,
+     "description": null,
+     "protein": "turkey",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--turkey-burger-deluxe",
+     "name": "Turkey Burger Deluxe",
+     "price": 17.75,
+     "description": "Served with french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
+     "protein": "turkey",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--ritz-burger",
+     "name": "Ritz Burger",
+     "price": 14.75,
+     "description": "Served with fresh mozzarella and roasted peppers.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "ritz-diner-lenox-hill--ritz-burger-deluxe",
+     "name": "Ritz Burger Deluxe",
+     "price": 18.95,
+     "description": "Served with fresh mozzarella and roasted peppers with all the trimmings, french fries, lettuce, tomatoes, coleslaw and pickle. Waffle, curly, sweet potato fries or onion rings instead of french fries available for an additional charge. Cheese added to fries for an extra cost.",
      "protein": "beef",
      "is_index_item": false
     }
@@ -20640,6 +24585,37 @@
    ]
   },
   {
+   "id": "serafina-soho",
+   "camis": "50066399",
+   "name": "Serafina",
+   "chain": null,
+   "address": "113 Reade Street",
+   "borough": "Manhattan",
+   "neighborhood": "SoHo-TriBeCa-Civic Center-Little Italy",
+   "neighborhood_slug": "soho-tribeca-civic-center-little-italy",
+   "zipcode": "10013",
+   "lat": 40.715837,
+   "lng": -74.008466,
+   "cuisine": "Italian",
+   "website": null,
+   "menu_url": "https://www.serafinarestaurant.com/tribeca",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (serafinarestaurant.com).",
+   "scraped_at": "2026-09-24T21:50:38Z",
+   "index_price": 31.0,
+   "burgers": [
+    {
+     "id": "serafina-soho--serafina-burger",
+     "name": "Serafina Burger",
+     "price": 31.0,
+     "description": "Dry aged angus beef, fontina cheese, caramelized onions & French fries",
+     "protein": "beef",
+     "is_index_item": true
+    }
+   ]
+  },
+  {
    "id": "si-diner-westerleigh",
    "camis": "41235694",
    "name": "SI Diner",
@@ -21238,6 +25214,101 @@
    ]
   },
   {
+   "id": "smacking-burger-west-village",
+   "camis": "50153998",
+   "name": "Smacking Burger",
+   "chain": null,
+   "address": "63 8 Avenue",
+   "borough": "Manhattan",
+   "neighborhood": "West Village",
+   "neighborhood_slug": "west-village",
+   "zipcode": "10014",
+   "lat": 40.739028,
+   "lng": -74.003147,
+   "cuisine": "Hamburgers",
+   "website": "http://smackingburger.com/",
+   "menu_url": "https://smackingburger.com/order/smacking-burger/menu",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (smackingburger.com).",
+   "scraped_at": "2026-09-24T21:50:33Z",
+   "index_price": 4.0,
+   "burgers": [
+    {
+     "id": "smacking-burger-west-village--smacking-crispy-bbq-bomber-limited-time-only",
+     "name": "SMACKING CRISPY BBQ BOMBER (Limited Time Only)",
+     "price": 14.49,
+     "description": "Double Smashed Patty W/ Caramelized Onions, Mozzarella Cheese, Bacon, BBQ Sauce & Mayo Topped With Crispy Fried Onions On A Toasted Plain Martins Potato Bun.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "smacking-burger-west-village--the-classic",
+     "name": "The Classic",
+     "price": 7.49,
+     "description": "Single smashed patty W/ Caramelized onions, American Cheese, Butter Crunch Pickles, Ketchup & mustard on a Toasted Plain Martins Potato Bun.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "smacking-burger-west-village--the-big-smack",
+     "name": "The Big Smack",
+     "price": 10.99,
+     "description": "Double Smashed Patty W/Caramelized Onions, Butter Crunch Pickles, Shredduce (Shredded Lettuce) & American cheese Topped With Our Signature SMACK Sauce On A Martins Sesame Bun.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "smacking-burger-west-village--the-oklahoma-o-k-c",
+     "name": "The Oklahoma (O.k.c)",
+     "price": 10.99,
+     "description": "Double Smashed Patty W/ Caramelized Onions, Butter Crunch Pickles, American Cheese Topped With Our House Made Horsey Sauce (HORSERADISH) on a Plain Martins Potato Bun.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "smacking-burger-west-village--all-the-way-a-t-w",
+     "name": "All the Way (A.t.w)",
+     "price": 14.49,
+     "description": "Double Smashed Patty W/ Caramelized Onions, Butter Crunch Pickles, Shredduce (Shredded Lettuce) , Tomato American Cheese & Crispy Bacon Topped With Our Signature SMACK Sauce On A Martins Sesame Bun.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "smacking-burger-west-village--the-naked-burger-lettuce-bun",
+     "name": "The Naked Burger (Lettuce Bun)",
+     "price": 9.49,
+     "description": "Single Smashed Patty W/ American Cheese, Caramelized Onions, Chopped Tomato & Pickles On A Lettuce Bun, Topped With Our Signature SMACK Sauce & Dab Of Our Cilapeno Sauce (Cilantro Jalapeno Sauce).",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "smacking-burger-west-village--the-truff-burger",
+     "name": "The Truff Burger",
+     "price": 9.99,
+     "description": "Single Smashed Patty W/ Caramelized Onions, Swiss Ceese & Grilled Mushrooms Topped With Our Truff Sauce (Truffle Mayo) On A Plain Martins Potato Bun.",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "smacking-burger-west-village--the-pup-patty-patty-for-puppy",
+     "name": "The Pup Patty (Patty for Puppy)",
+     "price": 4.0,
+     "description": "Single Smashed Patty W/ American Cheese. (No Included)",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "smacking-burger-west-village--mr-impossible-impossible-patty",
+     "name": "Mr. Impossible (Impossible Patty)",
+     "price": 12.49,
+     "description": "Single Smashed Impossible Patty W/ Caramalized Onions, Shredduce (Shredded Lettuce), Butter Crunch Pickles, Tomato & American Cheese Topped With Our Signature SMACK Sauce & A Dab Of Cilapeno Sauce (Cilantro Jalapeno Sauce) On A Plain Martins Potato Bun.",
+     "protein": "veggie",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "smash-shack-burger-bar-hunters-point",
    "camis": null,
    "name": "Smash Shack Burger Bar",
@@ -21781,6 +25852,53 @@
    "burgers": []
   },
   {
+   "id": "square-diner-soho",
+   "camis": "41006719",
+   "name": "Square Diner",
+   "chain": null,
+   "address": "33 Leonard Street",
+   "borough": "Manhattan",
+   "neighborhood": "SoHo-TriBeCa-Civic Center-Little Italy",
+   "neighborhood_slug": "soho-tribeca-civic-center-little-italy",
+   "zipcode": "10013",
+   "lat": 40.718407,
+   "lng": -74.007348,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://www.squaredinernyc.com/menu-1?location=Leonard+Street&menu=lunch--dinner",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (squaredinernyc.com).",
+   "scraped_at": "2026-09-24T21:50:37Z",
+   "index_price": 22.0,
+   "burgers": [
+    {
+     "id": "square-diner-soho--1-2-pound-beef-burger",
+     "name": "1/2 Pound Beef Burger",
+     "price": 22.0,
+     "description": "Half pound of our special blend chopped meat cooked to your liking.",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "square-diner-soho--1-2-pound-turkey-burger",
+     "name": "1/2 Pound Turkey Burger",
+     "price": 22.0,
+     "description": "Half pound of our special blend chopped turkey meat cooked to your liking.",
+     "protein": "turkey",
+     "is_index_item": false
+    },
+    {
+     "id": "square-diner-soho--homemade-southwest-veggie-burger",
+     "name": "Homemade Southwest Veggie Burger",
+     "price": 22.0,
+     "description": "Made in-house vegan patty with black beans, oats, mushrooms, veggies, and chipotle peppers.",
+     "protein": "veggie",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "st-dymphnas-east-village",
    "camis": "50099980",
    "name": "St Dymphna's",
@@ -22067,6 +26185,37 @@
    ]
   },
   {
+   "id": "step-in-restaurant-parkchester",
+   "camis": "40800483",
+   "name": "Step In Restaurant",
+   "chain": null,
+   "address": "1309 Metropolitan Avenue",
+   "borough": "Bronx",
+   "neighborhood": "Parkchester",
+   "neighborhood_slug": "parkchester",
+   "zipcode": "10462",
+   "lat": 40.83394,
+   "lng": -73.860907,
+   "cuisine": "American",
+   "website": "https://www.stepinnyc.com/",
+   "menu_url": "https://www.stepinnyc.com/menu",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (stepinnyc.com). The index price is from the brunch menu (no dinner or all-day burger price listed).",
+   "scraped_at": "2026-09-24T12:24:09Z",
+   "index_price": 24.0,
+   "burgers": [
+    {
+     "id": "step-in-restaurant-parkchester--country-prime-burger",
+     "name": "Country Prime Burger",
+     "price": 24.0,
+     "description": "Fried Egg / Bacon / Cheese",
+     "protein": "beef",
+     "is_index_item": true
+    }
+   ]
+  },
+  {
    "id": "stk-meatpacking-hudson-yards",
    "camis": "50185271",
    "name": "STK Meatpacking",
@@ -22147,6 +26296,53 @@
      "price": 19.0,
      "description": "arugula & tomato, chipotle lime aioli",
      "protein": "veggie",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
+   "id": "sunday-dreamin-east-village",
+   "camis": null,
+   "name": "Sunday Dreamin",
+   "chain": null,
+   "address": null,
+   "borough": "Manhattan",
+   "neighborhood": "East Village",
+   "neighborhood_slug": "east-village",
+   "zipcode": null,
+   "lat": null,
+   "lng": null,
+   "cuisine": null,
+   "website": null,
+   "menu_url": "https://www.beyondmenu.com/61749/new-york/sunday-dreamin--new-york-10003.aspx",
+   "price_source": "online_ordering",
+   "status": "priced",
+   "status_detail": "Prices from an online-ordering page (beyondmenu.com).",
+   "scraped_at": "2026-09-24T21:50:52Z",
+   "index_price": 18.4,
+   "burgers": [
+    {
+     "id": "sunday-dreamin-east-village--sunday-burger",
+     "name": "Sunday Burger",
+     "price": 18.4,
+     "description": "classic cheese burger w/ house sauce",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "sunday-dreamin-east-village--fuego-burger",
+     "name": "Fuego Burger",
+     "price": 19.55,
+     "description": "chorizo, jalapeno, russian mayo & oaxaca cheese",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "sunday-dreamin-east-village--salmon-burger",
+     "name": "Salmon Burger",
+     "price": 21.85,
+     "description": "avocado, onion, tomato & tartar sauce",
+     "protein": "fish",
      "is_index_item": false
     }
    ]
@@ -23275,6 +27471,37 @@
      "description": "lettuce, tomato, pickled beetroot, caramelized onions, cheddar cheese, green salad",
      "protein": "veggie",
      "is_index_item": false
+    }
+   ]
+  },
+  {
+   "id": "the-grill-turtle-bay",
+   "camis": "50059995",
+   "name": "The Grill",
+   "chain": null,
+   "address": "99 East 52 Street",
+   "borough": "Manhattan",
+   "neighborhood": "Turtle Bay-East Midtown",
+   "neighborhood_slug": "turtle-bay-east-midtown",
+   "zipcode": "10022",
+   "lat": 40.758183,
+   "lng": -73.972469,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://thegrillnewyork.com/?menu=lunch",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (thegrillnewyork.com). The index price is from the lunch menu (no dinner or all-day burger price listed).",
+   "scraped_at": "2026-09-24T21:51:24Z",
+   "index_price": 36.0,
+   "burgers": [
+    {
+     "id": "the-grill-turtle-bay--cheeseburger",
+     "name": "Cheeseburger",
+     "price": 36.0,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": true
     }
    ]
   },
@@ -24802,6 +29029,45 @@
    "burgers": []
   },
   {
+   "id": "the-smith-east-village",
+   "camis": "41298603",
+   "name": "The Smith",
+   "chain": null,
+   "address": "55 3 Avenue",
+   "borough": "Manhattan",
+   "neighborhood": "East Village",
+   "neighborhood_slug": "east-village",
+   "zipcode": "10003",
+   "lat": 40.730988,
+   "lng": -73.98884,
+   "cuisine": "American",
+   "website": "https://thesmithrestaurant.com/location/east-village/",
+   "menu_url": "https://thesmithrestaurant.com/location/east-village/",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (thesmithrestaurant.com).",
+   "scraped_at": "2026-09-24T21:50:59Z",
+   "index_price": 26.0,
+   "burgers": [
+    {
+     "id": "the-smith-east-village--burger-royale",
+     "name": "Burger royale",
+     "price": 26.0,
+     "description": "american cheese, the works, 50/50 sauce, brioche bun, fries",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "the-smith-east-village--the-smith-burger",
+     "name": "The Smith Burger",
+     "price": 28.0,
+     "description": "cheddar, bacon marmalade, crispy onions, dill pickles, TSB sauce, brioche bun, fries",
+     "protein": "beef",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "the-snail-williamsburg",
    "camis": "50160010",
    "name": "The Snail",
@@ -24859,6 +29125,37 @@
      "description": "English Muffin, Bacon Jam, Fried Egg, Cheddar Cheese, Chipotle Mayo",
      "protein": "beef",
      "is_index_item": false
+    }
+   ]
+  },
+  {
+   "id": "the-standard-grill-west-village",
+   "camis": "50071497",
+   "name": "The Standard Grill",
+   "chain": null,
+   "address": "848 Washington Street",
+   "borough": "Manhattan",
+   "neighborhood": "West Village",
+   "neighborhood_slug": "west-village",
+   "zipcode": "10014",
+   "lat": 40.740617,
+   "lng": -74.007719,
+   "cuisine": "American",
+   "website": "https://www.thestandardgrill.com/the-standard-grill-new-york",
+   "menu_url": "https://static1.squarespace.com/static/659c2f8440583b22db96bc2e/t/6a70d7c5bb76f4163a4af38c/1785780174290/Dinner_7.31.26-Marketing.pdf",
+   "price_source": "official_pdf",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's menu PDF (static1.squarespace.com).",
+   "scraped_at": "2026-09-24T21:50:25Z",
+   "index_price": 29.0,
+   "burgers": [
+    {
+     "id": "the-standard-grill-west-village--the-standard-burger",
+     "name": "The Standard Burger",
+     "price": 29.0,
+     "description": "american cheese, LTO, secret sauce, sesame bun, french fries",
+     "protein": "beef",
+     "is_index_item": true
     }
    ]
   },
@@ -25218,6 +29515,93 @@
    ]
   },
   {
+   "id": "tommys-tavern-and-tap-todt-hill",
+   "camis": "50079799",
+   "name": "Tommy's Tavern and Tap",
+   "chain": null,
+   "address": "2655 Richmond Avenue",
+   "borough": "Staten Island",
+   "neighborhood": "Todt Hill-Emerson Hill-Heartland Village-Lighthouse Hill",
+   "neighborhood_slug": "todt-hill-emerson-hill-heartland-village-lighthouse-hill",
+   "zipcode": "10314",
+   "lat": 40.582297,
+   "lng": -74.169053,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://www.tommystavernandtap.com/_files/ugd/29ea2c_ff0db8c5af034e6196c8ffc34465cb83.pdf",
+   "price_source": "official_pdf",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's menu PDF (tommystavernandtap.com).",
+   "scraped_at": "2026-09-24T21:53:28Z",
+   "index_price": 18.0,
+   "burgers": [
+    {
+     "id": "tommys-tavern-and-tap-todt-hill--l-a-sliders",
+     "name": "L.A. Sliders",
+     "price": 18.0,
+     "description": "mustard grilled burgers cooked to medium, melted cheddar, lettuce, pickles & burger sauce on mini brioche buns with kettle chips",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "tommys-tavern-and-tap-todt-hill--triple-ts-cheeseburger",
+     "name": "Triple T’s Cheeseburger",
+     "price": 19.0,
+     "description": "freshly ground 10oz burger topped with melted cheddar, tomato, red onions & lettuce on a toasted brioche bun, served with fries",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "tommys-tavern-and-tap-todt-hill--hickory-bacon-bbq-burger",
+     "name": "Hickory Bacon BBQ Burger",
+     "price": 20.0,
+     "description": "freshly ground 10oz burger topped with bacon, melted cheddar, red onions & hickory bbq sauce on a toasted brioche bun, served with fries",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "tommys-tavern-and-tap-todt-hill--cali-burger",
+     "name": "Cali Burger",
+     "price": 20.0,
+     "description": "freshly ground 10oz burger topped with melted pepper jack, avocado, red onions & chipotle mayo on a toasted brioche bun, served with fries",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "tommys-tavern-and-tap-todt-hill--bacon-swiss-burger",
+     "name": "Bacon Swiss Burger",
+     "price": 20.0,
+     "description": "freshly ground 10oz burger topped with neuske's pepper bacon, melted swiss, caramelized onions & bacon aioli on a toasted english muffin, served with fries",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "tommys-tavern-and-tap-todt-hill--impossible-meatless-burger",
+     "name": "Impossible Meatless Burger",
+     "price": 19.0,
+     "description": "topped with melted pepper jack, red onions, pickles, lettuce, tomato & a mustard aioli sauce on a toasted brioche bun, served with a house salad",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "tommys-tavern-and-tap-todt-hill--veggie-crunch-burger",
+     "name": "Veggie Crunch Burger",
+     "price": 16.0,
+     "description": "double veggie patties topped with melted cheddar, sliced avocado, mayonnaise, pickles, tomato, red onions and lettuce on a toasted brioche bun, served with fries",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "tommys-tavern-and-tap-todt-hill--southwest-turkey-burger",
+     "name": "Southwest Turkey Burger",
+     "price": 19.0,
+     "description": "freshly ground turkey topped with swiss cheese, avocado, tomato, red onions, lettuce & chipotle ranch on a toasted brioche bun, served with fries",
+     "protein": "turkey",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
    "id": "toms-restaurant-morningside-heights",
    "camis": "40389356",
    "name": "Tom's Restaurant",
@@ -25468,6 +29852,37 @@
    "burgers": []
   },
   {
+   "id": "townhouse-diner-murray-hill",
+   "camis": "40645039",
+   "name": "Townhouse Diner",
+   "chain": null,
+   "address": "696 2 Avenue",
+   "borough": "Manhattan",
+   "neighborhood": "Murray Hill-Kips Bay",
+   "neighborhood_slug": "murray-hill-kips-bay",
+   "zipcode": "10016",
+   "lat": 40.747084,
+   "lng": -73.974181,
+   "cuisine": "American",
+   "website": "https://townhousediner.netwaiter.com/",
+   "menu_url": "https://www.seamless.com/menu/townhouse-diner-696-2nd-ave-new-york/65472",
+   "price_source": "delivery_app",
+   "status": "priced",
+   "status_detail": "Prices from a delivery app (seamless.com). Delivery-app prices usually run above in-store prices.",
+   "scraped_at": "2026-09-24T21:52:02Z",
+   "index_price": 18.0,
+   "burgers": [
+    {
+     "id": "townhouse-diner-murray-hill--deluxe-cheeseburger",
+     "name": "Deluxe Cheeseburger",
+     "price": 18.0,
+     "description": "Grilled or fried patty with cheese on a bun. Lettuce, tomato and french fries.",
+     "protein": "beef",
+     "is_index_item": true
+    }
+   ]
+  },
+  {
    "id": "trackside-bar-and-grill-new-dorp",
    "camis": "50099750",
    "name": "Trackside Bar & Grill",
@@ -25658,6 +30073,101 @@
      "name": "The Mozzarella Parm Burger",
      "price": 22.0,
      "description": "Black Angus beef, basil tomato sauce, tomato jam, mozzarella, Parmesan, fried basil, brioche bun",
+     "protein": "beef",
+     "is_index_item": false
+    }
+   ]
+  },
+  {
+   "id": "tryon-public-house-washington-heights-north",
+   "camis": "50018261",
+   "name": "Tryon Public House",
+   "chain": null,
+   "address": "4740 Broadway",
+   "borough": "Manhattan",
+   "neighborhood": "Washington Heights North",
+   "neighborhood_slug": "washington-heights-north",
+   "zipcode": "10040",
+   "lat": 40.865094,
+   "lng": -73.928049,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://tryonpublichouse.com/food-menu",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (tryonpublichouse.com).",
+   "scraped_at": "2026-09-24T21:51:19Z",
+   "index_price": 18.0,
+   "burgers": [
+    {
+     "id": "tryon-public-house-washington-heights-north--o-g-classic-burger",
+     "name": "O.G. Classic Burger",
+     "price": 18.0,
+     "description": "Beef patty, lettuce, tomato, seeded bun",
+     "protein": "beef",
+     "is_index_item": true
+    },
+    {
+     "id": "tryon-public-house-washington-heights-north--impossible-burger",
+     "name": "Impossible Burger",
+     "price": 19.0,
+     "description": "100% Plant based protein patty, lettuce, tomato, seeded bun",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "tryon-public-house-washington-heights-north--smokey-burger",
+     "name": "Smokey Burger",
+     "price": 22.0,
+     "description": "Beef patty, smoked gouda, caramelized onions, bacon, chipotle mayo, brioche bun",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "tryon-public-house-washington-heights-north--tryon-red-eye-burger",
+     "name": "Tryon Red Eye Burger",
+     "price": 20.0,
+     "description": "Beef patty, applewood bacon, American cheese, sunny side up egg, on an English muffin",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "tryon-public-house-washington-heights-north--truffle-burger",
+     "name": "Truffle Burger",
+     "price": 22.0,
+     "description": "Beef patty, white truffle mayo, gruyère cheese, caramelized onion, brioche bun",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "tryon-public-house-washington-heights-north--sweet-potato-burger",
+     "name": "Sweet Potato Burger",
+     "price": 19.0,
+     "description": "Housemade sweet potato, black bean & quinoa burger, feta spread, lettuce, tomato, sriracha aioli",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "tryon-public-house-washington-heights-north--miso-bacon-burger",
+     "name": "Miso Bacon Burger",
+     "price": 21.0,
+     "description": "beef patty, american cheese, applewood bacon, pickled red onion, burnt butter miso mayo, seeded brioche",
+     "protein": "beef",
+     "is_index_item": false
+    },
+    {
+     "id": "tryon-public-house-washington-heights-north--an-impossible-burger-v",
+     "name": "An Impossible Burger! (V)",
+     "price": 18.0,
+     "description": "100% plant based protein patty, lettuce, tomato, seeded bun",
+     "protein": "veggie",
+     "is_index_item": false
+    },
+    {
+     "id": "tryon-public-house-washington-heights-north--tryon-brunch-burger",
+     "name": "Tryon Brunch Burger",
+     "price": 20.0,
+     "description": "beef patty, applewood bacon, pepper jack, sunny side egg, jalapeno hollandaise, english muffin",
      "protein": "beef",
      "is_index_item": false
     }
@@ -26010,6 +30520,37 @@
    ]
   },
   {
+   "id": "uncle-peters-bar-and-grill-jackson-heights",
+   "camis": "40824395",
+   "name": "Uncle Peters Bar & Grill",
+   "chain": null,
+   "address": "83-15 Northern Boulevard",
+   "borough": "Queens",
+   "neighborhood": "Jackson Heights",
+   "neighborhood_slug": "jackson-heights",
+   "zipcode": "11372",
+   "lat": 40.755683,
+   "lng": -73.884208,
+   "cuisine": "Continental",
+   "website": null,
+   "menu_url": "https://www.unclepetersrestaurant.com/main-menu",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (unclepetersrestaurant.com).",
+   "scraped_at": "2026-09-24T21:53:00Z",
+   "index_price": 24.0,
+   "burgers": [
+    {
+     "id": "uncle-peters-bar-and-grill-jackson-heights--uncle-peters-burger",
+     "name": "Uncle Peter's Burger",
+     "price": 24.0,
+     "description": "8 oz grilled angus beef, bacon jam, house-made pickles, lettuce, tomato, red onion, mozzarella, secret sauce, brioche bun",
+     "protein": "beef",
+     "is_index_item": true
+    }
+   ]
+  },
+  {
    "id": "underdog-battery-park-city",
    "camis": null,
    "name": "Underdog",
@@ -26337,6 +30878,37 @@
    ]
   },
   {
+   "id": "walkers-soho",
+   "camis": "40388218",
+   "name": "Walker's",
+   "chain": null,
+   "address": "16 North Moore Street",
+   "borough": "Manhattan",
+   "neighborhood": "SoHo-TriBeCa-Civic Center-Little Italy",
+   "neighborhood_slug": "soho-tribeca-civic-center-little-italy",
+   "zipcode": "10013",
+   "lat": 40.71979,
+   "lng": -74.007074,
+   "cuisine": "American",
+   "website": "http://walkersbarnyc.com/",
+   "menu_url": "https://www.walkersbarnyc.com/dinner",
+   "price_source": "official_site",
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (walkersbarnyc.com).",
+   "scraped_at": "2026-09-24T21:50:29Z",
+   "index_price": 22.0,
+   "burgers": [
+    {
+     "id": "walkers-soho--burger",
+     "name": "Burger",
+     "price": 22.0,
+     "description": "onion, lettuce, tomato, pickle w/ fries",
+     "protein": "beef",
+     "is_index_item": true
+    }
+   ]
+  },
+  {
    "id": "walters-fort-greene",
    "camis": "41627123",
    "name": "Walter's",
@@ -26362,6 +30934,37 @@
      "name": "Walter's Burger",
      "price": 24.0,
      "description": "pickled onion, lettuce, tomato on sesame bun",
+     "protein": "beef",
+     "is_index_item": true
+    }
+   ]
+  },
+  {
+   "id": "waverly-diner-west-village",
+   "camis": "40977209",
+   "name": "Waverly Diner",
+   "chain": null,
+   "address": "385 6 Avenue",
+   "borough": "Manhattan",
+   "neighborhood": "West Village",
+   "neighborhood_slug": "west-village",
+   "zipcode": "10014",
+   "lat": 40.733028,
+   "lng": -73.999996,
+   "cuisine": "American",
+   "website": null,
+   "menu_url": "https://www.seamless.com/menu/waverly-restaurant-385-6th-ave-new-york/64940",
+   "price_source": "delivery_app",
+   "status": "priced",
+   "status_detail": "Prices from a delivery app (seamless.com). Delivery-app prices usually run above in-store prices.",
+   "scraped_at": "2026-09-24T21:50:37Z",
+   "index_price": 20.45,
+   "burgers": [
+    {
+     "id": "waverly-diner-west-village--cheeseburger-deluxe",
+     "name": "Cheeseburger Deluxe",
+     "price": 20.45,
+     "description": "American swiss, cheddar, muenster, mozzarella and provolone.",
      "protein": "beef",
      "is_index_item": true
     }

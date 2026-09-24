@@ -79,11 +79,11 @@ export function BurgerTable({
   return (
     <div className="table-shell">
     <table className="data-table">
-      <caption className="sr-only">Burgers with their restaurant, price source and price</caption>
+      <caption className="sr-only">Restaurants with their burgers, price source and price</caption>
       <thead>
         <tr>
-          <SortHeader label="Burger" keyAsc="name" sort={sort} onSort={onSort} />
-          <SortHeader label="Restaurant" keyAsc="restaurant" sort={sort} onSort={onSort} className="hidden sm:table-cell" />
+          <SortHeader label="Restaurant" keyAsc="restaurant" sort={sort} onSort={onSort} />
+          <SortHeader label="Burger" keyAsc="name" sort={sort} onSort={onSort} className="hidden sm:table-cell" />
           <SortHeader label="Price" keyAsc="price" keyDesc="-price" sort={sort} onSort={onSort} className="num" />
           <th scope="col" className="num hidden sm:table-cell">
             vs NYC
@@ -98,16 +98,20 @@ export function BurgerTable({
           return (
             <tr key={b.id}>
               <td className="min-w-0">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <Link href={href} className="ui-link break-anywhere font-semibold">
+                <Link href={`/restaurants/${r.id}`} className="ui-link break-anywhere font-semibold">
+                  <Highlight text={r.name} tokens={tokens} />
+                </Link>
+                {/* Below sm the burger shares this cell, under its restaurant. */}
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 sm:hidden">
+                  <Link href={href} className="ui-link break-anywhere font-normal">
                     <Highlight text={b.name} tokens={tokens} />
                   </Link>
                   {b.idx ? <IndexTag /> : null}
                 </div>
-                <div className="t-ui-s muted break-anywhere sm:hidden">
-                  <Highlight text={r.name} tokens={tokens} /> · <Highlight text={where} tokens={tokens} />
+                <div className="t-ui-s muted break-anywhere">
+                  <Highlight text={where} tokens={tokens} />
+                  {r.nb ? ` · ${r.borough}` : ""}
                 </div>
-                <div className="t-ui-s muted hidden sm:block">{PROTEIN_LABEL[b.protein]}</div>
                 {r.source ? (
                   <div className="mt-1">
                     <SourceBadge source={r.source} />
@@ -115,13 +119,13 @@ export function BurgerTable({
                 ) : null}
               </td>
               <td className="hidden min-w-0 sm:table-cell">
-                <Link href={`/restaurants/${r.id}`} className="ui-link break-anywhere">
-                  <Highlight text={r.name} tokens={tokens} />
-                </Link>
-                <div className="t-ui-s muted break-anywhere">
-                  <Highlight text={where} tokens={tokens} />
-                  {r.nb ? ` · ${r.borough}` : ""}
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <Link href={href} className="ui-link break-anywhere font-normal">
+                    <Highlight text={b.name} tokens={tokens} />
+                  </Link>
+                  {b.idx ? <IndexTag /> : null}
                 </div>
+                <div className="t-ui-s muted">{PROTEIN_LABEL[b.protein]}</div>
               </td>
               <td className="num">
                 <span className="sm:hidden">

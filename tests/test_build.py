@@ -284,3 +284,54 @@ def test_sources_say_what_dohmh_supplies_for_the_scope():
                        "its records.")
     assert not WEB_DOHMH_AS_LIST.search(wide[1])
     assert build.sources({}) == listed  # no scope saved: the default, the list only
+
+
+def test_items_that_are_not_burgers_are_not_published_and_slider_plates_stay_listed():
+    ts = build_targets([rec("Smacking Burger", camis="1"), rec("Torst", camis="2")])
+    smack = [b("The Classic", 7.49), b("The Pup Patty (Patty for Puppy)", 4.0), b("The Frank", 9.99)]
+    torst = [b("Burger Sliders", 9.5), b("Smash Burger", 18.9)]
+    d = dataset(ts, {ts[0].key: result(burgers=smack), ts[1].key: result(burgers=torst)})
+    by = {r["name"]: r for r in d["restaurants"]}
+    assert [x["name"] for x in by["Smacking Burger"]["burgers"]] == ["The Classic"]
+    assert by["Smacking Burger"]["index_price"] == 7.49
+    # the slider plate is listed at its price, but the Smash Burger is the index item
+    assert [(x["name"], x["price"], x["is_index_item"]) for x in by["Torst"]["burgers"]] == [
+        ("Burger Sliders", 9.5, False), ("Smash Burger", 18.9, True)]
+    assert d["stats"]["cheapest_burger_id"].endswith("--the-classic")  # not the $4 dog patty
+    build.validate(d)
+
+
+WIX = "This is an item on your menu. Give your item a brief description"
+
+
+def test_template_placeholder_page_is_not_a_menu():
+    ts = build_targets([rec("The Hairy Lemon", camis="1"), rec("Half Template", camis="2")])
+    template = [b("Beef Burger", 9) | {"description": WIX}, b("Vegetarian Burger", 9, "veggie") | {"description": WIX}]
+    half = [b("Beef Burger", 9) | {"description": WIX}, b("Lemon Burger", 17)]
+    d = dataset(ts, {ts[0].key: result(burgers=template, menu_url="https://www.hairylemonnyc.com/menu?menu=menu"),
+                     ts[1].key: result(burgers=half)})
+    by = {r["name"]: r for r in d["restaurants"]}
+    r = by["The Hairy Lemon"]
+    assert (r["status"], r["burgers"], r["index_price"], r["menu_url"]) == ("no_menu_found", [], None, None)
+    assert "hairylemonnyc.com" in r["status_detail"] and "template" in r["status_detail"]
+    r = by["Half Template"]
+    assert [x["name"] for x in r["burgers"]] == ["Lemon Burger"] and r["index_price"] == 17
+    assert r["status_detail"].endswith("1 website-template placeholder item left out.")
+    build.validate(d)
+    # only placeholders priced: the page keeps its status only if a real burger is still priced
+    res = build.drop_template_placeholders(result(burgers=[b("Beef Burger", 9) | {"description": WIX},
+                                                           b("Lemon Burger", None)]))
+    assert res["status"] == "no_prices" and [x["name"] for x in res["burgers"]] == ["Lemon Burger"]
+    untouched = result(burgers=[b("Lemon Burger", 17)])
+    assert build.drop_template_placeholders(untouched) is untouched
+
+
+def test_template_rule_runs_after_corrections_that_name_the_placeholder_rows():
+    ts = build_targets([rec("The Hairy Lemon", camis="1")])
+    template = [b("Beef Burger", 9) | {"description": WIX}, b("Vegetarian Burger", 9, "veggie") | {"description": WIX}]
+    fix = {"target": ts[0].key, "checked_at": "2026-09-24", "source_url": "https://www.hairylemonnyc.com/menu-1",
+           "reason": "template page", "drop": ["Beef Burger", "Vegetarian Burger"],
+           "add": [{"name": "Classic Burger", "price": 17.53, "protein": "beef"}]}
+    d = build.assemble(ts, {ts[0].key: result(burgers=template)}, corrections=[fix], generated_at="2026-09-23T12:00:00Z")
+    r = d["restaurants"][0]
+    assert r["status"] == "priced" and r["index_price"] == 17.53 and "template-placeholder" not in r["status_detail"]

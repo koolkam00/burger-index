@@ -16,6 +16,7 @@ from pathlib import Path
 from . import config, extract
 from . import corrections as corrections_mod
 from .chains import Target, is_airport
+from .discover import host_of
 from .models import AreaSummary, Burger, BurgerIndex, Restaurant, Stats
 from .names import slugify
 from .sources import NTA_DISPLAY_OVERRIDES
@@ -117,6 +118,36 @@ def make_burgers(restaurant_id: str, burgers: list[dict], priced: bool) -> tuple
             "is_index_item": i == idx,
         })
     return out, (money(burgers[idx]["price"]) if idx is not None else None)
+
+
+def published_burgers(burgers: list[dict]) -> list[dict]:
+    """The rows a restaurant page lists: happy-hour rows are left out (they never set the index, and
+    the contract has no field to label them, so a $12 happy-hour burger is not published next to the
+    restaurant's $18 regular one), and so are items that are not burgers (extract.is_not_a_burger:
+    a hot dog, a pet patty), which would otherwise show up as the city's cheapest burger."""
+    return [b for b in burgers if b.get("menu_period") != "happy_hour" and not extract.is_not_a_burger(b)]
+
+
+def drop_template_placeholders(res: dict) -> dict:
+    """Leave out site-builder template items (extract.is_template_placeholder: 'This is an item on
+    your menu', every item $9). A page of nothing else is not a menu: no_menu_found, no menu_url.
+    Applied after corrections, so a hand correction that already dropped them sees them first."""
+    burgers = res.get("burgers") or []
+    keep = [b for b in burgers if not extract.is_template_placeholder(b)]
+    if len(keep) == len(burgers):
+        return res
+    n = len(burgers) - len(keep)
+    host = host_of(res["menu_url"]) if res.get("menu_url") else "unknown"
+    if not keep:
+        return {**res, "status": "no_menu_found", "burgers": [], "menu_url": None, "price_source": None,
+                "scraped_at": None,
+                "status_detail": f"The page found ({host}) is an unedited website template: its {n} items are "
+                                 "placeholders ('This is an item on your menu'), so it is not a menu."}
+    kind = extract.classify_menu({"burgers": keep, "is_menu": True})
+    status = res["status"] if res["status"] != "priced" or kind == "priced" else corrections_mod.STATUS_OF_KIND[kind]
+    note = f"{n} website-template placeholder item{'s' if n != 1 else ''} left out."
+    return {**res, "status": status, "burgers": keep,
+            "status_detail": " ".join(x for x in (res.get("status_detail"), note) if x)}
 
 
 def menu_index_prices(restaurants: Iterable[Restaurant]) -> list[float]:
@@ -283,7 +314,7 @@ def assemble(
     results; the CLI passes pipeline/data/corrections.json, tests pass their own.
     report: the match report from data/restaurants.json (national_chains_excluded names the chains
     the coverage note gives as examples)."""
-    results = corrections_mod.apply(results, corrections or [])
+    results = {k: drop_template_placeholders(r) for k, r in corrections_mod.apply(results, corrections or []).items()}
     # Ids are assigned over every restaurant in scope, scraped or not, so an id does not change
     # when a namesake in the same neighborhood gets scraped later (/restaurants/<id> permalinks).
     everyone = [(m, t.name if t.chain else m["name"], t) for t in targets for m in t.members]
@@ -303,10 +334,7 @@ def assemble(
         elif not t.chain or is_source:
             menu_sources.add(rid)
         status = res["status"]
-        # Happy-hour prices never set the index, and the contract has no field to label them, so a
-        # $12 happy-hour burger is not published next to the restaurant's $18 regular one.
-        regular = [b for b in res["burgers"] if b.get("menu_period") != "happy_hour"]
-        burgers, index_price = make_burgers(rid, regular, priced=status == "priced")
+        burgers, index_price = make_burgers(rid, published_burgers(res["burgers"]), priced=status == "priced")
         if status == "priced" and index_price is None:  # defensive: priced requires a priced beef burger
             status = "no_prices"
         nb = m.get("neighborhood")

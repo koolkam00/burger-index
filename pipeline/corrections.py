@@ -32,8 +32,8 @@ from . import config, extract
 CORRECTIONS_PATH = config.PACKAGE_DIR / "data" / "corrections.json"
 
 # extract.classify_menu kind -> restaurant status (process.py maps 'nonbeef' the same way)
-_STATUS = {"priced": "priced", "nonbeef": "no_burgers", "no_prices": "no_prices", "no_burgers": "no_burgers",
-           "not_menu": "no_burgers"}
+STATUS_OF_KIND = {"priced": "priced", "nonbeef": "no_burgers", "no_prices": "no_prices", "no_burgers": "no_burgers",
+                  "not_menu": "no_burgers"}
 
 
 class CorrectionError(RuntimeError):
@@ -76,7 +76,7 @@ def apply_one(res: dict, c: dict) -> dict:
         for b in burgers:
             b["price"] = None
     out["burgers"] = burgers
-    out["status"] = _STATUS[extract.classify_menu({"burgers": burgers, "is_menu": True})]
+    out["status"] = STATUS_OF_KIND[extract.classify_menu({"burgers": burgers, "is_menu": True})]
     out["menu_url"] = c["source_url"]
     if c.get("price_source"):
         out["price_source"] = c["price_source"]

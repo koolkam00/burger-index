@@ -7,6 +7,19 @@ is not on the dinner menu; happy-hour prices last; kids'-menu items are dropped.
 The index item follows the same order across burgers: the cheapest beef burger with a
 dinner / all-day price; only when no beef burger has one, the cheapest from the next menu
 period; never a happy-hour price.
+
+Index eligibility rules (index_item; post-processing only, so the scrape cache replays unchanged):
+  - is_slider_plate: a plate of small burgers ('Cheeseburger Sliders (3)', 'Mini Burgers', '2 Mini
+    Slammers') is never the index item while a standard-size beef burger is priced on the page. It
+    stays in the burger list at its own price (it is a real item people buy); on a page with only
+    slider plates it can still be the index item.
+  - is_not_a_burger: a hot dog / sausage ('The Frank') or a pet item ('The Pup Patty (Patty for
+    Puppy)') is never the index item and does not make a page 'priced'; build leaves it out of the
+    published burger list.
+  - is_template_placeholder: an unedited site-builder template item ('This is an item on your menu')
+    is not a menu item; build leaves it out (build.drop_template_placeholders).
+Rows are never removed in normalize_menu: pipeline/data/corrections.json names some of them and
+corrections are strict, and the scrape evaluation (process.py) counts them.
 """
 
 from __future__ import annotations
@@ -167,9 +180,54 @@ def normalize_menu(data: Any) -> dict:
     }
 
 
+# A plate of small burgers. 'slider' followed by 'burger' names one burger ('Slider Burger'); a single
+# 'Mini Burger' or 'Bistro Mini' (Corner Bistro's 4 oz burger) is one small burger, and so are 'Little',
+# 'Junior' and 'Jr.' burgers ('Treadwell Junior Burger', 'Little Burger (4 oz)'): none of them match.
+SLIDER_PLATE_RE = re.compile(
+    r"\bsliders?\b(?!.*burger)"  # 'Cheeseburger Sliders (3)', 'Beef Slider', 'Trio of Sliders'
+    r"|\bminis\b"  # 'Burger Minis'
+    r"|\bmini\b.*\b(?:burgers|cheeseburgers|hamburgers|slammers)\b"  # 'Mini Rodeo Burgers', '2 Mini Slammers'
+    r"|^\d+ mini\b"  # '3 Mini Burger'
+    r"|\bbaby (?:burgers|cheeseburgers)\b"  # 'Baby Burgers (3)'
+    r"|\btrio\b(?!.*burger\b)"  # 'Burger Trio' ('Trio Burger' is one burger)
+)
+# Not a burger at all: hot dogs and sausages (only when the name has no 'burger': 'Sausage Burger'
+# stays), and food for dogs. Possessives are ignored ("Frank's Special" is a burger named after Frank).
+HOT_DOG_RE = re.compile(
+    r"\b(?:franks?|frankfurters?|(?:hot|corn|chili) ?dogs?|wieners?|bratwursts?|kielbasas?|sausages?)\b")
+PET_FOOD_RE = re.compile(r"\b(?:pup|pups|puppy|puppies|doggy|doggie|doggies|pooch)\b|\bfor (?:your )?(?:dogs?|pets?)\b")
+# Text of an unedited site-builder menu template (Wix: every item $9 with this description).
+TEMPLATE_PLACEHOLDER_RE = re.compile(r"this is an item on your menu|give your item a brief description", re.I)
+
+
+def is_slider_plate(item: dict) -> bool:
+    """True for a plate of sliders / mini burgers ('Burger Sliders', 'Mini Burgers (3)', '2 Mini
+    Slammers', 'Baby Burgers (3)', a single $3.25 'Beef Slider'). index_item passes over it while the
+    page prices a standard-size beef burger; the row itself stays listed at its price."""
+    return bool(SLIDER_PLATE_RE.search(norm_name(item.get("name"))))
+
+
+def is_not_a_burger(item: dict) -> bool:
+    """True for an item that is not a burger for people: a hot dog or sausage ('The Frank', a 1/4 lb
+    beef frank) unless its name says burger, or a pet item ('The Pup Patty (Patty for Puppy)'; hush
+    puppies are not). Never the index item, ignored by classify_menu, left out of the published list."""
+    raw = re.sub(r"\b\w+['’]s\b", " ", str(item.get("name") or ""))  # "Frank's Special" -> " Special"
+    n = norm_name(raw)
+    if "burger" not in n and HOT_DOG_RE.search(n):
+        return True
+    return bool(PET_FOOD_RE.search(re.sub(r"\bhush pupp\w*", " ", n)))
+
+
+def is_template_placeholder(item: dict) -> bool:
+    """True for a site-builder template item ('This is an item on your menu. Give your item a brief
+    description'): filler with a made-up price, not a menu item (build.drop_template_placeholders)."""
+    return bool(TEMPLATE_PLACEHOLDER_RE.search(item.get("description") or ""))
+
+
 def classify_menu(menu: dict) -> str:
-    """priced | nonbeef | no_prices | no_burgers | not_menu."""
-    burgers = menu["burgers"]
+    """priced | nonbeef | no_prices | no_burgers | not_menu. Items that are not burgers
+    (is_not_a_burger) are ignored."""
+    burgers = [b for b in menu["burgers"] if not is_not_a_burger(b)]
     if index_item(burgers) is not None:
         return "priced"
     if any(b["price"] is not None and b["protein"] != "beef" for b in burgers):
@@ -185,16 +243,16 @@ INDEX_PERIOD_TIER = {None: 0, "all_day": 0, "dinner": 0, "late_night": 1, "lunch
 
 def index_item(burgers: list[dict]) -> int | None:
     """Position of the cheapest priced beef burger from the best menu period that has one
-    (first one on ties), or None."""
-    best: int | None = None
-    best_key: tuple | None = None
+    (first one on ties), or None. Items that are not burgers (is_not_a_burger) never count; slider
+    plates (is_slider_plate) count only when no other priced beef burger is eligible."""
+    eligible: list[tuple[tuple, int, dict]] = []
     for i, b in enumerate(burgers):
-        if b.get("protein") != "beef" or b.get("price") is None:
+        if b.get("protein") != "beef" or b.get("price") is None or is_not_a_burger(b):
             continue
         tier = INDEX_PERIOD_TIER.get(b.get("menu_period"))
         if tier is None:  # happy_hour (and anything unknown)
             continue
-        key = (tier, b["price"])
-        if best_key is None or key < best_key:
-            best, best_key = i, key
-    return best
+        eligible.append(((tier, b["price"]), i, b))
+    standard = [e for e in eligible if not is_slider_plate(e[2])]
+    pool = standard or eligible
+    return min(pool, key=lambda e: e[:2])[1] if pool else None

@@ -801,3 +801,14 @@ def test_committed_menu_url_overrides_name_restaurants_on_the_list():
         pytest.skip("no data/restaurants.json")
     keys = {r["key"] for r in json.loads(config.RESTAURANTS_PATH.read_text())["restaurants"]}
     assert set(sources.load_menu_url_overrides()) <= keys
+
+
+def test_blank_dohmh_name_at_a_named_address_does_not_crash(nta_map):
+    # DOHMH has a record with an empty DBA at 585 E 189th St; a list row naming that address must still match.
+    rows = [dohmh("300", "", building="585", street="EAST 189 STREET", boro="Bronx", nta="BX06", zipcode="10458"),
+            dohmh("301", "HOWL AT THE MOON BAR & GRILL", building="585", street="EAST 189 STREET", boro="Bronx",
+                  nta="BX06", zipcode="10458", cuisine="American")]
+    row = csv_row("Howl at the Moon Bar & Grill", neighborhood="Belmont", borough="Bronx")
+    row["notes"] = "DOHMH American; 585 East 189 Street, 10458"
+    out, _ = sources.build_restaurants([row], rows, nta_map, cuisines=[], min_date="2023-01-01")
+    assert [r["camis"] for r in out] == ["301"]

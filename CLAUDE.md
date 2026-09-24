@@ -85,6 +85,12 @@ burger has `is_index_item: true` (ties → first on the menu). Restaurant ids ar
 scope (scraped or not), so they stay stable as more targets are scraped. `cheapest_burger_id`/`priciest_burger_id`
 are picked among distinct menus (a chain's source location, not its copies).
 
+Post-processing index rules (`extract.py`/`build.py`; free on the next `build`, no re-scrape; `normalize_menu` never
+removes these rows, because `corrections.json` names them and `process` counts them):
+- **Slider plates** (`extract.is_slider_plate`: `Cheeseburger Sliders (3)`, a single `Beef Slider`, `Mini Burgers`, `2 Mini Slammers`, `Baby Burgers (3)`, `Trio of Sliders`) are never the index item while a standard beef burger is eligible. They stay listed at their price, and a page with only slider plates keeps its slider price. These do not match: `Slider Burger`, `Bistro Mini`, a single `Mini Burger`, and `Little`/`Junior`/`Jr.` burgers.
+- **Not burgers** (`extract.is_not_a_burger`: a hot dog or sausage whose name lacks `burger`, such as `The Frank`, and pet items such as `The Pup Patty (Patty for Puppy)`) never set the index and never make a page `priced`. `build.published_burgers` leaves them out of the list.
+- **Site-builder template placeholders** (`extract.is_template_placeholder`: "This is an item on your menu…", every item $9) are dropped by `build.drop_template_placeholders` after corrections. A page with nothing else becomes `no_menu_found`.
+
 **Chains count once (product decision, 2026-09-23).** The Burger Index (`index_median`/mean/p10/p90), the
 `all_burgers_median` and every borough/neighborhood median/min/max are computed over **distinct menus**
 (`build.menu_index_prices`): each independent restaurant once, each chain once citywide and at most once per area

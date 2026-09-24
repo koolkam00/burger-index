@@ -831,7 +831,8 @@ class _Pool:
         return {r: self.score(r, variants, words) for r in {self.owner[i] for i in idx}}
 
     def score(self, r: int, variants: list[str], words: _Words) -> float:
-        return max(name_score(v, n, words) for v in variants for n in self.record_names[r])
+        # A DOHMH record can have a blank DBA (one at 585 E 189th St does): nothing to compare, no match.
+        return max((name_score(v, n, words) for v in variants for n in self.record_names[r]), default=0.0)
 
     def at(self, key: list[str]) -> list[int]:
         return [i for i in self.by_address.get(tuple(key[:2]), []) if at_address(self.records[i].get("address"), key)]
