@@ -4,9 +4,10 @@ import { useId, useMemo, useState, type KeyboardEvent, type PointerEvent } from 
 import { formatPrice, pluralize } from "@/lib/format";
 import { binFor } from "@/lib/price-bins";
 import { binRangeLabel, histogram, niceTicks } from "@/lib/stats";
+import { Anchor } from "../icons/nautical";
 import { useElementSize, useMediaQuery, useSeenOnce } from "./hooks";
 
-const TOP = 24; // median label band
+const TOP = 26; // median label band
 const AXIS = 32; // x-axis band
 const PAD_L = 34; // y tick labels
 const PAD_R = 8;
@@ -40,7 +41,7 @@ export function Histogram({
   const wide = useMediaQuery("(min-width: 768px)", true);
   const width = wide ? 1 : 2;
   const bins = useMemo(() => histogram(prices, width, wide ? 10 : 6), [prices, width, wide]);
-  const [plotRef, size] = useElementSize<HTMLDivElement>({ width: 1136, height: 376 });
+  const [plotRef, size] = useElementSize<HTMLDivElement>({ width: 1136, height: 378 });
   const [seenRef, seen] = useSeenOnce<HTMLDivElement>();
   const [active, setActive] = useState<number | null>(null);
   const liveId = useId();
@@ -65,7 +66,7 @@ export function Histogram({
   const markValue = mark?.value ?? median;
   const medX = xs(Math.min(Math.max(markValue, lo), hi));
   const medText = `${mark?.label ?? "NYC median"} ${formatPrice(markValue, { cents: "always" })}`;
-  const medAnchor = medX < 90 ? "start" : medX > W - 90 ? "end" : "middle";
+  const medAnchor = medX < 100 ? "start" : medX > W - 100 ? "end" : "middle";
 
   const describe = (i: number) => {
     const b = bins[i];
@@ -131,14 +132,19 @@ export function Histogram({
             const bw = Math.max(1, xs(b.hi) - xs(b.lo) - 2);
             const by = b.count > 0 ? Math.min(ys(b.count), baseline - 2) : baseline; // keep 1-menu bins visible
             const mid = (b.lo + b.hi) / 2;
+            // A 1px --swatch-ring (the chip stripe's ring) lifts the pale light-mode steps off the
+            // paper. The path is inset by half the stroke, so the ring's outer edge is the bar's true
+            // edge and the bar's height is unchanged. Bars too thin to inset go without it.
+            const ringed = bw >= 3 && baseline - by >= 2;
+            const inset = ringed ? 0.5 : 0;
             return (
               <path
                 key={b.lo}
                 className="hist-bar"
-                d={barPath(bx, by, bw, baseline - by)}
+                d={barPath(bx + inset, by + inset, bw - 2 * inset, baseline - by - inset)}
                 fill={binFor(mid, median).color}
-                stroke={active === i ? "var(--ink)" : "none"}
-                strokeWidth={active === i ? 1.5 : 0}
+                stroke={active === i ? "var(--ink)" : ringed ? "var(--swatch-ring)" : "none"}
+                strokeWidth={active === i ? 1.5 : ringed ? 1 : 0}
                 style={{ ["--d" as string]: `${Math.round(i * stagger)}ms` }}
               />
             );
@@ -154,12 +160,23 @@ export function Histogram({
               </text>
             </g>
           ))}
-          {/* median annotation */}
-          <line x1={medX} x2={medX} y1={TOP - 4} y2={baseline} stroke="var(--ink)" strokeWidth={2} />
-          <text x={medX} y={TOP - 10} textAnchor={medAnchor} className="t-ui-s" style={{ fontWeight: 600 }} fill="var(--ink)">
-            {medText}
-          </text>
+          {/* median annotation: the line runs through the plot; its label sits in the band above */}
+          <line x1={medX} x2={medX} y1={TOP - 2} y2={baseline} stroke="var(--ink)" strokeWidth={2} />
         </svg>
+        {/* The label (anchor icon + text) lives in the label band only; it never marks a data position. */}
+        <p
+          className="hist-median-label t-ui-s"
+          style={{
+            fontWeight: 600,
+            left: medAnchor === "start" ? Math.max(0, medX - 7) : medAnchor === "end" ? undefined : medX,
+            right: medAnchor === "end" ? Math.max(0, W - medX - 7) : undefined,
+            transform: medAnchor === "middle" ? "translateX(-50%)" : undefined,
+          }}
+          aria-hidden="true"
+        >
+          <Anchor />
+          {medText}
+        </p>
 
         {tip ? (
           <div
@@ -170,7 +187,7 @@ export function Histogram({
             }}
             aria-hidden="true"
           >
-            <span className="tooltip-key" style={{ background: tip.color }} />
+            <span className="tooltip-key" style={{ background: tip.color, boxShadow: "0 0 0 1px var(--swatch-ring)" }} />
             <p className="t-ui-m" style={{ fontWeight: 700 }}>
               {tip.value}
             </p>

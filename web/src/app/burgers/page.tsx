@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { BurgerExplorer } from "@/components/burgers/BurgerExplorer";
 import { BurgerTable, type TableRow } from "@/components/burgers/BurgerTable";
+import { Spyglass } from "@/components/icons/nautical";
 import { PageHeader } from "@/components/ui";
 import { getScope } from "@/lib/data";
 import { buildExplorerData } from "@/lib/explorer-data";
@@ -25,12 +26,14 @@ export default function BurgersPage() {
     .map((b) => ({ b, r: data.restaurants[b.r] }));
 
   return (
-    <div className="wrap">
+    <>
       <PageHeader
+        ticket="Cast a line"
+        ticketIcon={Spyglass}
         title="Every burger."
         lede={`All ${formatCount(data.burgers.length)} burgers we ${getScope().pending ? "have found on New York menus so far" : "found on New York menus"}, ${formatCount(priced)} of them with a price, one row per location: a chain's menu repeats at each of its locations. Search by name, restaurant or neighborhood; the index price is the cheapest beef burger at each place.`}
       />
-      <div className="mt-8">
+      <div className="wrap mt-2">
         <Suspense
           fallback={
             <div>
@@ -44,6 +47,6 @@ export default function BurgersPage() {
           <BurgerExplorer data={data} />
         </Suspense>
       </div>
-    </div>
+    </>
   );
 }

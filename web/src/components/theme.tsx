@@ -1,8 +1,8 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
 import { useSyncExternalStore } from "react";
 import { THEME_KEY } from "@/lib/theme-script";
+import { Lantern, Sun } from "./icons/nautical";
 
 export type Theme = "light" | "dark";
 
@@ -37,34 +37,45 @@ function store(theme: Theme | null) {
   }
 }
 
-export function ThemeToggle() {
+/**
+ * "Shift change": a porthole button. Day shift (light) shows a lantern and offers the night shift;
+ * night shift (dark) shows a sun and offers the day shift. The icon and the visible label swap in CSS
+ * (so server and client markup match); the accessible name follows the resolved theme. `label`:
+ * where the visible label shows ("xl" in the header, "always" in the menu sheet).
+ */
+export function ThemeToggle({ label = "xl" }: { label?: "xl" | "always" }) {
   const dark = useResolvedTheme() === "dark";
   return (
     <button
       type="button"
-      className="icon-btn"
-      // A toggle button: the name stays put and aria-pressed carries the state.
-      aria-label="Dark mode"
-      aria-pressed={dark}
-      title={dark ? "Switch to light mode" : "Switch to dark mode"}
+      className="theme-toggle"
+      aria-label={dark ? "Day shift: switch to light theme" : "Night shift: switch to dark theme"}
+      title={dark ? "Day shift: switch to light theme" : "Night shift: switch to dark theme"}
       onClick={() => {
         const next: Theme = readTheme() === "dark" ? "light" : "dark";
         document.documentElement.setAttribute("data-theme", next);
         store(next);
       }}
     >
-      {/* Sun shows in dark mode, Moon in light mode (CSS picks, so server and client markup match). */}
-      <Sun className="theme-sun" strokeWidth={1.75} aria-hidden="true" />
-      <Moon className="theme-moon" strokeWidth={1.75} aria-hidden="true" />
+      <span className="porthole" aria-hidden="true">
+        <Lantern className="when-light" />
+        <Sun className="when-dark" />
+      </span>
+      {/* Both labels share one grid cell and only the inactive one is hidden (visibility), so the
+          button keeps the width of the longer label and the nav doesn't shift on a theme change. */}
+      <span className={label === "xl" ? "theme-label hidden pr-1 xl:inline-grid" : "theme-label pr-1"} aria-hidden="true">
+        <span className="theme-label-light">Night shift</span>
+        <span className="theme-label-dark">Day shift</span>
+      </span>
     </button>
   );
 }
 
-export function UseSystemTheme() {
+export function UseSystemTheme({ className = "deck-link" }: { className?: string }) {
   return (
     <button
       type="button"
-      className="ui-link cursor-pointer t-ui-m underline-offset-4 hover:underline"
+      className={className}
       onClick={() => {
         document.documentElement.removeAttribute("data-theme");
         store(null);

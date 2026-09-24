@@ -26,10 +26,10 @@ export function PriceDistribution({
 }) {
   if (prices.length < MIN_HISTOGRAM || cityMedian === null || sliceMedian === null) {
     return (
-      <ChartEmpty height={296}>
+      <ChartEmpty height={298}>
         {prices.length === 0
-          ? "No priced menus here yet."
-          : `Only ${pluralize(prices.length, "priced menu")} here. Not enough to draw a distribution.`}
+          ? "No priced menus in these waters yet."
+          : `Only ${pluralize(prices.length, "priced menu")} in these waters. We draw the chart at ${MIN_HISTOGRAM}.`}
       </ChartEmpty>
     );
   }

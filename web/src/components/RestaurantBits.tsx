@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { formatCount, pluralize } from "@/lib/format";
 import type { Menu } from "@/lib/menus";
 import type { Restaurant } from "@/lib/schema";
-import { PriceChip, SourceBadge, StatusBadge } from "./ui";
+import { Kicker, PriceChip, SourceBadge, StatusBadge } from "./ui";
 
 function indexBurger(r: Restaurant) {
   return r.burgers.find((b) => b.is_index_item);
@@ -27,6 +27,7 @@ export function RestaurantCard({
   burgerName,
   price,
   where,
+  headingLevel = 3,
 }: {
   restaurant: Restaurant;
   median: number | null;
@@ -34,17 +35,20 @@ export function RestaurantCard({
   burgerName?: string;
   price?: number | null;
   where?: string;
+  /** 4 when the card sits under a group heading (h3) of its own. */
+  headingLevel?: 3 | 4;
 }) {
   const b = indexBurger(r);
   const shownPrice = price !== undefined ? price : r.index_price;
+  const Heading = headingLevel === 4 ? "h4" : "h3";
   return (
     <article className="card flex h-full flex-col">
-      {kicker ? <p className="t-label muted">{kicker}</p> : null}
-      <h3 className={`t-display-s break-anywhere ${kicker ? "mt-2" : ""}`}>
+      {kicker ? <Kicker>{kicker}</Kicker> : null}
+      <Heading className={`t-display-s break-anywhere ${kicker ? "mt-2" : ""}`}>
         <Link href={`/restaurants/${r.id}`} className="stretched">
           {r.name}
         </Link>
-      </h3>
+      </Heading>
       <p className="t-ui-s muted mt-1 break-anywhere">
         {burgerName ?? b?.name ?? "No priced burger"} · {where ?? r.neighborhood ?? r.borough}
       </p>
@@ -64,10 +68,26 @@ export type ChainCount = { noun?: string; where?: string };
  * many priced locations in the slice share the menu (the link goes to one of them), with where they
  * are counted ("chain, 3 locations on our list"), so the count doesn't read as the whole chain's size.
  */
-export function MenuCard({ menu, median, chainCount = {} }: { menu: Menu; median: number | null; chainCount?: ChainCount }) {
+export function MenuCard({
+  menu,
+  median,
+  chainCount = {},
+  kicker,
+  headingLevel = 3,
+}: {
+  menu: Menu;
+  median: number | null;
+  chainCount?: ChainCount;
+  kicker?: string;
+  headingLevel?: 3 | 4;
+}) {
   const where = menu.chain ? `chain, ${pluralize(menu.locations, chainCount.noun ?? "location")}${chainCount.where ?? ""}` : undefined;
-  return <RestaurantCard restaurant={menu.restaurant} median={median} where={where} />;
+  return <RestaurantCard restaurant={menu.restaurant} median={median} where={where} kicker={kicker} headingLevel={headingLevel} />;
 }
+
+/** The callout kickers on the two ends of the counter: the cheapest menu and the priciest one. */
+const CHEAPEST_KICKER = "Cheapest on the counter";
+const PRICIEST_KICKER = "Top shelf";
 
 /** Menus needed before MenuEnds splits into cheapest and priciest (two lists of four that can't overlap). */
 export const MENU_ENDS_SPLIT = 8;
@@ -81,9 +101,9 @@ export function MenuEnds({ cheapest, priciest, median, chainCount }: { cheapest:
         <div className="min-w-0">
           <h3 className="t-label muted">Cheapest index prices</h3>
           <ul className="mt-3 grid gap-3 sm:grid-cols-2">
-            {cheapest.slice(0, 4).map((m) => (
+            {cheapest.slice(0, 4).map((m, i) => (
               <li key={m.key}>
-                <MenuCard menu={m} median={median} chainCount={chainCount} />
+                <MenuCard menu={m} median={median} chainCount={chainCount} headingLevel={4} kicker={i === 0 ? CHEAPEST_KICKER : undefined} />
               </li>
             ))}
           </ul>
@@ -91,9 +111,9 @@ export function MenuEnds({ cheapest, priciest, median, chainCount }: { cheapest:
         <div className="min-w-0">
           <h3 className="t-label muted">Priciest index prices</h3>
           <ul className="mt-3 grid gap-3 sm:grid-cols-2">
-            {priciest.slice(0, 4).map((m) => (
+            {priciest.slice(0, 4).map((m, i) => (
               <li key={m.key}>
-                <MenuCard menu={m} median={median} chainCount={chainCount} />
+                <MenuCard menu={m} median={median} chainCount={chainCount} headingLevel={4} kicker={i === 0 ? PRICIEST_KICKER : undefined} />
               </li>
             ))}
           </ul>
@@ -105,9 +125,15 @@ export function MenuEnds({ cheapest, priciest, median, chainCount }: { cheapest:
     <div className="mt-8">
       <h3 className="t-label muted">Index prices, cheapest first</h3>
       <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {cheapest.map((m) => (
+        {cheapest.map((m, i) => (
           <li key={m.key}>
-            <MenuCard menu={m} median={median} chainCount={chainCount} />
+            <MenuCard
+              menu={m}
+              median={median}
+              chainCount={chainCount}
+              headingLevel={4}
+              kicker={cheapest.length > 1 && i === 0 ? CHEAPEST_KICKER : cheapest.length > 1 && i === cheapest.length - 1 ? PRICIEST_KICKER : undefined}
+            />
           </li>
         ))}
       </ul>
@@ -126,6 +152,7 @@ export function RestaurantTable({ restaurants, median, showNeighborhood = true, 
   const address = (r: Restaurant) => (repeated.has(r.name) && r.address ? r.address : null);
   return (
     <div>
+      <div className="table-shell">
       <table className="data-table">
         {caption ? <caption className="sr-only">{caption}</caption> : null}
         <thead>
@@ -185,6 +212,7 @@ export function RestaurantTable({ restaurants, median, showNeighborhood = true, 
           ))}
         </tbody>
       </table>
+      </div>
       <p className="t-ui-s muted mt-3">
         {formatCount(priced.length)} priced{unpriced.length ? `, ${formatCount(unpriced.length)} without a price` : ""}.
         {hasDelivery ? " † Delivery-app price; these usually run higher than ordering in person." : ""}

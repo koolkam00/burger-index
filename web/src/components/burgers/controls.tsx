@@ -54,12 +54,12 @@ export function FilterPopover({ label, count, children }: { label: string; count
         type="button"
         className={`chip ${count ? "chip-active" : ""}`}
         aria-expanded={open}
-        aria-controls={id}
+        aria-controls={open ? id : undefined}
         onClick={() => setOpen((o) => !o)}
       >
         {label}
         {count ? <span className="t-num-s">({count})</span> : null}
-        <ChevronDown strokeWidth={1.75} aria-hidden="true" />
+        <ChevronDown strokeWidth={2} aria-hidden="true" />
       </button>
       {open ? (
         // tabIndex -1: a mousedown on anything inside that the browser won't focus (label text,
@@ -74,37 +74,55 @@ export function FilterPopover({ label, count, children }: { label: string; count
   );
 }
 
+/**
+ * A multi-select group. `list`: checkboxes in a column (the desktop popovers). `chips`: wrapping
+ * "buoy" toggle chips (aria-pressed) that never scroll sideways (the mobile filter sheet).
+ */
 export function CheckList<T extends string>({
   legend,
   options,
   selected,
   onChange,
   hideLegend = false,
+  variant = "list",
 }: {
   legend: string;
   options: Array<{ value: T; label: ReactNode }>;
   selected: readonly T[];
   onChange: (next: T[]) => void;
   hideLegend?: boolean;
+  variant?: "list" | "chips";
 }) {
+  const toggle = (value: T, on: boolean) => onChange(on ? [...selected, value] : selected.filter((v) => v !== value));
   return (
     <fieldset className="min-w-0">
-      <legend className={hideLegend ? "sr-only" : "t-label muted mb-1"}>{legend}</legend>
-      <ul>
-        {options.map((o) => (
-          <li key={o.value}>
-            <label className="t-ui-m flex min-h-11 cursor-pointer items-center gap-3 md:min-h-9">
-              <input
-                type="checkbox"
-                className="checkbox"
-                checked={selected.includes(o.value)}
-                onChange={(e) => onChange(e.target.checked ? [...selected, o.value] : selected.filter((v) => v !== o.value))}
-              />
-              <span className="min-w-0">{o.label}</span>
-            </label>
-          </li>
-        ))}
-      </ul>
+      <legend className={hideLegend ? "sr-only" : `t-label muted ${variant === "chips" ? "mb-3" : "mb-1"}`}>{legend}</legend>
+      {variant === "chips" ? (
+        // Row gap 10px: the chips' 44px hit areas (on 34px pills) never overlap between rows.
+        <ul className="flex flex-wrap gap-x-2 gap-y-2.5">
+          {options.map((o) => {
+            const on = selected.includes(o.value);
+            return (
+              <li key={o.value}>
+                <button type="button" className="chip" aria-pressed={on} onClick={() => toggle(o.value, !on)}>
+                  {o.label}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <ul>
+          {options.map((o) => (
+            <li key={o.value}>
+              <label className="t-ui-m flex min-h-11 cursor-pointer items-center gap-3 md:min-h-9">
+                <input type="checkbox" className="checkbox" checked={selected.includes(o.value)} onChange={(e) => toggle(o.value, e.target.checked)} />
+                <span className="min-w-0">{o.label}</span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
     </fieldset>
   );
 }
@@ -130,7 +148,7 @@ export function PriceInput({ id, label, value, onCommit }: { id: string; label: 
         {label}
       </label>
       <div className="relative mt-1">
-        <span className="t-ui-l muted pointer-events-none absolute top-1/2 left-3 -translate-y-1/2" aria-hidden="true">
+        <span className="t-ui-l muted pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2" aria-hidden="true">
           $
         </span>
         <input

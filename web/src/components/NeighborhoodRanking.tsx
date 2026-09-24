@@ -62,7 +62,7 @@ export function NeighborhoodRanking({ areas, cityMedian }: { areas: AreaWithMenu
           }}
         >
           {label}
-          <Icon strokeWidth={1.75} aria-hidden="true" className={active ? "" : "opacity-50"} />
+          <Icon strokeWidth={2} aria-hidden="true" className={active ? "" : "opacity-60"} />
         </button>
       </th>
     );
@@ -91,6 +91,7 @@ export function NeighborhoodRanking({ areas, cityMedian }: { areas: AreaWithMenu
           })}
         </div>
       ) : null}
+      <div className="table-shell">
       <table className="data-table">
         <caption className="sr-only">Neighborhoods ranked by median index price. Column headers sort the table.</caption>
         <thead>
@@ -150,6 +151,7 @@ export function NeighborhoodRanking({ areas, cityMedian }: { areas: AreaWithMenu
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

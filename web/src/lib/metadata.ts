@@ -17,7 +17,7 @@ export const OG_IMAGE = {
   url: "/og.png",
   width: 1200,
   height: 630,
-  alt: "The Burger Index: the NYC median burger price on a black letterboard",
+  alt: "The Burger Index: the NYC median burger price on a yellow order board hanging over the water",
 };
 
 export function absoluteUrl(path: string): string {

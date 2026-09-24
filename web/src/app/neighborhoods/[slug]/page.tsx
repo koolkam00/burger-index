@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { AreaListItem, ChainMenuNote } from "@/components/AreaList";
 import { Letterboard } from "@/components/Letterboard";
 import { RestaurantTable } from "@/components/RestaurantBits";
-import { Breadcrumbs, BoroughName, ChainOnlyBadge, Money, PageHeader, SectionHeading, StatGrid, StatTile } from "@/components/ui";
+import { Buoy, Spyglass } from "@/components/icons/nautical";
+import { BoroughName, ChainOnlyBadge, DetailOverline, Money, MoneyRange, PageHeader, SectionHeading, StatGrid, StatTile } from "@/components/ui";
 import { boroughInProse, boroughSlug } from "@/lib/boroughs";
 import {
   getGeneratedAt,
@@ -72,11 +73,11 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
   else if (chainOnly && !ranked)
     lede =
       c.menus === 1
-        ? `Chain prices only so far: the only priced menu here is a chain's (${chains}). Not enough to call it a trend.`
-        : `Chain prices only so far: every priced menu here belongs to a chain (${chains}). Only ${pluralize(c.menus, "priced menu")} here, not enough to call it a trend.`;
+        ? `Chain prices only so far: the only priced menu here is a chain's (${chains}). Too few to chart a course, so we don't rank it yet.`
+        : `Chain prices only so far: every priced menu here belongs to a chain (${chains}). Only ${pluralize(c.menus, "priced menu")} here: too few to chart a course, so we don't rank it yet.`;
   else if (chainOnly)
     lede = `Chain prices only so far: all ${formatCount(c.menus)} priced menus here belong to chains (${chains}), so the ${formatPrice(n.index_median)} median is not a like-for-like comparison with neighborhoods where we have read independent menus.`;
-  else if (!ranked) lede = `Only ${pluralize(c.menus, "priced menu")} here (${menuBreakdown(c)}). Not enough to call it a trend.`;
+  else if (!ranked) lede = `Only ${pluralize(c.menus, "priced menu")} here (${menuBreakdown(c)}). Too few to chart a course, so we don't rank it yet.`;
   else if (cityShare === "all")
     lede = `Every menu priced${scope.pending ? " so far" : ""} is served in ${n.name}, so its median index price, ${formatPrice(n.index_median)}, is the NYC index${
       scope.pending ? " for now" : ""
@@ -91,41 +92,38 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
   }
 
   return (
-    <div className="wrap">
-      <div className="pt-6 md:pt-8">
-        <Breadcrumbs
-          items={[
-            { href: "/neighborhoods", label: "Neighborhoods" },
-            { href: `/boroughs/${boroughSlug(n.borough)}`, label: n.borough },
-            { label: n.name },
-          ]}
-        />
-      </div>
-      <div className={showBoard ? "grid gap-8 lg:grid-cols-12 lg:items-end" : ""}>
-        <div className={showBoard ? "min-w-0 lg:col-span-5" : ""}>
-          <PageHeader
-            overline={
-              <span className="flex flex-wrap items-center gap-3">
-                <BoroughName borough={n.borough} />
-                {chainOnly ? <ChainOnlyBadge /> : null}
-              </span>
+    <>
+      <PageHeader
+        crumbs={[
+          { href: "/neighborhoods", label: "Neighborhoods" },
+          { href: `/boroughs/${boroughSlug(n.borough)}`, label: n.borough },
+          { label: n.name },
+        ]}
+        overline={
+          <DetailOverline
+            label={
+              <>
+                Neighborhood ·<BoroughName borough={n.borough} link={false} ringed />
+              </>
             }
-            title={n.name}
-            lede={lede}
-          />
-        </div>
-        {showBoard ? (
-          <div className="min-w-0 lg:col-span-7">
+          >
+            {chainOnly ? <ChainOnlyBadge /> : null}
+          </DetailOverline>
+        }
+        title={n.name}
+        lede={lede}
+        aside={
+          showBoard ? (
             <Letterboard
               overline={`The Burger Index · ${n.name} median`}
               price={n.index_median}
               line={[`Cheapest beef burger on ${pluralize(c.menus, "menu")}`, `Updated ${formatDate(getGeneratedAt())}`]}
             />
-          </div>
-        ) : null}
-      </div>
-
-      <section className="mt-10" aria-label="Key numbers">
+          ) : undefined
+        }
+      />
+      <div className="wrap">
+      <section className="mt-2" aria-label="Key numbers">
         <StatGrid cols={cityShare === "all" ? 3 : 4}>
           <StatTile
             label="Median"
@@ -151,12 +149,7 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
               oneLevel ? (
                 <Money value={n.index_min as number} />
               ) : n.index_min !== null && n.index_max !== null ? (
-                <span className="inline-flex flex-wrap items-start gap-x-1">
-                  <Money value={n.index_min} />
-                  <span aria-hidden="true">–</span>
-                  <span className="sr-only">to</span>
-                  <Money value={n.index_max} />
-                </span>
+                <MoneyRange lo={n.index_min} hi={n.index_max} />
               ) : (
                 "—"
               )
@@ -179,6 +172,8 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
       <section className="section" aria-labelledby="places">
         <SectionHeading
           id="places"
+          kicker="Cast a line"
+          icon={Spyglass}
           title={
             scope.pending
               ? `Every restaurant we have looked up in ${n.name} so far.`
@@ -205,7 +200,7 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
 
       {siblings.length ? (
         <section className="section" aria-labelledby="nearby">
-          <SectionHeading id="nearby" title={`Elsewhere in ${boroughInProse(n.borough)}.`} />
+          <SectionHeading id="nearby" kicker="Neighborhood specials" icon={Buoy} title={`Elsewhere in ${boroughInProse(n.borough)}.`} />
           <ul className="mt-6 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
             {siblings.map((s) => (
               <AreaListItem key={s.slug} area={s} />
@@ -214,6 +209,7 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
           <ChainMenuNote areas={siblings} />
         </section>
       ) : null}
-    </div>
+      </div>
+    </>
   );
 }

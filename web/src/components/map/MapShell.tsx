@@ -3,13 +3,14 @@
 import { List, Map as MapIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback, useState, type ReactNode } from "react";
+import { EmptyState } from "../ui";
 import type { MapPin } from "./MapCanvas";
 
 const MapCanvas = dynamic(() => import("./MapCanvas"), {
   ssr: false,
   loading: () => (
     <div className="absolute inset-0 grid place-items-center">
-      <p className="t-ui-m muted">Loading the map…</p>
+      <p className="t-ui-m muted">Unrolling the sea chart…</p>
     </div>
   ),
 });
@@ -33,53 +34,52 @@ export function MapShell({ pins, median, legend, list }: { pins: MapPin[]; media
   return (
     <div>
       <div className="wrap flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex rounded-[4px] border border-line-strong p-0.5" role="group" aria-label="View">
-          <button
-            type="button"
-            className={`btn btn-sm ${view === "map" ? "bg-ink text-surface" : "btn-ghost"}`}
-            aria-pressed={view === "map"}
-            disabled={!!fatal || pins.length === 0}
-            onClick={() => setView("map")}
-          >
-            <MapIcon strokeWidth={1.75} aria-hidden="true" />
+        <div className="inline-flex gap-2" role="group" aria-label="View">
+          <button type="button" className="chip disabled:cursor-not-allowed disabled:opacity-40" aria-pressed={view === "map"} disabled={!!fatal || pins.length === 0} onClick={() => setView("map")}>
+            <MapIcon strokeWidth={2} aria-hidden="true" />
             Map
           </button>
-          <button type="button" className={`btn btn-sm ${view === "list" ? "bg-ink text-surface" : "btn-ghost"}`} aria-pressed={view === "list"} onClick={() => setView("list")}>
-            <List strokeWidth={1.75} aria-hidden="true" />
+          <button type="button" className="chip" aria-pressed={view === "list"} onClick={() => setView("list")}>
+            <List strokeWidth={2} aria-hidden="true" />
             List
           </button>
         </div>
         {fatal ? (
           <p className="t-ui-s muted" role="status">
-            The map can&apos;t run in this browser ({fatal}). Here is the list instead.
+            The sea chart can&apos;t run in this browser ({fatal}). Here is the list instead.
           </p>
         ) : basemapDown && view === "map" ? (
           <p className="t-ui-s muted" role="status">
-            The basemap didn&apos;t load, so the pins sit on a blank background. The list view has every restaurant.
+            The sea chart didn&apos;t load, so the pins sit on plain sand. The list view has every restaurant.
           </p>
         ) : null}
       </div>
 
       {showMap ? (
-        <div className="map-frame mt-4">
+        <>
+        <span className="rope rope-flat map-rope mt-4" aria-hidden="true" />
+        <div className="map-frame">
           <MapCanvas pins={pins} median={median} onBasemapFail={onBasemapFail} onFatal={onFatal} />
           <div className="absolute top-3 left-3 z-10 max-w-[calc(100%-5rem)]">
-            <button
-              type="button"
-              className="btn btn-sm border-line bg-surface text-ink md:hidden"
-              aria-expanded={legendOpen}
-              aria-controls="map-legend"
-              onClick={() => setLegendOpen((o) => !o)}
-            >
+            <button type="button" className="btn btn-secondary btn-sm md:hidden" aria-expanded={legendOpen} aria-controls="map-legend" onClick={() => setLegendOpen((o) => !o)}>
               Legend
             </button>
-            <div id="map-legend" className={`${legendOpen ? "mt-2 block" : "hidden"} md:mt-0 md:block`}>
+            <div id="map-legend" className={`${legendOpen ? "mt-3 block" : "hidden"} md:mt-0 md:block`}>
               {legend}
             </div>
           </div>
         </div>
+        </>
       ) : (
-        <div className="wrap mt-4">{pins.length === 0 ? <p className="t-body muted">No restaurant has both a price and a location yet.</p> : list}</div>
+        <div className="wrap mt-4">
+          {pins.length === 0 ? (
+            <EmptyState height={200} art="trap">
+              No restaurant has both a price and a location yet.
+            </EmptyState>
+          ) : (
+            list
+          )}
+        </div>
       )}
     </div>
   );

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MiniMap } from "@/components/map/MiniMap";
 import { repeatedNames } from "@/components/RestaurantBits";
-import { Breadcrumbs, BoroughName, Dagger, IndexTag, Money, PriceChip, SectionHeading, SourceBadge, StatGrid, StatTile, StatusBadge } from "@/components/ui";
+import { Anchor, Spatula } from "@/components/icons/nautical";
+import { BoroughName, Dagger, DetailOverline, EmptyState, IndexTag, Money, PageHeader, PriceChip, SectionHeading, SourceBadge, StatGrid, StatTile, StatusBadge } from "@/components/ui";
 import { boroughSlug } from "@/lib/boroughs";
 import {
   getChainLocations,
@@ -50,7 +51,7 @@ function ExternalA({ href, children }: { href: string; children: React.ReactNode
   return (
     <a href={href} className="link inline-flex items-center gap-1" rel="nofollow noopener noreferrer" target="_blank">
       {children}
-      <ExternalLink className="size-3.5 flex-none" strokeWidth={1.75} aria-hidden="true" />
+      <ExternalLink className="size-3.5 flex-none" strokeWidth={2} aria-hidden="true" />
       <span className="sr-only">(opens in a new tab)</span>
     </a>
   );
@@ -68,20 +69,25 @@ function statusCopy(r: Restaurant): string {
 function HandCheckNote({ check, chainName, locations }: { check: HandCheck; chainName: string | null; locations: number }) {
   const corrected = check.kind === "corrected";
   const Icon = corrected ? ClipboardCheck : EyeOff;
+  // "The cook's correction slip": a ruled guest check with a torn top; its text sits on the rules.
   return (
-    <section className="prose-width mt-6 rounded-[4px] border border-line bg-surface p-4 md:p-5" aria-labelledby="hand-check">
-      <h2 id="hand-check" className="t-label muted flex items-start gap-2">
-        <Icon className="size-4 flex-none" strokeWidth={1.75} aria-hidden="true" />
+    <section className="slip mt-8" aria-labelledby="hand-check">
+      <h2 id="hand-check" className="t-label slip-line muted flex items-start gap-2">
+        <Icon className="mt-[6px] size-4 flex-none" strokeWidth={2} aria-hidden="true" />
         <span className="min-w-0">
-          {corrected ? "Prices corrected by hand" : "Prices withheld after a hand check"} · <span className="whitespace-nowrap">{formatDate(check.checkedOn)}</span>
+          {/* A no-break space binds the "·" to the words before it, so a wrap puts the date (which never
+              wraps) on the next line without a stray leading dot. */}
+          {corrected ? "Prices corrected by hand" : "Prices withheld after a hand check"}
+          {"\u00a0· "}
+          <span className="whitespace-nowrap">{formatDate(check.checkedOn)}</span>
         </span>
       </h2>
-      <p className="t-body-s mt-2">
+      <p className="t-body-s slip-line">
         {corrected ? "We re-read this menu ourselves and corrected what the scrape got wrong: " : "We re-read this menu ourselves and left its prices out: "}
         {check.reason}
       </p>
       {chainName && locations > 1 ? (
-        <p className="t-ui-s muted mt-2">
+        <p className="t-ui-s slip-line muted">
           This applies to all {pluralize(locations, `${chainName} location`)}: they share one menu.
         </p>
       ) : null}
@@ -94,7 +100,7 @@ function ChainLocationList({ rows, unpriced = false, className = "mt-6" }: { row
   return (
     <ul className={`${className} grid gap-x-8 sm:grid-cols-2`}>
       {rows.map((n) => (
-        <li key={n.id} className="flex min-h-12 items-center justify-between gap-3 border-b border-line py-2">
+        <li key={n.id} className="flex min-h-12 items-center justify-between gap-3 border-b-[1.5px] border-line py-2">
           <Link href={`/restaurants/${n.id}`} className="ui-link break-anywhere min-w-0">
             {n.neighborhood ?? n.borough}
             <span className="t-ui-s muted block">{n.address}</span>
@@ -161,23 +167,25 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
   ];
 
   return (
-    <div className="wrap">
-      <div className="pt-6 md:pt-8">
-        <Breadcrumbs items={crumbs} />
-      </div>
-      <header className="pt-6 md:pt-8">
-        <div className="flex flex-wrap items-center gap-2">
+    <>
+      <PageHeader
+        crumbs={crumbs}
+        overline={<DetailOverline label={r.cuisine ? `Restaurant · ${r.cuisine}` : "Restaurant"} />}
+        title={r.name}
+        lede={
+          <>
+            {[r.address, r.neighborhood].filter(Boolean).join(", ")}
+            {r.address || r.neighborhood ? ", " : ""}
+            {r.borough}
+            {r.zipcode ? ` ${r.zipcode}` : ""}.
+          </>
+        }
+      >
+        {/* Status and source sit under the lede (DESIGN.md "Page header"); each badge has its own fill. */}
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <StatusBadge status={r.status} />
           <SourceBadge source={r.price_source} />
-          {r.cuisine ? <span className="t-ui-s muted">{r.cuisine}</span> : null}
         </div>
-        <h1 className="t-display-l mt-4">{r.name}</h1>
-        <p className="t-lede prose-width mt-4">
-          {[r.address, r.neighborhood].filter(Boolean).join(", ")}
-          {r.address || r.neighborhood ? ", " : ""}
-          {r.borough}
-          {r.zipcode ? ` ${r.zipcode}` : ""}.
-        </p>
         {r.chain ? (
           <p className="t-body-s muted prose-width mt-3">
             {priced
@@ -197,13 +205,14 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
                   : `A ${r.name} location. No location of this chain is priced yet, so it isn't in the index.${chainListed > 1 ? ` It has ${pluralize(chainListed, "location")}${chainWhere}.` : ""}`}
           </p>
         ) : null}
-      </header>
-
+      </PageHeader>
+      <div className="wrap">
       {priced && indexBurger ? (
-        <section className="mt-8 md:mt-10" aria-label="Index price">
+        <section className="mt-2" aria-label="Index price">
           <StatGrid cols={3}>
             <StatTile
               label="Index price"
+              icon={Spatula}
               value={<Money value={r.index_price as number} />}
               sub={
                 <>
@@ -226,13 +235,14 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
             />
             <StatTile
               label="vs NYC"
+              icon={Anchor}
               value={median !== null ? formatDelta(r.index_price, median) : "—"}
               sub={median !== null ? `NYC median ${formatPrice(median, { cents: "always" })}` : undefined}
             />
           </StatGrid>
         </section>
       ) : (
-        <section className="mt-8 rounded-[4px] border border-line bg-surface p-4 md:mt-10 md:p-6" aria-label="Status">
+        <section className="panel mt-2 p-4 md:p-6" aria-label="Status">
           <div className="flex items-start gap-3">
             <StatusBadge status={r.status} />
           </div>
@@ -279,7 +289,14 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
               </li>
             ))}
           </ul>
-        ) : null}
+        ) : (
+          // No burger rows: the status card above already says why, so this only fills the space.
+          <div className="mt-6 max-w-3xl">
+            <EmptyState height={160} art="trap">
+              Nothing on the menu board for this one. The status above says why.
+            </EmptyState>
+          </div>
+        )}
         {delivery ? <p className="t-ui-s muted mt-3">† Delivery-app price. {DELIVERY_NOTE}</p> : null}
       </section>
 
@@ -331,7 +348,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
                 <MiniMap id={r.id} lat={r.lat} lng={r.lng} price={r.index_price} median={median} label={r.name} />
                 <p className="t-ui-s muted mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                   <span className="inline-flex items-center gap-1">
-                    <MapPin className="size-4" strokeWidth={1.75} aria-hidden="true" />
+                    <MapPin className="size-4" strokeWidth={2} aria-hidden="true" />
                     {r.lat.toFixed(5)}, {r.lng.toFixed(5)}
                   </span>
                   {priced ? (
@@ -342,9 +359,9 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
                 </p>
               </>
             ) : (
-              <div className="chart-empty" style={{ minHeight: 160 }}>
-                <p>No coordinates on file for this restaurant, so it isn&apos;t on the map.</p>
-              </div>
+              <EmptyState height={160} art="trap">
+                No coordinates on file for this restaurant, so it isn&apos;t on the map.
+              </EmptyState>
             )}
           </div>
         </div>
@@ -355,7 +372,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
           <SectionHeading id="nearby" title={`More in ${r.neighborhood}.`} />
           <ul className="mt-6 grid gap-x-8 sm:grid-cols-2">
             {neighbors.map(({ key, restaurant: n, locations }) => (
-              <li key={key} className="flex min-h-12 items-center justify-between gap-3 border-b border-line py-2">
+              <li key={key} className="flex min-h-12 items-center justify-between gap-3 border-b-[1.5px] border-line py-2">
                 <span className="min-w-0">
                   <Link href={`/restaurants/${n.id}`} className="ui-link break-anywhere font-semibold">
                     {n.name}
@@ -411,6 +428,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
           )}
         </section>
       ) : null}
-    </div>
+      </div>
+    </>
   );
 }

@@ -41,6 +41,9 @@ export default function MiniMapCanvas({ id, lat, lng, price, median, label }: { 
     map.on("error", () => {
       if (!loaded) fallBack();
     });
+    // The overlay below names the map for screen readers; MapLibre's own "Map" canvas label would
+    // only repeat it. (The attribution button stays reachable: it isn't inside the img.)
+    map.getCanvas().setAttribute("aria-hidden", "true");
     map.once("load", () => collapseAttribution(container));
     return () => {
       window.clearTimeout(timer);
@@ -49,9 +52,12 @@ export default function MiniMapCanvas({ id, lat, lng, price, median, label }: { 
   }, [theme, id, lat, lng, price, median, label]);
 
   if (failed) return <p className="t-ui-s muted absolute inset-0 grid place-items-center p-4 text-center">Map unavailable in this browser.</p>;
-  // MapLibre's CSS makes its container position:relative, so size it with a wrapper.
+  // MapLibre's CSS makes its container position:relative, so size it with a wrapper. The role="img"
+  // sits on a sibling overlay, not on a wrapper around the map: an img's contents are presentational,
+  // and the map holds a focusable attribution button. pointer-events-none lets clicks reach it.
   return (
-    <div className="absolute inset-0" role="img" aria-label={`Map showing the location of ${label}`}>
+    <div className="absolute inset-0">
+      <div className="pointer-events-none absolute inset-0 z-[1]" role="img" aria-label={`Map showing the location of ${label}`} />
       <div ref={ref} className="h-full w-full" />
     </div>
   );

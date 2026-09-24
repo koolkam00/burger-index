@@ -3,6 +3,7 @@ import type { MapPin } from "@/components/map/MapCanvas";
 import { MapLegend } from "@/components/map/MapLegend";
 import { MapShell } from "@/components/map/MapShell";
 import { RestaurantTable } from "@/components/RestaurantBits";
+import { CompassRose } from "@/components/icons/nautical";
 import { PageHeader, PriceChip, SectionHeading, StatusBadge } from "@/components/ui";
 import { boroughInProse } from "@/lib/boroughs";
 import { getBoroughs, getIndexBurger, getMenuCounts, getRestaurants, getScope, getStats } from "@/lib/data";
@@ -54,17 +55,17 @@ export default function MapPage() {
 
   return (
     <div>
-      <div className="wrap">
-        <PageHeader
+      <PageHeader
+          ticket="Chart a course"
+          ticketIcon={CompassRose}
           title="The map."
           lede={`${
             pricedNoCoords ? `${formatCount(onMap.length)} of the ${pluralize(onMap.length + pricedNoCoords, "priced location")}` : pluralize(onMap.length, "priced location")
           }, one pin each, colored by index price against the NYC median. Tap a pin for the burger and the price. Every location of a chain gets a pin, though the index counts the chain once (${pluralize(getMenuCounts().menus, "menu")} in all).${
             pricedNoCoords ? ` The other ${pluralize(pricedNoCoords, "priced location")} ${pricedNoCoords === 1 ? "has" : "have"} no coordinates yet and ${pricedNoCoords === 1 ? "is" : "are"} listed below the map.` : ""
           }${coverage}${unpricedWithCoords ? ` ${pluralize(unpricedWithCoords, "location")} without a price ${unpricedWithCoords === 1 ? "is" : "are"} left off.` : ""}`}
-        />
-      </div>
-      <div className="mt-8">
+      />
+      <div className="mt-2">
         <MapShell
           pins={pins}
           median={median}
@@ -81,7 +82,7 @@ export default function MapPage() {
             </SectionHeading>
             <ul className="mt-6 grid gap-x-8 sm:grid-cols-2">
               {noCoords.map((r) => (
-                <li key={r.id} className="flex min-h-12 items-center justify-between gap-3 border-b border-line py-2">
+                <li key={r.id} className="flex min-h-12 items-center justify-between gap-3 border-b-[1.5px] border-line py-2">
                   <span className="min-w-0">
                     <Link href={`/restaurants/${r.id}`} className="ui-link break-anywhere font-semibold">
                       {r.name}

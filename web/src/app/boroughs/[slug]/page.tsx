@@ -9,7 +9,8 @@ import { PriceDistribution } from "@/components/charts/PriceDistribution";
 import { AreaTable, RangePlot } from "@/components/charts/RangePlot";
 import { Letterboard } from "@/components/Letterboard";
 import { MENU_ENDS_SPLIT, MenuEnds } from "@/components/RestaurantBits";
-import { Breadcrumbs, BoroughDot, ChainOnlyBadge, Money, PageHeader, SectionHeading, StatGrid, StatTile } from "@/components/ui";
+import { Buoy, Net, ShipWheel, Spatula } from "@/components/icons/nautical";
+import { BoroughDot, ChainOnlyBadge, DetailOverline, Money, PageHeader, SectionHeading, StatGrid, StatTile } from "@/components/ui";
 import { BOROUGH_META, boroughInProse } from "@/lib/boroughs";
 import {
   getBorough,
@@ -128,39 +129,30 @@ export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug
   }
 
   return (
-    <div className="wrap">
-      <div className="pt-6 md:pt-8">
-        <Breadcrumbs items={[{ href: "/boroughs", label: "Boroughs" }, { label: b.name }]} />
-      </div>
-      <div className={showBoard ? "grid gap-8 lg:grid-cols-12 lg:items-end" : ""}>
-        <div className={showBoard ? "min-w-0 lg:col-span-5" : ""}>
-          <PageHeader
-            overline={
-              <span className="flex flex-wrap items-center gap-3">
-                <span className="t-label muted inline-flex items-center gap-2">
-                  <BoroughDot borough={b.name} />
-                  Borough
-                </span>
-                {chainOnly ? <ChainOnlyBadge /> : null}
-              </span>
-            }
-            title={b.name}
-            lede={lede}
-          />
-        </div>
-        {showBoard ? (
-          <div className="min-w-0 lg:col-span-7">
+    <>
+      <PageHeader
+        crumbs={[{ href: "/boroughs", label: "Boroughs" }, { label: b.name }]}
+        overline={<DetailOverline label="Borough">{chainOnly ? <ChainOnlyBadge /> : null}</DetailOverline>}
+        title={
+          <>
+            <BoroughDot borough={b.name} ringed title />
+            {b.name}
+          </>
+        }
+        lede={lede}
+        aside={
+          showBoard ? (
             <Letterboard
               overline={`The Burger Index · ${b.name} median`}
               price={s.index_median}
               line={[`Cheapest beef burger on ${pluralize(c.menus, "menu")}`, `Updated ${formatDate(getGeneratedAt())}`]}
             />
-          </div>
-        ) : null}
-      </div>
-
+          ) : undefined
+        }
+      />
+      <div className="wrap">
       {!unlisted ? (
-        <section className="mt-10" aria-label="Key numbers">
+        <section className="mt-2" aria-label="Key numbers">
           <StatGrid cols={cityShare === "all" ? 3 : 4}>
             <StatTile label="Median" value={s?.index_median != null ? <Money value={s.index_median} /> : "—"} sub={chainOnly ? "Chain prices only" : cityShare === "all" ? "Index price, per menu: the NYC index" : "Index price, per menu"} />
             {cityShare === "all" ? null : (
@@ -191,8 +183,8 @@ export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug
         </section>
       ) : null}
 
-      <section className={unlisted ? "mt-10" : "section"} aria-labelledby="compare">
-        <SectionHeading id="compare" title={chainOnly || unlisted ? "The other boroughs, for reference." : "Against the other boroughs."} />
+      <section className={unlisted ? "mt-2" : "section"} aria-labelledby="compare">
+        <SectionHeading id="compare" kicker="Five boroughs, one counter" icon={ShipWheel} title={chainOnly || unlisted ? "The other boroughs, for reference." : "Against the other boroughs."} />
         <div className="mt-8">
           <ChartFigure
             id="borough-bars"
@@ -208,7 +200,7 @@ export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug
 
       {!unlisted ? (
         <section className="section" aria-labelledby="spread">
-          <SectionHeading id="spread" title={`How ${b.name} prices spread.`} />
+          <SectionHeading id="spread" kicker="Fresh off the grill" icon={Spatula} title={`How ${b.name} prices spread.`} />
           <div className="mt-8">
             <PriceDistribution id="hist-borough" prices={prices} cityMedian={median} sliceMedian={s?.index_median ?? null} sliceName={b.name} chainOnly={chainOnly} />
           </div>
@@ -217,7 +209,7 @@ export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug
 
       {hoods.length ? (
         <section className="section" aria-labelledby="hoods">
-          <SectionHeading id="hoods" title={`${b.name} neighborhoods.`}>
+          <SectionHeading id="hoods" kicker="Neighborhood specials" icon={Buoy} title={`${b.name} neighborhoods.`}>
             {ranked.length === 1
               ? `Only ${ranked[0].name} has at least ${MIN_RANKED} priced menus so far (a chain counts once), so it is the only one ranked.`
               : ranked.length
@@ -262,7 +254,7 @@ export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug
 
       {cheapest.length ? (
         <section className="section" aria-labelledby="ends">
-          <SectionHeading id="ends" title={cheapest.length >= MENU_ENDS_SPLIT ? `The cheapest and priciest in ${where}.` : `Every priced menu in ${where}.`}>
+          <SectionHeading id="ends" kicker="Catch of the day" icon={Net} title={cheapest.length >= MENU_ENDS_SPLIT ? `The cheapest and priciest in ${where}.` : `Every priced menu in ${where}.`}>
             {chainOnly
               ? `Chain prices only so far: every menu below is a chain's, counted once however many ${b.name} locations it has.`
               : `One card per menu: a chain appears once, with the number of its ${b.name} locations${chainLocationsWhere(scope)} that share its price.`}
@@ -271,11 +263,12 @@ export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug
           <p className="mt-6">
             <Link href={`/burgers?borough=${b.slug}`} className="btn btn-secondary">
               Every burger in {where}
-              <ArrowRight strokeWidth={1.75} aria-hidden="true" />
+              <ArrowRight strokeWidth={2} aria-hidden="true" />
             </Link>
           </p>
         </section>
       ) : null}
-    </div>
+      </div>
+    </>
   );
 }

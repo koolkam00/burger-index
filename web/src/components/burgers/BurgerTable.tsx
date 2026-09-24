@@ -4,9 +4,9 @@ import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { ExBurger, ExRestaurant, SortKey } from "@/lib/explorer";
-import { formatDelta, formatPrice } from "@/lib/format";
+import { formatDelta } from "@/lib/format";
 import { PROTEIN_LABEL } from "@/lib/labels";
-import { Dagger, IndexTag, PriceChip, SourceBadge, Swatch } from "../ui";
+import { IndexTag, PriceChip, SourceBadge } from "../ui";
 
 export type TableRow = { b: ExBurger; r: ExRestaurant };
 
@@ -57,7 +57,7 @@ function SortHeader({
         aria-label={`Sort by ${label.toLowerCase()}`}
       >
         {label}
-        <Icon strokeWidth={1.75} aria-hidden="true" className={active ? "" : "opacity-50"} />
+        <Icon strokeWidth={2} aria-hidden="true" className={active ? "" : "opacity-60"} />
       </button>
     </th>
   );
@@ -77,6 +77,7 @@ export function BurgerTable({
   onSort?: (s: SortKey) => void;
 }) {
   return (
+    <div className="table-shell">
     <table className="data-table">
       <caption className="sr-only">Burgers with their restaurant, price source and price</caption>
       <thead>
@@ -126,10 +127,8 @@ export function BurgerTable({
                 <span className="sm:hidden">
                   <PriceChip price={b.price} median={median} dagger={delivery} suffix="" narrowWrap />
                 </span>
-                <span className="t-num-m hidden items-center justify-end gap-2 whitespace-nowrap sm:inline-flex">
-                  {b.price !== null && median !== null ? <Swatch price={b.price} median={median} /> : null}
-                  {b.price === null ? <span className="t-ui-s muted">No price</span> : formatPrice(b.price, { cents: "always" })}
-                  {delivery && b.price !== null ? <Dagger /> : null}
+                <span className="hidden sm:inline">
+                  <PriceChip price={b.price} median={median} delta={false} dagger={delivery} />
                 </span>
               </td>
               <td className="num t-num-s muted hidden whitespace-nowrap sm:table-cell">{b.price === null ? "—" : formatDelta(b.price, median)}</td>
@@ -138,5 +137,6 @@ export function BurgerTable({
         })}
       </tbody>
     </table>
+    </div>
   );
 }

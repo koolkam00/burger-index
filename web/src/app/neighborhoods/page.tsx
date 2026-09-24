@@ -1,5 +1,6 @@
 import { AreaListItem, ChainMenuNote, SoleRanked } from "@/components/AreaList";
 import { NeighborhoodRanking } from "@/components/NeighborhoodRanking";
+import { Buoy } from "@/components/icons/nautical";
 import { BoroughDot, PageHeader, SectionHeading } from "@/components/ui";
 import { BOROUGH_META } from "@/lib/boroughs";
 import { getMenuCounts, getNeighborhoods, getScope, getStats, rankedNeighborhoods, unrankedNeighborhoods } from "@/lib/data";
@@ -48,12 +49,13 @@ export default function NeighborhoodsPage() {
   else lede = `We rank a neighborhood once it has at least ${MIN_RANKED} priced menus, counting a chain once. None has that many yet.`;
 
   return (
-    <div className="wrap">
+    <>
       {/* A ranking needs two rows: with one, it is a single row of numbers, not a sortable table. */}
-      <PageHeader title={ranked.length > 1 ? "Neighborhoods, ranked." : "Neighborhoods."} lede={lede} />
+      <PageHeader ticket="Neighborhood specials" ticketIcon={Buoy} title={ranked.length > 1 ? "Neighborhoods, ranked." : "Neighborhoods."} lede={lede} />
+      <div className="wrap">
 
       {ranked.length === 1 ? (
-        <section className="mt-8" aria-label="The ranked neighborhood">
+        <section className="mt-2" aria-label="The ranked neighborhood">
           <SoleRanked area={ranked[0]} cityMedian={median} cityMenus={getMenuCounts()} />
           <p className="t-ui-s muted mt-3">
             Median and range use each menu&apos;s index price, its cheapest beef burger, with a chain counted once per neighborhood. NYC median{" "}
@@ -61,7 +63,7 @@ export default function NeighborhoodsPage() {
           </p>
         </section>
       ) : ranked.length ? (
-        <section className="mt-8" aria-label="Ranked neighborhoods">
+        <section className="mt-2" aria-label="Ranked neighborhoods">
           <NeighborhoodRanking areas={ranked} cityMedian={median} />
           <p className="t-ui-s muted mt-3">
             Median, range and rank use each menu&apos;s index price, its cheapest beef burger, with a chain counted once per neighborhood. NYC median{" "}
@@ -105,6 +107,7 @@ export default function NeighborhoodsPage() {
           <ChainMenuNote areas={unranked} />
         </section>
       ) : null}
-    </div>
+      </div>
+    </>
   );
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BoroughBars, BoroughTable } from "@/components/charts/BoroughBars";
 import { ChartFigure } from "@/components/charts/ChartFigure";
+import { ShipWheel } from "@/components/icons/nautical";
 import { BoroughDot, ChainOnlyBadge, Money, PageHeader } from "@/components/ui";
 import { BOROUGH_META, boroughInProse } from "@/lib/boroughs";
 import { getBoroughs, getMenuCounts, getNeighborhoodsInBorough, getScope, getStats } from "@/lib/data";
@@ -47,9 +48,10 @@ export default function BoroughsPage() {
   const title = comparable.length === boroughs.length ? "Five boroughs, five medians." : "Borough medians.";
 
   return (
-    <div className="wrap">
-      <PageHeader title={title} lede={lede} />
-      <section className="mt-10" aria-label="Borough comparison">
+    <>
+      <PageHeader ticket="Five boroughs, one counter" ticketIcon={ShipWheel} title={title} lede={lede} />
+      <div className="wrap">
+      <section className="mt-2" aria-label="Borough comparison">
         <ChartFigure
           id="borough-bars"
           title="Median index price by borough"
@@ -96,6 +98,7 @@ export default function BoroughsPage() {
           ))}
         </ul>
       </section>
-    </div>
+      </div>
+    </>
   );
 }

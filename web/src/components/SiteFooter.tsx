@@ -1,45 +1,59 @@
 import Link from "next/link";
 import { formatDate, pluralize } from "@/lib/format";
 import { NAV } from "@/lib/site";
+import { Anchor } from "./icons/nautical";
 import { UseSystemTheme } from "./theme";
+import { Wordmark } from "./Wordmark";
 
-/** `listCredit`: where the restaurant list comes from, computed from the dataset (lib/scope `scopeCredit`). */
+/**
+ * The deck: a rope rail, then dark stained deck planks. `listCredit`: where the restaurant list comes
+ * from, computed from the dataset (lib/scope `scopeCredit`). The non-affiliation line ships on every page.
+ */
 export function SiteFooter({ generatedAt, menus, locations, listCredit }: { generatedAt: string; menus: number; locations: number; listCredit: string }) {
   return (
-    <footer className="mt-12 md:mt-24">
-      <div className="wrap">
-        <div className="grid gap-8 border-t-2 border-ink py-12 md:grid-cols-3">
+    <footer className="site-footer atmo">
+      <span className="rope rope-flat" aria-hidden="true" />
+      <div className="deck">
+        <div className="wrap grid gap-10 md:grid-cols-3 md:gap-8">
           <div className="min-w-0">
-            <p className="wordmark">
-              <span className="wordmark-the">The</span>Burger Index
+            <p>
+              <Wordmark />
             </p>
-            <p className="t-ui-m mt-3">
+            <p className="t-ui-m mt-4">
               Updated {formatDate(generatedAt)} · {pluralize(menus, "menu")} at {pluralize(locations, "location")} priced
             </p>
-            <p className="t-ui-s muted mt-2">Prices in US dollars, before tax and tip.</p>
+            <p className="t-ui-s deck-muted mt-2">Prices in US dollars, before tax and tip.</p>
           </div>
           <nav aria-label="Footer" className="min-w-0">
             <ul className="t-ui-m grid grid-cols-2 gap-x-6 gap-y-2">
               {NAV.map((item) => (
                 <li key={item.href}>
-                  <Link className="ui-link" href={item.href}>
+                  <Link className="deck-link" href={item.href}>
                     {item.label}
                   </Link>
                 </li>
               ))}
-              <li>
-                <a className="ui-link" href="/data/burger_index.json" download>
+              <li className="col-span-2">
+                <a className="deck-link" href="/data/burger_index.json" download>
                   Download the data (JSON)
                 </a>
               </li>
-              <li>
+              <li className="col-span-2">
                 <UseSystemTheme />
               </li>
             </ul>
           </nav>
           <div className="min-w-0">
-            <p className="t-body-s muted">We index prices, not quality. Not affiliated with any restaurant.</p>
-            <p className="t-body-s muted mt-3">{listCredit} Map data © OpenStreetMap contributors, tiles by OpenFreeMap.</p>
+            <p className="t-body-s deck-muted">
+              We index prices, not quality. An original seaside-diner homage: not affiliated with any restaurant, TV show or network.
+            </p>
+            <p className="t-body-s mt-3 flex items-start gap-2">
+              <Anchor size={18} className="mt-0.5 flex-none" />
+              <span>Fry-cook approved: every price comes from a menu online, and the methodology says which.</span>
+            </p>
+            <p className="t-body-s deck-muted mt-3">
+              {listCredit} Map data © OpenStreetMap contributors, tiles by OpenFreeMap.
+            </p>
           </div>
         </div>
       </div>

@@ -41,8 +41,20 @@ export const STATUS_COPY: Record<Status, string> = {
   priced: "We found a priced beef burger on this menu.",
   no_burgers: "Menu found, but no beef burger on the page we read.",
   no_prices: "There's a burger on the menu, but no price online. Market price, apparently.",
+  no_menu_found: "We couldn't find a menu online for this place. Lost at sea, for now.",
+  error: "Our scraper ran aground on this menu. It sets sail again next update.",
+};
+
+/**
+ * The same statuses as plain rules, for the methodology page (DESIGN.md: methodology is joke-free
+ * below its kicker). The no_burgers and no_prices lines are user-kept verbatim strings, so they match.
+ */
+export const STATUS_MEANING: Record<Status, string> = {
+  priced: STATUS_COPY.priced,
+  no_burgers: STATUS_COPY.no_burgers,
+  no_prices: STATUS_COPY.no_prices,
   no_menu_found: "We couldn't find a menu online for this place.",
-  error: "Our scraper choked on this menu. It tries again next update.",
+  error: "Our scraper failed on this menu. It tries again next update.",
 };
 
 /**

@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generated_at": "2026-09-24T07:01:27Z",
+ "generated_at": "2026-09-24T11:34:33Z",
  "currency": "USD",
  "methodology": {
   "index_price_rule": "A restaurant's index price is its cheapest beef burger: the burger by itself (no combo or meal upgrade, no add-ons), single/standard size, at its dinner or all-day menu price. Lunch, brunch or late-night prices count only when no beef burger on the menu has a dinner or all-day price; happy-hour prices are left out. The Burger Index is the median index price across distinct menus: every independent restaurant counts once and each chain counts once, however many locations it has (they share one scraped menu). Borough and neighborhood figures count a chain at most once per area.",
@@ -10,7 +10,7 @@
    "2010 Neighborhood Tabulation Areas (NYC Open Data 8ius-dhrr): neighborhood names, a few relabeled to current usage (MN27 as Chinatown-Lower East Side, MN28 as Lower East Side-Alphabet City, BK72 as South Williamsburg, BK73 as Williamsburg).",
    "Menu prices from each restaurant's own site or menu PDF, online-ordering pages, menu aggregators and delivery apps, read with Context.dev web scraping."
   ],
-  "coverage_note": "608 restaurants in scope: our curated list of NYC burger restaurants, matched to NYC DOHMH inspection records for address and location where possible (500 of 608), except national fast-food chains (Shake Shack, Five Guys, McDonald's, Tex's Chicken & Burgers and the like). NYC's own small chains stay in. 80 of them are in this dataset; the other 528 are not yet scraped. Chain locations share one menu price scraped from a single NYC location. Delivery-app prices usually run above in-store prices."
+  "coverage_note": "604 restaurants in scope: our curated list of NYC burger restaurants, matched to NYC DOHMH inspection records for address and location where possible (500 of 604), except national fast-food chains (Shake Shack, Five Guys, McDonald's, Tex's Chicken & Burgers and the like). NYC's own small chains stay in. 80 of them are in this dataset; the other 524 are not yet scraped. Chain locations share one menu price scraped from a single NYC location. Delivery-app prices usually run above in-store prices."
  },
  "stats": {
   "restaurants_scanned": 80,

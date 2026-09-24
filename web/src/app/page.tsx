@@ -7,7 +7,8 @@ import { AreaTable, RangePlot } from "@/components/charts/RangePlot";
 import { Letterboard } from "@/components/Letterboard";
 import { SoleRanked } from "@/components/AreaList";
 import { MenuEnds } from "@/components/RestaurantBits";
-import { ChartEmpty, Money, SectionHeading, StatGrid, StatTile } from "@/components/ui";
+import { Anchor, Buoy, LobsterTrap, Net, OrderBell, ShipWheel, Spatula, Spyglass } from "@/components/icons/nautical";
+import { Bubbles, Caustics, ChartEmpty, KickerTicket, Money, MoneyRange, SectionHeading, StatGrid, StatTile, WaveEdge } from "@/components/ui";
 import { boroughInProse } from "@/lib/boroughs";
 import { allBurgers, getBoroughs, getBurger, getGeneratedAt, getMenuCounts, getNeighborhoods, getRestaurants, getScope, getStats, rankedNeighborhoods } from "@/lib/data";
 import { capitalize, ends, formatCount, formatDate, formatPrice, pluralize } from "@/lib/format";
@@ -132,79 +133,92 @@ export default function HomePage() {
   const rankRule = `We rank a neighborhood once it has at least ${MIN_RANKED} priced menus, counting a chain once.`;
 
   return (
-    <div className="wrap">
-      {/* Hero: H1 + lede, board in columns 6–12 at lg */}
-      <section className="grid gap-8 pt-8 md:pt-12 lg:grid-cols-12 lg:items-end lg:gap-8" aria-labelledby="hero-title">
-        <div className="min-w-0 lg:col-span-5 lg:pb-4">
-          <h1 id="hero-title" className="t-display-l">
-            What a burger costs in New York.
-          </h1>
-          <p className="t-lede mt-5">
-            {median !== null ? (
-              <>
-                {lookedUp} and recorded the cheapest beef burger on every menu we could price: {pluralize(counts.menus, "menu")}, from {menuBreakdown(counts)}.
-                {chainRule} Half of those menus charge more than {formatPrice(median)}. Half charge less.
-              </>
-            ) : (
-              <>
-                We are still reading {scope.pending ? `the menus of the ${scopeRestaurants(scope)}` : "menus"}. The index appears here once the first
-                restaurants are priced.
-              </>
-            )}
-          </p>
+    <>
+      {/* The view through the front window: sea water, surface ripples, bubbles in the gutters. The
+          kicker ticket, H1 and lede sit here, and the Order Board hangs in columns 6–12 at lg. */}
+      <section className="hero atmo" aria-labelledby="hero-title">
+        <Caustics id="caustic-hero" />
+        <Bubbles />
+        <div className="wrap band-body">
+          <div className="grid gap-10 lg:grid-cols-12 lg:items-end lg:gap-8">
+            <div className="min-w-0 lg:col-span-5 lg:pb-6">
+              <KickerTicket>Now serving · NYC</KickerTicket>
+              <h1 id="hero-title" className="t-display-l mt-5">
+                What a burger costs in New York.
+              </h1>
+              <p className="t-lede mt-5">
+                {median !== null ? (
+                  <>
+                    {lookedUp} and recorded the cheapest beef burger on every menu we could price: {pluralize(counts.menus, "menu")}, from {menuBreakdown(counts)}.
+                    {chainRule} Half of those menus charge more than {formatPrice(median)}. Half charge less.
+                  </>
+                ) : (
+                  <>
+                    We are still reading {scope.pending ? `the menus of the ${scopeRestaurants(scope)}` : "menus"}. The index appears here once the first
+                    restaurants are priced.
+                  </>
+                )}
+              </p>
+            </div>
+            <div className="min-w-0 lg:col-span-7">
+              <Letterboard
+                overline="The Burger Index · NYC median"
+                price={median}
+                line={[`Cheapest beef burger on ${pluralize(counts.menus, "menu")}`, lookedUpSoFar(scope), `Updated ${formatDate(generated)}`].filter((x): x is string => !!x)}
+              />
+            </div>
+          </div>
         </div>
-        <div className="min-w-0 lg:col-span-7">
-          <Letterboard
-            overline="The Burger Index · NYC median"
-            price={median}
-            line={[`Cheapest beef burger on ${pluralize(counts.menus, "menu")}`, lookedUpSoFar(scope), `Updated ${formatDate(generated)}`].filter((x): x is string => !!x)}
-          />
-        </div>
+        <WaveEdge />
       </section>
 
-      <section className="mt-10 md:mt-12" aria-label="Key numbers">
-        <StatGrid>
-          <StatTile
-            label="Typical range"
-            value={
-              stats.index_p10 !== null && stats.index_p90 !== null && stats.index_p10 === stats.index_p90 ? (
-                <Money value={stats.index_p10} />
-              ) : stats.index_p10 !== null && stats.index_p90 !== null ? (
-                <span className="inline-flex flex-wrap items-start gap-x-1">
+      {/* Portholes along the counter, on a trap-net band. */}
+      <section className="counter" aria-label="Key numbers">
+        <div className="wrap">
+          <StatGrid>
+            <StatTile
+              label="Typical range"
+              icon={Anchor}
+              value={
+                stats.index_p10 !== null && stats.index_p90 !== null && stats.index_p10 === stats.index_p90 ? (
                   <Money value={stats.index_p10} />
-                  <span aria-hidden="true">–</span>
-                  <span className="sr-only">to</span>
-                  <Money value={stats.index_p90} />
-                </span>
-              ) : (
-                "—"
-              )
-            }
-            sub="Middle 80% of the menus"
-          />
-          <StatTile
-            label="Menus priced"
-            value={formatCount(counts.menus)}
-            sub={counts.menus ? `${menuBreakdownShort(counts)}, at ${pluralize(stats.restaurants_priced, "location")}` : `of ${formatCount(stats.restaurants_scanned)} restaurants`}
-          />
-          {/* While part of the list is still unread, how much of it is read beats a burger count. */}
-          {scope.pending ? (
-            <StatTile label="Looked up so far" value={formatCount(scope.lookedUp)} sub={`of ${formatCount(scope.inScope)} restaurants ${scopeWhere(scope)}`} />
-          ) : (
-            <StatTile label="Burgers priced" value={formatCount(stats.burgers)} sub={`${formatCount(stats.beef_burgers)} beef · a row per location`} />
-          )}
-          {/* Pooled over every item, so long menus weigh more: it sits below the index, which is one cheapest beef burger per menu. */}
-          <StatTile
-            label="Every burger, pooled"
-            value={stats.all_burgers_median !== null ? <Money value={stats.all_burgers_median} /> : "—"}
-            sub={pooledItems ? `Median of all ${formatCount(pooledItems)} priced items, any protein` : "Every priced item on those menus"}
-          />
-        </StatGrid>
+                ) : stats.index_p10 !== null && stats.index_p90 !== null ? (
+                  <MoneyRange lo={stats.index_p10} hi={stats.index_p90} />
+                ) : (
+                  "—"
+                )
+              }
+              sub="Middle 80% of the menus"
+            />
+            <StatTile
+              label="Menus priced"
+              icon={Spatula}
+              value={formatCount(counts.menus)}
+              sub={counts.menus ? `${menuBreakdownShort(counts)}, at ${pluralize(stats.restaurants_priced, "location")}` : `of ${formatCount(stats.restaurants_scanned)} restaurants`}
+            />
+            {/* While part of the list is still unread, how much of it is read beats a burger count. */}
+            {scope.pending ? (
+              <StatTile label="Looked up so far" icon={Spyglass} value={formatCount(scope.lookedUp)} sub={`of ${formatCount(scope.inScope)} restaurants ${scopeWhere(scope)}`} />
+            ) : (
+              <StatTile label="Burgers priced" icon={OrderBell} value={formatCount(stats.burgers)} sub={`${formatCount(stats.beef_burgers)} beef · a row per location`} />
+            )}
+            {/* Pooled over every item, so long menus weigh more: it sits below the index, which is one cheapest beef burger per menu. */}
+            <StatTile
+              label="Every burger, pooled"
+              icon={LobsterTrap}
+              value={stats.all_burgers_median !== null ? <Money value={stats.all_burgers_median} /> : "—"}
+              sub={pooledItems ? `Median of all ${formatCount(pooledItems)} priced items, any protein` : "Every priced item on those menus"}
+            />
+          </StatGrid>
+        </div>
       </section>
 
-      <section className="section" aria-labelledby="spread">
+      <div className="wrap">
+      <section className="mt-10 md:mt-16" aria-labelledby="spread">
         <SectionHeading
           id="spread"
+          kicker="Fresh off the grill"
+          icon={Spatula}
           title={
             // p10–p90 of index prices: what most menus' cheapest beef burger costs, not most burgers.
             stats.index_p10 !== null && stats.index_p90 !== null && Math.floor(stats.index_p10) !== Math.ceil(stats.index_p90)
@@ -220,7 +234,7 @@ export default function HomePage() {
       </section>
 
       <section className="section" aria-labelledby="boroughs">
-        <SectionHeading id="boroughs" title={boroughTitle}>
+        <SectionHeading id="boroughs" kicker="Five boroughs, one counter" icon={ShipWheel} title={boroughTitle}>
           {chainOnlyLine}
         </SectionHeading>
         <div className="mt-8">
@@ -233,14 +247,14 @@ export default function HomePage() {
               table={<BoroughTable boroughs={boroughs} />}
             />
           ) : (
-            <ChartEmpty height={220}>No borough has a priced restaurant yet.</ChartEmpty>
+            <ChartEmpty height={220}>No borough has a priced restaurant yet. The grill&apos;s still warming up.</ChartEmpty>
           )}
         </div>
       </section>
 
       {cheapest.length ? (
         <section className="section" aria-labelledby="cheap">
-          <SectionHeading id="cheap" title={`Where ${formatPrice(cheapest[0].indexPrice)} still gets you lunch.`}>
+          <SectionHeading id="cheap" kicker="Catch of the day" icon={Net} title={`Where ${formatPrice(cheapest[0].indexPrice)} still gets you lunch.`}>
             One card per menu: a chain appears once, with the number of its locations{chainLocationsWhere(scope)} that share its price.
           </SectionHeading>
           <MenuEnds cheapest={cheapest} priciest={priciest} median={median} chainCount={{ where: chainLocationsWhere(scope) }} />
@@ -263,6 +277,8 @@ export default function HomePage() {
       <section className="section" aria-labelledby="hoods">
         <SectionHeading
           id="hoods"
+          kicker="Neighborhood specials"
+          icon={Buoy}
           title={
             hoodEnds.kind === "none"
               ? ranked.length
@@ -306,28 +322,29 @@ export default function HomePage() {
           <p className="mt-6">
             <Link href="/neighborhoods" className="btn btn-secondary">
               All neighborhoods
-              <ArrowRight strokeWidth={1.75} aria-hidden="true" />
+              <ArrowRight strokeWidth={2} aria-hidden="true" />
             </Link>
           </p>
         </div>
       </section>
 
       <section className="section" aria-labelledby="explore">
-        <SectionHeading id="explore" title="Look up any burger." />
+        <SectionHeading id="explore" kicker="Cast a line" icon={Spyglass} title="Look up any burger." />
         <p className="t-body muted prose-width mt-3">
           Search every burger we found by name, restaurant or neighborhood, or see the index prices on a map.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link href="/burgers" className="btn btn-primary btn-lg">
             Browse all {formatCount(burgerRows)} burgers
-            <ArrowRight strokeWidth={1.75} aria-hidden="true" />
+            <ArrowRight strokeWidth={2} aria-hidden="true" />
           </Link>
           <Link href="/map" className="btn btn-secondary btn-lg">
-            <MapIcon strokeWidth={1.75} aria-hidden="true" />
+            <MapIcon strokeWidth={2} aria-hidden="true" />
             Open the map
           </Link>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }

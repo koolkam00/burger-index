@@ -120,3 +120,13 @@ With the user's approval (clean the list from the audit, fix wrong neighborhoods
 - **233** The Standard Plaza takes no permit of its own: 50071497 (THE STANDARD BIERGARTEN / THE STANDARD GRILL / THE STANDARD SODA SHOP, 848 Washington St) goes to row 33 The Standard Grill. Delete it as a duplicate, or keep it as a separate menu?
 - **224** Rory's Rooftop and **234** Puttery share one permit (50146477, 446 W 14th St); Rory's Rooftop takes it and Puttery is left CSV-only. Two menus, or one?
 - **3** Skinny Louie West Village and **350** Skinny Louie (NoMad): a fast-casual smash-burger chain from Miami (founded in Wynwood in 2023; shops across South Florida, and in NYC in NoMad, the West Village, the Upper East Side and the East Village, with more planned). Exclude it like PLNT Burger and Slutty Vegan, or keep it? Source: https://whatnow.com/new-york/restaurants/miamis-award-winning-smash-burger-chain-lands-in-the-penn-district/ ; https://www.qsrmagazine.com/news/skinny-louie-to-open-in-new-york-citys-upper-east-side-neighborhood/.
+
+## Third pass (2026-09-24, user decisions)
+
+Row numbers here are rows of the list as it stood after the second pass.
+
+- **233** The Standard Plaza (Meatpacking District): deleted. Why: no permit of its own; the only permit at 848 Washington St (Standard Biergarten / Grill / Soda Shop) belongs to The Standard Grill. User chose to treat it as a duplicate.
+- **130** Burger Bandit (Financial District): deleted. Why: DOHMH lists another business at 2 Broadway (report.csv_address_now_other_business); likely closed. User decision.
+- **313** AKB (Archer Hotel) (Midtown West): deleted. Why: DOHMH lists another business at 45 W 38th St; likely closed. User decision.
+- **603** The Richmond (Stapleton, Staten Island): deleted. Why: DOHMH lists another business at 695 Bay St; likely closed. User decision.
+- Skinny Louie (2 rows): kept as a local chain (user decision), although it started in Miami in 2023.

@@ -1,61 +1,115 @@
 @import "tailwindcss";
 
 /* =============================================================================================
-   The Burger Index design tokens (DESIGN.md). Light on :root; dark under prefers-color-scheme
+   The Burger Index design tokens (DESIGN.md, direction "The Restaurant"). An original seaside-diner
+   homage: day shift on :root; night shift (the deep sea after close) under prefers-color-scheme
    (unless the reader chose light) and again under [data-theme="dark"] for the persisted toggle.
+   Four color families, each with one job: chrome (the building), the "Shallows to Trench" price
+   ramp (price only), borough flags (identity dots only) and status.
    ============================================================================================= */
 
 :root {
   color-scheme: light;
 
-  --bg: #f5f1e8;
-  --surface: #fffdf8;
-  --surface-2: #ede7da;
-  --ink: #1c1915;
-  --ink-muted: #5c554c;
-  --line: #ddd5c6;
-  --line-strong: #8a8174;
-  --grid: #e8e1d3;
-  --axis: #a69c8d;
-  --bar: #7a7166;
-  --accent: #b8261b;
-  --accent-hover: #9c1f16;
+  /* Paper and ink */
+  --bg: #f6ecd6;
+  --surface: #fffaf0;
+  --surface-2: #f3e4c4;
+  --ink: #2b1b10;
+  --ink-muted: #6a4f3a;
+  --line: #e6d3ae;
+  --line-strong: #957550;
+  --grid: #efe2c6;
+  --axis: #b89f7a;
+  --bar: #8a6d4e;
+
+  /* Galley red */
+  --accent: #c4221b;
+  --accent-hover: #a11a14;
+  --accent-deep: #6e0f0b;
   --accent-ink: #ffffff;
-  --accent-tint: #f6e0db;
-  --highlight-tint: #fbefc7;
-  --highlight-edge: #8f6b0c;
-  --focus: #1f5fd6;
-  --board: #181614;
-  --board-frame: #3a352f;
-  --board-ink: #f8f3e7;
-  --board-muted: #b5ab9c;
-  --map-land: #ece6da;
-  --map-water: #cfdcdd;
-  --map-park: #dfe3cf;
-  --map-border: #b9ae9c;
-  --map-label: #5c554c;
-  --pin-ring: rgba(28, 25, 21, 0.55);
-  --ok-bg: #e2eedd;
-  --ok-icon: #2d6a2e;
-  --warn-bg: #f7eacb;
-  --warn-icon: #8a5a00;
-  --err-bg: #f6ddd8;
-  --err-icon: #a3261c;
+  --accent-tint: #fbe0d8;
+  --highlight-tint: #ffefb5;
+  --highlight-edge: #8c6700;
+  --focus: #1648c8;
+  --focus-halo: #fffaf0;
 
-  --price-1: #dea41b;
-  --price-2: #db7b06;
-  --price-3: #d24e00;
-  --price-4: #b52c22;
-  --price-5: #881e2a;
+  /* The Order Board (theme-invariant: the lit sign) */
+  --sign: #ffcd3c;
+  --sign-ink: #3a1f0c;
+  --sign-price: #b0170f;
+  --sign-shade: #3a1f0c;
+  --sign-glow: 0 0 0 0 transparent;
+  --plaque: #b0170f;
+  --plaque-ink: #ffe08a;
 
+  /* The building */
+  --wood-face: #dda764;
+  --wood-ink: #2b1b10;
+  --wood-hover: rgba(58, 31, 12, 0.1);
+  --deck: #5a3a1e;
+  --deck-ink: #fff4de;
+  --deck-muted: #e6cfa8;
+  --frame-1: #c68842;
+  --frame-2: #9a6128;
+  --nail: #5a3410;
+  --rope-1: #e2c089;
+  --rope-2: #a77c45;
+  --brass: #b8862e;
+  --brass-hi: rgba(255, 236, 190, 0.7);
+  --brass-lo: #7a5415;
+  --glass: #9fdcd6;
+  --glass-hi: #e6fffb;
+  --sea-top: #a7e3dc;
+  --sea-bot: #62c3c3;
+  --caustic: rgba(255, 255, 255, 0.55);
+  --bubble: rgba(255, 255, 255, 0.8);
+  --foam: rgba(255, 255, 255, 0.7);
+  --awning-a: #c4221b;
+  --awning-b: #fff4de;
+  --net: rgba(149, 117, 80, 0.16);
+  --block: #dcc79e;
+  --ring-a: #c4221b;
+  --ring-b: #fff4de;
+  --ring-line: #2b1b10;
+  --slip: #eef6e6;
+  --slip-rule: #c9ddbe;
+  --slip-margin: #c8453a;
+  --swatch-ring: rgba(43, 27, 16, 0.38);
+
+  /* Basemap */
+  --map-land: #efe3c8;
+  --map-water: #c3d5d6;
+  --map-park: #dce3c4;
+  --map-border: #b59e7b;
+  --map-label: #6a4f3a;
+  --pin-ring: #6b5847;
+
+  /* Status */
+  --ok-bg: #ddf0d8;
+  --ok-icon: #2b6a2e;
+  --warn-bg: #fbebc0;
+  --warn-icon: #875800;
+  --err-bg: #fadad2;
+  --err-icon: #a3221a;
+
+  /* Price ramp "Shallows to Trench": the deeper the water, the pricier the burger. */
+  --price-1: #54c2c7;
+  --price-2: #2ea0b0;
+  --price-3: #197f94;
+  --price-4: #005f78;
+  --price-5: #00405a;
+
+  /* Borough "Harbor flags" (fixed order) */
   --borough-manhattan: #005bb3;
   --borough-brooklyn: #ab3b79;
   --borough-queens: #018c3f;
   --borough-bronx: #734dbe;
-  --borough-staten-island: #09a0a0;
+  --borough-staten-island: #bf5a0c;
 
-  --shadow-pop: 0 1px 2px rgba(28, 25, 21, 0.08), 0 8px 24px rgba(28, 25, 21, 0.12);
-  --shadow-board: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+  --shadow-block: 0 4px 0 var(--block);
+  --shadow-pop: 0 1px 2px rgba(43, 27, 16, 0.08), 0 8px 24px rgba(43, 27, 16, 0.14);
+  --shadow-sign: 0 24px 30px -16px rgba(43, 27, 16, 0.55);
 
   --space-1: 4px;
   --space-2: 8px;
@@ -67,11 +121,14 @@
   --space-8: 64px;
   --space-9: 96px;
 
-  --radius-1: 2px;
-  --radius-2: 4px;
+  --radius-1: 4px;
+  --radius-badge: 6px;
+  --radius-2: 10px;
+  --radius-3: 16px;
   --radius-pill: 999px;
 
-  --nav-h: 56px;
+  --nav-h: 64px;
+  --awning-h: 30px;
   --max-page: 1200px;
   --max-prose: 680px;
   --max-map: 1440px;
@@ -81,108 +138,185 @@
   --dur-3: 320ms;
   --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-swing: cubic-bezier(0.3, 0.7, 0.4, 1);
 
-  --font-display: var(--bs), "Arial Narrow", sans-serif;
-  --font-body: var(--nr), Georgia, serif;
-  --font-ui: var(--lf), "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--lo), "Arial Rounded MT Bold", "Arial Black", sans-serif;
+  --font-body: var(--nu), "Trebuchet MS", sans-serif;
+  --font-ui: var(--ba), "Helvetica Neue", Arial, sans-serif;
+
+  /* Textures (alpha-only strokes, so one tile serves both themes). Any stroke that can fall behind
+     text stays at or under 12% alpha. The nav's 25% seam sits on the bottom row of its one plank,
+     under no text; the footer deck repeats under running text, so its seam is 12% and its top
+     highlight 8%. */
+  --plank-nav: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='56'%3E%3Crect width='360' height='1' fill='%23fff' fill-opacity='0.18'/%3E%3Crect y='55' width='360' height='1' fill='%23000' fill-opacity='0.25'/%3E%3Cg fill='none' stroke='%23000'%3E%3Cpath d='M0 14C60 11 120 17 180 14S300 11 360 15' stroke-opacity='0.07'/%3E%3Cpath d='M0 28C70 25 130 31 200 28S310 26 360 29' stroke-opacity='0.06'/%3E%3Cpath d='M0 41C50 44 110 38 170 41S290 45 360 41' stroke-opacity='0.07'/%3E%3Cellipse cx='96' cy='34' rx='9' ry='3.5' stroke-opacity='0.1'/%3E%3C/g%3E%3Crect x='244' width='1' height='56' fill='%23000' fill-opacity='0.12'/%3E%3Cg fill='%23000' fill-opacity='0.12'%3E%3Ccircle cx='238' cy='8' r='1.8'/%3E%3Ccircle cx='238' cy='48' r='1.8'/%3E%3Ccircle cx='251' cy='8' r='1.8'/%3E%3Ccircle cx='251' cy='48' r='1.8'/%3E%3C/g%3E%3C/svg%3E");
+  --plank-deck: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='56'%3E%3Crect width='360' height='1' fill='%23fff' fill-opacity='0.08'/%3E%3Crect y='55' width='360' height='1' fill='%23000' fill-opacity='0.12'/%3E%3Cg fill='none' stroke='%23000'%3E%3Cpath d='M0 14C60 11 120 17 180 14S300 11 360 15' stroke-opacity='0.07'/%3E%3Cpath d='M0 28C70 25 130 31 200 28S310 26 360 29' stroke-opacity='0.06'/%3E%3Cpath d='M0 41C50 44 110 38 170 41S290 45 360 41' stroke-opacity='0.07'/%3E%3Cellipse cx='96' cy='34' rx='9' ry='3.5' stroke-opacity='0.1'/%3E%3C/g%3E%3Crect x='244' width='1' height='56' fill='%23000' fill-opacity='0.12'/%3E%3Cg fill='%23000' fill-opacity='0.12'%3E%3Ccircle cx='238' cy='8' r='1.8'/%3E%3Ccircle cx='238' cy='48' r='1.8'/%3E%3Ccircle cx='251' cy='8' r='1.8'/%3E%3Ccircle cx='251' cy='48' r='1.8'/%3E%3C/g%3E%3C/svg%3E");
+  --plank-faint: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='56'%3E%3Cg fill='none' stroke='%23000'%3E%3Cpath d='M0 14C60 11 120 17 180 14S300 11 360 15' stroke-opacity='0.035'/%3E%3Cpath d='M0 28C70 25 130 31 200 28S310 26 360 29' stroke-opacity='0.03'/%3E%3Cpath d='M0 41C50 44 110 38 170 41S290 45 360 41' stroke-opacity='0.035'/%3E%3C/g%3E%3C/svg%3E");
+  --rope: repeating-linear-gradient(118deg, var(--rope-1) 0 4px, var(--rope-2) 4px 6px, var(--rope-1) 6px 8px);
+  --rope-v: repeating-linear-gradient(28deg, var(--rope-1) 0 4px, var(--rope-2) 4px 6px, var(--rope-1) 6px 8px);
+  --net-pattern: repeating-linear-gradient(45deg, var(--net) 0 1.5px, transparent 1.5px 18px), repeating-linear-gradient(-45deg, var(--net) 0 1.5px, transparent 1.5px 18px);
 }
 
+/* Night shift. Keep the two dark blocks identical. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: #121110;
-    --surface: #1b1916;
-    --surface-2: #25221e;
-    --ink: #f3eee4;
-    --ink-muted: #aaa194;
-    --line: #332f29;
-    --line-strong: #7a7266;
-    --grid: #2a2723;
-    --axis: #4d473f;
-    --bar: #8c8377;
-    --accent: #f2604c;
-    --accent-hover: #ff7a66;
-    --accent-ink: #1a0a07;
-    --accent-tint: #3a1f1a;
-    --highlight-tint: #3a3117;
-    --highlight-edge: #c99a2a;
-    --focus: #86aeff;
-    --board: #0c0b0a;
-    --board-frame: #6e665b;
-    --board-ink: #f8f3e7;
-    --board-muted: #a9a08f;
-    --map-land: #1f1d1a;
-    --map-water: #15212a;
-    --map-park: #1e231b;
-    --map-border: #4d473f;
-    --map-label: #aaa194;
-    --pin-ring: #121110;
-    --ok-bg: #1c2b1d;
-    --ok-icon: #6fc77a;
+    --bg: #081b25;
+    --surface: #0e2733;
+    --surface-2: #15343f;
+    --ink: #f6edda;
+    --ink-muted: #a9c0c4;
+    --line: #1f4251;
+    --line-strong: #628896;
+    --grid: #173442;
+    --axis: #3e6272;
+    --bar: #a58d70;
+    --accent: #ff6b57;
+    --accent-hover: #ff8a78;
+    --accent-deep: #9e2b1e;
+    --accent-ink: #1e0804;
+    --accent-tint: #3d1e1c;
+    --highlight-tint: #3b3416;
+    --highlight-edge: #d9aa33;
+    --focus: #8db6ff;
+    --focus-halo: #081b25;
+    --sign-glow: 0 0 0 3px rgba(255, 205, 60, 0.18), 0 0 70px 6px rgba(255, 205, 60, 0.2);
+    --wood-face: #4b2e17;
+    --wood-ink: #f6edda;
+    --wood-hover: rgba(255, 240, 210, 0.1);
+    --deck: #2a190c;
+    --deck-ink: #f6edda;
+    --deck-muted: #d2bc98;
+    --frame-1: #a8723a;
+    --frame-2: #80521f;
+    --nail: #3a2208;
+    --rope-1: #b89464;
+    --rope-2: #6f5130;
+    --brass: #a87a2a;
+    --brass-hi: rgba(255, 226, 160, 0.35);
+    --brass-lo: #5e4010;
+    --glass: #0f4a57;
+    --glass-hi: #2b8c9a;
+    --sea-top: #0d3b48;
+    --sea-bot: #072531;
+    --caustic: rgba(140, 230, 255, 0.13);
+    --bubble: rgba(160, 240, 255, 0.5);
+    --foam: rgba(160, 240, 255, 0.22);
+    --awning-a: #b8392a;
+    --awning-b: #e9dcc4;
+    --net: rgba(98, 136, 150, 0.16);
+    --block: #04121a;
+    --ring-a: #ff6b57;
+    --ring-b: #f6edda;
+    --ring-line: #f6edda;
+    --slip: #17302a;
+    --slip-rule: #2a4a40;
+    --slip-margin: #e0685c;
+    --swatch-ring: rgba(0, 0, 0, 0.45);
+    --map-land: #102b37;
+    --map-water: #061520;
+    --map-park: #12302b;
+    --map-border: #36596a;
+    --map-label: #a9c0c4;
+    --pin-ring: #081b25;
+    --ok-bg: #11332a;
+    --ok-icon: #6fd08a;
     --warn-bg: #33290f;
-    --warn-icon: #e7b54a;
-    --err-bg: #3a1c18;
+    --warn-icon: #f0be4e;
+    --err-bg: #3f1d1b;
     --err-icon: #ff7b69;
-    --price-1: #f7cb58;
-    --price-2: #f9a136;
-    --price-3: #f17633;
-    --price-4: #e1503b;
-    --price-5: #c53443;
-    --borough-manhattan: #2f7dd9;
-    --borough-brooklyn: #b2417f;
+    --price-1: #c4fbf9;
+    --price-2: #82dfe9;
+    --price-3: #5ac3d7;
+    --price-4: #39a5c3;
+    --price-5: #1689b0;
+    --borough-manhattan: #3584de;
+    --borough-brooklyn: #c04d8b;
     --borough-queens: #33ac5a;
-    --borough-bronx: #7a59c3;
-    --borough-staten-island: #05a7a7;
-    --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --borough-bronx: #8465d0;
+    --borough-staten-island: #d8691f;
+    --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.55);
+    --shadow-sign: 0 24px 30px -16px rgba(0, 0, 0, 0.7);
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #121110;
-  --surface: #1b1916;
-  --surface-2: #25221e;
-  --ink: #f3eee4;
-  --ink-muted: #aaa194;
-  --line: #332f29;
-  --line-strong: #7a7266;
-  --grid: #2a2723;
-  --axis: #4d473f;
-  --bar: #8c8377;
-  --accent: #f2604c;
-  --accent-hover: #ff7a66;
-  --accent-ink: #1a0a07;
-  --accent-tint: #3a1f1a;
-  --highlight-tint: #3a3117;
-  --highlight-edge: #c99a2a;
-  --focus: #86aeff;
-  --board: #0c0b0a;
-  --board-frame: #6e665b;
-  --board-ink: #f8f3e7;
-  --board-muted: #a9a08f;
-  --map-land: #1f1d1a;
-  --map-water: #15212a;
-  --map-park: #1e231b;
-  --map-border: #4d473f;
-  --map-label: #aaa194;
-  --pin-ring: #121110;
-  --ok-bg: #1c2b1d;
-  --ok-icon: #6fc77a;
+  --bg: #081b25;
+  --surface: #0e2733;
+  --surface-2: #15343f;
+  --ink: #f6edda;
+  --ink-muted: #a9c0c4;
+  --line: #1f4251;
+  --line-strong: #628896;
+  --grid: #173442;
+  --axis: #3e6272;
+  --bar: #a58d70;
+  --accent: #ff6b57;
+  --accent-hover: #ff8a78;
+  --accent-deep: #9e2b1e;
+  --accent-ink: #1e0804;
+  --accent-tint: #3d1e1c;
+  --highlight-tint: #3b3416;
+  --highlight-edge: #d9aa33;
+  --focus: #8db6ff;
+  --focus-halo: #081b25;
+  --sign-glow: 0 0 0 3px rgba(255, 205, 60, 0.18), 0 0 70px 6px rgba(255, 205, 60, 0.2);
+  --wood-face: #4b2e17;
+  --wood-ink: #f6edda;
+  --wood-hover: rgba(255, 240, 210, 0.1);
+  --deck: #2a190c;
+  --deck-ink: #f6edda;
+  --deck-muted: #d2bc98;
+  --frame-1: #a8723a;
+  --frame-2: #80521f;
+  --nail: #3a2208;
+  --rope-1: #b89464;
+  --rope-2: #6f5130;
+  --brass: #a87a2a;
+  --brass-hi: rgba(255, 226, 160, 0.35);
+  --brass-lo: #5e4010;
+  --glass: #0f4a57;
+  --glass-hi: #2b8c9a;
+  --sea-top: #0d3b48;
+  --sea-bot: #072531;
+  --caustic: rgba(140, 230, 255, 0.13);
+  --bubble: rgba(160, 240, 255, 0.5);
+  --foam: rgba(160, 240, 255, 0.22);
+  --awning-a: #b8392a;
+  --awning-b: #e9dcc4;
+  --net: rgba(98, 136, 150, 0.16);
+  --block: #04121a;
+  --ring-a: #ff6b57;
+  --ring-b: #f6edda;
+  --ring-line: #f6edda;
+  --slip: #17302a;
+  --slip-rule: #2a4a40;
+  --slip-margin: #e0685c;
+  --swatch-ring: rgba(0, 0, 0, 0.45);
+  --map-land: #102b37;
+  --map-water: #061520;
+  --map-park: #12302b;
+  --map-border: #36596a;
+  --map-label: #a9c0c4;
+  --pin-ring: #081b25;
+  --ok-bg: #11332a;
+  --ok-icon: #6fd08a;
   --warn-bg: #33290f;
-  --warn-icon: #e7b54a;
-  --err-bg: #3a1c18;
+  --warn-icon: #f0be4e;
+  --err-bg: #3f1d1b;
   --err-icon: #ff7b69;
-  --price-1: #f7cb58;
-  --price-2: #f9a136;
-  --price-3: #f17633;
-  --price-4: #e1503b;
-  --price-5: #c53443;
-  --borough-manhattan: #2f7dd9;
-  --borough-brooklyn: #b2417f;
+  --price-1: #c4fbf9;
+  --price-2: #82dfe9;
+  --price-3: #5ac3d7;
+  --price-4: #39a5c3;
+  --price-5: #1689b0;
+  --borough-manhattan: #3584de;
+  --borough-brooklyn: #c04d8b;
   --borough-queens: #33ac5a;
-  --borough-bronx: #7a59c3;
-  --borough-staten-island: #05a7a7;
-  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --borough-bronx: #8465d0;
+  --borough-staten-island: #d8691f;
+  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.55);
+  --shadow-sign: 0 24px 30px -16px rgba(0, 0, 0, 0.7);
 }
 
 /* Tailwind theme: only the design tokens exist as colors, so off-palette utilities can't sneak in. */
@@ -202,21 +336,19 @@
   --color-highlight-tint: var(--highlight-tint);
   --color-highlight-edge: var(--highlight-edge);
   --color-focus: var(--focus);
-  --color-board: var(--board);
-  --color-board-ink: var(--board-ink);
-  --color-board-muted: var(--board-muted);
   --color-ok-bg: var(--ok-bg);
   --color-warn-bg: var(--warn-bg);
   --color-err-bg: var(--err-bg);
   --color-transparent: transparent;
   --color-current: currentColor;
 
-  --font-display: var(--bs), "Arial Narrow", sans-serif;
-  --font-body: var(--nr), Georgia, serif;
-  --font-ui: var(--lf), "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--lo), "Arial Rounded MT Bold", "Arial Black", sans-serif;
+  --font-body: var(--nu), "Trebuchet MS", sans-serif;
+  --font-ui: var(--ba), "Helvetica Neue", Arial, sans-serif;
 
-  --radius-1: 2px;
-  --radius-2: 4px;
+  --radius-1: 4px;
+  --radius-2: 10px;
+  --radius-3: 16px;
   --radius-pill: 999px;
 }
 
@@ -243,9 +375,11 @@
   }
   main {
     flex: 1 0 auto;
+    /* Bands and the board rig may overhang; clip (not hidden) keeps sticky table headers working. */
+    overflow-x: clip;
   }
   :focus-visible {
-    outline: 2px solid var(--focus);
+    outline: 3px solid var(--focus);
     outline-offset: 2px;
   }
   a {
@@ -255,7 +389,7 @@
   mark {
     background: var(--highlight-tint);
     color: inherit;
-    border-radius: 1px;
+    border-radius: 2px;
   }
   ::selection {
     background: var(--highlight-tint);
@@ -272,49 +406,87 @@
 }
 
 @layer components {
+  /* ---- Focus: "life-ring focus". In atmosphere zones (wood, water, deck) a halo sits under the
+     ring, so it is measured against the halo (7.22 | 8.60), never against a grain line. -------- */
+  .atmo :focus-visible {
+    box-shadow: 0 0 0 8px var(--focus-halo);
+  }
+  .atmo .btn-primary:focus-visible {
+    box-shadow:
+      0 0 0 8px var(--focus-halo),
+      0 4px 0 var(--accent-deep);
+  }
+  .atmo .nav-link[aria-current="page"]:focus-visible {
+    box-shadow:
+      0 0 0 8px var(--focus-halo),
+      0 3px 0 var(--accent-deep);
+  }
+
   /* ---- Type scale (DESIGN.md) --------------------------------------------------------------- */
-  .t-display-xl {
+  .t-display-xl,
+  .t-display-l,
+  .t-display-m,
+  .t-display-s,
+  .t-stat,
+  .t-wordmark,
+  .t-plaque,
+  .t-kicker {
     font-family: var(--font-display);
-    font-weight: 900;
+    font-weight: 400;
+    font-synthesis-weight: none;
+  }
+  .t-display-xl {
     font-size: 112px;
-    line-height: 0.85;
-    letter-spacing: -0.01em;
+    line-height: 0.9;
+    letter-spacing: 0;
     font-variant-numeric: lining-nums proportional-nums;
   }
   .t-display-l {
-    font-family: var(--font-display);
-    font-weight: 800;
-    font-size: 44px;
-    line-height: 0.95;
-    letter-spacing: 0;
-  }
-  .t-display-m {
-    font-family: var(--font-display);
-    font-weight: 800;
-    font-size: 30px;
+    font-size: 40px;
     line-height: 1;
     letter-spacing: 0.005em;
+    text-wrap: balance;
+  }
+  .t-display-m {
+    font-size: 28px;
+    line-height: 1.05;
+    letter-spacing: 0.005em;
+    text-wrap: balance;
   }
   .t-display-s {
-    font-family: var(--font-display);
-    font-weight: 800;
-    font-size: 24px;
-    line-height: 1.05;
+    font-size: 22px;
+    line-height: 1.1;
     letter-spacing: 0.01em;
   }
   .t-stat {
-    font-family: var(--font-display);
-    font-weight: 800;
-    font-size: 32px;
+    font-size: 30px;
     line-height: 1;
     font-variant-numeric: lining-nums proportional-nums;
+  }
+  .t-wordmark {
+    font-size: 21px;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .t-plaque {
+    font-size: 18px;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .t-kicker {
+    font-size: 15px;
+    line-height: 1.1;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
   }
   .t-lede {
     font-family: var(--font-body);
     font-weight: 400;
-    font-size: 19px;
-    line-height: 1.45;
-    letter-spacing: -0.005em;
+    font-size: 18px;
+    line-height: 1.5;
   }
   .t-body {
     font-family: var(--font-body);
@@ -337,7 +509,7 @@
   .t-ui-m {
     font-family: var(--font-ui);
     font-weight: 500;
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1.4;
   }
   .t-ui-s {
@@ -349,10 +521,10 @@
   }
   .t-label {
     font-family: var(--font-ui);
-    font-weight: 600;
+    font-weight: 700;
     font-size: 12px;
     line-height: 1.2;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
   }
   .t-num-l {
@@ -381,20 +553,26 @@
       font-size: 200px;
     }
     .t-display-l {
-      font-size: 72px;
-      line-height: 0.92;
+      font-size: 64px;
+      line-height: 0.98;
     }
     .t-display-m {
-      font-size: 40px;
+      font-size: 38px;
     }
     .t-display-s {
-      font-size: 28px;
+      font-size: 26px;
     }
     .t-stat {
-      font-size: 44px;
+      font-size: 40px;
+    }
+    .t-wordmark {
+      font-size: 24px;
+    }
+    .t-plaque {
+      font-size: 22px;
     }
     .t-lede {
-      font-size: 22px;
+      font-size: 21px;
     }
     .t-body {
       font-size: 18px;
@@ -445,10 +623,50 @@
       margin-top: 96px;
     }
   }
-  /* 2px ink rule, 16px, then the H2 */
-  .section-rule {
-    border-top: 2px solid var(--ink);
-    padding-top: 16px;
+
+  /* ---- Rope (section rules, trims, hangers) ------------------------------------------------ */
+  .rope {
+    display: block;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--rope);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.35),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+  }
+  .rope-flat {
+    border-radius: 0;
+  }
+
+  /* ---- Kickers ------------------------------------------------------------------------------ */
+  .kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--accent);
+  }
+  .kicker svg {
+    width: 18px;
+    height: 18px;
+    flex: none;
+  }
+  /* The ticket: the only kicker form allowed on a sea band (plain accent text falls to 4.08 there). */
+  .ticket {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 6px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    box-shadow: 0 3px 0 var(--accent-deep);
+    white-space: nowrap;
+  }
+  .ticket svg {
+    width: 16px;
+    height: 16px;
+    flex: none;
   }
 
   /* ---- Prose ---------------------------------------------------------------------------- */
@@ -482,7 +700,7 @@
     margin-top: 0.4em;
   }
   .prose strong {
-    font-weight: 600;
+    font-weight: 800;
   }
   .prose a,
   .link {
@@ -506,7 +724,7 @@
     text-underline-offset: 0.18em;
   }
 
-  /* ---- Buttons ------------------------------------------------------------------------- */
+  /* ---- Buttons (chunky, with a solid press shadow) -------------------------------------------- */
   .btn {
     position: relative;
     display: inline-flex;
@@ -515,10 +733,10 @@
     gap: 8px;
     height: 40px;
     padding: 0 16px;
-    border: 1px solid transparent;
-    border-radius: var(--radius-2);
+    border: 2px solid transparent;
+    border-radius: 12px;
     font-family: var(--font-ui);
-    font-weight: 600;
+    font-weight: 700;
     font-size: 14px;
     line-height: 1;
     white-space: nowrap;
@@ -527,7 +745,9 @@
     transition:
       background-color var(--dur-1) var(--ease-out),
       color var(--dur-1) var(--ease-out),
-      border-color var(--dur-1) var(--ease-out);
+      border-color var(--dur-1) var(--ease-out),
+      transform var(--dur-1) var(--ease-out),
+      box-shadow var(--dur-1) var(--ease-out);
   }
   /* 44px minimum touch target */
   .btn::before {
@@ -559,15 +779,18 @@
   }
   .btn-primary {
     background: var(--accent);
+    border-color: var(--accent-deep);
     color: var(--accent-ink);
+    box-shadow: 0 4px 0 var(--accent-deep);
   }
   .btn-primary:hover {
     background: var(--accent-hover);
   }
   .btn-secondary {
-    background: transparent;
+    background: var(--surface);
     border-color: var(--ink);
     color: var(--ink);
+    box-shadow: 0 4px 0 var(--ink);
   }
   .btn-secondary:hover {
     background: var(--surface-2);
@@ -575,18 +798,26 @@
   .btn-ghost {
     background: transparent;
     color: var(--ink-muted);
-  }
-  .btn-ghost:hover {
-    color: var(--ink);
     text-decoration: underline;
     text-underline-offset: 0.18em;
   }
-  .btn:active:not(:disabled) {
-    transform: translateY(1px);
+  .btn-ghost:hover {
+    color: var(--ink);
+  }
+  .btn-primary:active:not(:disabled),
+  .btn-secondary:active:not(:disabled) {
+    transform: translateY(3px);
+  }
+  .btn-primary:active:not(:disabled) {
+    box-shadow: 0 1px 0 var(--accent-deep);
+  }
+  .btn-secondary:active:not(:disabled) {
+    box-shadow: 0 1px 0 var(--ink);
   }
   .btn:disabled,
   .btn[aria-disabled="true"] {
     opacity: 0.4;
+    box-shadow: none;
     cursor: not-allowed;
   }
   .icon-btn {
@@ -596,7 +827,7 @@
     justify-content: center;
     width: 40px;
     height: 40px;
-    border-radius: var(--radius-2);
+    border-radius: 10px;
     color: var(--ink);
     background: transparent;
     border: 0;
@@ -616,21 +847,21 @@
     height: 20px;
   }
 
-  /* ---- Filter chips ------------------------------------------------------------------------ */
+  /* ---- Filter chips ("buoys") -------------------------------------------------------------- */
   .chip {
     position: relative;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    height: 32px;
-    padding: 0 12px;
-    border: 1px solid var(--line-strong);
+    height: 34px;
+    padding: 0 14px;
+    border: 1.5px solid var(--line-strong);
     border-radius: var(--radius-pill);
     background: var(--surface);
     color: var(--ink);
     font-family: var(--font-ui);
     font-weight: 500;
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1;
     white-space: nowrap;
     cursor: pointer;
@@ -655,15 +886,35 @@
     height: 16px;
     flex: none;
   }
+  .chip .key-dot {
+    box-shadow: 0 0 0 1.5px var(--surface);
+  }
   .chip[aria-pressed="true"],
   .chip-active {
-    background: var(--ink);
-    border-color: var(--ink);
-    color: var(--surface);
+    background: var(--accent);
+    border-color: var(--accent-deep);
+    color: var(--accent-ink);
+    box-shadow: 0 2px 0 var(--accent-deep);
   }
   .chip[aria-pressed="true"]:hover,
   .chip-active:hover {
-    background: var(--ink);
+    background: var(--accent-hover);
+  }
+  /* Secondary words inside a lit chip ("none yet") take the chip's own ink, not --ink-muted. */
+  .chip[aria-pressed="true"] .muted,
+  .chip-active .muted {
+    color: inherit;
+  }
+  select.chip {
+    appearance: none;
+    padding-right: 30px;
+    background-image:
+      linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+    background-position:
+      calc(100% - 17px) 14px,
+      calc(100% - 12px) 14px;
+    background-size: 5px 5px;
+    background-repeat: no-repeat;
   }
 
   /* ---- Inputs ---------------------------------------------------------------------------- */
@@ -673,7 +924,7 @@
     padding: 0 12px;
     background: var(--surface);
     color: var(--ink);
-    border: 1px solid var(--line-strong);
+    border: 2px solid var(--line-strong);
     border-radius: var(--radius-2);
     font-family: var(--font-ui);
     font-weight: 500;
@@ -685,35 +936,70 @@
     opacity: 1;
   }
   .input:focus-visible {
-    outline-offset: 0;
+    outline-offset: 1px;
+  }
+  .input-search {
+    height: 48px;
+    border-radius: 12px;
   }
   select.input {
     appearance: none;
     padding-right: 36px;
-    background-image: linear-gradient(45deg, transparent 50%, var(--ink-muted) 50%),
-      linear-gradient(135deg, var(--ink-muted) 50%, transparent 50%);
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink-muted) 50%), linear-gradient(135deg, var(--ink-muted) 50%, transparent 50%);
     background-position:
-      calc(100% - 18px) 19px,
-      calc(100% - 13px) 19px;
+      calc(100% - 18px) 18px,
+      calc(100% - 13px) 18px;
     background-size: 5px 5px;
     background-repeat: no-repeat;
   }
+  /* Checkboxes in the filter popovers and toggles: a rounded box in the chip's colors. The check is
+     a masked shape filled with --accent-ink, so it follows the theme. */
   .checkbox {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--ink);
+    appearance: none;
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    margin: 0;
     flex: none;
+    border: 2px solid var(--line-strong);
+    border-radius: 6px;
+    background: var(--surface);
+    cursor: pointer;
+    transition:
+      background-color var(--dur-1) var(--ease-out),
+      border-color var(--dur-1) var(--ease-out);
+  }
+  .checkbox::before {
+    content: "";
+    width: 12px;
+    height: 12px;
+    background: var(--accent-ink);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 6.3l2.6 2.6L10 3.4' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px 12px no-repeat;
+    opacity: 0;
+  }
+  .checkbox:hover {
+    border-color: var(--ink-muted);
+  }
+  .checkbox:checked {
+    background: var(--accent);
+    border-color: var(--accent-deep);
+  }
+  .checkbox:checked::before {
+    opacity: 1;
   }
 
   /* ---- Badges ---------------------------------------------------------------------------- */
   .badge {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    height: 22px;
-    padding: 0 6px;
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-1);
+    gap: 5px;
+    height: 24px;
+    padding: 0 7px;
+    border: 1.5px solid var(--line-strong);
+    border-radius: var(--radius-badge);
+    background: var(--surface);
     font-family: var(--font-ui);
     font-weight: 500;
     font-size: 12px;
@@ -737,14 +1023,21 @@
     font-weight: 600;
     border-color: transparent;
   }
+  .badge-chain {
+    background: var(--surface-2);
+    color: var(--ink);
+    font-weight: 600;
+  }
+  /* "Order flag": a pennant, never rotated. */
   .index-tag {
     display: inline-flex;
     align-items: center;
-    height: 18px;
-    padding: 0 6px;
-    border-radius: var(--radius-1);
-    background: var(--ink);
-    color: var(--surface);
+    height: 20px;
+    padding: 0 7px 0 11px;
+    border-radius: 0 var(--radius-1) var(--radius-1) 0;
+    clip-path: polygon(7px 0, 100% 0, 100% 100%, 7px 100%, 0 50%);
+    background: var(--accent);
+    color: var(--accent-ink);
     font-family: var(--font-ui);
     font-weight: 700;
     font-size: 11px;
@@ -755,18 +1048,26 @@
     vertical-align: middle;
   }
 
-  /* ---- Price chip ------------------------------------------------------------------------- */
+  /* ---- Price chip ("price tag"): a full-height ramp stripe, then the price and the delta ----- */
   .price-chip {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    height: 24px;
-    padding: 0 8px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-1);
+    gap: 8px;
+    height: 28px;
+    padding: 0 10px 0 8px;
+    border: 1.5px solid var(--line);
+    border-left: 6px solid var(--chip, var(--line));
+    border-radius: 8px;
     background: var(--surface);
+    box-shadow: inset 1px 0 0 var(--swatch-ring);
+    color: var(--ink);
     white-space: nowrap;
     vertical-align: middle;
+  }
+  .price-chip-plain {
+    border-left-width: 1.5px;
+    box-shadow: none;
+    padding-left: 10px;
   }
   .price-chip-main {
     display: inline-flex;
@@ -780,15 +1081,24 @@
       justify-content: flex-end;
       row-gap: 0;
       height: auto;
-      min-height: 24px;
+      min-height: 28px;
       padding-block: 2px;
     }
   }
   .swatch {
     display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: var(--radius-1);
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px var(--swatch-ring);
+    flex: none;
+  }
+  .buoy-swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px var(--swatch-ring);
     flex: none;
   }
   .key-dot {
@@ -798,19 +1108,35 @@
     border-radius: 999px;
     flex: none;
   }
+  .key-dot-ringed {
+    box-shadow: 0 0 0 2px var(--surface);
+  }
+  /* Before a borough page's H1: scaled with the heading, still ringed on the sea band. */
+  .key-dot-title {
+    width: 0.3em;
+    height: 0.3em;
+    margin-right: 0.28em;
+    vertical-align: 0.18em;
+  }
 
-  /* ---- Cards ------------------------------------------------------------------------------ */
+  /* ---- Cards ("menu cards") --------------------------------------------------------------- */
   .card {
     position: relative;
     min-width: 0;
     background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-2);
+    border: 2px solid var(--line);
+    border-radius: var(--radius-3);
     padding: 16px;
-    transition: border-color var(--dur-1) var(--ease-out);
+    box-shadow: var(--shadow-block);
+    transition:
+      border-color var(--dur-1) var(--ease-out),
+      transform var(--dur-1) var(--ease-out),
+      box-shadow var(--dur-1) var(--ease-out);
   }
   .card:hover {
     border-color: var(--line-strong);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 var(--block);
   }
   .stretched::after {
     content: "";
@@ -822,33 +1148,92 @@
     outline: none;
   }
   .card:has(.stretched:focus-visible) {
-    outline: 2px solid var(--focus);
-    outline-offset: -2px;
+    outline: 3px solid var(--focus);
+    outline-offset: -3px;
+  }
+  .panel {
+    background: var(--surface);
+    border: 2px solid var(--line);
+    border-radius: var(--radius-3);
+    box-shadow: var(--shadow-block);
   }
 
-  /* ---- Stat tiles ------------------------------------------------------------------------- */
+  /* ---- Stat tiles ("porthole tiles") on the counter ---------------------------------------- */
+  /* Each tile spans three rows of the grid as a subgrid (label, value, sub-line), so the values in a
+     row line up even when one label wraps to two lines. The space between rows of tiles is the
+     tiles' own bottom margin (a row-gap would also open up inside each tile); the grid's negative
+     bottom margin cancels it after the last row. */
   .stat-grid {
+    --stat-row-gap: 36px;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px 16px;
-  }
-  .stat-tile {
-    min-width: 0;
-    border-top: 2px solid var(--ink);
-    padding-top: 12px;
+    gap: 0 12px;
+    padding-top: 21px;
+    margin-bottom: calc(-1 * var(--stat-row-gap));
   }
   @media (min-width: 768px) {
     .stat-grid {
+      --stat-row-gap: 24px;
       grid-template-columns: repeat(var(--stat-cols, 4), minmax(0, 1fr));
-      gap: 0;
+      column-gap: 20px;
     }
-    .stat-tile {
-      padding-right: 16px;
+  }
+  .stat-tile {
+    display: grid;
+    grid-row: span 3;
+    grid-template-rows: subgrid;
+    row-gap: 0;
+    align-content: start;
+    margin-bottom: var(--stat-row-gap);
+    position: relative;
+    min-width: 0;
+    padding: 30px 14px 14px;
+    border: 3px solid var(--brass);
+    border-radius: 18px;
+    background:
+      radial-gradient(circle, var(--brass-lo) 0 2.2px, transparent 2.6px) right 3px top 3px / 14px 14px no-repeat,
+      radial-gradient(circle, var(--brass-lo) 0 2.2px, transparent 2.6px) left 3px bottom 3px / 14px 14px no-repeat,
+      radial-gradient(circle, var(--brass-lo) 0 2.2px, transparent 2.6px) right 3px bottom 3px / 14px 14px no-repeat,
+      var(--surface);
+    box-shadow:
+      inset 0 0 0 1.5px var(--brass-hi),
+      var(--shadow-block);
+  }
+  .stat-badge {
+    position: absolute;
+    top: -21px;
+    left: 14px;
+    width: 42px;
+    height: 42px;
+  }
+  .stat-badge svg {
+    width: 18px;
+    height: 18px;
+  }
+  /* A range ("$9.15–$29.40") wraps as a unit: never between the dash and a price. */
+  .stat-range {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0 0.12em;
+    white-space: nowrap;
+  }
+  @media (max-width: 767px) {
+    .stat-range {
+      font-size: min(30px, 7.2vw);
     }
-    .stat-tile + .stat-tile {
-      border-left: 1px solid var(--line);
-      padding-left: 16px;
-    }
+  }
+
+  /* ---- Porthole (stat badges, theme toggle, 404 art) ---------------------------------------- */
+  .porthole {
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--glass-hi), var(--glass) 70%);
+    border: 4px solid var(--brass);
+    box-shadow:
+      0 0 0 1.5px var(--brass-lo),
+      inset 0 2px 4px rgba(0, 0, 0, 0.25);
+    color: var(--ink);
   }
 
   /* ---- Money with price-card cents ------------------------------------------------------ */
@@ -857,6 +1242,12 @@
     align-items: flex-start;
     font-variant-numeric: lining-nums proportional-nums;
     white-space: nowrap;
+  }
+  /* The whole dollars carry the box's baseline, so "$16.50" sits on the same baseline (and at the
+     same height) as a plain "80" beside it. Without this the box takes its baseline from the small
+     top-aligned "$", drops about a third of a line and grows the line box. */
+  .money-whole {
+    align-self: baseline;
   }
   .money-dollar {
     font-size: 0.5em;
@@ -871,43 +1262,360 @@
     margin-top: 0.06em;
     margin-left: 0.05em;
     padding-bottom: 0.08em;
-    border-bottom: 0.06em solid currentColor;
+    border-bottom: 0.07em solid currentColor;
   }
 
-  /* ---- Letterboard ---------------------------------------------------------------------- */
-  .letterboard {
+  /* ---- Page bands: the home hero window and the inner-page shallows ------------------------ */
+  .hero,
+  .shallows {
     position: relative;
-    min-width: 0;
-    background-color: var(--board);
-    background-image: repeating-linear-gradient(to bottom, transparent 0 7px, rgba(255, 255, 255, 0.035) 7px 8px);
-    border: 6px solid var(--board-frame);
-    border-radius: var(--radius-2);
-    box-shadow: var(--shadow-board);
-    padding: 20px;
-    color: var(--board-ink);
+    overflow-x: clip;
+    isolation: isolate;
+  }
+  .hero {
+    background: linear-gradient(180deg, var(--sea-top), var(--sea-bot));
+    padding-top: calc(var(--awning-h) + 36px);
   }
   @media (min-width: 768px) {
-    .letterboard {
-      padding: 32px 40px;
+    .hero {
+      padding-top: calc(var(--awning-h) + 56px);
     }
   }
-  .letterboard :focus-visible {
-    outline-color: var(--focus);
+  .shallows {
+    background: linear-gradient(180deg, var(--sea-top), var(--bg));
+    padding-top: calc(var(--awning-h) + 32px);
   }
-  .board-price {
-    color: var(--board-ink);
-    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.55);
-    margin-block: 16px 16px;
+  @media (min-width: 768px) {
+    .shallows {
+      padding-top: calc(var(--awning-h) + 48px);
+    }
   }
-  .board-glyph {
-    display: inline-block;
+  .band-body {
+    position: relative;
+    z-index: 1;
+    padding-bottom: 40px;
   }
-  html:not(.board-seen) .board-glyph {
-    animation: board-in 280ms var(--ease-out) both;
-    animation-delay: calc(var(--i, 0) * 40ms);
+  .caustics {
+    position: absolute;
+    z-index: 0;
+    left: 0;
+    right: 0;
+    top: var(--awning-h);
+    width: 100%;
+    height: 140px;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(#000, transparent);
+    mask-image: linear-gradient(#000, transparent);
+  }
+  .shallows .caustics {
+    opacity: 0.6;
+  }
+  .wave-edge {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 40px;
+    margin-top: -1px;
+  }
+  .bubbles {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    --gutter: max(16px, calc((100% - var(--max-page)) / 2));
+  }
+  .bubble {
+    position: absolute;
+    border: 2px solid var(--bubble);
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 30%, rgba(255, 255, 255, 0.9) 0 18%, transparent 22%);
+  }
+  html:not(.board-seen) .bubbles .bubble {
+    animation: bubble-rise 3.4s var(--ease-out) both;
+    animation-delay: var(--delay, 0s);
+  }
+  /* The counter: a trap-net band behind the stat tiles (tiles on it are opaque). */
+  .counter {
+    background-color: var(--bg);
+    background-image: var(--net-pattern);
+    padding: 20px 0 44px;
   }
 
-  /* ---- Data table ------------------------------------------------------------------------ */
+  /* ---- The awning (under the nav on every page; overlaps the band below by its own height) -- */
+  .awning-wrap {
+    position: relative;
+    z-index: 30;
+    height: var(--awning-h);
+    margin-bottom: calc(-1 * var(--awning-h));
+    overflow-x: clip;
+    pointer-events: none;
+    filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.2));
+  }
+  .awning {
+    height: var(--awning-h);
+    background: repeating-linear-gradient(90deg, var(--awning-a) 0 36px, var(--awning-b) 36px 72px);
+    -webkit-mask:
+      linear-gradient(#000 0 0) top / 100% 12px no-repeat,
+      radial-gradient(circle 18px at 18px 12px, #000 17.5px, #0000 18px) 0 0 / 36px 30px repeat-x;
+    mask:
+      linear-gradient(#000 0 0) top / 100% 12px no-repeat,
+      radial-gradient(circle 18px at 18px 12px, #000 17.5px, #0000 18px) 0 0 / 36px 30px repeat-x;
+  }
+
+  /* ---- The Order Board ------------------------------------------------------------------- */
+  .board {
+    position: relative;
+    min-width: 0;
+    margin: 0;
+    padding-top: 28px; /* room for the bell on the beam */
+  }
+  @media (min-width: 768px) {
+    .board {
+      padding-top: 36px;
+    }
+  }
+  .board-beam {
+    position: relative;
+    height: 16px;
+    border-radius: 4px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 45%),
+      repeating-linear-gradient(180deg, rgba(0, 0, 0, 0.06) 0 1px, transparent 1px 5px),
+      var(--frame-2);
+    box-shadow:
+      inset 0 -2px 0 rgba(0, 0, 0, 0.25),
+      0 3px 0 rgba(0, 0, 0, 0.15);
+  }
+  .board-bolt {
+    position: absolute;
+    top: 4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--brass);
+    box-shadow: inset 0 0 0 1.5px var(--brass-lo);
+  }
+  .board-bell {
+    position: absolute;
+    right: 7%;
+    bottom: calc(100% - 2px);
+    width: 28px;
+    height: 28px;
+    color: var(--brass-lo);
+    transform-origin: 50% 30%;
+  }
+  @media (min-width: 768px) {
+    .board-bell {
+      width: 36px;
+      height: 36px;
+    }
+  }
+  .board-bell .bell-body {
+    fill: var(--brass);
+    stroke: var(--brass-lo);
+  }
+  .board-bell .bell-ding {
+    opacity: 0;
+  }
+  .board-swing {
+    position: relative;
+    padding-top: 40px;
+    transform-origin: 50% 0;
+  }
+  .board-rope {
+    position: absolute;
+    top: -3px;
+    width: 6px;
+    height: 44px;
+    border-radius: 3px;
+    background: var(--rope-v);
+    box-shadow:
+      inset 1px 0 0 rgba(255, 255, 255, 0.3),
+      inset -1px 0 0 rgba(0, 0, 0, 0.25);
+  }
+  .board-rope-l {
+    left: calc(15% - 3px);
+  }
+  .board-rope-r {
+    right: calc(15% - 3px);
+  }
+  .board-eyelet {
+    position: absolute;
+    z-index: 3;
+    top: 32px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 3.5px solid var(--brass);
+    box-shadow:
+      0 0 0 1px var(--brass-lo),
+      inset 0 0 0 1px var(--brass-lo);
+  }
+  .board-eyelet-l {
+    left: calc(15% - 8px);
+  }
+  .board-eyelet-r {
+    right: calc(15% - 8px);
+  }
+  .board-frame {
+    position: relative;
+    padding: 12px;
+    border-radius: 18px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 30%),
+      repeating-linear-gradient(180deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 7px),
+      var(--frame-1);
+    box-shadow:
+      inset 0 0 0 1.5px rgba(0, 0, 0, 0.18),
+      var(--shadow-sign),
+      var(--sign-glow);
+  }
+  @media (min-width: 768px) {
+    .board-frame {
+      padding: 16px;
+    }
+  }
+  .board-nail {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--nail);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  }
+  .board-nail:nth-of-type(1) {
+    top: 3px;
+    left: 3px;
+  }
+  .board-nail:nth-of-type(2) {
+    top: 3px;
+    right: 3px;
+  }
+  .board-nail:nth-of-type(3) {
+    bottom: 3px;
+    left: 3px;
+  }
+  .board-nail:nth-of-type(4) {
+    bottom: 3px;
+    right: 3px;
+  }
+  @media (min-width: 768px) {
+    .board-nail:nth-of-type(1),
+    .board-nail:nth-of-type(2) {
+      top: 5px;
+    }
+    .board-nail:nth-of-type(3),
+    .board-nail:nth-of-type(4) {
+      bottom: 5px;
+    }
+    .board-nail:nth-of-type(1),
+    .board-nail:nth-of-type(3) {
+      left: 5px;
+    }
+    .board-nail:nth-of-type(2),
+    .board-nail:nth-of-type(4) {
+      right: 5px;
+    }
+  }
+  .board-plaque {
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-2deg);
+    padding: 6px 16px;
+    border-radius: 6px;
+    background: var(--plaque);
+    color: var(--plaque-ink);
+    box-shadow:
+      0 0 0 2px var(--nail),
+      0 3px 0 2px var(--nail);
+    white-space: nowrap;
+  }
+  .board-plaque::before,
+  .board-plaque::after {
+    content: "";
+    position: absolute;
+    top: calc(50% - 2px);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--brass);
+  }
+  .board-plaque::before {
+    left: 5px;
+  }
+  .board-plaque::after {
+    right: 5px;
+  }
+  .board-face {
+    position: relative;
+    border-radius: 10px;
+    padding: 22px 18px 40px;
+    background:
+      radial-gradient(120% 90% at 30% 20%, rgba(255, 255, 255, 0.35), transparent 60%),
+      var(--sign);
+    box-shadow: inset 0 0 0 2px rgba(58, 31, 12, 0.25);
+    color: var(--sign-ink);
+    /* A hand-painted order board is centered, like the OG image: at desktop widths a left-aligned
+       price left half the sign empty. */
+    text-align: center;
+  }
+  @media (min-width: 768px) {
+    .board-face {
+      padding: 30px 36px 44px;
+    }
+  }
+  .board-price {
+    color: var(--sign-price);
+    text-shadow: 0.022em 0.03em 0 var(--sign-shade);
+    margin-block: 14px 12px;
+  }
+  .board-line {
+    color: var(--sign-ink);
+  }
+  .board-ring {
+    position: absolute;
+    z-index: 2;
+    left: -16px;
+    bottom: -16px;
+    width: 52px;
+    height: 52px;
+    transform: rotate(-14deg);
+    filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.22));
+  }
+  @media (min-width: 768px) {
+    .board-ring {
+      left: -20px;
+      bottom: -20px;
+      width: 64px;
+      height: 64px;
+    }
+  }
+  html:not(.board-seen) .board-swing {
+    animation: board-swing 1200ms var(--ease-swing) both;
+  }
+  html:not(.board-seen) .board-bell {
+    animation: bell-ding 560ms var(--ease-out) 1250ms both;
+  }
+  html:not(.board-seen) .board-bell .bell-ding {
+    animation: ding-fade 560ms linear 1250ms both;
+  }
+
+  /* ---- Data table ("the ticket rail") ----------------------------------------------------- */
+  .table-shell {
+    min-width: 0;
+    background: var(--surface);
+    border: 2px solid var(--line);
+    border-radius: var(--radius-3);
+    box-shadow: var(--shadow-block);
+    /* clip, not hidden: no scroll container, so the sticky header still sticks to the viewport */
+    overflow: clip;
+  }
+  .chart-card .table-shell {
+    box-shadow: none;
+  }
   .data-table {
     width: 100%;
     border-collapse: separate;
@@ -918,45 +1626,49 @@
     position: sticky;
     top: var(--nav-h);
     z-index: 2;
-    height: 40px;
+    height: 42px;
     padding: 0 16px;
-    background: var(--surface-2);
-    border-bottom: 1px solid var(--line-strong);
+    background-color: var(--surface-2);
+    background-image: var(--plank-faint);
+    border-bottom: 2px solid var(--line-strong);
     font-family: var(--font-ui);
-    font-weight: 600;
+    font-weight: 700;
     font-size: 12px;
     line-height: 1.2;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     text-align: left;
-    color: var(--ink);
+    color: var(--ink-muted);
     white-space: nowrap;
   }
   .data-table tbody th {
     padding: 10px 16px;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1.5px solid var(--line);
     text-align: left;
     vertical-align: middle;
     font-family: var(--font-ui);
     font-weight: 500;
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1.4;
   }
   .data-table td {
     height: 48px;
     padding: 10px 16px;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1.5px solid var(--line);
     vertical-align: middle;
     font-family: var(--font-ui);
     font-weight: 500;
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1.4;
   }
-  .data-table tbody tr {
+  .data-table tbody tr:last-child > * {
+    border-bottom: 0;
+  }
+  .data-table tbody tr > * {
     transition: background-color var(--dur-1) var(--ease-out);
   }
-  .data-table tbody tr:hover {
-    background: var(--surface-2);
+  .data-table tbody tr:hover > * {
+    background-color: var(--surface-2);
   }
   @media (max-width: 639px) {
     .data-table thead th,
@@ -964,6 +1676,25 @@
     .data-table td {
       padding-inline: 12px;
     }
+    /* The shell clips (it can't scroll, or the sticky header would stop sticking), so on a narrow
+       screen the headers wrap instead of pushing the last column out of the shell. */
+    .data-table thead th {
+      white-space: normal;
+      overflow-wrap: normal;
+      line-height: 1.15;
+    }
+  }
+  @media (max-width: 359px) {
+    .data-table thead th,
+    .data-table tbody th,
+    .data-table td {
+      padding-inline: 8px;
+    }
+  }
+  /* Shift+Tab upward through a table: keep the focused link clear of the sticky header (42px plus its
+     2px rule) and its focus ring, on top of the page's nav scroll padding. */
+  .data-table tbody :is(a, button, input, select, [tabindex]) {
+    scroll-margin-top: 54px;
   }
   .data-table .num {
     text-align: right;
@@ -972,14 +1703,14 @@
   .data-table thead th.num {
     text-align: right;
   }
-  .data-table tr.is-index {
-    background: var(--highlight-tint);
+  .data-table tr.is-index > * {
+    background-color: var(--highlight-tint);
   }
   .sort-btn {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    height: 40px;
+    height: 42px;
     font: inherit;
     letter-spacing: inherit;
     text-transform: inherit;
@@ -993,22 +1724,30 @@
     width: 14px;
     height: 14px;
   }
-  th[aria-sort="ascending"],
-  th[aria-sort="descending"] {
-    background: color-mix(in srgb, var(--accent-tint) 70%, var(--surface-2));
+  .data-table thead th[aria-sort="ascending"],
+  .data-table thead th[aria-sort="descending"] {
+    background-color: color-mix(in srgb, var(--accent-tint) 70%, var(--surface-2));
+    color: var(--ink);
   }
 
-  /* ---- Menu board list -------------------------------------------------------------------- */
+  /* ---- Menu board list (a data zone) -------------------------------------------------------- */
+  /* On a phone the rows stay inside the 16px page gutter; from md up they hang 12px into the margin
+     so the names line up with the heading above. */
   .menu-item {
-    padding: 14px 12px;
-    margin-inline: -12px;
-    border-bottom: 1px solid var(--line);
+    padding: 14px 10px;
+    border-bottom: 1.5px solid var(--line);
+  }
+  @media (min-width: 768px) {
+    .menu-item {
+      padding-inline: 12px;
+      margin-inline: -12px;
+    }
   }
   .menu-item:first-child {
-    border-top: 1px solid var(--line);
+    border-top: 1.5px solid var(--line);
   }
   .menu-item:target {
-    box-shadow: inset 3px 0 0 var(--ink);
+    box-shadow: inset 4px 0 0 var(--accent);
   }
   .menu-item.is-index {
     background: var(--highlight-tint);
@@ -1022,11 +1761,11 @@
   .menu-leader {
     flex: 1 1 16px;
     min-width: 16px;
-    border-bottom: 1px dotted var(--line-strong);
+    border-bottom: 2px dotted var(--line-strong);
     transform: translateY(-5px);
   }
 
-  /* ---- Tooltip ---------------------------------------------------------------------------- */
+  /* ---- Tooltip ("order ticket") ------------------------------------------------------------ */
   .tooltip {
     position: absolute;
     z-index: 20;
@@ -1035,41 +1774,56 @@
     max-width: 260px;
     padding: 8px 12px;
     background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-2);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
     box-shadow: var(--shadow-pop);
     color: var(--ink);
   }
   .tooltip-key {
     display: block;
     width: 12px;
-    height: 2px;
+    height: 3px;
+    border-radius: 1px;
     margin-bottom: 6px;
   }
 
-  /* ---- Charts ----------------------------------------------------------------------------- */
-  .chart-empty {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 24px;
+  /* ---- Charts: a menu card with a flat plot inside ------------------------------------------ */
+  .chart-card {
+    min-width: 0;
     background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-2);
-    color: var(--ink-muted);
-    font-family: var(--font-ui);
-    font-weight: 500;
-    font-size: 14px;
+    border: 2px solid var(--line);
+    border-radius: var(--radius-3);
+    box-shadow: var(--shadow-block);
+    padding: 16px;
+  }
+  @media (min-width: 768px) {
+    .chart-card {
+      padding: 24px;
+    }
   }
   .hist-plot {
     position: relative;
-    height: 296px; /* 24 label band + 240 plot + 32 axis band */
+    height: 298px; /* 26 label band + 240 plot + 32 axis band */
   }
   @media (min-width: 768px) {
     .hist-plot {
-      height: 376px; /* 24 + 320 + 32 */
+      height: 378px; /* 26 + 320 + 32 */
     }
+  }
+  .hist-median-label {
+    position: absolute;
+    top: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    color: var(--ink);
+    pointer-events: none;
+  }
+  .hist-median-label svg {
+    width: 14px;
+    height: 14px;
+    flex: none;
   }
   .hist-bar {
     transform-box: fill-box;
@@ -1096,72 +1850,232 @@
     background: var(--ink);
   }
 
-  /* ---- Header / nav --------------------------------------------------------------------- */
+  /* ---- Empty states ------------------------------------------------------------------------ */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    text-align: center;
+    padding: 24px;
+    background: var(--surface);
+    border: 2px solid var(--line);
+    border-radius: var(--radius-3);
+    color: var(--ink-muted);
+    font-family: var(--font-ui);
+    font-weight: 500;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+  .empty-art {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background-color: var(--bg);
+    background-image: var(--net-pattern);
+    color: var(--ink-muted);
+    flex: none;
+  }
+  .empty-art > svg {
+    width: 64px;
+    height: 64px;
+  }
+  .empty-art .bubble {
+    border-width: 1.5px;
+    border-color: var(--line-strong);
+    background: none;
+  }
+
+  /* ---- Header: the facade --------------------------------------------------------------- */
   .site-header {
     position: sticky;
     top: 0;
     z-index: 40;
     height: var(--nav-h);
-    background: var(--bg);
-    border-bottom: 1px solid var(--line);
+  }
+  .facade {
+    height: calc(var(--nav-h) - 8px);
+    background-color: var(--wood-face);
+    background-image: var(--plank-nav);
+    background-size: 360px 56px;
+    color: var(--wood-ink);
   }
   .wordmark {
-    font-family: var(--font-display);
-    font-weight: 900;
-    font-size: 22px;
-    line-height: 1;
-    letter-spacing: 0.01em;
-    text-transform: uppercase;
-    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: inherit;
+  }
+  .wordmark-ring {
+    width: 26px;
+    height: 26px;
+    flex: none;
+  }
+  @media (min-width: 640px) {
+    .wordmark-ring {
+      width: 30px;
+      height: 30px;
+    }
   }
   .wordmark-the {
     font-size: 60%;
-    margin-right: 0.18em;
-    vertical-align: 0.18em;
+    vertical-align: 0.2em;
+  }
+  /* In the header the wordmark may wrap onto two lines rather than run under the search button
+     (at 320px, or with larger text spacing); below 360px it also steps down to 17px. */
+  .home-link .wordmark {
+    min-width: 0;
+  }
+  .home-link .t-wordmark {
+    white-space: normal;
+  }
+  @media (max-width: 359px) {
+    .home-link .t-wordmark {
+      font-size: 17px;
+    }
   }
   .nav-link {
     position: relative;
     display: inline-flex;
     align-items: center;
-    height: var(--nav-h);
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 9px;
     font-family: var(--font-ui);
-    font-weight: 500;
-    font-size: 14px;
-    color: var(--ink);
+    font-weight: 600;
+    font-size: 15px;
+    line-height: 1;
+    color: var(--wood-ink);
+    transition: background-color var(--dur-1) var(--ease-out);
+  }
+  @media (min-width: 1280px) {
+    .nav-link {
+      padding: 0 12px;
+    }
   }
   .nav-link:hover {
-    color: var(--ink);
-    text-decoration: underline;
-    text-underline-offset: 0.3em;
+    background: var(--wood-hover);
   }
-  .nav-link[aria-current="page"]::after {
+  /* The active link is a red plank tab. */
+  .nav-link[aria-current="page"] {
+    background: var(--accent);
+    color: var(--accent-ink);
+    box-shadow: 0 3px 0 var(--accent-deep);
+  }
+  .wood-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--wood-ink);
+    font-family: var(--font-ui);
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color var(--dur-1) var(--ease-out);
+  }
+  .wood-btn::before {
     content: "";
     position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -1px;
-    height: 2px;
-    background: var(--accent);
+    inset: -2px;
   }
-  .nav-link[aria-current="page"]:hover {
-    text-decoration: none;
+  .wood-btn:hover {
+    background: var(--wood-hover);
+  }
+  .wood-btn svg {
+    width: 20px;
+    height: 20px;
+    flex: none;
+  }
+  .menu-btn {
+    padding: 0 10px;
+  }
+  .menu-btn svg {
+    transition: transform var(--dur-2) var(--ease-out);
+  }
+  .menu-btn:hover svg {
+    transform: rotate(45deg);
   }
 
-  /* ---- Theme toggle icon swap (CSS-driven so server and client markup match) -------------- */
-  .theme-sun {
+  /* ---- Theme toggle ("shift change"): a porthole button ------------------------------------- */
+  .theme-toggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    border-radius: 999px;
+  }
+  .theme-toggle .porthole {
+    width: 40px;
+    height: 40px;
+    flex: none;
+  }
+  .theme-toggle .porthole svg {
+    width: 18px;
+    height: 18px;
+  }
+  .theme-toggle:hover .porthole {
+    background: radial-gradient(circle at 35% 30%, var(--glass-hi), var(--glass) 90%);
+  }
+  .theme-label {
+    display: inline-grid;
+    text-align: left;
+  }
+  .theme-label > span {
+    grid-area: 1 / 1;
+  }
+  .theme-label-dark {
+    visibility: hidden;
+  }
+  :root[data-theme="dark"] .theme-label-dark {
+    visibility: visible;
+  }
+  :root[data-theme="dark"] .theme-label-light {
+    visibility: hidden;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-label-dark {
+      visibility: visible;
+    }
+    :root:not([data-theme="light"]) .theme-label-light {
+      visibility: hidden;
+    }
+  }
+  /* Icon and label swap (CSS-driven so server and client markup match). */
+  .when-dark {
     display: none;
   }
-  :root[data-theme="dark"] .theme-sun {
-    display: block;
+  :root[data-theme="dark"] .when-dark {
+    display: inline;
   }
-  :root[data-theme="dark"] .theme-moon {
+  :root[data-theme="dark"] .when-light {
     display: none;
   }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) .theme-sun {
-      display: block;
+    :root:not([data-theme="light"]) .when-dark {
+      display: inline;
     }
-    :root:not([data-theme="light"]) .theme-moon {
+    :root:not([data-theme="light"]) .when-light {
       display: none;
     }
   }
@@ -1179,7 +2093,7 @@
     box-shadow: var(--shadow-pop);
   }
   .sheet::backdrop {
-    background: rgba(12, 11, 10, 0.45);
+    background: rgba(4, 18, 26, 0.5);
   }
   .sheet-full {
     inset: 0;
@@ -1190,28 +2104,91 @@
     inset: auto 0 0 0;
     width: 100%;
     max-height: 88dvh;
-    border-radius: var(--radius-2) var(--radius-2) 0 0;
-    border-top: 1px solid var(--line);
+    border-radius: 16px 16px 0 0;
+    border: 2px solid var(--line);
+    border-bottom: 0;
+    overflow: hidden;
   }
   .sheet[open] {
     animation: sheet-in var(--dur-2) var(--ease-out);
+  }
+  .sheet-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 56px;
+    color: var(--ink);
+  }
+  .sheet-link .menu-leader {
+    transform: none;
+    align-self: center;
+  }
+  .sheet-link svg {
+    width: 24px;
+    height: 24px;
+    flex: none;
+    color: var(--ink-muted);
+  }
+  /* The current page is the same red plank tab as in the desktop nav (a filled shape, not a color
+     change alone). */
+  .sheet-link[aria-current="page"] .sheet-label {
+    margin-left: -10px;
+    padding: 3px 10px 4px;
+    border-radius: 9px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    box-shadow: 0 3px 0 var(--accent-deep);
+  }
+  .sheet-link[aria-current="page"] svg {
+    color: var(--accent);
   }
 
   /* ---- Popover ------------------------------------------------------------------------------ */
   .popover {
     position: absolute;
     z-index: 30;
-    top: calc(100% + 6px);
+    top: calc(100% + 8px);
     left: 0;
     min-width: 220px;
     padding: 12px;
     background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-2);
+    border: 2px solid var(--line);
+    border-radius: 12px;
     box-shadow: var(--shadow-pop);
   }
 
+  /* ---- Hand-check note: "the cook's correction slip" --------------------------------------- */
+  .slip {
+    position: relative;
+    max-width: var(--max-prose);
+    padding: 14px 16px 14px 40px;
+    border-radius: 0 0 12px 12px;
+    background:
+      radial-gradient(circle 3px at 6px 0, var(--bg) 97%, transparent) 0 0 / 12px 6px repeat-x,
+      repeating-linear-gradient(180deg, transparent 0 27px, var(--slip-rule) 27px 28px) 0 9px / 100% 100%,
+      var(--slip);
+    box-shadow: var(--shadow-block);
+    color: var(--ink);
+  }
+  .slip::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 22px;
+    width: 4.5px;
+    border-left: 1.5px solid var(--slip-margin);
+    border-right: 1.5px solid var(--slip-margin);
+  }
+  .slip-line {
+    line-height: 28px;
+  }
+
   /* ---- Map -------------------------------------------------------------------------------- */
+  .map-rope {
+    max-width: var(--max-map);
+    margin-inline: auto;
+  }
   .map-frame {
     position: relative;
     width: 100%;
@@ -1219,22 +2196,32 @@
     margin-inline: auto;
     height: clamp(420px, 68vh, 760px);
     background: var(--map-land);
-    border-block: 1px solid var(--line);
+    border-bottom: 2px solid var(--line);
   }
   @media (min-width: 1440px) {
     .map-frame {
-      border-inline: 1px solid var(--line);
+      border-inline: 2px solid var(--line);
     }
   }
   .map-frame .maplibregl-canvas:focus-visible {
-    outline: 2px solid var(--focus);
-    outline-offset: -2px;
+    outline: 3px solid var(--focus);
+    outline-offset: -3px;
+  }
+  /* The legend: a brass-rimmed "depth chart" plaque (the swatches inside stay flat). */
+  .legend-plaque {
+    background: var(--surface);
+    border: 3px solid var(--brass);
+    border-radius: var(--radius-3);
+    box-shadow:
+      inset 0 0 0 1.5px var(--brass-hi),
+      var(--shadow-block);
+    padding: 12px 14px;
   }
   .maplibregl-popup-content {
     background: var(--surface) !important;
     color: var(--ink);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-2) !important;
+    border: 1.5px solid var(--line);
+    border-radius: 10px !important;
     box-shadow: var(--shadow-pop) !important;
     padding: 10px 12px !important;
     font-family: var(--font-ui);
@@ -1277,7 +2264,8 @@
   }
   .maplibregl-ctrl-group {
     background: var(--surface) !important;
-    border: 1px solid var(--line);
+    border: 2px solid var(--line);
+    border-radius: 10px !important;
     box-shadow: none !important;
   }
   /* MapLibre's control icons are black SVGs. */
@@ -1291,12 +2279,116 @@
       filter: invert(1);
     }
   }
+
+  /* ---- Footer: the deck -------------------------------------------------------------------- */
+  .site-footer {
+    margin-top: 48px;
+    color: var(--deck-ink);
+  }
+  @media (min-width: 768px) {
+    .site-footer {
+      margin-top: 96px;
+    }
+  }
+  .deck {
+    background-color: var(--deck);
+    background-image: var(--plank-deck);
+    background-size: 360px 56px;
+    padding-block: 44px;
+  }
+  .deck-muted {
+    color: var(--deck-muted);
+  }
+  .deck-link {
+    color: var(--deck-ink);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+    cursor: pointer;
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    text-align: left;
+  }
+  .deck-link:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  /* ---- 404 art ------------------------------------------------------------------------------ */
+  .lost-art {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 168px;
+    height: 168px;
+    border-radius: 50%;
+    background-color: var(--bg);
+    background-image: var(--net-pattern);
+  }
+  .lost-art .porthole {
+    width: 120px;
+    height: 120px;
+    border-width: 8px;
+  }
+  .lost-art .porthole svg {
+    width: 64px;
+    height: 64px;
+  }
 }
 
-@keyframes board-in {
+@keyframes board-swing {
+  0% {
+    transform: rotate(-5deg);
+  }
+  32% {
+    transform: rotate(3deg);
+  }
+  58% {
+    transform: rotate(-1.4deg);
+  }
+  80% {
+    transform: rotate(0.5deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+@keyframes bell-ding {
+  0% {
+    transform: rotate(0);
+  }
+  22% {
+    transform: rotate(-14deg);
+  }
+  48% {
+    transform: rotate(10deg);
+  }
+  74% {
+    transform: rotate(-5deg);
+  }
+  100% {
+    transform: rotate(0);
+  }
+}
+@keyframes ding-fade {
+  0% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes bubble-rise {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(60px);
   }
   to {
     opacity: 1;
@@ -1314,7 +2406,8 @@
   }
 }
 
-/* Reduced motion: every duration to 0, no entrances. Content is complete at t=0. */
+/* Reduced motion: every duration to 0 and every animation to none. The board hangs straight, the
+   bell is still, the bubbles are simply there, the bars are drawn, cards don't lift. */
 @media (prefers-reduced-motion: reduce) {
   :root {
     --dur-1: 0ms;
@@ -1324,23 +2417,27 @@
   *,
   *::before,
   *::after {
-    animation-duration: 0ms !important;
-    animation-delay: 0ms !important;
+    animation: none !important;
     transition-duration: 0ms !important;
     transition-delay: 0ms !important;
     scroll-behavior: auto !important;
   }
-  html:not(.board-seen) .board-glyph {
-    animation: none;
-  }
   html.js .chart-grow:not(.is-in) .hist-bar,
   html.js .chart-grow:not(.is-in) .hbar-fill {
+    transform: none;
+  }
+  .card:hover {
+    transform: none;
+    box-shadow: var(--shadow-block);
+  }
+  .menu-btn:hover svg {
     transform: none;
   }
 }
 
 @media print {
   .site-header,
+  .awning-wrap,
   .no-print {
     display: none !important;
   }

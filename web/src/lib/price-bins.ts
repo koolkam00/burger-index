@@ -1,4 +1,5 @@
-// DESIGN.md price ramp "mustard to char": five bins measured against the CITYWIDE index median,
+// DESIGN.md price ramp "Shallows to Trench" (one sea hue, pale to deep: the deeper the water, the
+// pricier the burger): five bins measured against the CITYWIDE index median,
 // never a filtered subset, so a mark keeps its color when filters change.
 // Comparisons run in integer cents so the legend ranges and the bin assignment always agree.
 

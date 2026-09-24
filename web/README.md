@@ -83,7 +83,7 @@ Notes:
 
 | Route | Page |
 |---|---|
-| `/` | The headline index on the Letterboard, typical range, counts, price histogram, borough bars, cheapest and priciest, neighborhood ranking |
+| `/` | The headline index on the Order Board, typical range, counts, price histogram, borough bars, cheapest and priciest, neighborhood ranking |
 | `/burgers` | Every burger: search, filters (borough, neighborhood, price, protein, price source, index-only), sort, all synced to the URL |
 | `/restaurants/[id]` | Menu board, index price vs neighborhood and NYC, price source, menu link, scrape date, chain note, locator map |
 | `/neighborhoods`, `/neighborhoods/[slug]` | Sortable ranking (areas with at least 5 distinct priced menus; a chain counts once) and area pages |
@@ -91,7 +91,7 @@ Notes:
 | `/map` | MapLibre GL map, pins colored by price level, legend, list view, restaurants without coordinates |
 | `/methodology` | The rule, where the restaurant list comes from and how much of it is read, sources, price-source meanings, statuses, exclusions, biases, update date |
 | `/data/burger_index.json` | The validated dataset, for download |
-| `/og.png`, `/sitemap.xml`, `/robots.txt` | Open Graph image (the Letterboard), sitemap, robots |
+| `/og.png`, `/sitemap.xml`, `/robots.txt` | Open Graph image (the Order Board), sitemap, robots |
 
 ## Notes for maintainers
 
@@ -108,7 +108,7 @@ Notes:
   as `pipeline/build.py` `coverage_note` writes it: list only ("our curated list of NYC burger restaurants, matched to NYC DOHMH
   inspection records...") or list plus DOHMH cuisines ("our curated restaurant list plus every restaurant NYC DOHMH lists under
   'Hamburgers'..."), the in-scope and not-yet-scraped counts, and whether national fast-food chains are left out. The home lede,
-  Letterboard line, stat tiles, meta descriptions, Open Graph image, footer and methodology read it. `test/scope.test.ts` pins both
+  Order Board line, stat tiles, meta descriptions, Open Graph image, footer and methodology read it. `test/scope.test.ts` pins both
   phrasings; if the pipeline rewords the note, update both together. An unrecognised note (the fixture's) gives copy that names no source.
 - **Price colors** (Steal → Splurge) are always measured against the citywide median, never a filtered subset. See `src/lib/price-bins.ts`.
 - **Map:** tiles and styles come from [OpenFreeMap](https://openfreemap.org) (`positron` for light, `dark` for dark), recolored to the

@@ -1,8 +1,8 @@
 "use client";
 
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useDeferredValue, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { BOROUGH_META, boroughBySlug, boroughInProse, type BoroughSlug } from "@/lib/boroughs";
 import {
   activeFilterCount,
@@ -21,9 +21,10 @@ import {
 import { formatCount, formatPrice, pluralize } from "@/lib/format";
 import { DELIVERY_NOTE, PRICE_SOURCE_NAME, PROTEIN_LABEL } from "@/lib/labels";
 import { binRanges } from "@/lib/price-bins";
-import type { Protein } from "@/lib/schema";
+import type { Borough, Protein } from "@/lib/schema";
 import { useMediaQuery } from "../charts/hooks";
-import { BoroughDot } from "../ui";
+import { ShipWheel } from "../icons/nautical";
+import { BoroughDot, EmptyState } from "../ui";
 import { BurgerTable, type TableRow } from "./BurgerTable";
 import { CheckList, FilterPopover, PriceInput } from "./controls";
 
@@ -86,19 +87,20 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
     return () => window.clearTimeout(t);
   }, [query, urlFilters, commit]);
 
-  // "/" focuses search; arriving via /burgers#search focuses it too.
+  // Arriving via /burgers#search focuses the search box.
   useEffect(() => {
     if (window.location.hash === "#search") inputRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
-      const t = e.target as HTMLElement | null;
-      if (t?.closest("input, textarea, select, [contenteditable='true'], dialog[open]")) return;
-      e.preventDefault();
-      inputRef.current?.focus();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
   }, []);
+  // "/" jumps back to the search box, but only while focus is inside the explorer (its filters, chips
+  // or results), never page-wide: a single-character shortcut must not fire from anywhere on the page
+  // (WCAG 2.1.4). Typing a "/" into a field still types it.
+  const onExplorerKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target as HTMLElement | null;
+    if (t?.closest("input, textarea, select, [contenteditable='true'], dialog[open]")) return;
+    e.preventDefault();
+    inputRef.current?.focus();
+  };
 
   const rows: Row[] = useMemo(
     () =>
@@ -178,10 +180,13 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
   };
 
   // ---- filter groups (rendered in popovers on desktop, in the sheet on mobile) ----------------
-  const boroughGroup = (hideLegend: boolean) => (
+  // In a popover (desktop) the groups are checkbox lists with the legend hidden (the chip names them);
+  // in the mobile sheet they are wrapping buoy chips under a visible legend.
+  const boroughGroup = (inSheet: boolean) => (
     <CheckList<BoroughSlug>
       legend="Borough"
-      hideLegend={hideLegend}
+      hideLegend={!inSheet}
+      variant={inSheet ? "chips" : "list"}
       options={BOROUGH_META.map((m) => ({
         value: m.slug,
         label: (
@@ -199,19 +204,21 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
       }}
     />
   );
-  const proteinGroup = (hideLegend: boolean) => (
+  const proteinGroup = (inSheet: boolean) => (
     <CheckList<Protein>
       legend="Protein"
-      hideLegend={hideLegend}
+      hideLegend={!inSheet}
+      variant={inSheet ? "chips" : "list"}
       options={data.proteins.map((p) => ({ value: p, label: PROTEIN_LABEL[p] }))}
       selected={filters.proteins}
       onChange={(next) => update({ proteins: next })}
     />
   );
-  const sourceGroup = (hideLegend: boolean) => (
+  const sourceGroup = (inSheet: boolean) => (
     <CheckList<SourceKey>
       legend="Price source"
-      hideLegend={hideLegend}
+      hideLegend={!inSheet}
+      variant={inSheet ? "chips" : "list"}
       options={data.sources.map((s) => ({ value: s, label: sourceLabel(s) }))}
       selected={filters.sources}
       onChange={setSources}
@@ -234,7 +241,7 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
                   <button
                     type="button"
                     aria-pressed={active}
-                    className={`t-ui-s flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-[4px] px-2 text-left ${active ? "bg-ink text-surface" : "hover:bg-surface-2"}`}
+                    className={`t-ui-s flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-[10px] px-2 text-left ${active ? "bg-accent text-accent-ink" : "hover:bg-surface-2"}`}
                     onClick={() => update(active ? { min: null, max: null } : { min: bin.min, max: bin.max })}
                   >
                     <span className="swatch" style={{ background: bin.color }} aria-hidden="true" />
@@ -301,8 +308,13 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
   );
 
   // ---- active filter chips ------------------------------------------------------------------
-  const chips: Array<{ key: string; label: string; clear: () => void }> = [
-    ...filters.boroughs.map((s) => ({ key: `b-${s}`, label: boroughBySlug(s)!.name, clear: () => update({ boroughs: filters.boroughs.filter((x) => x !== s) }) })),
+  const chips: Array<{ key: string; label: string; borough?: Borough; clear: () => void }> = [
+    ...filters.boroughs.map((s) => ({
+      key: `b-${s}`,
+      label: boroughBySlug(s)!.name,
+      borough: boroughBySlug(s)!.name,
+      clear: () => update({ boroughs: filters.boroughs.filter((x) => x !== s) }),
+    })),
     ...(selectedNeighborhood ? [{ key: "nb", label: selectedNeighborhood.name, clear: () => update({ neighborhood: "" }) }] : []),
     ...(filters.min !== null || filters.max !== null ? [{ key: "price", label: priceLabel(filters.min, filters.max), clear: () => update({ min: null, max: null }) }] : []),
     ...filters.proteins.map((p) => ({ key: `p-${p}`, label: PROTEIN_LABEL[p], clear: () => update({ proteins: filters.proteins.filter((x) => x !== p) }) })),
@@ -321,24 +333,26 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
   const emptyMessage = unpricedScope
     ? `We haven't priced any burgers in ${filters.boroughs.map((s) => boroughInProse(boroughBySlug(s)!.name)).join(" or ")} yet.`
     : query.trim()
-      ? `No burgers match “${query.trim()}”${scope ? ` in ${scope}` : ""}. Try fewer filters.`
-      : `No burgers match these filters${scope ? ` in ${scope}` : ""}. Try fewer filters.`;
+      ? `No burgers match “${query.trim()}”${scope ? ` in ${scope}` : ""}. Nothing in the net; try fewer filters.`
+      : `No burgers match these filters${scope ? ` in ${scope}` : ""}. Nothing in the net; try fewer filters.`;
 
   return (
-    <div>
+    // The keydown listener only catches "/" (see onExplorerKey); the div itself is not focusable.
+    <div onKeyDown={onExplorerKey}>
       {/* ---- Filter bar ---- */}
       <div className="grid gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="relative min-w-0 flex-1 basis-72">
-            <label htmlFor="search" className="sr-only">
-              Search burgers, restaurants, neighborhoods
+          <div className="min-w-0 flex-1 basis-72">
+            <label htmlFor="search" className="t-label muted mb-1.5 block">
+              Search every burger
             </label>
-            <Search className="muted pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" strokeWidth={1.75} aria-hidden="true" />
+            <div className="relative">
+            <Search className="muted pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2" strokeWidth={2} aria-hidden="true" />
             <input
               ref={inputRef}
               id="search"
               type="search"
-              className={`input pl-10 [&::-webkit-search-cancel-button]:hidden ${query ? "pr-12" : "pr-3 lg:pr-12"}`}
+              className={`input input-search pl-11 [&::-webkit-search-cancel-button]:hidden ${query ? "pr-12" : "pr-3 lg:pr-12"}`}
               placeholder={wide ? "Search burgers, restaurants, neighborhoods" : "Search burgers, restaurants"}
               maxLength={MAX_QUERY}
               autoComplete="off"
@@ -365,31 +379,32 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
                   inputRef.current?.focus();
                 }}
               >
-                <X strokeWidth={1.75} aria-hidden="true" />
+                <X strokeWidth={2} aria-hidden="true" />
               </button>
             ) : (
-              <kbd className="t-num-s muted pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 rounded-[2px] border border-line px-1.5 py-0.5 lg:block" aria-hidden="true">
+              <kbd className="t-num-s muted pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 rounded-[6px] border-[1.5px] border-line-strong px-1.5 py-0.5 lg:block" aria-hidden="true">
                 /
               </kbd>
             )}
+            </div>
           </div>
-          <div className="hidden md:block">{sortSelect(`${uid}-sort`)}</div>
+          <div className="hidden self-end md:block">{sortSelect(`${uid}-sort`)}</div>
         </div>
 
         {/* desktop filters */}
         <div className="hidden flex-wrap items-center gap-2 md:flex" role="group" aria-label="Filters">
           <FilterPopover label="Borough" count={filters.boroughs.length}>
-            {boroughGroup(true)}
+            {boroughGroup(false)}
           </FilterPopover>
           {neighborhoodSelect(`chip max-w-[16rem] pr-2 ${filters.neighborhood ? "chip-active" : ""}`, `${uid}-d-nb`)}
           <FilterPopover label="Price" count={filters.min !== null || filters.max !== null ? 1 : 0}>
             <div className="w-72">{priceGroup("d")}</div>
           </FilterPopover>
           <FilterPopover label="Protein" count={filters.proteins.length}>
-            {proteinGroup(true)}
+            {proteinGroup(false)}
           </FilterPopover>
           <FilterPopover label="Source" count={filters.sources.length}>
-            {sourceGroup(true)}
+            {sourceGroup(false)}
           </FilterPopover>
           <div className="ml-2">{toggles("d")}</div>
         </div>
@@ -397,7 +412,7 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
         {/* mobile: filters sheet + sort */}
         <div className="flex flex-wrap items-center gap-3 md:hidden">
           <button type="button" className="btn btn-secondary" aria-haspopup="dialog" onClick={() => sheetRef.current?.showModal()}>
-            <SlidersHorizontal strokeWidth={1.75} aria-hidden="true" />
+            <ShipWheel aria-hidden="true" />
             Filters{nActive ? ` (${nActive})` : ""}
           </button>
           {sortSelect(`${uid}-msort`, "input w-auto max-w-[13rem]")}
@@ -406,9 +421,11 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
         {chips.length ? (
           <div className="flex flex-wrap items-center gap-2" aria-label="Active filters" role="group">
             {chips.map((c) => (
-              <button key={c.key} type="button" className="chip chip-active" onClick={c.clear} aria-label={`Remove filter: ${c.label}`}>
+              <button key={c.key} type="button" className="chip chip-active" onClick={c.clear}>
+                {c.borough ? <BoroughDot borough={c.borough} /> : null}
                 <span className="break-anywhere">{c.label}</span>
-                <X strokeWidth={1.75} aria-hidden="true" />
+                <span className="sr-only">, remove filter</span>
+                <X strokeWidth={2} aria-hidden="true" />
               </button>
             ))}
             <button type="button" className="btn btn-ghost btn-sm" onClick={clearAll}>
@@ -427,16 +444,20 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
         }}
       >
         <div className="flex max-h-[88dvh] flex-col">
-          <div className="flex items-center justify-between border-b border-line px-4 py-2">
-            <h2 id={`${uid}-sheet-title`} className="t-display-s">
-              Filters
-            </h2>
+          <span className="rope rope-flat flex-none" aria-hidden="true" />
+          <div className="flex items-center justify-between border-b-2 border-line px-4 py-2">
+            <div>
+              <p className="kicker t-kicker">Your order</p>
+              <h2 id={`${uid}-sheet-title`} className="t-display-s">
+                Filters
+              </h2>
+            </div>
             <button type="button" className="icon-btn" aria-label="Close filters" onClick={() => sheetRef.current?.close()}>
-              <X strokeWidth={1.75} aria-hidden="true" />
+              <X strokeWidth={2} aria-hidden="true" />
             </button>
           </div>
           <div className="grid flex-1 gap-6 overflow-y-auto px-4 py-4">
-            {boroughGroup(false)}
+            {boroughGroup(true)}
             <div>
               <label htmlFor={`${uid}-m-nb`} className="t-label muted mb-1 block">
                 Neighborhood
@@ -447,11 +468,11 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
               <legend className="t-label muted mb-2">Price</legend>
               {priceGroup("m")}
             </fieldset>
-            {proteinGroup(false)}
-            {sourceGroup(false)}
+            {proteinGroup(true)}
+            {sourceGroup(true)}
             {toggles("m")}
           </div>
-          <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-3">
+          <div className="flex items-center justify-between gap-3 border-t-2 border-line px-4 pt-3 pb-4">
             <button type="button" className="btn btn-ghost" onClick={clearAll}>
               Clear all
             </button>
@@ -475,7 +496,7 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
           {results.length > shown.length ? (
             <div className="mt-6 flex flex-wrap items-center gap-4">
               <button type="button" className="btn btn-secondary" onClick={() => setLimit((l) => l + PAGE)}>
-                Load {formatCount(Math.min(PAGE, results.length - shown.length))} more
+                Haul in {formatCount(Math.min(PAGE, results.length - shown.length))} more
               </button>
               <span className="t-ui-s muted">
                 Showing {formatCount(shown.length)} of {formatCount(results.length)}
@@ -484,14 +505,19 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
           ) : null}
         </div>
       ) : (
-        <div className="chart-empty flex-col gap-4" style={{ minHeight: 200 }}>
-          <p>{emptyMessage}</p>
-          {nActive || query ? (
-            <button type="button" className="btn btn-secondary btn-sm" onClick={clearAll}>
-              Clear all filters
-            </button>
-          ) : null}
-        </div>
+        <EmptyState
+          height={240}
+          art="net"
+          action={
+            nActive || query ? (
+              <button type="button" className="btn btn-secondary btn-sm" onClick={clearAll}>
+                Clear all filters
+              </button>
+            ) : null
+          }
+        >
+          {emptyMessage}
+        </EmptyState>
       )}
     </div>
   );

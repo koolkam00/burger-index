@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Lighthouse, OrderBell } from "@/components/icons/nautical";
 import { PageHeader, SectionHeading, SourceBadge, StatusBadge } from "@/components/ui";
 import { boroughInProse } from "@/lib/boroughs";
 import {
@@ -15,7 +16,7 @@ import {
   withMenuCounts,
 } from "@/lib/data";
 import { capitalize, formatCount, formatDate, formatDateTime, formatPrice, pluralize } from "@/lib/format";
-import { PRICE_SOURCE_MEANING, STATUS_COPY } from "@/lib/labels";
+import { PRICE_SOURCE_MEANING, STATUS_MEANING } from "@/lib/labels";
 import { isChainOnly, joinList, listedChainNames, listedMenus, menuBreakdown, perLocationNote, pricedMenus, splitByCoverage, statusTally, type StatusTally } from "@/lib/menus";
 import { pageMetadata } from "@/lib/metadata";
 import { cuisineNames, mostlyIn, scopeMethod, scopeRestaurants, scopeSources, scopeWhere } from "@/lib/scope";
@@ -94,8 +95,10 @@ export default function MethodologyPage() {
   const p90 = stats.index_p90 !== null ? formatPrice(stats.index_p90, { cents: "always" }) : null;
 
   return (
-    <div className="wrap">
+    <>
       <PageHeader
+        ticket="The recipe"
+        ticketIcon={Lighthouse}
         title="How the index works."
         lede={`One number for what a burger costs in New York, built from the menus we could price, with each chain counted once${
           noNational ? " and national chains left out" : ""
@@ -106,7 +109,8 @@ export default function MethodologyPage() {
         } Here is what counts, where the prices come from and what we leave out.`}
       />
 
-      <article className="prose mt-10">
+      <div className="wrap">
+      <article className="prose mt-2">
         <section aria-labelledby="rule">
           <SectionHeading id="rule" title="The rule." />
           <p className="mt-4">{m.index_price_rule}</p>
@@ -154,7 +158,7 @@ export default function MethodologyPage() {
           {median !== null ? (
             <>
               <p>Colors on the map and charts compare a price with the citywide median, never with a filtered subset, so a restaurant keeps its color everywhere:</p>
-              <div className="not-prose mt-4">
+              <div className="not-prose table-shell mt-4">
                 <table className="data-table">
                   <thead>
                     <tr>
@@ -222,7 +226,7 @@ export default function MethodologyPage() {
               No menu is priced yet in {joinList(unpricedBoroughs.map((b) => boroughInProse(b.name)))}.
             </p>
           ) : null}
-          <div className="not-prose mt-4">
+          <div className="not-prose table-shell mt-4">
             <table className="data-table">
               <caption className="sr-only">Priced menus by borough</caption>
               <thead>
@@ -272,7 +276,7 @@ export default function MethodologyPage() {
           </p>
           <dl className="not-prose mt-4 grid gap-4">
             {PRICE_SOURCES.map((s) => (
-              <div key={s} className="grid gap-1 border-b border-line pb-4 sm:grid-cols-[12rem_minmax(0,1fr)] sm:gap-4">
+              <div key={s} className="grid gap-1 border-b-[1.5px] border-line pb-4 sm:grid-cols-[12rem_minmax(0,1fr)] sm:gap-4">
                 <dt className="flex flex-wrap items-center gap-2">
                   <SourceBadge source={s} />
                 </dt>
@@ -285,7 +289,7 @@ export default function MethodologyPage() {
         </section>
 
         <section className="section" aria-labelledby="hand-checks">
-          <SectionHeading id="hand-checks" title="Checked by hand." />
+          <SectionHeading id="hand-checks" kicker="Checked by the cook" icon={OrderBell} title="Checked by hand." />
           <p className="mt-4">
             When a scraped price looks wrong, we re-read the live menu ourselves. A price found wrong is corrected; one we can&apos;t confirm against a
             current menu is withheld, which leaves that restaurant out of the index. Each restaurant page says what changed and when.
@@ -320,12 +324,12 @@ export default function MethodologyPage() {
           </p>
           <dl className="not-prose mt-4 grid gap-4">
             {STATUSES.map((s) => (
-              <div key={s} className="grid gap-1 border-b border-line pb-4 sm:grid-cols-[12rem_minmax(0,1fr)] sm:gap-4">
+              <div key={s} className="grid gap-1 border-b-[1.5px] border-line pb-4 sm:grid-cols-[12rem_minmax(0,1fr)] sm:gap-4">
                 <dt>
                   <StatusBadge status={s} />
                 </dt>
                 <dd className="t-body-s">
-                  {STATUS_COPY[s]}{" "}
+                  {STATUS_MEANING[s]}{" "}
                   <span className="muted">
                     {statuses[s].locations
                       ? `(${statusMenus(statuses[s])}, ${pluralize(statuses[s].locations, "location")}${
@@ -440,6 +444,7 @@ export default function MethodologyPage() {
           </p>
         </section>
       </article>
-    </div>
+      </div>
+    </>
   );
 }

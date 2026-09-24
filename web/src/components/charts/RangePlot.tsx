@@ -58,7 +58,7 @@ export function RangePlot({ areas, cityMedian, labelledBy }: { areas: AreaWithMe
               />
               <span
                 className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink"
-                style={{ left: pct(a.index_median as number), boxShadow: "0 0 0 2px var(--bg)" }}
+                style={{ left: pct(a.index_median as number), boxShadow: "0 0 0 2px var(--surface)" }}
               />
             </div>
             <div className="t-num-m text-right">{formatPrice(a.index_median, { cents: "always" })}</div>
@@ -97,7 +97,9 @@ export function AreaTable({ areas }: { areas: AreaWithMenus[] }) {
         {areas.map((a) => (
           <tr key={a.slug}>
             <th scope="row" className="break-anywhere">
-              {a.name}
+              <Link href={`/neighborhoods/${a.slug}`} className="ui-link">
+                {a.name}
+              </Link>
               <span className="t-ui-s muted block">
                 {a.borough}
                 {isChainOnly(a.menuCounts) ? " · Chain prices only" : ""}

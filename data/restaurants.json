@@ -7,7 +7,7 @@
   "dohmh_fetched_at": "2026-09-23T18:42:05Z"
  },
  "report": {
-  "csv_rows": 636,
+  "csv_rows": 632,
   "csv_matched": 523,
   "csv_unmatched": [
    {
@@ -66,533 +66,507 @@
     "why": "no similar name"
    },
    {
-    "row": 130,
-    "name": "Burger Bandit",
-    "why": "best candidate 'BURGER MANIA' scored 78"
-   },
-   {
-    "row": 139,
+    "row": 138,
     "name": "Frying Pan",
     "why": "no similar name"
    },
    {
-    "row": 141,
+    "row": 140,
     "name": "Twist Bar",
     "why": "best candidate 'BAR' scored 55"
    },
    {
-    "row": 144,
+    "row": 143,
     "name": "The Chelsea Pub",
     "why": "best candidate 'HYATT HOUSE NEW YORK, CHELSEA' scored 79"
    },
    {
-    "row": 149,
+    "row": 148,
     "name": "Black Market",
     "why": "best candidate 'GRACE CONCOURSE PAVILION COFFEE BAR/MARKET' scored 71"
    },
    {
-    "row": 152,
+    "row": 151,
     "name": "Burgers on B",
     "why": "best candidate 'BURGERS AND TACOS ON LEX' scored 67"
    },
    {
-    "row": 153,
+    "row": 152,
     "name": "Grillify-NYC",
     "why": "no similar name"
    },
    {
-    "row": 154,
+    "row": 153,
     "name": "Populares",
     "why": "no similar name"
    },
    {
-    "row": 156,
+    "row": 155,
     "name": "Sunday Dreamin",
     "why": "best candidate 'SUNDAY TO SUNDAY' scored 60"
    },
    {
-    "row": 159,
+    "row": 158,
     "name": "Tallgrass Burger",
     "why": "best candidate 'LE BURGER' scored 64"
    },
    {
-    "row": 160,
+    "row": 159,
     "name": "Chick-N-Smash",
     "why": "best candidate 'CHICK CHICK' scored 64"
    },
    {
-    "row": 162,
+    "row": 161,
     "name": "McDonald's (East Village)",
     "why": "ambiguous: 2 records tie"
    },
    {
-    "row": 167,
+    "row": 166,
     "name": "Croxley Ale House",
     "why": "no similar name"
    },
    {
-    "row": 169,
+    "row": 168,
     "name": "Idle Hands",
     "why": "no similar name"
    },
    {
-    "row": 170,
+    "row": 169,
     "name": "Professor Thom's",
     "why": "no similar name"
    },
    {
-    "row": 171,
+    "row": 170,
     "name": "Destination Bar & Grille",
     "why": "best candidate \"DALTON'S BAR & GRILL\" scored 66"
    },
    {
-    "row": 175,
+    "row": 174,
     "name": "Blue Road Burger",
     "why": "best candidate 'LE BURGER' scored 73"
    },
    {
-    "row": 181,
+    "row": 180,
     "name": "Casa 13urger",
     "why": "best candidate 'CASA' scored 53"
    },
    {
-    "row": 199,
+    "row": 198,
     "name": "The Surf Lodge",
     "why": "no similar name"
    },
    {
-    "row": 202,
+    "row": 201,
     "name": "The Loyal",
     "why": "best candidate 'LOKAL' scored 80"
    },
    {
-    "row": 217,
+    "row": 216,
     "name": "Pop's of Brooklyn",
     "why": "best candidate \"PATRIZIA'S OF BROOKLYN\" scored 76"
    },
    {
-    "row": 219,
+    "row": 218,
     "name": "Garage Restaurant and Cafe",
     "why": "best candidate 'B AND B RESTAURANT' scored 73"
    },
    {
-    "row": 221,
+    "row": 220,
     "name": "Jekyll & Hyde",
     "why": "no similar name"
    },
    {
-    "row": 222,
+    "row": 221,
     "name": "Caroll Place",
     "why": "no similar name"
    },
    {
-    "row": 227,
+    "row": 226,
     "name": "BFB Highline",
     "why": "best candidate 'HIGHLINE CAFE' scored 79"
    },
    {
-    "row": 230,
+    "row": 229,
     "name": "The Chester",
     "why": "no similar name"
    },
    {
-    "row": 231,
+    "row": 230,
     "name": "The Collective",
     "why": "best candidate 'PIZZA COLLECTIVE' scored 80"
    },
    {
-    "row": 232,
+    "row": 231,
     "name": "The Vinatta Project",
     "why": "best candidate 'THE GYRO PROJECT' scored 56"
    },
    {
-    "row": 233,
-    "name": "The Standard Plaza",
-    "why": "duplicate match"
-   },
-   {
-    "row": 234,
+    "row": 232,
     "name": "Puttery",
     "why": "duplicate match"
    },
    {
-    "row": 237,
+    "row": 235,
     "name": "Ricardo's Steakhouse",
     "why": "best candidate \"ROCCO'S STEAKHOUSE\" scored 67"
    },
    {
-    "row": 244,
+    "row": 242,
     "name": "Abbey Tavern",
     "why": "best candidate 'TAVERN 29' scored 67"
    },
    {
-    "row": 252,
+    "row": 250,
     "name": "B2 Harlem",
     "why": "best candidate 'HARLEM BAR-B-Q / NABE HARLEM' scored 84"
    },
    {
-    "row": 264,
+    "row": 262,
     "name": "The Cecil Steakhouse",
     "why": "best candidate 'VINYL STEAKHOUSE' scored 50"
    },
    {
-    "row": 266,
+    "row": 264,
     "name": "123 Burger Shot Beer",
     "why": "best candidate 'KO BURGER' scored 55"
    },
    {
-    "row": 268,
+    "row": 266,
     "name": "Bar Bacon",
     "why": "'BEACON THEATRE (BALCONY BAR)' (2124 Broadway, Upper West Side) is not at the address the row names (836 9 ave)"
    },
    {
-    "row": 270,
+    "row": 268,
     "name": "Genuine Roadside",
     "why": "no similar name"
    },
    {
-    "row": 276,
+    "row": 274,
     "name": "Hudson Yards Grill",
     "why": "best candidate 'HUDSON YARDS CATERING LLC' scored 79"
    },
    {
-    "row": 277,
+    "row": 275,
     "name": "La Barra (Mercado Little Spain)",
     "why": "'LA CASA DEL MOFONGO AND PIANO BAR/ BARRA PAYAN' (546 West 207 Street, Marble Hill-Inwood) is only a similar name outside the row's neighborhood"
    },
    {
-    "row": 290,
+    "row": 288,
     "name": "Hill and Bay",
     "why": "no similar name"
    },
    {
-    "row": 291,
+    "row": 289,
     "name": "Kipsey's",
     "why": "no similar name"
    },
    {
-    "row": 293,
+    "row": 291,
     "name": "Penelope",
     "why": "no similar name"
    },
    {
-    "row": 313,
-    "name": "AKB (Archer Hotel)",
-    "why": "best candidate 'SPYGLASS ROOFTOP BAR' scored 19"
-   },
-   {
-    "row": 327,
+    "row": 324,
     "name": "Porter House Bar and Grill",
     "why": "best candidate 'THE U BAR AND GRILL' scored 73"
    },
    {
-    "row": 335,
+    "row": 332,
     "name": "At The Office",
     "why": "best candidate 'THE OFFICE' scored 79"
    },
    {
-    "row": 349,
+    "row": 346,
     "name": "Portrait Bar",
     "why": "best candidate 'CONRAD MIDTOWN (RESTAURANT, BAR/STORAGE)' scored 50"
    },
    {
-    "row": 354,
+    "row": 351,
     "name": "Jus' Bad Food",
     "why": "best candidate 'FOOD' scored 57"
    },
    {
-    "row": 371,
+    "row": 368,
     "name": "The Lambs Club",
     "why": "best candidate 'REVEL & RYE / BROADWAY LOUNGE / M CLUB' scored 75"
    },
    {
-    "row": 391,
+    "row": 388,
     "name": "Quality Eats (UES)",
     "why": "'QUALITY MEATS' (57 West 58 Street, Midtown-Midtown South) is only a similar name outside the row's neighborhood"
    },
    {
-    "row": 395,
+    "row": 392,
     "name": "Sojourn",
     "why": "best candidate 'SOJOURN SOCIAL' scored 70, not at the address the row names (244 e 79)"
    },
    {
-    "row": 411,
+    "row": 408,
     "name": "McAleer's Pub",
     "why": "best candidate \"MCGEE'S PUB\" scored 81"
    },
    {
-    "row": 427,
+    "row": 424,
     "name": "The Grange",
     "why": "best candidate 'LAGRANGE' scored 86"
    },
    {
-    "row": 429,
+    "row": 426,
     "name": "Bun Haus",
     "why": "no similar name"
    },
    {
-    "row": 430,
+    "row": 427,
     "name": "Mekelburg's",
     "why": "no similar name"
    },
    {
-    "row": 431,
+    "row": 428,
     "name": "Juanchi's Burger",
     "why": "best candidate 'C. BURGER' scored 70"
    },
    {
-    "row": 441,
+    "row": 438,
     "name": "Blue Hour",
     "why": "no similar name"
    },
    {
-    "row": 451,
+    "row": 448,
     "name": "Madcap Cafe",
     "why": "best candidate 'CAFE MADO' scored 70"
    },
    {
-    "row": 461,
+    "row": 458,
     "name": "Meme's Diner",
     "why": "best candidate \"MIKE'S DINER\" scored 70"
    },
    {
-    "row": 462,
+    "row": 459,
     "name": "Maison Yaki",
     "why": "no similar name"
    },
    {
-    "row": 464,
+    "row": 461,
     "name": "Patti Ann's",
     "why": "no similar name"
    },
    {
-    "row": 474,
+    "row": 471,
     "name": "The Burger Bistro",
     "why": "best candidate 'BURGERS BAR' scored 79"
    },
    {
-    "row": 484,
+    "row": 481,
     "name": "20 Grams Cafe",
     "why": "best candidate 'U CAFE' scored 53"
    },
    {
-    "row": 487,
+    "row": 484,
     "name": "Shake Shack Dumbo",
     "why": "ambiguous: 2 records tie"
    },
    {
-    "row": 491,
+    "row": 488,
     "name": "Tavern Next Door",
     "why": "'YIASOU / NEXT DOOR' (2003 Emmons Avenue, Sheepshead Bay-Gerritsen Beach-Manhattan Beach) is only a similar name outside the row's neighborhood"
    },
    {
-    "row": 494,
+    "row": 491,
     "name": "Korzo",
     "why": "no similar name"
    },
    {
-    "row": 503,
+    "row": 500,
     "name": "OG Burger Box",
     "why": "no similar name"
    },
    {
-    "row": 516,
+    "row": 513,
     "name": "Jackson's Eatery | Bar",
     "why": "best candidate 'JACKSON DINER' scored 79"
    },
    {
-    "row": 518,
+    "row": 515,
     "name": "CaliBun Burgers & Shakes",
     "why": "no similar name"
    },
    {
-    "row": 525,
+    "row": 522,
     "name": "Irish Cottage",
     "why": "no similar name"
    },
    {
-    "row": 530,
+    "row": 527,
     "name": "Millard Fillmore Tavern",
     "why": "no similar name"
    },
    {
-    "row": 531,
+    "row": 528,
     "name": "Burger Plus",
     "why": "best candidate 'BURGER CLUB' scored 82"
    },
    {
-    "row": 532,
+    "row": 529,
     "name": "Outback Steakhouse",
     "why": "'OUTBACK STEAKHOUSE' (23-48 Bell Boulevard, Ft. Totten-Bay Terrace-Clearview) is only a name match outside the row's neighborhood, and 2 other place(s) in NYC have that name"
    },
    {
-    "row": 533,
+    "row": 530,
     "name": "Pat LaFrieda's Chop House at Citi Field",
     "why": "best candidate 'CITI FIELD STERLING KITCHEN/CHOP HOUSE' scored 74"
    },
    {
-    "row": 544,
+    "row": 541,
     "name": "Smash Shack Burger Bar",
     "why": "best candidate 'SLDR BURGER BAR' scored 65"
    },
    {
-    "row": 547,
+    "row": 544,
     "name": "Crete Diner and Restaurant",
     "why": "best candidate 'JS RESTAURANT & DINER' scored 82"
    },
    {
-    "row": 554,
+    "row": 551,
     "name": "Riverdale Diner",
     "why": "best candidate 'DALE DINER' scored 78"
    },
    {
-    "row": 556,
+    "row": 553,
     "name": "Riverdale Garden",
     "why": "no similar name"
    },
    {
-    "row": 559,
+    "row": 556,
     "name": "O'Brien Pub",
     "why": "no similar name"
    },
    {
-    "row": 560,
+    "row": 557,
     "name": "Keane's Bar And Restaurant",
     "why": "best candidate 'K & Q RESTAURANT' scored 76"
    },
    {
-    "row": 562,
+    "row": 559,
     "name": "The Flame Diner",
     "why": "no similar name"
    },
    {
-    "row": 563,
+    "row": 560,
     "name": "Olympic Flame Diner",
     "why": "no similar name"
    },
    {
-    "row": 564,
+    "row": 561,
     "name": "Solomon's Porch",
     "why": "no similar name"
    },
    {
-    "row": 565,
+    "row": 562,
     "name": "Burger Lodge",
     "why": "best candidate 'YO-BURGER' scored 76"
    },
    {
-    "row": 570,
+    "row": 567,
     "name": "Mott Haven Bar and Grill",
     "why": "best candidate 'AQUA BAR & GRILL' scored 69"
    },
    {
-    "row": 571,
+    "row": 568,
     "name": "Jerry's Hamburger Place",
     "why": "best candidate \"JIMBO'S HAMBURGER PLACE\" scored 82"
    },
    {
-    "row": 573,
+    "row": 570,
     "name": "Mo Gridder's BBQ",
     "why": "no similar name"
    },
    {
-    "row": 574,
+    "row": 571,
     "name": "Burger Time",
     "why": "best candidate 'Smash Time Burger Co' scored 79"
    },
    {
-    "row": 575,
+    "row": 572,
     "name": "Nana's Kitchen",
     "why": "best candidate \"MALINA'S KITCHEN\" scored 77"
    },
    {
-    "row": 576,
+    "row": 573,
     "name": "Doyle's Pub",
     "why": "no similar name"
    },
    {
-    "row": 579,
+    "row": 576,
     "name": "Fiddler's Elbow Restaurant & Bar",
     "why": "best candidate 'M & G RESTAURANT' scored 63"
    },
    {
-    "row": 581,
+    "row": 578,
     "name": "Ice House Café",
     "why": "best candidate 'LAVA HOUSE CREPES & CAFE' scored 55"
    },
    {
-    "row": 589,
+    "row": 586,
     "name": "Stadium Sport Bar Restaurant & Pizzeria",
     "why": "best candidate 'VPHO PIZZERIA & RESTAURANT' scored 73"
    },
    {
-    "row": 603,
-    "name": "The Richmond",
-    "why": "best candidate 'RICHMOND REPUBLIC' scored 67, not at the address the row names (695 bay st)"
-   },
-   {
-    "row": 608,
+    "row": 604,
     "name": "98K Burger",
     "why": "no similar name"
    },
    {
-    "row": 609,
+    "row": 605,
     "name": "Applebee's",
     "why": "best candidate 'APPLEBEES NEIGHBORHOOD GRILL AND BAR' scored 60, not at the address the row names (430 new dorp)"
    },
    {
-    "row": 616,
+    "row": 612,
     "name": "Bite Burger",
     "why": "no similar name"
    },
    {
-    "row": 618,
+    "row": 614,
     "name": "Flanagan's Tavern",
     "why": "no similar name"
    },
    {
-    "row": 619,
+    "row": 615,
     "name": "Tottenville Tavern",
     "why": "no similar name"
    },
    {
-    "row": 625,
+    "row": 621,
     "name": "DaddyO's BBQ and Sports Bar",
     "why": "no similar name"
    },
    {
-    "row": 628,
+    "row": 624,
     "name": "PepperJack Grill",
     "why": "no similar name"
    },
    {
-    "row": 630,
+    "row": 626,
     "name": "Adobe Blues",
     "why": "no similar name"
    },
    {
-    "row": 632,
+    "row": 628,
     "name": "Five Guys (Flushing)",
     "why": "'FIVE GUYS' (210-33 26 Avenue, Ft. Totten-Bay Terrace-Clearview) is only a name match outside the row's neighborhood, and 25 other place(s) in NYC have that name"
    }
   ],
   "csv_duplicate_matches": [
    {
-    "row": 233,
-    "name": "The Standard Plaza",
-    "camis": "50071497",
-    "first_row": 33
-   },
-   {
-    "row": 234,
+    "row": 232,
     "name": "Puttery",
     "camis": "50146477",
-    "first_row": 224
+    "first_row": 223
    }
   ],
   "csv_ambiguous": [
    {
-    "row": 162,
+    "row": 161,
     "name": "McDonald's (East Village)",
     "candidates": [
      {
@@ -610,7 +584,7 @@
     ]
    },
    {
-    "row": 487,
+    "row": 484,
     "name": "Shake Shack Dumbo",
     "candidates": [
      {
@@ -629,35 +603,7 @@
    }
   ],
   "csv_stale_matches": [],
-  "csv_address_now_other_business": [
-   {
-    "row": 130,
-    "name": "Burger Bandit",
-    "address": "2 broadway",
-    "now": [
-     "CHIPOTLE MEXICAN GRILL (41048427)",
-     "ROSEN'S CAFE (41655257)",
-     "STARBUCKS (50168556)"
-    ]
-   },
-   {
-    "row": 313,
-    "name": "AKB (Archer Hotel)",
-    "address": "45 w 38",
-    "now": [
-     "AVA SOCIAL (50110616)",
-     "SPYGLASS ROOFTOP BAR (50110619)"
-    ]
-   },
-   {
-    "row": 603,
-    "name": "The Richmond",
-    "address": "695 bay st",
-    "now": [
-     "UNITED BAR & RESTAURANT CORPORATION (50188332)"
-    ]
-   }
-  ],
+  "csv_address_now_other_business": [],
   "dohmh_records": 31120,
   "dohmh_dropped_boro": 87,
   "dohmh_superseded_permits": [
@@ -1869,7 +1815,7 @@
    "Slutty Vegan": 1
   },
   "no_neighborhood": 0,
-  "restaurants": 608,
+  "restaurants": 604,
   "dohmh_fetched_at": "2026-09-23T18:42:05Z"
  },
  "restaurants": [
@@ -5386,30 +5332,6 @@
    "match": null
   },
   {
-   "key": "csv:burger-bandit-manhattan",
-   "camis": null,
-   "dba": null,
-   "name": "Burger Bandit",
-   "address": null,
-   "borough": "Manhattan",
-   "zipcode": null,
-   "lat": null,
-   "lng": null,
-   "nta": "MN25",
-   "neighborhood": "Battery Park City-Lower Manhattan",
-   "nta_source": "csv-neighborhood",
-   "cuisine": null,
-   "last_inspection": null,
-   "website": null,
-   "menu_url": null,
-   "csv": true,
-   "csv_name": "Burger Bandit",
-   "csv_neighborhood": "Financial District",
-   "csv_notes": "Burger joint; 2 Broadway",
-   "csv_row": 130,
-   "match": null
-  },
-  {
    "key": "camis:50118585",
    "camis": "50118585",
    "dba": "ZAZA GREENWICH ST",
@@ -5430,7 +5352,7 @@
    "csv_name": "ZAZA",
    "csv_neighborhood": "Financial District",
    "csv_notes": "Modern diner with burgers",
-   "csv_row": 131,
+   "csv_row": 130,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood",
@@ -5458,7 +5380,7 @@
    "csv_name": "Fraunces Tavern",
    "csv_neighborhood": "Financial District",
    "csv_notes": "Historic tavern; Sam's Tavern Burger (verified on menu)",
-   "csv_row": 132,
+   "csv_row": 131,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -5486,7 +5408,7 @@
    "csv_name": "The Chelsea Bell",
    "csv_neighborhood": "Chelsea",
    "csv_notes": "Bar and grill; Chelsea Burger",
-   "csv_row": 133,
+   "csv_row": 132,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -5514,7 +5436,7 @@
    "csv_name": "Chelsea Square Restaurant",
    "csv_neighborhood": "Chelsea",
    "csv_notes": "24-hour diner; broiled jumbo beefburger",
-   "csv_row": 134,
+   "csv_row": 133,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -5542,7 +5464,7 @@
    "csv_name": "Coppelia",
    "csv_neighborhood": "Chelsea",
    "csv_notes": "24-hour Cuban diner; Hamburguesa",
-   "csv_row": 135,
+   "csv_row": 134,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood",
@@ -5570,7 +5492,7 @@
    "csv_name": "Cafeteria",
    "csv_neighborhood": "Chelsea",
    "csv_notes": "Comfort-food bar and grill",
-   "csv_row": 136,
+   "csv_row": 135,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+neighborhood-zip",
@@ -5598,7 +5520,7 @@
    "csv_name": "Dallas BBQ",
    "csv_neighborhood": "Chelsea",
    "csv_notes": "Barbecue restaurant with burgers",
-   "csv_row": 137,
+   "csv_row": 136,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -5626,7 +5548,7 @@
    "csv_name": "Burger & Lobster",
    "csv_neighborhood": "Midtown",
    "csv_notes": "Burger-and-lobster restaurant at 132 W 43rd St (Bryant Park)",
-   "csv_row": 138,
+   "csv_row": 137,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -5654,7 +5576,7 @@
    "csv_name": "Frying Pan",
    "csv_neighborhood": "West Chelsea",
    "csv_notes": "Floating bar at Chelsea Piers; bar food and burgers",
-   "csv_row": 139,
+   "csv_row": 138,
    "match": null
   },
   {
@@ -5678,7 +5600,7 @@
    "csv_name": "Wildflower",
    "csv_neighborhood": "Chelsea",
    "csv_notes": "Cocktail bar; smash burgers",
-   "csv_row": 140,
+   "csv_row": 139,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -5706,7 +5628,7 @@
    "csv_name": "Twist Bar",
    "csv_neighborhood": "Chelsea",
    "csv_notes": "Cocktail bar serving burgers",
-   "csv_row": 141,
+   "csv_row": 140,
    "match": null
   },
   {
@@ -5730,7 +5652,7 @@
    "csv_name": "O'Toole's Way",
    "csv_neighborhood": "Chelsea",
    "csv_notes": "Irish restaurant with burgers",
-   "csv_row": 142,
+   "csv_row": 141,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -5758,7 +5680,7 @@
    "csv_name": "Empire Diner",
    "csv_neighborhood": "Chelsea",
    "csv_notes": "Iconic American diner near High Line",
-   "csv_row": 143,
+   "csv_row": 142,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -5786,7 +5708,7 @@
    "csv_name": "The Chelsea Pub",
    "csv_neighborhood": "Chelsea",
    "csv_notes": "Pub fare; sliders and burgers",
-   "csv_row": 144,
+   "csv_row": 143,
    "match": null
   },
   {
@@ -5810,7 +5732,7 @@
    "csv_name": "Black Iron Burger",
    "csv_neighborhood": "Midtown",
    "csv_notes": "Burger joint at 245 W 38th St; voted one of NYC's best",
-   "csv_row": 145,
+   "csv_row": 144,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -5838,7 +5760,7 @@
    "csv_name": "Emmy Squared Pizza East Village",
    "csv_neighborhood": "East Village",
    "csv_notes": "Pizza spot with acclaimed burger",
-   "csv_row": 146,
+   "csv_row": 145,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -5866,7 +5788,7 @@
    "csv_name": "The Lion's Bar & Grill",
    "csv_neighborhood": "East Village",
    "csv_notes": "Bar and grill; dry-aged cheeseburger",
-   "csv_row": 147,
+   "csv_row": 146,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood",
@@ -5894,7 +5816,7 @@
    "csv_name": "Virginia's",
    "csv_neighborhood": "East Village",
    "csv_notes": "Neighborhood restaurant with burgers",
-   "csv_row": 148,
+   "csv_row": 147,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -5922,7 +5844,7 @@
    "csv_name": "Black Market",
    "csv_neighborhood": "East Village",
    "csv_notes": "Burger and bar",
-   "csv_row": 149,
+   "csv_row": 148,
    "match": null
   },
   {
@@ -5946,7 +5868,7 @@
    "csv_name": "The Grafton",
    "csv_neighborhood": "East Village",
    "csv_notes": "Irish sports pub with burger",
-   "csv_row": 150,
+   "csv_row": 149,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood",
@@ -5974,7 +5896,7 @@
    "csv_name": "St. Mark's Burgers & Dogs",
    "csv_neighborhood": "East Village",
    "csv_notes": "Counter joint for burgers and dogs",
-   "csv_row": 151,
+   "csv_row": 150,
    "match": {
     "score": 98.0,
     "method": "name+neighborhood",
@@ -6002,7 +5924,7 @@
    "csv_name": "Burgers on B",
    "csv_neighborhood": "East Village",
    "csv_notes": "Burger counter",
-   "csv_row": 152,
+   "csv_row": 151,
    "match": null
   },
   {
@@ -6026,7 +5948,7 @@
    "csv_name": "Grillify-NYC",
    "csv_neighborhood": "East Village",
    "csv_notes": "Halal grill; smash burgers",
-   "csv_row": 153,
+   "csv_row": 152,
    "match": null
   },
   {
@@ -6050,7 +5972,7 @@
    "csv_name": "Populares",
    "csv_neighborhood": "East Village",
    "csv_notes": "EV burger counter",
-   "csv_row": 154,
+   "csv_row": 153,
    "match": null
   },
   {
@@ -6074,7 +5996,7 @@
    "csv_name": "The Hairy Lemon",
    "csv_neighborhood": "East Village",
    "csv_notes": "Irish pub; burger menu",
-   "csv_row": 155,
+   "csv_row": 154,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6102,7 +6024,7 @@
    "csv_name": "Sunday Dreamin",
    "csv_neighborhood": "East Village",
    "csv_notes": "Burger counter",
-   "csv_row": 156,
+   "csv_row": 155,
    "match": null
   },
   {
@@ -6126,7 +6048,7 @@
    "csv_name": "8-Bit Bites",
    "csv_neighborhood": "East Village",
    "csv_notes": "Arcade bar with burgers",
-   "csv_row": 157,
+   "csv_row": 156,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6154,7 +6076,7 @@
    "csv_name": "Crispy Burger",
    "csv_neighborhood": "East Village",
    "csv_notes": "Chicken and burger spot",
-   "csv_row": 158,
+   "csv_row": 157,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6182,7 +6104,7 @@
    "csv_name": "Tallgrass Burger",
    "csv_neighborhood": "East Village",
    "csv_notes": "Burger counter",
-   "csv_row": 159,
+   "csv_row": 158,
    "match": null
   },
   {
@@ -6206,7 +6128,7 @@
    "csv_name": "Chick-N-Smash",
    "csv_neighborhood": "East Village",
    "csv_notes": "Chicken spot; smash burgers",
-   "csv_row": 160,
+   "csv_row": 159,
    "match": null
   },
   {
@@ -6230,7 +6152,7 @@
    "csv_name": "Superiority Burger",
    "csv_neighborhood": "East Village",
    "csv_notes": "Vegetarian burger counter",
-   "csv_row": 161,
+   "csv_row": 160,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6258,7 +6180,7 @@
    "csv_name": "Mary O's Irish Pub",
    "csv_neighborhood": "East Village",
    "csv_notes": "Irish pub with burger",
-   "csv_row": 163,
+   "csv_row": 162,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood",
@@ -6286,7 +6208,7 @@
    "csv_name": "Bowery Meat Company",
    "csv_neighborhood": "East Village",
    "csv_notes": "Steakhouse; burger on menu",
-   "csv_row": 164,
+   "csv_row": 163,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6314,7 +6236,7 @@
    "csv_name": "The Wren",
    "csv_neighborhood": "East Village",
    "csv_notes": "Irish pub with kitchen; burger",
-   "csv_row": 165,
+   "csv_row": 164,
    "match": {
     "score": 100.0,
     "method": "name-unique",
@@ -6342,7 +6264,7 @@
    "csv_name": "The Winslow",
    "csv_neighborhood": "East Village",
    "csv_notes": "Gin house and eatery; Winslow burger",
-   "csv_row": 166,
+   "csv_row": 165,
    "match": {
     "score": 100.0,
     "method": "name-unique",
@@ -6370,7 +6292,7 @@
    "csv_name": "Croxley Ale House",
    "csv_neighborhood": "East Village",
    "csv_notes": "Ale house; burger menu",
-   "csv_row": 167,
+   "csv_row": 166,
    "match": null
   },
   {
@@ -6394,7 +6316,7 @@
    "csv_name": "Poco",
    "csv_neighborhood": "East Village",
    "csv_notes": "Restaurant; beef sliders",
-   "csv_row": 168,
+   "csv_row": 167,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6422,7 +6344,7 @@
    "csv_name": "Idle Hands",
    "csv_neighborhood": "East Village",
    "csv_notes": "Bourbon bar; burger menu",
-   "csv_row": 169,
+   "csv_row": 168,
    "match": null
   },
   {
@@ -6446,7 +6368,7 @@
    "csv_name": "Professor Thom's",
    "csv_neighborhood": "East Village",
    "csv_notes": "Sports bar; Go Blue burger",
-   "csv_row": 170,
+   "csv_row": 169,
    "match": null
   },
   {
@@ -6470,7 +6392,7 @@
    "csv_name": "Destination Bar & Grille",
    "csv_neighborhood": "East Village",
    "csv_notes": "Bar and grill; sliders",
-   "csv_row": 171,
+   "csv_row": 170,
    "match": null
   },
   {
@@ -6494,7 +6416,7 @@
    "csv_name": "Hearty & Healthy",
    "csv_neighborhood": "East Village",
    "csv_notes": "Healthy comfort spot; Wuddaburger",
-   "csv_row": 172,
+   "csv_row": 171,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6522,7 +6444,7 @@
    "csv_name": "St Dymphna's",
    "csv_neighborhood": "East Village",
    "csv_notes": "Irish pub with pub food",
-   "csv_row": 173,
+   "csv_row": 172,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6550,7 +6472,7 @@
    "csv_name": "Veselka",
    "csv_neighborhood": "East Village",
    "csv_notes": "Ukrainian diner; char-broiled burgers (verified on menu)",
-   "csv_row": 174,
+   "csv_row": 173,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6578,7 +6500,7 @@
    "csv_name": "Blue Road Burger",
    "csv_neighborhood": "Lower East Side",
    "csv_notes": "Burger joint",
-   "csv_row": 175,
+   "csv_row": 174,
    "match": null
   },
   {
@@ -6602,7 +6524,7 @@
    "csv_name": "Holy Burger",
    "csv_neighborhood": "Lower East Side",
    "csv_notes": "Halal burger spot at 34 Canal St (the brand's original shop)",
-   "csv_row": 176,
+   "csv_row": 175,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+url-address",
@@ -6630,7 +6552,7 @@
    "csv_name": "The Mayfly",
    "csv_neighborhood": "Lower East Side",
    "csv_notes": "New American; burger on menu",
-   "csv_row": 177,
+   "csv_row": 176,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6658,7 +6580,7 @@
    "csv_name": "Bar Revival",
    "csv_neighborhood": "Lower East Side",
    "csv_notes": "Cocktail bar with food; burger",
-   "csv_row": 178,
+   "csv_row": 177,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6686,7 +6608,7 @@
    "csv_name": "Balvanera",
    "csv_neighborhood": "Lower East Side",
    "csv_notes": "Argentine spot with burger",
-   "csv_row": 179,
+   "csv_row": 178,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6714,7 +6636,7 @@
    "csv_name": "Flyfish Club",
    "csv_neighborhood": "Lower East Side",
    "csv_notes": "Restaurant; burger menu",
-   "csv_row": 180,
+   "csv_row": 179,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6742,7 +6664,7 @@
    "csv_name": "Casa 13urger",
    "csv_neighborhood": "Lower East Side",
    "csv_notes": "Burger counter",
-   "csv_row": 181,
+   "csv_row": 180,
    "match": null
   },
   {
@@ -6766,7 +6688,7 @@
    "csv_name": "Sonnyboy",
    "csv_neighborhood": "Lower East Side",
    "csv_notes": "Restaurant with burger",
-   "csv_row": 182,
+   "csv_row": 181,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6794,7 +6716,7 @@
    "csv_name": "Dirty French",
    "csv_neighborhood": "Lower East Side",
    "csv_notes": "French restaurant; Burger Maison",
-   "csv_row": 183,
+   "csv_row": 182,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6822,7 +6744,7 @@
    "csv_name": "El Castillo de Jagua",
    "csv_neighborhood": "Lower East Side",
    "csv_notes": "Dominican diner with burger",
-   "csv_row": 184,
+   "csv_row": 183,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6850,7 +6772,7 @@
    "csv_name": "Zaab Burger",
    "csv_neighborhood": "Lower East Side",
    "csv_notes": "Thai-inspired burger counter",
-   "csv_row": 185,
+   "csv_row": 184,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood",
@@ -6878,7 +6800,7 @@
    "csv_name": "Katz's Delicatessen",
    "csv_neighborhood": "Lower East Side",
    "csv_notes": "Deli; burgers on grill menu (verified)",
-   "csv_row": 186,
+   "csv_row": 185,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6906,7 +6828,7 @@
    "csv_name": "The Nines",
    "csv_neighborhood": "NoHo",
    "csv_notes": "Cocktail bar; burger on menu",
-   "csv_row": 187,
+   "csv_row": 186,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6934,7 +6856,7 @@
    "csv_name": "Raf's",
    "csv_neighborhood": "NoHo",
    "csv_notes": "Italian spot; dry-aged burger",
-   "csv_row": 188,
+   "csv_row": 187,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6962,7 +6884,7 @@
    "csv_name": "Great Jones Distilling Co.",
    "csv_neighborhood": "NoHo",
    "csv_notes": "Distillery restaurant; The Burger",
-   "csv_row": 189,
+   "csv_row": 188,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -6990,7 +6912,7 @@
    "csv_name": "Sláinte Bar and Lounge",
    "csv_neighborhood": "NoHo",
    "csv_notes": "Irish pub with burger menu",
-   "csv_row": 190,
+   "csv_row": 189,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood",
@@ -7018,7 +6940,7 @@
    "csv_name": "El Sazón R.D.",
    "csv_neighborhood": "Chinatown",
    "csv_notes": "Dominican spot with burger",
-   "csv_row": 191,
+   "csv_row": 190,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7046,7 +6968,7 @@
    "csv_name": "Spring Cafe",
    "csv_neighborhood": "Chinatown",
    "csv_notes": "Vegan cafe at 153 Centre St; plant-based burgers only (Beyond, tofu, mushroom)",
-   "csv_row": 192,
+   "csv_row": 191,
    "match": {
     "score": 100.0,
     "method": "name+notes-address",
@@ -7074,7 +6996,7 @@
    "csv_name": "K.O. Burger",
    "csv_neighborhood": "Chinatown",
    "csv_notes": "Burger counter",
-   "csv_row": 193,
+   "csv_row": 192,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7102,7 +7024,7 @@
    "csv_name": "Emily",
    "csv_neighborhood": "West Village",
    "csv_notes": "Pizza restaurant; Emmy Burger (West Village location)",
-   "csv_row": 195,
+   "csv_row": 194,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7130,7 +7052,7 @@
    "csv_name": "Fairfax",
    "csv_neighborhood": "West Village",
    "csv_notes": "Cafe/wine bar; well-known burger",
-   "csv_row": 196,
+   "csv_row": 195,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7158,7 +7080,7 @@
    "csv_name": "Wild Cherry",
    "csv_neighborhood": "West Village",
    "csv_notes": "Supper club; signature cheeseburger",
-   "csv_row": 197,
+   "csv_row": 196,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7186,7 +7108,7 @@
    "csv_name": "Crevette",
    "csv_neighborhood": "West Village",
    "csv_notes": "French restaurant; limited smash burger",
-   "csv_row": 198,
+   "csv_row": 197,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7214,7 +7136,7 @@
    "csv_name": "The Surf Lodge",
    "csv_neighborhood": "West Village",
    "csv_notes": "American restaurant/bar",
-   "csv_row": 199,
+   "csv_row": 198,
    "match": null
   },
   {
@@ -7238,7 +7160,7 @@
    "csv_name": "The Bedford",
    "csv_neighborhood": "Financial District",
    "csv_notes": "Gastropub at 55 Stone St (Manhattan outpost of the Williamsburg original); Bedford Plank Burger",
-   "csv_row": 200,
+   "csv_row": 199,
    "match": {
     "score": 56.0,
     "method": "name-word+neighborhood+notes-address",
@@ -7266,7 +7188,7 @@
    "csv_name": "Bandits Burger + Dive",
    "csv_neighborhood": "West Village",
    "csv_notes": "Burger joint and cocktail bar",
-   "csv_row": 201,
+   "csv_row": 200,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood",
@@ -7294,7 +7216,7 @@
    "csv_name": "The Loyal",
    "csv_neighborhood": "West Village",
    "csv_notes": "Brasserie",
-   "csv_row": 202,
+   "csv_row": 201,
    "match": null
   },
   {
@@ -7318,7 +7240,7 @@
    "csv_name": "Stash Burger",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "Smashburger joint",
-   "csv_row": 203,
+   "csv_row": 202,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7346,7 +7268,7 @@
    "csv_name": "Butter Smashburgers",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "Burger joint on MacDougal",
-   "csv_row": 204,
+   "csv_row": 203,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7374,7 +7296,7 @@
    "csv_name": "Wicked Willy's",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "Bar with specialty burgers",
-   "csv_row": 205,
+   "csv_row": 204,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7402,7 +7324,7 @@
    "csv_name": "Kettle of Fish",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "Sports bar with food",
-   "csv_row": 206,
+   "csv_row": 205,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7430,7 +7352,7 @@
    "csv_name": "The Half Pint",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "Gastropub; Angry Burger",
-   "csv_row": 207,
+   "csv_row": 206,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7458,7 +7380,7 @@
    "csv_name": "Off the Wagon",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "Sports bar with food",
-   "csv_row": 208,
+   "csv_row": 207,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7486,7 +7408,7 @@
    "csv_name": "Amity Hall",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "Beer hall with food",
-   "csv_row": 209,
+   "csv_row": 208,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7514,7 +7436,7 @@
    "csv_name": "Blind Tiger Ale House",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "Craft-beer pub with food",
-   "csv_row": 210,
+   "csv_row": 209,
    "match": {
     "score": 90.0,
     "method": "name+neighborhood",
@@ -7542,7 +7464,7 @@
    "csv_name": "GMT Tavern",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "British gastropub; Meantime burger",
-   "csv_row": 211,
+   "csv_row": 210,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7570,7 +7492,7 @@
    "csv_name": "Pubkey",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "Gastropub; smashburgers",
-   "csv_row": 212,
+   "csv_row": 211,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7598,7 +7520,7 @@
    "csv_name": "Cecchi's",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "American bar and grill; Cecchi's Burger",
-   "csv_row": 213,
+   "csv_row": 212,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7626,7 +7548,7 @@
    "csv_name": "The Red Lion",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "Pub; Red Lion Burger",
-   "csv_row": 214,
+   "csv_row": 213,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7654,7 +7576,7 @@
    "csv_name": "Da Andrea",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "Italian restaurant; burgers per reviews",
-   "csv_row": 215,
+   "csv_row": 214,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7682,7 +7604,7 @@
    "csv_name": "Society Cafe",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "Hotel restaurant (Walker Hotel); brisket burger",
-   "csv_row": 216,
+   "csv_row": 215,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7710,7 +7632,7 @@
    "csv_name": "Pop's of Brooklyn",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "Burger joint",
-   "csv_row": 217,
+   "csv_row": 216,
    "match": null
   },
   {
@@ -7734,7 +7656,7 @@
    "csv_name": "Peculier Pub",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "Pub; Ultimate Burger",
-   "csv_row": 218,
+   "csv_row": 217,
    "match": {
     "score": 91.7,
     "method": "name+neighborhood",
@@ -7762,7 +7684,7 @@
    "csv_name": "Garage Restaurant and Cafe",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "Casual American restaurant; burgers on menu",
-   "csv_row": 219,
+   "csv_row": 218,
    "match": null
   },
   {
@@ -7786,7 +7708,7 @@
    "csv_name": "Knickerbocker Bar & Grill",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "American bar and grill",
-   "csv_row": 220,
+   "csv_row": 219,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7814,7 +7736,7 @@
    "csv_name": "Jekyll & Hyde",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "American pub/restaurant",
-   "csv_row": 221,
+   "csv_row": 220,
    "match": null
   },
   {
@@ -7838,7 +7760,7 @@
    "csv_name": "Caroll Place",
    "csv_neighborhood": "Greenwich Village",
    "csv_notes": "Wine bar and gastropub",
-   "csv_row": 222,
+   "csv_row": 221,
    "match": null
   },
   {
@@ -7862,7 +7784,7 @@
    "csv_name": "Old Homestead Steakhouse",
    "csv_neighborhood": "Meatpacking District",
    "csv_notes": "Steakhouse; multiple burgers",
-   "csv_row": 223,
+   "csv_row": 222,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7890,7 +7812,7 @@
    "csv_name": "Rory's Rooftop",
    "csv_neighborhood": "Meatpacking District",
    "csv_notes": "American rooftop bar; smash/Rodeo burger",
-   "csv_row": 224,
+   "csv_row": 223,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7918,7 +7840,7 @@
    "csv_name": "Sirrah",
    "csv_neighborhood": "Meatpacking District",
    "csv_notes": "Modern French steakhouse; Sirrah Burger",
-   "csv_row": 225,
+   "csv_row": 224,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -7946,7 +7868,7 @@
    "csv_name": "STK Meatpacking",
    "csv_neighborhood": "Meatpacking District",
    "csv_notes": "Steakhouse at 412 W 15th St (moved there from Little W 12th St); Wagyu burger",
-   "csv_row": 226,
+   "csv_row": 225,
    "match": {
     "score": 45.3,
     "method": "name-word+neighborhood+notes-address",
@@ -7974,7 +7896,7 @@
    "csv_name": "BFB Highline",
    "csv_neighborhood": "Meatpacking District",
    "csv_notes": "Burger spot",
-   "csv_row": 227,
+   "csv_row": 226,
    "match": null
   },
   {
@@ -7998,7 +7920,7 @@
    "csv_name": "Gansevoort Rooftop",
    "csv_neighborhood": "Meatpacking District",
    "csv_notes": "Hotel rooftop; House Burger",
-   "csv_row": 228,
+   "csv_row": 227,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -8026,7 +7948,7 @@
    "csv_name": "Brass Monkey",
    "csv_neighborhood": "Meatpacking District",
    "csv_notes": "Bar; Char Grilled Beef Burger",
-   "csv_row": 229,
+   "csv_row": 228,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -8054,7 +7976,7 @@
    "csv_name": "The Chester",
    "csv_neighborhood": "Meatpacking District",
    "csv_notes": "American bistro at Gansevoort Hotel; Chester Burger",
-   "csv_row": 230,
+   "csv_row": 229,
    "match": null
   },
   {
@@ -8078,7 +8000,7 @@
    "csv_name": "The Collective",
    "csv_neighborhood": "Meatpacking District",
    "csv_notes": "American restaurant",
-   "csv_row": 231,
+   "csv_row": 230,
    "match": null
   },
   {
@@ -8102,31 +8024,7 @@
    "csv_name": "The Vinatta Project",
    "csv_neighborhood": "Meatpacking District",
    "csv_notes": "Bar food",
-   "csv_row": 232,
-   "match": null
-  },
-  {
-   "key": "csv:the-standard-plaza-manhattan",
-   "camis": null,
-   "dba": null,
-   "name": "The Standard Plaza",
-   "address": null,
-   "borough": "Manhattan",
-   "zipcode": null,
-   "lat": null,
-   "lng": null,
-   "nta": "MN23",
-   "neighborhood": "West Village",
-   "nta_source": "csv-neighborhood",
-   "cuisine": null,
-   "last_inspection": null,
-   "website": null,
-   "menu_url": null,
-   "csv": true,
-   "csv_name": "The Standard Plaza",
-   "csv_neighborhood": "Meatpacking District",
-   "csv_notes": "American restaurant at The Standard",
-   "csv_row": 233,
+   "csv_row": 231,
    "match": null
   },
   {
@@ -8150,7 +8048,7 @@
    "csv_name": "Puttery",
    "csv_neighborhood": "Meatpacking District",
    "csv_notes": "Mini-golf venue; smash burgers",
-   "csv_row": 234,
+   "csv_row": 232,
    "match": null
   },
   {
@@ -8174,7 +8072,7 @@
    "csv_name": "CakeBurgers",
    "csv_neighborhood": "East Harlem",
    "csv_notes": "1950s retro malt shop at 400 E 120th; gourmet burgers plus cupcakes",
-   "csv_row": 235,
+   "csv_row": 233,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -8202,7 +8100,7 @@
    "csv_name": "East Harlem Bottling Co.",
    "csv_neighborhood": "East Harlem",
    "csv_notes": "Craft-beer bistro at 107th & Lexington; bistro menus typically include burgers",
-   "csv_row": 236,
+   "csv_row": 234,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -8230,7 +8128,7 @@
    "csv_name": "Ricardo's Steakhouse",
    "csv_neighborhood": "East Harlem",
    "csv_notes": "Steakhouse on 2nd Ave; steakhouses typically serve burgers",
-   "csv_row": 237,
+   "csv_row": 235,
    "match": null
   },
   {
@@ -8254,7 +8152,7 @@
    "csv_name": "Clemente Bar",
    "csv_neighborhood": "Flatiron",
    "csv_notes": "Intimate bar known for the Clemente burger",
-   "csv_row": 239,
+   "csv_row": 237,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -8282,7 +8180,7 @@
    "csv_name": "Gramercy Tavern",
    "csv_neighborhood": "Flatiron",
    "csv_notes": "Tavern famous for the Tavern Burger (available in the Tavern room)",
-   "csv_row": 240,
+   "csv_row": 238,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -8310,7 +8208,7 @@
    "csv_name": "Motek Flatiron",
    "csv_neighborhood": "Flatiron",
    "csv_notes": "Middle Eastern restaurant serving wagyu and Arayes burgers",
-   "csv_row": 241,
+   "csv_row": 239,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -8338,7 +8236,7 @@
    "csv_name": "S&P Lunch",
    "csv_neighborhood": "Flatiron",
    "csv_notes": "Jewish-style diner at 174 5th Ave; Prairie Burger and classic cheeseburger",
-   "csv_row": 243,
+   "csv_row": 241,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -8366,7 +8264,7 @@
    "csv_name": "Abbey Tavern",
    "csv_neighborhood": "Gramercy",
    "csv_notes": "Irish bar/restaurant on the Gramercy/Kips Bay border; burgers on menu",
-   "csv_row": 244,
+   "csv_row": 242,
    "match": null
   },
   {
@@ -8390,7 +8288,7 @@
    "csv_name": "Diner 24 NYC",
    "csv_neighborhood": "Gramercy",
    "csv_notes": "24-hour diner; known for its Double Smash Burger",
-   "csv_row": 245,
+   "csv_row": 243,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -8418,7 +8316,7 @@
    "csv_name": "L'Express",
    "csv_neighborhood": "Gramercy",
    "csv_notes": "French bistro known for its lamb burger",
-   "csv_row": 246,
+   "csv_row": 244,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -8446,7 +8344,7 @@
    "csv_name": "Molly's Shebeen Bar + Restaurant",
    "csv_neighborhood": "Gramercy",
    "csv_notes": "Irish pub; reviewers praise its burgers",
-   "csv_row": 247,
+   "csv_row": 245,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood",
@@ -8474,7 +8372,7 @@
    "csv_name": "Popchew Burger",
    "csv_neighborhood": "Gramercy",
    "csv_notes": "Smash-burger walk-up window at 119 E 15th St",
-   "csv_row": 248,
+   "csv_row": 246,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood+notes-address",
@@ -8502,7 +8400,7 @@
    "csv_name": "Saperavi",
    "csv_neighborhood": "Gramercy",
    "csv_notes": "Georgian restaurant serving a beef smash burger",
-   "csv_row": 249,
+   "csv_row": 247,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -8530,7 +8428,7 @@
    "csv_name": "Amy Ruth's",
    "csv_neighborhood": "Harlem",
    "csv_notes": "Soul food restaurant on W 116th; diner-style soul food menus often include burgers",
-   "csv_row": 250,
+   "csv_row": 248,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -8558,7 +8456,7 @@
    "csv_name": "Angel of Harlem",
    "csv_neighborhood": "Harlem",
    "csv_notes": "Gastro pub; dinner menu includes the Frederick Douglass Burger plus sliders",
-   "csv_row": 251,
+   "csv_row": 249,
    "match": {
     "score": 100.0,
     "method": "name-unique",
@@ -8586,7 +8484,7 @@
    "csv_name": "B2 Harlem",
    "csv_neighborhood": "Harlem",
    "csv_notes": "Modern soul food restaurant; menu includes The B² Burger (prime blend, smoked gouda)",
-   "csv_row": 252,
+   "csv_row": 250,
    "match": null
   },
   {
@@ -8610,7 +8508,7 @@
    "csv_name": "BLVD Bistro",
    "csv_neighborhood": "Harlem",
    "csv_notes": "French-soul bistro on Lenox Ave; bistro menus typically include burgers",
-   "csv_row": 253,
+   "csv_row": 251,
    "match": {
     "score": 100.0,
     "method": "name-unique",
@@ -8638,7 +8536,7 @@
    "csv_name": "Corner Social",
    "csv_neighborhood": "Harlem",
    "csv_notes": "Neighborhood pub on Lenox Ave; pub fare typically includes burgers",
-   "csv_row": 254,
+   "csv_row": 252,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-street",
@@ -8666,7 +8564,7 @@
    "csv_name": "Dinosaur Bar-B-Que",
    "csv_neighborhood": "Harlem",
    "csv_notes": "BBQ joint at 700 W 125th; BBQ spots typically serve burgers",
-   "csv_row": 255,
+   "csv_row": 253,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -8694,7 +8592,7 @@
    "csv_name": "Harlem Public",
    "csv_neighborhood": "Harlem",
    "csv_notes": "Pub at 3612 Broadway known for burgers (BBQ pork burger, peanut butter burger, parmesan-crusted burger)",
-   "csv_row": 256,
+   "csv_row": 254,
    "match": {
     "score": 100.0,
     "method": "name+notes-address",
@@ -8722,7 +8620,7 @@
    "csv_name": "Harlem Shake",
    "csv_neighborhood": "Harlem",
    "csv_notes": "Dedicated Harlem burger joint; featured on best-burger lists for its Hot Mess and Harlem Classic",
-   "csv_row": 257,
+   "csv_row": 255,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -8750,7 +8648,7 @@
    "csv_name": "Harlem Tavern",
    "csv_neighborhood": "Harlem",
    "csv_notes": "Tavern at 2153 Frederick Douglass Blvd; tavern menus center on burgers",
-   "csv_row": 258,
+   "csv_row": 256,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -8778,7 +8676,7 @@
    "csv_name": "Jacob Restaurant",
    "csv_neighborhood": "Harlem",
    "csv_notes": "Soul food diner-style restaurant; casual Southern menus typically include burgers",
-   "csv_row": 259,
+   "csv_row": 257,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -8806,7 +8704,7 @@
    "csv_name": "Red Rooster Harlem",
    "csv_neighborhood": "Harlem",
    "csv_notes": "Marcus Samuelsson American/comfort-food restaurant; signature Red Line burger",
-   "csv_row": 260,
+   "csv_row": 258,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -8834,7 +8732,7 @@
    "csv_name": "Row House",
    "csv_neighborhood": "Harlem",
    "csv_notes": "Harlem comfort-food restaurant; comfort menus typically include burgers",
-   "csv_row": 261,
+   "csv_row": 259,
    "match": {
     "score": 100.0,
     "method": "name-unique",
@@ -8862,7 +8760,7 @@
    "csv_name": "Sylvia's Restaurant",
    "csv_neighborhood": "Harlem",
    "csv_notes": "Famous soul food landmark; Southern soul menus typically include a burger option",
-   "csv_row": 263,
+   "csv_row": 261,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood",
@@ -8890,7 +8788,7 @@
    "csv_name": "The Cecil Steakhouse",
    "csv_neighborhood": "Harlem",
    "csv_notes": "Steakhouse at 210 W 118th; steakhouses almost always serve a burger",
-   "csv_row": 264,
+   "csv_row": 262,
    "match": null
   },
   {
@@ -8914,7 +8812,7 @@
    "csv_name": "Vinateria",
    "csv_neighborhood": "Harlem",
    "csv_notes": "New American restaurant in Harlem; known to serve a burger on its menu",
-   "csv_row": 265,
+   "csv_row": 263,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -8942,7 +8840,7 @@
    "csv_name": "123 Burger Shot Beer",
    "csv_neighborhood": "Hell's Kitchen",
    "csv_notes": "Sports bar and burger joint; affordable burgers plus extensive beer list",
-   "csv_row": 266,
+   "csv_row": 264,
    "match": null
   },
   {
@@ -8966,7 +8864,7 @@
    "csv_name": "5 Napkin Burger",
    "csv_neighborhood": "Hell's Kitchen",
    "csv_notes": "Iconic Hell's Kitchen burger spot (630 9th Ave); the 5 Napkin Burger is the namesake dish",
-   "csv_row": 267,
+   "csv_row": 265,
    "match": {
     "score": 82.8,
     "method": "name+neighborhood+notes-address",
@@ -8994,7 +8892,7 @@
    "csv_name": "Bar Bacon",
    "csv_neighborhood": "Hell's Kitchen",
    "csv_notes": "Bacon-focused American bar (836 9th Ave); bacon-cheeseburgers are the point",
-   "csv_row": 268,
+   "csv_row": 266,
    "match": null
   },
   {
@@ -9018,7 +8916,7 @@
    "csv_name": "Galaxy Diner",
    "csv_neighborhood": "Hell's Kitchen",
    "csv_notes": "Retro diner (665 9th Ave); classic cheeseburgers and fries",
-   "csv_row": 269,
+   "csv_row": 267,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -9046,7 +8944,7 @@
    "csv_name": "Genuine Roadside",
    "csv_neighborhood": "Hell's Kitchen",
    "csv_notes": "Burger counter inside Gotham West Market (600 11th Ave); dedicated burger spot",
-   "csv_row": 270,
+   "csv_row": 268,
    "match": null
   },
   {
@@ -9070,7 +8968,7 @@
    "csv_name": "Hibernia Bar",
    "csv_neighborhood": "Hell's Kitchen",
    "csv_notes": "Irish pub (401 W 50th); pub burgers standard",
-   "csv_row": 271,
+   "csv_row": 269,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood+notes-address",
@@ -9098,7 +8996,7 @@
    "csv_name": "Rudy's Bar & Grill",
    "csv_neighborhood": "Hell's Kitchen",
    "csv_notes": "Famous Hell's Kitchen dive bar (627 9th Ave); free hot dogs and classic bar burgers",
-   "csv_row": 272,
+   "csv_row": 270,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -9126,7 +9024,7 @@
    "csv_name": "Uncle Jack's Steakhouse",
    "csv_neighborhood": "Hell's Kitchen",
    "csv_notes": "Steakhouse on 9th Ave; steakhouses serve lunch burgers",
-   "csv_row": 274,
+   "csv_row": 272,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-street",
@@ -9154,7 +9052,7 @@
    "csv_name": "Greywind",
    "csv_neighborhood": "Hudson Yards",
    "csv_notes": "Dan Kluger vegetable-forward restaurant; serves a Greywind Burger with cheddar",
-   "csv_row": 275,
+   "csv_row": 273,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -9182,7 +9080,7 @@
    "csv_name": "Hudson Yards Grill",
    "csv_neighborhood": "Hudson Yards",
    "csv_notes": "American grill by Michael Lomonaco; ML's Blend Aged Prime Beef Burger on the menu",
-   "csv_row": 276,
+   "csv_row": 274,
    "match": null
   },
   {
@@ -9206,7 +9104,7 @@
    "csv_name": "La Barra (Mercado Little Spain)",
    "csv_neighborhood": "Hudson Yards",
    "csv_notes": "Spanish food hall counter; hamburguesa-style sandwiches on Spanish menus",
-   "csv_row": 277,
+   "csv_row": 275,
    "match": null
   },
   {
@@ -9230,7 +9128,7 @@
    "csv_name": "Queensyard",
    "csv_neighborhood": "Hudson Yards",
    "csv_notes": "American brasserie at 20 Hudson Yards; brasserie menus typically include a burger",
-   "csv_row": 278,
+   "csv_row": 276,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -9258,7 +9156,7 @@
    "csv_name": "Whitmans (Hudson Yards)",
    "csv_neighborhood": "Hudson Yards",
    "csv_notes": "Burger joint at 331 10th Ave; famous for the Juicy Lucy stuffed burger",
-   "csv_row": 280,
+   "csv_row": 278,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -9286,7 +9184,7 @@
    "csv_name": "Dyckman Dogs",
    "csv_neighborhood": "Inwood",
    "csv_notes": "Hot dog and burger spot at 105-A Dyckman St; smashburgers (Dyckman Burger) on the menu",
-   "csv_row": 281,
+   "csv_row": 279,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-street",
@@ -9314,7 +9212,7 @@
    "csv_name": "Inwood Bar & Grill",
    "csv_neighborhood": "Inwood",
    "csv_notes": "Bar and grill at 4892 Broadway; bar-and-grill menus center on burgers",
-   "csv_row": 282,
+   "csv_row": 280,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -9342,7 +9240,7 @@
    "csv_name": "Inwood Local",
    "csv_neighborhood": "Inwood",
    "csv_notes": "Wine bar and beer garden; beer gardens typically serve burgers",
-   "csv_row": 283,
+   "csv_row": 281,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -9370,7 +9268,7 @@
    "csv_name": "Mamajuana Cafe (Dyckman)",
    "csv_neighborhood": "Inwood",
    "csv_notes": "Latin restaurant at Dyckman St; Latin family restaurants commonly include burgers",
-   "csv_row": 284,
+   "csv_row": 282,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-street",
@@ -9398,7 +9296,7 @@
    "csv_name": "Tryon Public House",
    "csv_neighborhood": "Inwood",
    "csv_notes": "Gastropub at Broadway & Thayer (Dyckman area); gastropub menus typically include burgers",
-   "csv_row": 285,
+   "csv_row": 283,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -9426,7 +9324,7 @@
    "csv_name": "Tubby Hook Tavern",
    "csv_neighborhood": "Inwood",
    "csv_notes": "Tavern; delivery listings show a classic burger and Tubby Hook Burger",
-   "csv_row": 286,
+   "csv_row": 284,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -9454,7 +9352,7 @@
    "csv_name": "Banc Cafe",
    "csv_neighborhood": "Kips Bay",
    "csv_notes": "Irish pub at 431 3rd Ave; pub menu includes burgers",
-   "csv_row": 287,
+   "csv_row": 285,
    "match": {
     "score": 90.0,
     "method": "name+neighborhood+notes-address",
@@ -9482,7 +9380,7 @@
    "csv_name": "Bespoke",
    "csv_neighborhood": "Kips Bay",
    "csv_notes": "Bar-food restaurant at 121 E 27th St",
-   "csv_row": 288,
+   "csv_row": 286,
    "match": {
     "score": 93.3,
     "method": "name+neighborhood+notes-address",
@@ -9510,7 +9408,7 @@
    "csv_name": "Buddy's Sports Bar",
    "csv_neighborhood": "Kips Bay",
    "csv_notes": "Sports bar at 354 3rd Ave; bar-grill food incl. burgers",
-   "csv_row": 289,
+   "csv_row": 287,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood+notes-address",
@@ -9538,7 +9436,7 @@
    "csv_name": "Hill and Bay",
    "csv_neighborhood": "Kips Bay",
    "csv_notes": "Kips Bay spot known for juicy Angus beef burgers",
-   "csv_row": 290,
+   "csv_row": 288,
    "match": null
   },
   {
@@ -9562,7 +9460,7 @@
    "csv_name": "Kipsey's",
    "csv_neighborhood": "Kips Bay",
    "csv_notes": "American restaurant at 438 2nd Ave",
-   "csv_row": 291,
+   "csv_row": 289,
    "match": null
   },
   {
@@ -9586,7 +9484,7 @@
    "csv_name": "Paddy Reilly's Music Bar",
    "csv_neighborhood": "Kips Bay",
    "csv_notes": "Irish music bar; Irish bars serve pub burgers",
-   "csv_row": 292,
+   "csv_row": 290,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -9614,7 +9512,7 @@
    "csv_name": "Penelope",
    "csv_neighborhood": "Kips Bay",
    "csv_notes": "American restaurant at 159 Lexington Ave",
-   "csv_row": 293,
+   "csv_row": 291,
    "match": null
   },
   {
@@ -9638,7 +9536,7 @@
    "csv_name": "Riverpark",
    "csv_neighborhood": "Kips Bay",
    "csv_notes": "Modern American at 450 E 29th; famous dry-aged Riverpark burger",
-   "csv_row": 294,
+   "csv_row": 292,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -9666,7 +9564,7 @@
    "csv_name": "The Factory 380",
    "csv_neighborhood": "Kips Bay",
    "csv_notes": "Sports bar in Kips Bay; sports bars serve burgers",
-   "csv_row": 295,
+   "csv_row": 293,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -9694,7 +9592,7 @@
    "csv_name": "Little Ruby's",
    "csv_neighborhood": "Nolita",
    "csv_notes": "Nolita brunch spot at 219 Mulberry St; Whaleys Burger is a praised signature",
-   "csv_row": 296,
+   "csv_row": 294,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -9722,7 +9620,7 @@
    "csv_name": "Space Billiards",
    "csv_neighborhood": "Koreatown",
    "csv_notes": "Pool-hall tavern on W 32nd serving burgers with live music",
-   "csv_row": 297,
+   "csv_row": 295,
    "match": {
     "score": 92.9,
     "method": "name+neighborhood",
@@ -9750,7 +9648,7 @@
    "csv_name": "Benjamin Steak House",
    "csv_neighborhood": "Midtown East",
    "csv_notes": "Steakhouse on E 41st; steakhouses almost always offer a burger",
-   "csv_row": 298,
+   "csv_row": 296,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -9778,7 +9676,7 @@
    "csv_name": "Club A Steakhouse",
    "csv_neighborhood": "Midtown East",
    "csv_notes": "Steakhouse famed for its 10oz dry-aged Club A Cheeseburger",
-   "csv_row": 299,
+   "csv_row": 297,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -9806,7 +9704,7 @@
    "csv_name": "Holy Cow Burgers",
    "csv_neighborhood": "Midtown East",
    "csv_notes": "Halal fast-food burger joint at 906 3rd Ave",
-   "csv_row": 300,
+   "csv_row": 298,
    "match": {
     "score": 90.0,
     "method": "name+neighborhood+notes-address",
@@ -9834,7 +9732,7 @@
    "csv_name": "International Burgers",
    "csv_neighborhood": "Midtown East",
    "csv_notes": "Burger spot with global flavors incl. Japanese wagyu and American cheeseburgers",
-   "csv_row": 301,
+   "csv_row": 299,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -9862,7 +9760,7 @@
    "csv_name": "Monkey Bar",
    "csv_neighborhood": "Midtown East",
    "csv_notes": "Classic Midtown East steakhouse; praised for its burgers",
-   "csv_row": 302,
+   "csv_row": 300,
    "match": {
     "score": 100.0,
     "method": "name-unique",
@@ -9890,7 +9788,7 @@
    "csv_name": "Moonstruck Eatery",
    "csv_neighborhood": "Midtown East",
    "csv_notes": "Diner; known for a juicy Classic Burger on a brioche bun",
-   "csv_row": 303,
+   "csv_row": 301,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -9918,7 +9816,7 @@
    "csv_name": "New York Luncheonette",
    "csv_neighborhood": "Midtown East",
    "csv_notes": "Classic American diner serving a Classic Burger",
-   "csv_row": 304,
+   "csv_row": 302,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -9946,7 +9844,7 @@
    "csv_name": "Smith & Wollensky",
    "csv_neighborhood": "Midtown East",
    "csv_notes": "Midtown East steakhouse; bar menu includes a burger",
-   "csv_row": 305,
+   "csv_row": 303,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -9974,7 +9872,7 @@
    "csv_name": "Sparks Steak House",
    "csv_neighborhood": "Midtown East",
    "csv_notes": "Steakhouse on E 46th; steakhouses almost always offer a burger",
-   "csv_row": 306,
+   "csv_row": 304,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -10002,7 +9900,7 @@
    "csv_name": "The Grill",
    "csv_neighborhood": "Midtown East",
    "csv_notes": "Upscale American steakhouse; bar menu typically includes a burger",
-   "csv_row": 307,
+   "csv_row": 305,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -10030,7 +9928,7 @@
    "csv_name": "The Horny Ram",
    "csv_neighborhood": "Midtown East",
    "csv_notes": "Bar/brunch spot; serves burgers including a pancake burger and fried fish burger",
-   "csv_row": 308,
+   "csv_row": 306,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -10058,7 +9956,7 @@
    "csv_name": "The Lunch Box",
    "csv_neighborhood": "Midtown East",
    "csv_notes": "Casual Midtown East spot; known for its Rodeo Burger",
-   "csv_row": 309,
+   "csv_row": 307,
    "match": {
     "score": 100.0,
     "method": "name-unique",
@@ -10086,7 +9984,7 @@
    "csv_name": "The Naked Pig",
    "csv_neighborhood": "Midtown East",
    "csv_notes": "Bar serving smash burgers including a French-toast burger",
-   "csv_row": 310,
+   "csv_row": 308,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -10114,7 +10012,7 @@
    "csv_name": "Townhouse Diner",
    "csv_neighborhood": "Midtown East",
    "csv_notes": "Classic family-run Midtown East diner; cheeseburger is a menu staple",
-   "csv_row": 311,
+   "csv_row": 309,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -10142,36 +10040,12 @@
    "csv_name": "Turtle Bay Tavern",
    "csv_neighborhood": "Midtown East",
    "csv_notes": "Elevated sports bar; reviewers call its smash burger among the best in NYC",
-   "csv_row": 312,
+   "csv_row": 310,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
     "dba": "TURTLE BAY TAVERN"
    }
-  },
-  {
-   "key": "csv:akb-archer-hotel-manhattan",
-   "camis": null,
-   "dba": null,
-   "name": "AKB (Archer Hotel)",
-   "address": null,
-   "borough": "Manhattan",
-   "zipcode": null,
-   "lat": null,
-   "lng": null,
-   "nta": "MN17",
-   "neighborhood": "Midtown-Midtown South",
-   "nta_source": "csv-neighborhood",
-   "cuisine": null,
-   "last_inspection": null,
-   "website": "https://archerhotel.com/new-york/akb-hotel-bar",
-   "menu_url": null,
-   "csv": true,
-   "csv_name": "AKB (Archer Hotel)",
-   "csv_neighborhood": "Midtown West",
-   "csv_notes": "Archer Hotel bar and restaurant (45 W 38th); runs a weekly Burger Monday special",
-   "csv_row": 313,
-   "match": null
   },
   {
    "key": "camis:50005067",
@@ -10194,7 +10068,7 @@
    "csv_name": "American Whiskey",
    "csv_neighborhood": "Midtown West",
    "csv_notes": "Whiskey bar (247 W 30th); bar food centered on burgers",
-   "csv_row": 314,
+   "csv_row": 311,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -10222,7 +10096,7 @@
    "csv_name": "Benjamin Steakhouse Prime",
    "csv_neighborhood": "Murray Hill",
    "csv_notes": "Steakhouse at 23 E 40th St; steakhouses serve lunch burgers",
-   "csv_row": 315,
+   "csv_row": 312,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -10250,7 +10124,7 @@
    "csv_name": "Benoit New York",
    "csv_neighborhood": "Midtown West",
    "csv_notes": "Upscale French bistro (60 W 55th); its cheeseburger with bacon and caramelized onions is a known highlight",
-   "csv_row": 316,
+   "csv_row": 313,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood+notes-address",
@@ -10278,7 +10152,7 @@
    "csv_name": "Brooklyn Diner",
    "csv_neighborhood": "Midtown West",
    "csv_notes": "Classic NYC diner at 212 W 57th; burgers are a staple",
-   "csv_row": 317,
+   "csv_row": 314,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+near-named-address",
@@ -10306,7 +10180,7 @@
    "csv_name": "Bryant Park Grill",
    "csv_neighborhood": "Midtown West",
    "csv_notes": "American restaurant at Bryant Park; burgers are core to its American menu",
-   "csv_row": 318,
+   "csv_row": 315,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -10334,7 +10208,7 @@
    "csv_name": "Burgerology Midtown",
    "csv_neighborhood": "Midtown West",
    "csv_notes": "Burger joint at 320 W 36th (connected to Crowne Plaza); dedicated burger restaurant",
-   "csv_row": 319,
+   "csv_row": 316,
    "match": {
     "score": 100.0,
     "method": "name+notes-address",
@@ -10362,7 +10236,7 @@
    "csv_name": "Del Frisco's Double Eagle Steakhouse",
    "csv_neighborhood": "Midtown West",
    "csv_notes": "Midtown steakhouse at 1221 6th Ave; steakhouses serve lunch burgers",
-   "csv_row": 320,
+   "csv_row": 317,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -10390,7 +10264,7 @@
    "csv_name": "Gallagher's Steakhouse",
    "csv_neighborhood": "Midtown West",
    "csv_notes": "Storied Times Square chophouse (228 W 52nd); house-blend burger on the lunch menu",
-   "csv_row": 321,
+   "csv_row": 318,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood+notes-address",
@@ -10418,7 +10292,7 @@
    "csv_name": "Hudson Yards Tavern",
    "csv_neighborhood": "Midtown West",
    "csv_notes": "American tavern at 360 9th Ave; Tavern Burger and specialty burgers on the menu",
-   "csv_row": 322,
+   "csv_row": 319,
    "match": {
     "score": 100.0,
     "method": "name+notes-address",
@@ -10446,7 +10320,7 @@
    "csv_name": "Jack Dempsey's",
    "csv_neighborhood": "Midtown West",
    "csv_notes": "Irish pub (36 W 33rd); pub fare with burgers",
-   "csv_row": 323,
+   "csv_row": 320,
    "match": {
     "score": 96.0,
     "method": "name+neighborhood+notes-address",
@@ -10474,7 +10348,7 @@
    "csv_name": "McGee's",
    "csv_neighborhood": "Midtown West",
    "csv_notes": "Pub at 240 W 55th; classic pub burgers",
-   "csv_row": 324,
+   "csv_row": 321,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood+notes-address",
@@ -10502,7 +10376,7 @@
    "csv_name": "Mustang Harry's",
    "csv_neighborhood": "Midtown West",
    "csv_notes": "Irish sports bar (352 7th Ave); burgers are pub staples",
-   "csv_row": 325,
+   "csv_row": 322,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -10530,7 +10404,7 @@
    "csv_name": "Parker & Quinn",
    "csv_neighborhood": "Midtown West",
    "csv_notes": "American restaurant at 62 W 39th; New American menus typically include a burger",
-   "csv_row": 326,
+   "csv_row": 323,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -10558,7 +10432,7 @@
    "csv_name": "Porter House Bar and Grill",
    "csv_neighborhood": "Midtown West",
    "csv_notes": "Michael Lomonaco steakhouse at 10 Columbus Circle; bar-and-grill burgers standard",
-   "csv_row": 327,
+   "csv_row": 324,
    "match": null
   },
   {
@@ -10582,7 +10456,7 @@
    "csv_name": "Skylight Diner",
    "csv_neighborhood": "Midtown West",
    "csv_notes": "Classic diner at 402 W 34th; burgers are a staple",
-   "csv_row": 328,
+   "csv_row": 325,
    "match": {
     "score": 100.0,
     "method": "name+notes-address",
@@ -10610,7 +10484,7 @@
    "csv_name": "Stout NYC",
    "csv_neighborhood": "Midtown West",
    "csv_notes": "Irish pub and sports bar, Penn Station flagship at 213 W 35th St (moved from W 33rd St); pub burgers standard",
-   "csv_row": 329,
+   "csv_row": 326,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -10638,7 +10512,7 @@
    "csv_name": "The Liberty NYC",
    "csv_neighborhood": "Midtown West",
    "csv_notes": "American bar at 29 W 35th; bar-and-grill menu with burgers",
-   "csv_row": 330,
+   "csv_row": 327,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -10666,7 +10540,7 @@
    "csv_name": "Community Food & Juice",
    "csv_neighborhood": "Morningside Heights",
    "csv_notes": "New American cafe on Broadway; American cafe fare typically includes a burger",
-   "csv_row": 331,
+   "csv_row": 328,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -10694,7 +10568,7 @@
    "csv_name": "The Heights Bar & Grill",
    "csv_neighborhood": "Morningside Heights",
    "csv_notes": "American bar and grill; classic bar food menus include burgers",
-   "csv_row": 333,
+   "csv_row": 330,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -10722,7 +10596,7 @@
    "csv_name": "Tom's Restaurant",
    "csv_neighborhood": "Morningside Heights",
    "csv_notes": "Iconic Seinfeld-era diner at 2880 Broadway; classic diners serve burgers",
-   "csv_row": 334,
+   "csv_row": 331,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -10750,7 +10624,7 @@
    "csv_name": "At The Office",
    "csv_neighborhood": "Murray Hill",
    "csv_notes": "Upscale sports bar at 160 E 38th St, opened April 2026 beside The Consulate (same address); sports bars serve burgers",
-   "csv_row": 335,
+   "csv_row": 332,
    "match": null
   },
   {
@@ -10774,7 +10648,7 @@
    "csv_name": "Bareburger",
    "csv_neighborhood": "Murray Hill",
    "csv_notes": "Organic burger chain with a Murray Hill location",
-   "csv_row": 336,
+   "csv_row": 333,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -10802,7 +10676,7 @@
    "csv_name": "Black Sheep",
    "csv_neighborhood": "Murray Hill",
    "csv_notes": "Irish sports pub; Irish pubs serve pub burgers",
-   "csv_row": 337,
+   "csv_row": 334,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -10830,7 +10704,7 @@
    "csv_name": "Black Tap Craft Burgers & Beer",
    "csv_neighborhood": "Murray Hill",
    "csv_notes": "Award-winning burger joint with a Murray Hill location",
-   "csv_row": 338,
+   "csv_row": 335,
    "match": {
     "score": 100.0,
     "method": "name-unique",
@@ -10858,7 +10732,7 @@
    "csv_name": "Blue Haven East",
    "csv_neighborhood": "Murray Hill",
    "csv_notes": "American restaurant at 493 3rd Ave; American menus include burgers",
-   "csv_row": 339,
+   "csv_row": 336,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -10886,7 +10760,7 @@
    "csv_name": "Cask Bar & Kitchen",
    "csv_neighborhood": "Murray Hill",
    "csv_notes": "American gastropub at 167 E 33rd; gastropubs serve burgers",
-   "csv_row": 340,
+   "csv_row": 337,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood+notes-address",
@@ -10914,7 +10788,7 @@
    "csv_name": "Jackson Hole Burgers",
    "csv_neighborhood": "Murray Hill",
    "csv_notes": "Classic big-burger joint est. 1972 (locations on 3rd Ave and 35th St)",
-   "csv_row": 341,
+   "csv_row": 338,
    "match": {
     "score": 90.0,
     "method": "name+neighborhood+notes-street",
@@ -10942,7 +10816,7 @@
    "csv_name": "Leslie New American",
    "csv_neighborhood": "Murray Hill",
    "csv_notes": "New American restaurant on 3rd Ave; American menus include burgers",
-   "csv_row": 342,
+   "csv_row": 339,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood+notes-street",
@@ -10970,7 +10844,7 @@
    "csv_name": "Mulligan's Pub",
    "csv_neighborhood": "Murray Hill",
    "csv_notes": "Irish pub; reviewers praise its fresh burgers",
-   "csv_row": 343,
+   "csv_row": 340,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood",
@@ -10998,7 +10872,7 @@
    "csv_name": "Tara Rose",
    "csv_neighborhood": "Murray Hill",
    "csv_notes": "Murray Hill bar; bar food includes pub burgers",
-   "csv_row": 344,
+   "csv_row": 341,
    "match": {
     "score": 100.0,
     "method": "name-unique",
@@ -11026,7 +10900,7 @@
    "csv_name": "Ted's Corner Tavern",
    "csv_neighborhood": "Murray Hill",
    "csv_notes": "Tavern on 3rd Ave at 35th St; taverns typically serve burgers",
-   "csv_row": 345,
+   "csv_row": 342,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-street",
@@ -11054,7 +10928,7 @@
    "csv_name": "Black Barn",
    "csv_neighborhood": "NoMad",
    "csv_notes": "Rustic American restaurant; Black Barn burger is a signature",
-   "csv_row": 346,
+   "csv_row": 343,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -11082,7 +10956,7 @@
    "csv_name": "Johny's Luncheonette",
    "csv_neighborhood": "NoMad",
    "csv_notes": "Diner/luncheonette at 124 W 25th; diners serve burgers",
-   "csv_row": 347,
+   "csv_row": 344,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -11110,7 +10984,7 @@
    "csv_name": "Portrait Bar",
    "csv_neighborhood": "NoMad",
    "csv_notes": "Bar in the Fifth Avenue Hotel; known for its dry-aged burger",
-   "csv_row": 349,
+   "csv_row": 346,
    "match": null
   },
   {
@@ -11134,7 +11008,7 @@
    "csv_name": "Skinny Louie",
    "csv_neighborhood": "NoMad",
    "csv_notes": "Smash-burger joint at Broadway & 26th; 2025 SOBEWFF Very Best Burger winner",
-   "csv_row": 350,
+   "csv_row": 347,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -11162,7 +11036,7 @@
    "csv_name": "Swingers NoMad",
    "csv_neighborhood": "NoMad",
    "csv_notes": "Mini-golf venue serving Emmy Squared burgers incl. Le Big Matt",
-   "csv_row": 351,
+   "csv_row": 348,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -11190,7 +11064,7 @@
    "csv_name": "Anything At All",
    "csv_neighborhood": "Roosevelt Island",
    "csv_notes": "New American restaurant in the Graduate Roosevelt Island hotel; burger-standard fare",
-   "csv_row": 352,
+   "csv_row": 349,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -11218,7 +11092,7 @@
    "csv_name": "Granny Annie's Bar and Kitchen",
    "csv_neighborhood": "Roosevelt Island",
    "csv_notes": "Categorized 'Bar Burgers Sandwiches' at 425 Main St; burgers in the name/category",
-   "csv_row": 353,
+   "csv_row": 350,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -11246,7 +11120,7 @@
    "csv_name": "Jus' Bad Food",
    "csv_neighborhood": "Roosevelt Island",
    "csv_notes": "American restaurant on Main St; American menus typically include burgers",
-   "csv_row": 354,
+   "csv_row": 351,
    "match": null
   },
   {
@@ -11270,7 +11144,7 @@
    "csv_name": "NISI Bistro",
    "csv_neighborhood": "Roosevelt Island",
    "csv_notes": "Greek-American diner at 549 Main St with a build-your-own burger menu",
-   "csv_row": 355,
+   "csv_row": 352,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood+notes-address",
@@ -11298,7 +11172,7 @@
    "csv_name": "The Panorama Room",
    "csv_neighborhood": "Roosevelt Island",
    "csv_notes": "Rooftop bar at Graduate Roosevelt Island; bar-food menu with burgers expected",
-   "csv_row": 356,
+   "csv_row": 353,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -11326,7 +11200,7 @@
    "csv_name": "Black Iron Burger",
    "csv_neighborhood": "Times Square",
    "csv_notes": "Dedicated burger joint at 250 W 54th; build-your-own burgers and craft cocktails in the Theater District",
-   "csv_row": 357,
+   "csv_row": 354,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -11354,7 +11228,7 @@
    "csv_name": "Ellen's Stardust Diner",
    "csv_neighborhood": "Times Square",
    "csv_notes": "Retro diner with singing waitstaff; classic burgers and fries",
-   "csv_row": 359,
+   "csv_row": 356,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -11382,7 +11256,7 @@
    "csv_name": "Farm to Burger",
    "csv_neighborhood": "Times Square",
    "csv_notes": "Burger-forward hotel restaurant on the ground floor of Aliz Hotel Times Square",
-   "csv_row": 360,
+   "csv_row": 357,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -11410,7 +11284,7 @@
    "csv_name": "Glass House Tavern",
    "csv_neighborhood": "Times Square",
    "csv_notes": "Theater District tavern (252 W 47th); tavern fare centered on burgers",
-   "csv_row": 361,
+   "csv_row": 358,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -11438,7 +11312,7 @@
    "csv_name": "Handcraft Burgers and Brew",
    "csv_neighborhood": "Times Square",
    "csv_notes": "Smash-burger joint with craft brews at 110 W 40th; Certified Angus burgers",
-   "csv_row": 362,
+   "csv_row": 359,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -11466,7 +11340,7 @@
    "csv_name": "Hurley's",
    "csv_neighborhood": "Times Square",
    "csv_notes": "Classic Times Square Irish pub (232 W 48th); pub burgers standard",
-   "csv_row": 364,
+   "csv_row": 361,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood+notes-address",
@@ -11494,7 +11368,7 @@
    "csv_name": "Jimmy's Corner",
    "csv_neighborhood": "Times Square",
    "csv_notes": "Boxing dive bar at 140 W 44th; simple pub burgers standard",
-   "csv_row": 365,
+   "csv_row": 362,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -11522,7 +11396,7 @@
    "csv_name": "Joe Allen",
    "csv_neighborhood": "Times Square",
    "csv_notes": "Classic Theater District restaurant; famous burgers for the pre-theater crowd",
-   "csv_row": 366,
+   "csv_row": 363,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -11550,7 +11424,7 @@
    "csv_name": "Junior's Restaurant",
    "csv_neighborhood": "Times Square",
    "csv_notes": "Times Square institution at 1515 Broadway; deli-style burgers standard on the menu",
-   "csv_row": 367,
+   "csv_row": 364,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood+notes-address",
@@ -11578,7 +11452,7 @@
    "csv_name": "McHale's Bar & Grill",
    "csv_neighborhood": "Times Square",
    "csv_notes": "Sports bar at 251 W 50th; bar-and-grill menus always include burgers",
-   "csv_row": 368,
+   "csv_row": 365,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -11606,7 +11480,7 @@
    "csv_name": "Red Flame Diner",
    "csv_neighborhood": "Times Square",
    "csv_notes": "Long-running Midtown diner (67 W 44th St); classic diner burgers",
-   "csv_row": 369,
+   "csv_row": 366,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -11634,7 +11508,7 @@
    "csv_name": "Sardi's",
    "csv_neighborhood": "Times Square",
    "csv_notes": "Old-school Theater District haunt (234 W 44th); lunch burgers served to the Broadway crowd",
-   "csv_row": 370,
+   "csv_row": 367,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood+notes-address",
@@ -11662,7 +11536,7 @@
    "csv_name": "The Lambs Club",
    "csv_neighborhood": "Times Square",
    "csv_notes": "Chatwal hotel American restaurant; New American restaurants of this type nearly always serve a burger",
-   "csv_row": 371,
+   "csv_row": 368,
    "match": null
   },
   {
@@ -11686,7 +11560,7 @@
    "csv_name": "The Mean Fiddler",
    "csv_neighborhood": "Times Square",
    "csv_notes": "Irish pub on Restaurant Row (266 W 47th); pubs like this serve burgers",
-   "csv_row": 372,
+   "csv_row": 369,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -11714,7 +11588,7 @@
    "csv_name": "The Rum House",
    "csv_neighborhood": "Times Square",
    "csv_notes": "Hotel Edison cocktail bar with a full American bar menu; burgers standard fare",
-   "csv_row": 373,
+   "csv_row": 370,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -11742,7 +11616,7 @@
    "csv_name": "Times Square Diner",
    "csv_neighborhood": "Times Square",
    "csv_notes": "Classic NYC diner at 807 8th Ave; specialty hamburgers plus build-your-own burgers",
-   "csv_row": 374,
+   "csv_row": 371,
    "match": {
     "score": 79.0,
     "method": "name-word+neighborhood+notes-address",
@@ -11770,7 +11644,7 @@
    "csv_name": "West Bank Cafe",
    "csv_neighborhood": "Times Square",
    "csv_notes": "Theater District bistro at 407 W 42nd; American bistro serving burgers",
-   "csv_row": 375,
+   "csv_row": 372,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -11798,7 +11672,7 @@
    "csv_name": "Bareburger",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "Organic burger chain at 1681 1st Ave (beef, bison, veggie)",
-   "csv_row": 376,
+   "csv_row": 373,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -11826,7 +11700,7 @@
    "csv_name": "Bedford Falls",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "UES bar at 206 E 67th St; full bar menu, burgers likely",
-   "csv_row": 377,
+   "csv_row": 374,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -11854,7 +11728,7 @@
    "csv_name": "Cafe Luka",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "Neighborhood diner/cafe at 1317 1st Ave",
-   "csv_row": 378,
+   "csv_row": 375,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -11882,7 +11756,7 @@
    "csv_name": "Chez Nick",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "Cozy UES spot at 1737 York Ave; reviews single out its top-tier burger",
-   "csv_row": 379,
+   "csv_row": 376,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -11910,7 +11784,7 @@
    "csv_name": "Doc Watson's",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "Irish-style pub at 1490 2nd Ave; reviewers praise its burger",
-   "csv_row": 380,
+   "csv_row": 377,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -11938,7 +11812,7 @@
    "csv_name": "East End Bar & Grill",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "UES sports bar; double smash cheeseburger on the menu",
-   "csv_row": 381,
+   "csv_row": 378,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -11966,7 +11840,7 @@
    "csv_name": "EJ's Luncheonette",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "1940s-style diner at 1271 3rd Ave; classic burgers and sandwiches",
-   "csv_row": 382,
+   "csv_row": 379,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -11994,7 +11868,7 @@
    "csv_name": "Emmy Squared (UES)",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "Detroit-style pizzeria whose Le Big Matt burger is cited as one of the city's best",
-   "csv_row": 383,
+   "csv_row": 380,
    "match": {
     "score": 90.0,
     "method": "name+neighborhood",
@@ -12022,7 +11896,7 @@
    "csv_name": "Gracie Mews Diner",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "Diner at 1550 1st Ave; burgers and fries are diner staples",
-   "csv_row": 384,
+   "csv_row": 381,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -12050,7 +11924,7 @@
    "csv_name": "Horn's Hook Tavern",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "Tavern at 1589 1st Ave; classic tavern burger fare",
-   "csv_row": 385,
+   "csv_row": 382,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -12078,7 +11952,7 @@
    "csv_name": "Jackson Hole",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "Classic NYC burger restaurant; hand-scooped made-to-order burgers at its UES spot",
-   "csv_row": 386,
+   "csv_row": 383,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -12106,7 +11980,7 @@
    "csv_name": "J.G. Melon",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "Iconic cash-only pub (since 1972); Bobby Flay's favorite cheeseburger in NYC",
-   "csv_row": 387,
+   "csv_row": 384,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -12134,7 +12008,7 @@
    "csv_name": "Lexington Candy Shop",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "Historic 1925 luncheonette/diner; classic diner fare including burgers",
-   "csv_row": 388,
+   "csv_row": 385,
    "match": {
     "score": 90.0,
     "method": "name+neighborhood",
@@ -12162,7 +12036,7 @@
    "csv_name": "Midnight Express Diner",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "24/7 UES diner at 1715 2nd Ave; Angus burgers on the menu",
-   "csv_row": 389,
+   "csv_row": 386,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -12190,7 +12064,7 @@
    "csv_name": "Orsay",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "French brasserie at 1057 Lexington; its burger is called the best in the UES",
-   "csv_row": 390,
+   "csv_row": 387,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -12218,7 +12092,7 @@
    "csv_name": "Quality Eats (UES)",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "Steakhouse on 2nd Ave; menu includes a Butcher's Cut Burger with slab bacon",
-   "csv_row": 391,
+   "csv_row": 388,
    "match": null
   },
   {
@@ -12242,7 +12116,7 @@
    "csv_name": "Ritz Diner",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "UES diner at 1133 1st Ave; diner burgers standard",
-   "csv_row": 392,
+   "csv_row": 389,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -12270,7 +12144,7 @@
    "csv_name": "Sin City Burger",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "Burger haven on E 76th; S.I.N. double-meat burger and pulled-ribeye sliders",
-   "csv_row": 394,
+   "csv_row": 391,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -12298,7 +12172,7 @@
    "csv_name": "Sojourn",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "Bar/restaurant at 244 E 79th St with American bar food",
-   "csv_row": 395,
+   "csv_row": 392,
    "match": null
   },
   {
@@ -12322,7 +12196,7 @@
    "csv_name": "The Mansion",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "Neighborhood diner at 1634 York Ave",
-   "csv_row": 396,
+   "csv_row": 393,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -12350,7 +12224,7 @@
    "csv_name": "The Penrose",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "Gastropub at 1590 2nd Ave; burgers are standard gastropub fare",
-   "csv_row": 397,
+   "csv_row": 394,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -12378,7 +12252,7 @@
    "csv_name": "The Stumble Inn",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "Sports bar famous for stuffed burgers (The Stuffed Stumbler, Cheese Monster)",
-   "csv_row": 398,
+   "csv_row": 395,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -12406,7 +12280,7 @@
    "csv_name": "Treadwell Park",
    "csv_neighborhood": "Upper East Side",
    "csv_notes": "Craft beer hall at 1125 1st Ave; beer-hall food (burgers) expected",
-   "csv_row": 399,
+   "csv_row": 396,
    "match": {
     "score": 92.9,
     "method": "name+neighborhood+notes-address",
@@ -12434,7 +12308,7 @@
    "csv_name": "5 Napkin Burger (UWS)",
    "csv_neighborhood": "Upper West Side",
    "csv_notes": "2315 Broadway burger spot; OpenTable reviewers call its burger 'one of the best ever'",
-   "csv_row": 400,
+   "csv_row": 397,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -12462,7 +12336,7 @@
    "csv_name": "Amsterdam Ale House",
    "csv_neighborhood": "Upper West Side",
    "csv_notes": "Cited in a 'best burger in NYC' writeup; English-muffin-bun burger",
-   "csv_row": 401,
+   "csv_row": 398,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -12490,7 +12364,7 @@
    "csv_name": "Arte Cafe",
    "csv_neighborhood": "Upper West Side",
    "csv_notes": "Bistro/cafe at 106 W 73rd St; bistro-style American menu",
-   "csv_row": 402,
+   "csv_row": 399,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-street",
@@ -12518,7 +12392,7 @@
    "csv_name": "Cafe Luxembourg",
    "csv_neighborhood": "Upper West Side",
    "csv_notes": "French bistro at 200 W 70th St famous for the Luxemburger",
-   "csv_row": 403,
+   "csv_row": 400,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -12546,7 +12420,7 @@
    "csv_name": "Florentin",
    "csv_neighborhood": "Upper West Side",
    "csv_notes": "Chic neo-American bistro; classic bistro fare including burgers likely",
-   "csv_row": 404,
+   "csv_row": 401,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -12574,7 +12448,7 @@
    "csv_name": "Fred's",
    "csv_neighborhood": "Upper West Side",
    "csv_notes": "Cozy American bistro and neighborhood bar at 476 Amsterdam Ave",
-   "csv_row": 405,
+   "csv_row": 402,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -12602,7 +12476,7 @@
    "csv_name": "Holy Cow Burgers",
    "csv_neighborhood": "Upper West Side",
    "csv_notes": "Halal smashburger chain at 23 W 100th St",
-   "csv_row": 406,
+   "csv_row": 403,
    "match": {
     "score": 90.0,
     "method": "name+neighborhood+notes-address",
@@ -12630,7 +12504,7 @@
    "csv_name": "Jacob's Pickles",
    "csv_neighborhood": "Upper West Side",
    "csv_notes": "Southern comfort spot at 680 Columbus Ave; smashburger on the menu per reviews",
-   "csv_row": 407,
+   "csv_row": 404,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -12658,7 +12532,7 @@
    "csv_name": "Lion's Head Tavern",
    "csv_neighborhood": "Upper West Side",
    "csv_notes": "Gastropub/sports tavern at 995 Amsterdam Ave; signature Lion's Head Burger",
-   "csv_row": 408,
+   "csv_row": 405,
    "match": {
     "score": 100.0,
     "method": "name+notes-address",
@@ -12686,7 +12560,7 @@
    "csv_name": "Maison Pickle",
    "csv_neighborhood": "Upper West Side",
    "csv_notes": "American bistro with patty melt and comfort food at 2309 Broadway",
-   "csv_row": 409,
+   "csv_row": 406,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -12714,7 +12588,7 @@
    "csv_name": "Malachy's Irish Pub",
    "csv_neighborhood": "Upper West Side",
    "csv_notes": "Classic Irish pub at 103 W 72nd St; serves a 1/4 lb burger, well-reviewed burgers",
-   "csv_row": 410,
+   "csv_row": 407,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood+notes-address",
@@ -12742,7 +12616,7 @@
    "csv_name": "McAleer's Pub",
    "csv_neighborhood": "Upper West Side",
    "csv_notes": "UWS Irish pub; its Bacon Bacon Burger was reviewed by Burger Weekly",
-   "csv_row": 411,
+   "csv_row": 408,
    "match": null
   },
   {
@@ -12766,7 +12640,7 @@
    "csv_name": "Sarabeth's (UWS)",
    "csv_neighborhood": "Upper West Side",
    "csv_notes": "American staple at 423 Amsterdam Ave; brunch/lunch menu with burgers likely",
-   "csv_row": 412,
+   "csv_row": 409,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -12794,7 +12668,7 @@
    "csv_name": "Tavern on the Green",
    "csv_neighborhood": "Upper West Side",
    "csv_notes": "Classic Central Park tavern in W 67th St; quintessential American tavern fare",
-   "csv_row": 414,
+   "csv_row": 411,
    "match": {
     "score": 100.0,
     "method": "name-unique",
@@ -12822,7 +12696,7 @@
    "csv_name": "Tessa",
    "csv_neighborhood": "Upper West Side",
    "csv_notes": "Modern American restaurant with Mediterranean influences at 349 Amsterdam Ave",
-   "csv_row": 415,
+   "csv_row": 412,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -12850,7 +12724,7 @@
    "csv_name": "The Milling Room",
    "csv_neighborhood": "Upper West Side",
    "csv_notes": "American bistro at 446 Columbus Ave",
-   "csv_row": 416,
+   "csv_row": 413,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -12878,7 +12752,7 @@
    "csv_name": "The Ribbon",
    "csv_neighborhood": "Upper West Side",
    "csv_notes": "Neighborhood American restaurant with broad menu at 20 W 72nd St",
-   "csv_row": 417,
+   "csv_row": 414,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -12906,7 +12780,7 @@
    "csv_name": "Viand Cafe",
    "csv_neighborhood": "Upper West Side",
    "csv_notes": "Classic old-school coffee-shop diner at 2130 Broadway; diner burgers",
-   "csv_row": 418,
+   "csv_row": 415,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -12934,7 +12808,7 @@
    "csv_name": "Willet's Corner",
    "csv_neighborhood": "Upper West Side",
    "csv_notes": "New American bistro at 420 Amsterdam Ave",
-   "csv_row": 419,
+   "csv_row": 416,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -12962,7 +12836,7 @@
    "csv_name": "Burger Heights",
    "csv_neighborhood": "Washington Heights",
    "csv_notes": "Dedicated gourmet burger joint at 177 Wadsworth Ave",
-   "csv_row": 420,
+   "csv_row": 417,
    "match": {
     "score": 90.0,
     "method": "name+neighborhood+notes-address",
@@ -12990,7 +12864,7 @@
    "csv_name": "Dallas BBQ",
    "csv_neighborhood": "Washington Heights",
    "csv_notes": "BBQ chain at 166th & Broadway; BBQ chains typically serve burgers",
-   "csv_row": 421,
+   "csv_row": 418,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13018,7 +12892,7 @@
    "csv_name": "Fort Washington Public House",
    "csv_neighborhood": "Washington Heights",
    "csv_notes": "Neighborhood pub noted in reviews for burgers",
-   "csv_row": 422,
+   "csv_row": 419,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13046,7 +12920,7 @@
    "csv_name": "Le Cheile",
    "csv_neighborhood": "Washington Heights",
    "csv_notes": "Irish pub; pub menus typically include burgers",
-   "csv_row": 423,
+   "csv_row": 420,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13074,7 +12948,7 @@
    "csv_name": "Locksmith Wine & Burger Bar",
    "csv_neighborhood": "Washington Heights",
    "csv_notes": "Wine and burger bar; burgers are in the name",
-   "csv_row": 424,
+   "csv_row": 421,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13102,7 +12976,7 @@
    "csv_name": "Malecon Restaurant",
    "csv_neighborhood": "Washington Heights",
    "csv_notes": "Dominican restaurant chain; large Latin family menus typically include burgers",
-   "csv_row": 425,
+   "csv_row": 422,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13130,7 +13004,7 @@
    "csv_name": "Mambi Steakhouse",
    "csv_neighborhood": "Washington Heights",
    "csv_notes": "Dominican steakhouse at 4181 Broadway; steakhouses and Dominican family spots often serve burgers",
-   "csv_row": 426,
+   "csv_row": 423,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -13158,7 +13032,7 @@
    "csv_name": "The Grange",
    "csv_neighborhood": "Washington Heights",
    "csv_notes": "American pub at 1635 Amsterdam Ave; pub menus typically include burgers",
-   "csv_row": 427,
+   "csv_row": 424,
    "match": null
   },
   {
@@ -13182,7 +13056,7 @@
    "csv_name": "WaHi Diner",
    "csv_neighborhood": "Washington Heights",
    "csv_notes": "Classic NYC diner at Broadway & 164th; diners serve burgers",
-   "csv_row": 428,
+   "csv_row": 425,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13210,7 +13084,7 @@
    "csv_name": "Bun Haus",
    "csv_neighborhood": "Williamsburg",
    "csv_notes": "Korean-American twist burgers; Kimcheez burger",
-   "csv_row": 429,
+   "csv_row": 426,
    "match": null
   },
   {
@@ -13234,7 +13108,7 @@
    "csv_name": "Mekelburg's",
    "csv_neighborhood": "Williamsburg",
    "csv_notes": "Specialty food shop + craft beer bar; Double Butter Burger",
-   "csv_row": 430,
+   "csv_row": 427,
    "match": null
   },
   {
@@ -13258,7 +13132,7 @@
    "csv_name": "Juanchi's Burger",
    "csv_neighborhood": "Williamsburg",
    "csv_notes": "American/Venezuelan burger spot on S 1st St",
-   "csv_row": 431,
+   "csv_row": 428,
    "match": null
   },
   {
@@ -13282,7 +13156,7 @@
    "csv_name": "Frita Batidos",
    "csv_neighborhood": "Williamsburg",
    "csv_notes": "Cuban fritas (fry-topped burgers) + tropical shakes",
-   "csv_row": 432,
+   "csv_row": 429,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13310,7 +13184,7 @@
    "csv_name": "DuMont Burger",
    "csv_neighborhood": "Williamsburg",
    "csv_notes": "Burger + sandwich spot on Bedford Ave",
-   "csv_row": 433,
+   "csv_row": 430,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-street",
@@ -13338,7 +13212,7 @@
    "csv_name": "Burger Bhai",
    "csv_neighborhood": "Flatbush",
    "csv_notes": "Halal smash burgers with desi twist at 1017 Cortelyou Rd (Ditmas Park); spicy mint chutney burger",
-   "csv_row": 434,
+   "csv_row": 431,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -13366,7 +13240,7 @@
    "csv_name": "Cozy Royale",
    "csv_neighborhood": "Williamsburg",
    "csv_notes": "Meat Hook butcher beef cheeseburgers; limited dry-aged burger",
-   "csv_row": 435,
+   "csv_row": 432,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13394,7 +13268,7 @@
    "csv_name": "Allswell",
    "csv_neighborhood": "Williamsburg",
    "csv_notes": "One of the best burgers in Williamsburg per Infatuation",
-   "csv_row": 436,
+   "csv_row": 433,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13422,7 +13296,7 @@
    "csv_name": "Blue Collar",
    "csv_neighborhood": "Bushwick",
    "csv_notes": "In-N-Out style burgers; best onion rings per Eater",
-   "csv_row": 437,
+   "csv_row": 434,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13450,7 +13324,7 @@
    "csv_name": "Nowon Bushwick",
    "csv_neighborhood": "Bushwick",
    "csv_notes": "Korean-American gastropub; legendary kimchi cheeseburger",
-   "csv_row": 438,
+   "csv_row": 435,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13478,7 +13352,7 @@
    "csv_name": "Lori Jayne",
    "csv_neighborhood": "Bushwick",
    "csv_notes": "Dive bar in back of Alphaville; quarter-pound cheeseburger",
-   "csv_row": 439,
+   "csv_row": 436,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13506,7 +13380,7 @@
    "csv_name": "Grilled!",
    "csv_neighborhood": "Bushwick",
    "csv_notes": "Vegan burger spot across from Maria Hernandez Park",
-   "csv_row": 440,
+   "csv_row": 437,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13534,7 +13408,7 @@
    "csv_name": "Blue Hour",
    "csv_neighborhood": "Bushwick",
    "csv_notes": "Halal double smashburger at BP gas station on Myrtle",
-   "csv_row": 441,
+   "csv_row": 438,
    "match": null
   },
   {
@@ -13558,7 +13432,7 @@
    "csv_name": "Bonnie's Grill",
    "csv_neighborhood": "Park Slope",
    "csv_notes": "Counter diner; Angus/turkey/veggie burgers + wings",
-   "csv_row": 442,
+   "csv_row": 439,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13586,7 +13460,7 @@
    "csv_name": "Harlem Shake",
    "csv_neighborhood": "Park Slope",
    "csv_notes": "Retro burger joint; Hot Mess smashburger",
-   "csv_row": 443,
+   "csv_row": 440,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13614,7 +13488,7 @@
    "csv_name": "Little Purity",
    "csv_neighborhood": "Park Slope",
    "csv_notes": "Classic diner; great burgers with spicy pickles",
-   "csv_row": 444,
+   "csv_row": 441,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13642,7 +13516,7 @@
    "csv_name": "Purity Diner",
    "csv_neighborhood": "Park Slope",
    "csv_notes": "Old-school diner with loyal neighborhood crowd",
-   "csv_row": 445,
+   "csv_row": 442,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13670,7 +13544,7 @@
    "csv_name": "Putnam's Pub",
    "csv_neighborhood": "Fort Greene",
    "csv_notes": "Elevated pub fare for brunch lunch and dinner",
-   "csv_row": 446,
+   "csv_row": 443,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13698,7 +13572,7 @@
    "csv_name": "Sailor",
    "csv_neighborhood": "Fort Greene",
    "csv_notes": "American bistro",
-   "csv_row": 447,
+   "csv_row": 444,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13726,7 +13600,7 @@
    "csv_name": "Stackd Burger",
    "csv_neighborhood": "Fort Greene",
    "csv_notes": "Burger + wings spot on Nevins St",
-   "csv_row": 449,
+   "csv_row": 446,
    "match": {
     "score": 96.3,
     "method": "name+neighborhood+notes-street",
@@ -13754,7 +13628,7 @@
    "csv_name": "Ramblin' Chick",
    "csv_neighborhood": "Carroll Gardens",
    "csv_notes": "Chicken smash burgers; CGBG-style smash menu",
-   "csv_row": 450,
+   "csv_row": 447,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13782,7 +13656,7 @@
    "csv_name": "Madcap Cafe",
    "csv_neighborhood": "Carroll Gardens",
    "csv_notes": "Cafe; Carroll Gardens Burger (CGBG)",
-   "csv_row": 451,
+   "csv_row": 448,
    "match": null
   },
   {
@@ -13806,7 +13680,7 @@
    "csv_name": "BIGTINY",
    "csv_neighborhood": "Carroll Gardens",
    "csv_notes": "French bistro; Jolie burger with fries",
-   "csv_row": 452,
+   "csv_row": 449,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13834,7 +13708,7 @@
    "csv_name": "Swoony's",
    "csv_neighborhood": "Carroll Gardens",
    "csv_notes": "American bistro; double smash patty on Portuguese roll",
-   "csv_row": 453,
+   "csv_row": 450,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13862,7 +13736,7 @@
    "csv_name": "Cafe Spaghetti",
    "csv_neighborhood": "Carroll Gardens",
    "csv_notes": "Italian spot from Swoony's chef; likely burger",
-   "csv_row": 454,
+   "csv_row": 451,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13890,7 +13764,7 @@
    "csv_name": "two8two Bar & Burger",
    "csv_neighborhood": "Cobble Hill",
    "csv_notes": "Hatch green chile cheeseburger on Atlantic Ave",
-   "csv_row": 455,
+   "csv_row": 452,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-street",
@@ -13918,7 +13792,7 @@
    "csv_name": "8-Bit Bites",
    "csv_neighborhood": "Cobble Hill",
    "csv_notes": "Retro arcade diner; halal smash burgers",
-   "csv_row": 456,
+   "csv_row": 453,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -13946,7 +13820,7 @@
    "csv_name": "Bareburger Cobble Hill",
    "csv_neighborhood": "Cobble Hill",
    "csv_notes": "Organic build-your-own burgers on Court St",
-   "csv_row": 457,
+   "csv_row": 454,
    "match": {
     "score": 100.0,
     "method": "name+notes-street",
@@ -13974,7 +13848,7 @@
    "csv_name": "Blue Collar Cobble Hill",
    "csv_neighborhood": "Cobble Hill",
    "csv_notes": "Blue Collar's outpost at 187 Court St",
-   "csv_row": 458,
+   "csv_row": 455,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -14002,7 +13876,7 @@
    "csv_name": "Henry Public",
    "csv_neighborhood": "Cobble Hill",
    "csv_notes": "Grass-fed burgers; classic cocktails",
-   "csv_row": 459,
+   "csv_row": 456,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14030,7 +13904,7 @@
    "csv_name": "Belli Osteria",
    "csv_neighborhood": "Clinton Hill",
    "csv_notes": "Italian restaurant; grass-fed Angus beef burgers",
-   "csv_row": 460,
+   "csv_row": 457,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14058,7 +13932,7 @@
    "csv_name": "Meme's Diner",
    "csv_neighborhood": "Prospect Heights",
    "csv_notes": "Neighborhood diner; veggie burger",
-   "csv_row": 461,
+   "csv_row": 458,
    "match": null
   },
   {
@@ -14082,7 +13956,7 @@
    "csv_name": "Maison Yaki",
    "csv_neighborhood": "Prospect Heights",
    "csv_notes": "French yakitori fusion; Raclette Wagyu Burger",
-   "csv_row": 462,
+   "csv_row": 459,
    "match": null
   },
   {
@@ -14106,7 +13980,7 @@
    "csv_name": "Branded Saloon",
    "csv_neighborhood": "Prospect Heights",
    "csv_notes": "Bar; Branded Burger with maple glaze bacon",
-   "csv_row": 463,
+   "csv_row": 460,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14134,7 +14008,7 @@
    "csv_name": "Patti Ann's",
    "csv_neighborhood": "Prospect Heights",
    "csv_notes": "Midwestern-style restaurant; smash burger",
-   "csv_row": 464,
+   "csv_row": 461,
    "match": null
   },
   {
@@ -14158,7 +14032,7 @@
    "csv_name": "Gertrude's",
    "csv_neighborhood": "Prospect Heights",
    "csv_notes": "Brooklyn bistro; Gertrude burger on challah bun",
-   "csv_row": 465,
+   "csv_row": 462,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14186,7 +14060,7 @@
    "csv_name": "Boeuf & Bun",
    "csv_neighborhood": "Crown Heights",
    "csv_notes": "Artisanal burger lab; house-ground burgers",
-   "csv_row": 466,
+   "csv_row": 463,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14214,7 +14088,7 @@
    "csv_name": "Dutch Boy Burger",
    "csv_neighborhood": "Crown Heights",
    "csv_notes": "Laid-back burger joint next to Franklin Park",
-   "csv_row": 467,
+   "csv_row": 464,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14242,7 +14116,7 @@
    "csv_name": "Café Rue Dix",
    "csv_neighborhood": "Crown Heights",
    "csv_notes": "Spiced ribeye burger",
-   "csv_row": 468,
+   "csv_row": 465,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14270,7 +14144,7 @@
    "csv_name": "Tom's Restaurant",
    "csv_neighborhood": "Crown Heights",
    "csv_notes": "Iconic diner; Tom Burger deluxe",
-   "csv_row": 469,
+   "csv_row": 466,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14298,7 +14172,7 @@
    "csv_name": "Little Grenjai",
    "csv_neighborhood": "Bed-Stuy",
    "csv_notes": "Thai American diner; pad krapow smash burger (lunch only)",
-   "csv_row": 470,
+   "csv_row": 467,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14326,7 +14200,7 @@
    "csv_name": "Hart's",
    "csv_neighborhood": "Bed-Stuy",
    "csv_notes": "Lamb burger with anchovies; mini-empire of cozy spots",
-   "csv_row": 471,
+   "csv_row": 468,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14354,7 +14228,7 @@
    "csv_name": "The Fly",
    "csv_neighborhood": "Bed-Stuy",
    "csv_notes": "Sister restaurant of Hart's; likely burger",
-   "csv_row": 472,
+   "csv_row": 469,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14382,7 +14256,7 @@
    "csv_name": "Home Frite",
    "csv_neighborhood": "Bed-Stuy",
    "csv_notes": "Award Winning Cheeseburger; boozy milkshakes",
-   "csv_row": 473,
+   "csv_row": 470,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14410,7 +14284,7 @@
    "csv_name": "The Burger Bistro",
    "csv_neighborhood": "Bay Ridge",
    "csv_notes": "Build-your-own burgers; 3rd Ave institution",
-   "csv_row": 474,
+   "csv_row": 471,
    "match": null
   },
   {
@@ -14434,7 +14308,7 @@
    "csv_name": "Bean Post Pub",
    "csv_neighborhood": "Bay Ridge",
    "csv_notes": "Pub; Bay Ridge's best wings burgers & beer",
-   "csv_row": 475,
+   "csv_row": 472,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14462,7 +14336,7 @@
    "csv_name": "Bay Ridge House of Wings",
    "csv_neighborhood": "Bay Ridge",
    "csv_notes": "Smash burgers + wings on 3rd Ave",
-   "csv_row": 476,
+   "csv_row": 473,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-street",
@@ -14490,7 +14364,7 @@
    "csv_name": "Pipin's Pub",
    "csv_neighborhood": "Bay Ridge",
    "csv_notes": "Landmark gastropub; Pipin Burger",
-   "csv_row": 477,
+   "csv_row": 474,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14518,7 +14392,7 @@
    "csv_name": "New Dyker Restaurant",
    "csv_neighborhood": "Bensonhurst",
    "csv_notes": "Diner; charbroiled burgers",
-   "csv_row": 478,
+   "csv_row": 475,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14546,7 +14420,7 @@
    "csv_name": "Butcher's Burger",
    "csv_neighborhood": "Bensonhurst",
    "csv_notes": "Burger joint; viral FRENCHINATOR sandwich",
-   "csv_row": 479,
+   "csv_row": 476,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14574,7 +14448,7 @@
    "csv_name": "Parkview Diner",
    "csv_neighborhood": "Bensonhurst",
    "csv_notes": "Voted Brooklyn's best diner; classic burgers",
-   "csv_row": 480,
+   "csv_row": 477,
    "match": {
     "score": 100.0,
     "method": "name-unique",
@@ -14602,7 +14476,7 @@
    "csv_name": "Bernie's",
    "csv_neighborhood": "Greenpoint",
    "csv_notes": "Smash burgers with special sauce; draw-on tables",
-   "csv_row": 482,
+   "csv_row": 479,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14630,7 +14504,7 @@
    "csv_name": "The Snail",
    "csv_neighborhood": "Greenpoint",
    "csv_notes": "New restaurant; acclaimed double patty burger",
-   "csv_row": 483,
+   "csv_row": 480,
    "match": {
     "score": 100.0,
     "method": "name-unique",
@@ -14658,7 +14532,7 @@
    "csv_name": "20 Grams Cafe",
    "csv_neighborhood": "Greenpoint",
    "csv_notes": "Viral $2.55 cheeseburger at Jubilee Marketplace",
-   "csv_row": 484,
+   "csv_row": 481,
    "match": null
   },
   {
@@ -14682,7 +14556,7 @@
    "csv_name": "Tørst",
    "csv_neighborhood": "Greenpoint",
    "csv_notes": "Danish tavern; dry-aged burger with smoked tomato jam",
-   "csv_row": 485,
+   "csv_row": 482,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14710,7 +14584,7 @@
    "csv_name": "Gator",
    "csv_neighborhood": "Greenpoint",
    "csv_notes": "Contemporary American; burger with miso tempura mushroom",
-   "csv_row": 486,
+   "csv_row": 483,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14738,7 +14612,7 @@
    "csv_name": "Ingas Bar",
    "csv_neighborhood": "Brooklyn Heights",
    "csv_notes": "Neighborhood restaurant from Ingas people",
-   "csv_row": 488,
+   "csv_row": 485,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14766,7 +14640,7 @@
    "csv_name": "Cafe Kestrel",
    "csv_neighborhood": "Red Hook",
    "csv_notes": "$32 brisket-blend peppercorn burger",
-   "csv_row": 489,
+   "csv_row": 486,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14794,7 +14668,7 @@
    "csv_name": "Hometown Bar-B-Que",
    "csv_neighborhood": "Red Hook",
    "csv_notes": "Famed pitmaster's spot; tavern-adjacent burger",
-   "csv_row": 490,
+   "csv_row": 487,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14822,7 +14696,7 @@
    "csv_name": "Tavern Next Door",
    "csv_neighborhood": "Red Hook",
    "csv_notes": "Sister tavern to Red Hook Tavern; exceptional burgers",
-   "csv_row": 491,
+   "csv_row": 488,
    "match": null
   },
   {
@@ -14846,7 +14720,7 @@
    "csv_name": "Sea Witch",
    "csv_neighborhood": "Sunset Park",
    "csv_notes": "Bar with elevated pub fare",
-   "csv_row": 493,
+   "csv_row": 490,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14874,7 +14748,7 @@
    "csv_name": "Korzo",
    "csv_neighborhood": "Sunset Park",
    "csv_notes": "Eastern European; deep-fried lángos burgers",
-   "csv_row": 494,
+   "csv_row": 491,
    "match": null
   },
   {
@@ -14898,7 +14772,7 @@
    "csv_name": "Moes Pastrami & Burgers",
    "csv_neighborhood": "Flatbush",
    "csv_notes": "Pastrami + burgers on Flatbush Ave",
-   "csv_row": 495,
+   "csv_row": 492,
    "match": {
     "score": 98.0,
     "method": "name+neighborhood+notes-street",
@@ -14926,7 +14800,7 @@
    "csv_name": "Sunset Bagel",
    "csv_neighborhood": "Flatbush",
    "csv_notes": "24/7 bagel spot; Murder Burger",
-   "csv_row": 496,
+   "csv_row": 493,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14954,7 +14828,7 @@
    "csv_name": "Butcher Bar",
    "csv_neighborhood": "Astoria",
    "csv_notes": "BBQ smokehouse with famous smoked burgers; best BBQ in NYC contender",
-   "csv_row": 498,
+   "csv_row": 495,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -14982,7 +14856,7 @@
    "csv_name": "Petey's Burger",
    "csv_neighborhood": "Astoria",
    "csv_notes": "In-N-Out-style double cheeseburger spot; also has LIC location",
-   "csv_row": 499,
+   "csv_row": 496,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15010,7 +14884,7 @@
    "csv_name": "Burger Club",
    "csv_neighborhood": "Astoria",
    "csv_notes": "Bison and hanger-steak burgers with shakes",
-   "csv_row": 500,
+   "csv_row": 497,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15038,7 +14912,7 @@
    "csv_name": "Holy Burger",
    "csv_neighborhood": "Astoria",
    "csv_notes": "Smash burgers and late-night bites at 23-14 36th Ave",
-   "csv_row": 501,
+   "csv_row": 498,
    "match": {
     "score": 83.3,
     "method": "name+notes-address",
@@ -15066,7 +14940,7 @@
    "csv_name": "Bareburger",
    "csv_neighborhood": "Astoria",
    "csv_notes": "Organic/bison/elk burgers regional chain",
-   "csv_row": 502,
+   "csv_row": 499,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15094,7 +14968,7 @@
    "csv_name": "OG Burger Box",
    "csv_neighborhood": "Astoria",
    "csv_notes": "Halal grass-fed smash burgers",
-   "csv_row": 503,
+   "csv_row": 500,
    "match": null
   },
   {
@@ -15118,7 +14992,7 @@
    "csv_name": "Bel Aire Diner",
    "csv_neighborhood": "Astoria",
    "csv_notes": "Classic Greek diner",
-   "csv_row": 504,
+   "csv_row": 501,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15146,7 +15020,7 @@
    "csv_name": "Bohemian Hall & Beer Garden",
    "csv_neighborhood": "Astoria",
    "csv_notes": "Historic 1910 beer garden with burgers on menu",
-   "csv_row": 505,
+   "csv_row": 502,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15174,7 +15048,7 @@
    "csv_name": "Cronin & Phelan's",
    "csv_neighborhood": "Astoria",
    "csv_notes": "Irish pub with burgers",
-   "csv_row": 506,
+   "csv_row": 503,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15202,7 +15076,7 @@
    "csv_name": "Irish Rover",
    "csv_neighborhood": "Astoria",
    "csv_notes": "Irish pub with burgers",
-   "csv_row": 507,
+   "csv_row": 504,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15230,7 +15104,7 @@
    "csv_name": "The Baroness",
    "csv_neighborhood": "Long Island City",
    "csv_notes": "Craft beer bar with 10+ burger combos; voted #1 burger in Queens by some lists",
-   "csv_row": 508,
+   "csv_row": 505,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15258,7 +15132,7 @@
    "csv_name": "Petey's Burger",
    "csv_neighborhood": "Long Island City",
    "csv_notes": "Second Queens location of In-N-Out-style burger spot",
-   "csv_row": 509,
+   "csv_row": 506,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15286,7 +15160,7 @@
    "csv_name": "Bareburger",
    "csv_neighborhood": "Long Island City",
    "csv_notes": "Organic/bison/elk burgers regional chain",
-   "csv_row": 510,
+   "csv_row": 507,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15314,7 +15188,7 @@
    "csv_name": "F. Ottomanelli's",
    "csv_neighborhood": "Woodside",
    "csv_notes": "Burgers and Belgian fries by butcher family Ottomanelli at 60-15 Woodside Ave",
-   "csv_row": 511,
+   "csv_row": 508,
    "match": {
     "score": 96.3,
     "method": "name+neighborhood+notes-address",
@@ -15342,7 +15216,7 @@
    "csv_name": "The Huntress",
    "csv_neighborhood": "Long Island City",
    "csv_notes": "Whiskey/wings/burger spot",
-   "csv_row": 512,
+   "csv_row": 509,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15370,7 +15244,7 @@
    "csv_name": "PJ Leahy's",
    "csv_neighborhood": "Long Island City",
    "csv_notes": "Irish pub and sports bar with burgers",
-   "csv_row": 513,
+   "csv_row": 510,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15398,7 +15272,7 @@
    "csv_name": "Bantry Bay Publick House",
    "csv_neighborhood": "Long Island City",
    "csv_notes": "Irish pub with burgers incl. lamb burger",
-   "csv_row": 514,
+   "csv_row": 511,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15426,7 +15300,7 @@
    "csv_name": "Gantry Bar & Kitchen",
    "csv_neighborhood": "Long Island City",
    "csv_notes": "Vintage sports bar; The Gantry Burger on pretzel bun",
-   "csv_row": 515,
+   "csv_row": 512,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15454,7 +15328,7 @@
    "csv_name": "Jackson's Eatery | Bar",
    "csv_neighborhood": "Long Island City",
    "csv_notes": "Seasonal American; Jackson's Grass Fed Burger",
-   "csv_row": 516,
+   "csv_row": 513,
    "match": null
   },
   {
@@ -15478,7 +15352,7 @@
    "csv_name": "Court Square Diner",
    "csv_neighborhood": "Long Island City",
    "csv_notes": "Classic diner",
-   "csv_row": 517,
+   "csv_row": 514,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15506,7 +15380,7 @@
    "csv_name": "CaliBun Burgers & Shakes",
    "csv_neighborhood": "Long Island City",
    "csv_notes": "Burgers and shakes spot",
-   "csv_row": 518,
+   "csv_row": 515,
    "match": null
   },
   {
@@ -15530,7 +15404,7 @@
    "csv_name": "First Stop Bar & Grill",
    "csv_neighborhood": "Long Island City",
    "csv_notes": "Bar and grill with burgers",
-   "csv_row": 519,
+   "csv_row": 516,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15558,7 +15432,7 @@
    "csv_name": "Local Hops",
    "csv_neighborhood": "Forest Hills",
    "csv_notes": "Craft beer bar with smash burger and truffle mushroom burger",
-   "csv_row": 520,
+   "csv_row": 517,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15586,7 +15460,7 @@
    "csv_name": "Burger Spot",
    "csv_neighborhood": "Forest Hills",
    "csv_notes": "Kosher smash-burger joint; late-night",
-   "csv_row": 521,
+   "csv_row": 518,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15614,7 +15488,7 @@
    "csv_name": "Dirty Pierre's",
    "csv_neighborhood": "Forest Hills",
    "csv_notes": "Longtime burger-centric bar since 1995; garlic-cheese burger",
-   "csv_row": 522,
+   "csv_row": 519,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15642,7 +15516,7 @@
    "csv_name": "Bareburger",
    "csv_neighborhood": "Forest Hills",
    "csv_notes": "Organic/bison/elk burgers regional chain",
-   "csv_row": 523,
+   "csv_row": 520,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15670,7 +15544,7 @@
    "csv_name": "Forest Hills Station House",
    "csv_neighborhood": "Forest Hills",
    "csv_notes": "Gastropub with bacon cheddar burger and pastrami burger",
-   "csv_row": 524,
+   "csv_row": 521,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15698,7 +15572,7 @@
    "csv_name": "Irish Cottage",
    "csv_neighborhood": "Forest Hills",
    "csv_notes": "Irish pub with well-regarded burgers",
-   "csv_row": 525,
+   "csv_row": 522,
    "match": null
   },
   {
@@ -15722,7 +15596,7 @@
    "csv_name": "(aged.)",
    "csv_neighborhood": "Forest Hills",
    "csv_notes": "American steakhouse with burgers on menu",
-   "csv_row": 527,
+   "csv_row": 524,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15750,7 +15624,7 @@
    "csv_name": "IYKYK",
    "csv_neighborhood": "Flushing",
    "csv_notes": "Downtown Flushing speakeasy with smash burgers",
-   "csv_row": 528,
+   "csv_row": 525,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15778,7 +15652,7 @@
    "csv_name": "Zabiha Burger & Fries",
    "csv_neighborhood": "Flushing",
    "csv_notes": "Halal burgers to-go in downtown Flushing",
-   "csv_row": 529,
+   "csv_row": 526,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15806,7 +15680,7 @@
    "csv_name": "Millard Fillmore Tavern",
    "csv_neighborhood": "Flushing",
    "csv_notes": "American bar and pub with burgers",
-   "csv_row": 530,
+   "csv_row": 527,
    "match": null
   },
   {
@@ -15830,7 +15704,7 @@
    "csv_name": "Burger Plus",
    "csv_neighborhood": "Flushing",
    "csv_notes": "Budget burger and chicken sandwich spot",
-   "csv_row": 531,
+   "csv_row": 528,
    "match": null
   },
   {
@@ -15854,7 +15728,7 @@
    "csv_name": "Pat LaFrieda's Chop House at Citi Field",
    "csv_neighborhood": "Flushing",
    "csv_notes": "Butcher-driven steakhouse with custom burger blends; game-day dining",
-   "csv_row": 533,
+   "csv_row": 530,
    "match": null
   },
   {
@@ -15878,7 +15752,7 @@
    "csv_name": "Golden K Burgers",
    "csv_neighborhood": "Bayside",
    "csv_notes": "Korean-American burger joint; bulgogi and Big Kahuna burgers",
-   "csv_row": 534,
+   "csv_row": 531,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15906,7 +15780,7 @@
    "csv_name": "Bourbon Street",
    "csv_neighborhood": "Bayside",
    "csv_notes": "Cajun bar and grill with Utopia Burger and Bourbon Burger",
-   "csv_row": 535,
+   "csv_row": 532,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15934,7 +15808,7 @@
    "csv_name": "Press 195",
    "csv_neighborhood": "Bayside",
    "csv_notes": "Gastropub with 195 Classic Burger",
-   "csv_row": 536,
+   "csv_row": 533,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15962,7 +15836,7 @@
    "csv_name": "Monahan & Fitzgerald",
    "csv_neighborhood": "Bayside",
    "csv_notes": "Irish-American sports bar with burgers",
-   "csv_row": 537,
+   "csv_row": 534,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -15990,7 +15864,7 @@
    "csv_name": "Emoji Burger",
    "csv_neighborhood": "Jackson Heights",
    "csv_notes": "Burger joint with themed burger names",
-   "csv_row": 538,
+   "csv_row": 535,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -16018,7 +15892,7 @@
    "csv_name": "Bar Burger",
    "csv_neighborhood": "Jackson Heights",
    "csv_notes": "Burger bar on Roosevelt Ave",
-   "csv_row": 539,
+   "csv_row": 536,
    "match": {
     "score": 100.0,
     "method": "name+notes-street",
@@ -16046,7 +15920,7 @@
    "csv_name": "Jax Inn Diner",
    "csv_neighborhood": "Jackson Heights",
    "csv_notes": "Classic diner",
-   "csv_row": 540,
+   "csv_row": 537,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -16074,7 +15948,7 @@
    "csv_name": "The Queensboro",
    "csv_neighborhood": "Jackson Heights",
    "csv_notes": "Neighborhood bar-restaurant with dinner menu including burgers",
-   "csv_row": 541,
+   "csv_row": 538,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -16102,7 +15976,7 @@
    "csv_name": "Uncle Peters Bar & Grill",
    "csv_neighborhood": "Jackson Heights",
    "csv_notes": "Bar and grill with burgers",
-   "csv_row": 542,
+   "csv_row": 539,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -16130,7 +16004,7 @@
    "csv_name": "El Poblado Gastro Bar",
    "csv_neighborhood": "Jackson Heights",
    "csv_notes": "Colombian gastro bar with large Dulcinea and Don Bacon burgers",
-   "csv_row": 543,
+   "csv_row": 540,
    "match": {
     "score": 93.9,
     "method": "name+neighborhood",
@@ -16158,7 +16032,7 @@
    "csv_name": "Smash Shack Burger Bar",
    "csv_neighborhood": "Sunnyside",
    "csv_notes": "Smash burger bar",
-   "csv_row": 544,
+   "csv_row": 541,
    "match": null
   },
   {
@@ -16182,7 +16056,7 @@
    "csv_name": "Pete's Grill",
    "csv_neighborhood": "Sunnyside",
    "csv_notes": "American diner",
-   "csv_row": 545,
+   "csv_row": 542,
    "match": {
     "score": 90.0,
     "method": "name+neighborhood",
@@ -16210,7 +16084,7 @@
    "csv_name": "The Lowery Bar & Kitchen",
    "csv_neighborhood": "Sunnyside",
    "csv_notes": "Bar and kitchen with pub burgers",
-   "csv_row": 546,
+   "csv_row": 543,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood",
@@ -16238,7 +16112,7 @@
    "csv_name": "Crete Diner and Restaurant",
    "csv_neighborhood": "Sunnyside",
    "csv_notes": "Charcoal-grilled burgers at lunch",
-   "csv_row": 547,
+   "csv_row": 544,
    "match": null
   },
   {
@@ -16262,7 +16136,7 @@
    "csv_name": "McGuinness's Saloon",
    "csv_neighborhood": "Sunnyside",
    "csv_notes": "Classic Irish pub",
-   "csv_row": 548,
+   "csv_row": 545,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -16290,7 +16164,7 @@
    "csv_name": "Jack's Fire Department",
    "csv_neighborhood": "Sunnyside",
    "csv_notes": "Family-owned bar and grill; one of oldest spots in Sunnyside",
-   "csv_row": 549,
+   "csv_row": 546,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -16318,7 +16192,7 @@
    "csv_name": "Sweet Avenue",
    "csv_neighborhood": "Sunnyside",
    "csv_notes": "Tavern with burgers on menu",
-   "csv_row": 550,
+   "csv_row": 547,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -16346,7 +16220,7 @@
    "csv_name": "Bronx Burger House",
    "csv_neighborhood": "Riverdale",
    "csv_notes": "Burger joint; 17 burger combos, fresh-chopped Angus blend",
-   "csv_row": 551,
+   "csv_row": 548,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -16374,7 +16248,7 @@
    "csv_name": "An Beal Bocht Cafe",
    "csv_neighborhood": "Riverdale",
    "csv_notes": "Irish pub and restaurant; burgers on pub menu",
-   "csv_row": 552,
+   "csv_row": 549,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -16402,7 +16276,7 @@
    "csv_name": "Blackstone Bar & Grill",
    "csv_neighborhood": "Riverdale",
    "csv_notes": "Sports bar and eatery; burgers highly rated",
-   "csv_row": 553,
+   "csv_row": 550,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -16430,7 +16304,7 @@
    "csv_name": "Riverdale Diner",
    "csv_neighborhood": "Riverdale",
    "csv_notes": "Classic diner with burgers on extensive menu",
-   "csv_row": 554,
+   "csv_row": 551,
    "match": null
   },
   {
@@ -16454,7 +16328,7 @@
    "csv_name": "Riverdale Steak House",
    "csv_neighborhood": "Riverdale",
    "csv_notes": "Irish family-run pub/steakhouse since the 70s; burgers on menu",
-   "csv_row": 555,
+   "csv_row": 552,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -16482,7 +16356,7 @@
    "csv_name": "Riverdale Garden",
    "csv_neighborhood": "Riverdale",
    "csv_notes": "Eclectic restaurant with kids menu incl. burgers",
-   "csv_row": 556,
+   "csv_row": 553,
    "match": null
   },
   {
@@ -16506,7 +16380,7 @@
    "csv_name": "Bronx Alehouse",
    "csv_neighborhood": "Kingsbridge",
    "csv_notes": "Craft-beer gastropub; Alehouse Burger and weekly burger of the week",
-   "csv_row": 557,
+   "csv_row": 554,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -16534,7 +16408,7 @@
    "csv_name": "The Punch Bowl",
    "csv_neighborhood": "Kingsbridge",
    "csv_notes": "Historic Irish pub; classic pub fare",
-   "csv_row": 558,
+   "csv_row": 555,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -16562,7 +16436,7 @@
    "csv_name": "O'Brien Pub",
    "csv_neighborhood": "Kingsbridge",
    "csv_notes": "Neighborhood pub with classic pub fare",
-   "csv_row": 559,
+   "csv_row": 556,
    "match": null
   },
   {
@@ -16586,7 +16460,7 @@
    "csv_name": "Keane's Bar And Restaurant",
    "csv_neighborhood": "Woodlawn",
    "csv_notes": "Irish bar/restaurant; Gaelic Burger and hamburger on menu",
-   "csv_row": 560,
+   "csv_row": 557,
    "match": null
   },
   {
@@ -16610,7 +16484,7 @@
    "csv_name": "Kingsbridge Social Club",
    "csv_neighborhood": "Kingsbridge",
    "csv_notes": "Eatery with wood-fired pizzas, sandwiches; burgers on menu",
-   "csv_row": 561,
+   "csv_row": 558,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -16638,7 +16512,7 @@
    "csv_name": "The Flame Diner",
    "csv_neighborhood": "Fordham",
    "csv_notes": "Greek diner; classic cheeseburger on menu",
-   "csv_row": 562,
+   "csv_row": 559,
    "match": null
   },
   {
@@ -16662,7 +16536,7 @@
    "csv_name": "Olympic Flame Diner",
    "csv_neighborhood": "Fordham",
    "csv_notes": "Greek diner; burgers on menu",
-   "csv_row": 563,
+   "csv_row": 560,
    "match": null
   },
   {
@@ -16686,7 +16560,7 @@
    "csv_name": "Solomon's Porch",
    "csv_neighborhood": "Fordham",
    "csv_notes": "Gourmet burger spot on Webster Ave; creative toppings",
-   "csv_row": 564,
+   "csv_row": 561,
    "match": null
   },
   {
@@ -16710,7 +16584,7 @@
    "csv_name": "Burger Lodge",
    "csv_neighborhood": "Belmont",
    "csv_notes": "Burger spot",
-   "csv_row": 565,
+   "csv_row": 562,
    "match": null
   },
   {
@@ -16734,7 +16608,7 @@
    "csv_name": "Charlies Bar & Kitchen",
    "csv_neighborhood": "Mott Haven",
    "csv_notes": "American bar and kitchen; known for burgers (454 burger)",
-   "csv_row": 566,
+   "csv_row": 563,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -16762,7 +16636,7 @@
    "csv_name": "Beatstro",
    "csv_neighborhood": "Mott Haven",
    "csv_notes": "American/Puerto Rican spot; burgers on menu",
-   "csv_row": 567,
+   "csv_row": 564,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -16790,7 +16664,7 @@
    "csv_name": "Milk Burger",
    "csv_neighborhood": "Mott Haven",
    "csv_notes": "Burger joint",
-   "csv_row": 568,
+   "csv_row": 565,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -16818,7 +16692,7 @@
    "csv_name": "Maisonetta",
    "csv_neighborhood": "Mott Haven",
    "csv_notes": "French-Mexican fusion; burger with sweet plantain and fried cheese on menu",
-   "csv_row": 569,
+   "csv_row": 566,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -16846,7 +16720,7 @@
    "csv_name": "Mott Haven Bar and Grill",
    "csv_neighborhood": "Mott Haven",
    "csv_notes": "Neighborhood bar and grill; burgers and pub fare",
-   "csv_row": 570,
+   "csv_row": 567,
    "match": null
   },
   {
@@ -16870,7 +16744,7 @@
    "csv_name": "Jerry's Hamburger Place",
    "csv_neighborhood": "Mott Haven",
    "csv_notes": "Hamburger place; huge menu including burgers and burritos",
-   "csv_row": 571,
+   "csv_row": 568,
    "match": null
   },
   {
@@ -16894,7 +16768,7 @@
    "csv_name": "Bronx Burger Co",
    "csv_neighborhood": "South Bronx",
    "csv_notes": "Affordable burger spot; smash-style cheeseburgers",
-   "csv_row": 572,
+   "csv_row": 569,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -16922,7 +16796,7 @@
    "csv_name": "Mo Gridder's BBQ",
    "csv_neighborhood": "Hunts Point",
    "csv_notes": "BBQ joint featured on Diners Drive-Ins and Dives; burgers on menu",
-   "csv_row": 573,
+   "csv_row": 570,
    "match": null
   },
   {
@@ -16946,7 +16820,7 @@
    "csv_name": "Burger Time",
    "csv_neighborhood": "Morris Park",
    "csv_notes": "Classic burger restaurant; Excaliburger and French Fried Onion Burger",
-   "csv_row": 574,
+   "csv_row": 571,
    "match": null
   },
   {
@@ -16970,7 +16844,7 @@
    "csv_name": "Nana's Kitchen",
    "csv_neighborhood": "Morris Park",
    "csv_notes": "Albanian-Mediterranean eatery; Albanian Burger Combo on menu",
-   "csv_row": 575,
+   "csv_row": 572,
    "match": null
   },
   {
@@ -16994,7 +16868,7 @@
    "csv_name": "Doyle's Pub",
    "csv_neighborhood": "Morris Park",
    "csv_notes": "Pub with pub-food menu",
-   "csv_row": 576,
+   "csv_row": 573,
    "match": null
   },
   {
@@ -17018,7 +16892,7 @@
    "csv_name": "P.J. Brady's",
    "csv_neighborhood": "Throggs Neck",
    "csv_notes": "American pub food at 3201 Philip Ave",
-   "csv_row": 577,
+   "csv_row": 574,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -17046,7 +16920,7 @@
    "csv_name": "Wicked Wolf Bronx",
    "csv_neighborhood": "Throggs Neck",
    "csv_notes": "Neighborhood sports bar; Wolf burger",
-   "csv_row": 578,
+   "csv_row": 575,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -17074,7 +16948,7 @@
    "csv_name": "Fiddler's Elbow Restaurant & Bar",
    "csv_neighborhood": "Throggs Neck",
    "csv_notes": "Irish-American restaurant and bar; burgers and steak on menu",
-   "csv_row": 579,
+   "csv_row": 576,
    "match": null
   },
   {
@@ -17098,7 +16972,7 @@
    "csv_name": "Dale Diner",
    "csv_neighborhood": "Kingsbridge",
    "csv_notes": "Classic American diner at 189 W 231st St; burgers on menu",
-   "csv_row": 580,
+   "csv_row": 577,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -17126,7 +17000,7 @@
    "csv_name": "Ice House Café",
    "csv_neighborhood": "Throggs Neck",
    "csv_notes": "Waterfront American restaurant; burgers on menu",
-   "csv_row": 581,
+   "csv_row": 578,
    "match": null
   },
   {
@@ -17150,7 +17024,7 @@
    "csv_name": "Jimmy's Grand Cafe",
    "csv_neighborhood": "Unionport",
    "csv_notes": "American diner/cafe; burgers, cheeseburgers, veggie and turkey burgers",
-   "csv_row": 582,
+   "csv_row": 579,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -17178,7 +17052,7 @@
    "csv_name": "John's Diner",
    "csv_neighborhood": "Parkchester",
    "csv_notes": "Classic Bronx diner since 1990s; Jumbo Beef Burger",
-   "csv_row": 583,
+   "csv_row": 580,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -17206,7 +17080,7 @@
    "csv_name": "Step In Restaurant",
    "csv_neighborhood": "Unionport",
    "csv_notes": "American restaurant; burgers, steak, sandwiches",
-   "csv_row": 584,
+   "csv_row": 581,
    "match": {
     "score": 100.0,
     "method": "name-unique",
@@ -17234,7 +17108,7 @@
    "csv_name": "City Island Diner",
    "csv_neighborhood": "City Island",
    "csv_notes": "Classic diner; cheeseburgers and creative sandwiches",
-   "csv_row": 585,
+   "csv_row": 582,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -17262,7 +17136,7 @@
    "csv_name": "Black Whale",
    "csv_neighborhood": "City Island",
    "csv_notes": "Pub with seafaring decor; seafood and burgers",
-   "csv_row": 586,
+   "csv_row": 583,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -17290,7 +17164,7 @@
    "csv_name": "Johnny's Reef",
    "csv_neighborhood": "City Island",
    "csv_notes": "Seafood spot; burgers and shakes on menu",
-   "csv_row": 587,
+   "csv_row": 584,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -17318,7 +17192,7 @@
    "csv_name": "Bronx Beer Hall",
    "csv_neighborhood": "Belmont",
    "csv_notes": "Gastropub in the Arthur Ave market (2344 Arthur Ave); gourmet burgers and craft beer",
-   "csv_row": 588,
+   "csv_row": 585,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -17346,7 +17220,7 @@
    "csv_name": "Stadium Sport Bar Restaurant & Pizzeria",
    "csv_neighborhood": "Concourse",
    "csv_notes": "Sports bar pizzeria; pub food and burgers",
-   "csv_row": 589,
+   "csv_row": 586,
    "match": null
   },
   {
@@ -17370,7 +17244,7 @@
    "csv_name": "Jolly Tinker",
    "csv_neighborhood": "Bedford Park",
    "csv_notes": "Cozy spot at 2875 Webster Ave known for juicy burgers",
-   "csv_row": 590,
+   "csv_row": 587,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -17398,7 +17272,7 @@
    "csv_name": "Duffy's Tavern",
    "csv_neighborhood": "West Brighton",
    "csv_notes": "Irish pub since 1985; famous flame-broiled cheeseburger on English muffin",
-   "csv_row": 592,
+   "csv_row": 589,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood",
@@ -17426,7 +17300,7 @@
    "csv_name": "Jody's Club Forest",
    "csv_neighborhood": "West Brighton",
    "csv_notes": "Irish-American pub; Barstool Sports praised its burger",
-   "csv_row": 593,
+   "csv_row": 590,
    "match": {
     "score": 90.0,
     "method": "name+neighborhood+name-street",
@@ -17454,7 +17328,7 @@
    "csv_name": "O'Neill's",
    "csv_neighborhood": "West Brighton",
    "csv_notes": "Irish pub at 1614 Forest Ave; burgers are house specialty per reviews",
-   "csv_row": 594,
+   "csv_row": 591,
    "match": {
     "score": 82.0,
     "method": "name+notes-address",
@@ -17482,7 +17356,7 @@
    "csv_name": "G&G American Grill",
    "csv_neighborhood": "West Brighton",
    "csv_notes": "American grill/diner at 891 Manor Rd",
-   "csv_row": 595,
+   "csv_row": 592,
    "match": {
     "score": 79.0,
     "method": "name-word+notes-address",
@@ -17510,7 +17384,7 @@
    "csv_name": "8 Bit Bites",
    "csv_neighborhood": "West Brighton",
    "csv_notes": "Smashburgers at 1419 Forest Ave; viral on TikTok",
-   "csv_row": 596,
+   "csv_row": 593,
    "match": {
     "score": 100.0,
     "method": "name+notes-address",
@@ -17538,7 +17412,7 @@
    "csv_name": "Supreme Burger Company",
    "csv_neighborhood": "West Brighton",
    "csv_notes": "Smash burgers at 646 Forest Ave",
-   "csv_row": 597,
+   "csv_row": 594,
    "match": {
     "score": 90.0,
     "method": "name+neighborhood+notes-address",
@@ -17566,7 +17440,7 @@
    "csv_name": "Steiny's Pub",
    "csv_neighborhood": "St. George",
    "csv_notes": "Neighborhood pub near the ferry; beef and veggie burgers",
-   "csv_row": 598,
+   "csv_row": 595,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -17594,7 +17468,7 @@
    "csv_name": "Ruddy & Dean American Steakhouse",
    "csv_neighborhood": "St. George",
    "csv_notes": "Steakhouse at 44 Richmond Ter",
-   "csv_row": 599,
+   "csv_row": 596,
    "match": {
     "score": 90.0,
     "method": "name+neighborhood+notes-address",
@@ -17622,7 +17496,7 @@
    "csv_name": "The Hop Shoppe",
    "csv_neighborhood": "Stapleton",
    "csv_notes": "Bar at 372 Van Duzer St; frequent local burger pick",
-   "csv_row": 601,
+   "csv_row": 598,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -17650,36 +17524,12 @@
    "csv_name": "Craft House",
    "csv_neighborhood": "Stapleton",
    "csv_notes": "American restaurant/bar at 60 Van Duzer St",
-   "csv_row": 602,
+   "csv_row": 599,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
     "dba": "CRAFT HOUSE"
    }
-  },
-  {
-   "key": "csv:the-richmond-staten-island",
-   "camis": null,
-   "dba": null,
-   "name": "The Richmond",
-   "address": null,
-   "borough": "Staten Island",
-   "zipcode": null,
-   "lat": null,
-   "lng": null,
-   "nta": "SI37",
-   "neighborhood": "Stapleton-Rosebank",
-   "nta_source": "csv-neighborhood",
-   "cuisine": null,
-   "last_inspection": null,
-   "website": null,
-   "menu_url": null,
-   "csv": true,
-   "csv_name": "The Richmond",
-   "csv_neighborhood": "Stapleton",
-   "csv_notes": "New American restaurant at 695 Bay St",
-   "csv_row": 603,
-   "match": null
   },
   {
    "key": "camis:41507398",
@@ -17702,7 +17552,7 @@
    "csv_name": "Griff's Place",
    "csv_neighborhood": "New Dorp",
    "csv_notes": "Bar/restaurant; 'best burgers on SI' per locals",
-   "csv_row": 604,
+   "csv_row": 600,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -17730,7 +17580,7 @@
    "csv_name": "Ronnie's Sandwich Shoppe",
    "csv_neighborhood": "New Dorp",
    "csv_notes": "Known for its Bourbon burger",
-   "csv_row": 605,
+   "csv_row": 601,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -17758,7 +17608,7 @@
    "csv_name": "Andrew's Diner",
    "csv_neighborhood": "New Dorp",
    "csv_notes": "Classic diner; pizza burger and classic burgers",
-   "csv_row": 606,
+   "csv_row": 602,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -17786,7 +17636,7 @@
    "csv_name": "On A Roll",
    "csv_neighborhood": "New Dorp",
    "csv_notes": "Pat LaFrieda cheeseburger; roast-beef specialist",
-   "csv_row": 607,
+   "csv_row": 603,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -17814,7 +17664,7 @@
    "csv_name": "98K Burger",
    "csv_neighborhood": "New Dorp",
    "csv_notes": "Burger counter at 357A New Dorp Ln",
-   "csv_row": 608,
+   "csv_row": 604,
    "match": null
   },
   {
@@ -17838,7 +17688,7 @@
    "csv_name": "CD Burger",
    "csv_neighborhood": "Old Town",
    "csv_notes": "Burger spot; pretzel-bun burger",
-   "csv_row": 610,
+   "csv_row": 606,
    "match": {
     "score": 90.0,
     "method": "name+neighborhood",
@@ -17866,7 +17716,7 @@
    "csv_name": "Saucy",
    "csv_neighborhood": "Grasmere",
    "csv_notes": "Wings-and-burgers spot",
-   "csv_row": 611,
+   "csv_row": 607,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -17894,7 +17744,7 @@
    "csv_name": "The KOVA",
    "csv_neighborhood": "Grant City",
    "csv_notes": "American cafe; raved-about burger",
-   "csv_row": 612,
+   "csv_row": 608,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -17922,7 +17772,7 @@
    "csv_name": "Joyce's Tavern",
    "csv_neighborhood": "Eltingville",
    "csv_notes": "Irish pub since 1966; sirloin burgers, weekly burger specials",
-   "csv_row": 614,
+   "csv_row": 610,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -17950,7 +17800,7 @@
    "csv_name": "Richmond Republic",
    "csv_neighborhood": "Annadale",
    "csv_notes": "Bar & grill at 4459 Amboy Rd",
-   "csv_row": 615,
+   "csv_row": 611,
    "match": {
     "score": 100.0,
     "method": "name+notes-address",
@@ -17978,7 +17828,7 @@
    "csv_name": "Bite Burger",
    "csv_neighborhood": "Great Kills",
    "csv_notes": "Burger joint; 4.6 stars on Yelp",
-   "csv_row": 616,
+   "csv_row": 612,
    "match": null
   },
   {
@@ -18002,7 +17852,7 @@
    "csv_name": "Da Damaso",
    "csv_neighborhood": "Great Kills",
    "csv_notes": "Italian restaurant likely serving burgers",
-   "csv_row": 617,
+   "csv_row": 613,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -18030,7 +17880,7 @@
    "csv_name": "Flanagan's Tavern",
    "csv_neighborhood": "Great Kills",
    "csv_notes": "Irish pub; Irish Prime Rib Burger (site listed as JD's Tavern)",
-   "csv_row": 618,
+   "csv_row": 614,
    "match": null
   },
   {
@@ -18054,7 +17904,7 @@
    "csv_name": "Tottenville Tavern",
    "csv_neighborhood": "Tottenville",
    "csv_notes": "Neighborhood bar & grill; 1/2-lb Tavern Burger and Spicy Burger",
-   "csv_row": 619,
+   "csv_row": 615,
    "match": null
   },
   {
@@ -18078,7 +17928,7 @@
    "csv_name": "Ralph's Sports Bar",
    "csv_neighborhood": "Tottenville",
    "csv_notes": "Sports bar; local burger favorite",
-   "csv_row": 620,
+   "csv_row": 616,
    "match": {
     "score": 100.0,
     "method": "name-unique",
@@ -18106,7 +17956,7 @@
    "csv_name": "Trackside Bar & Grill",
    "csv_neighborhood": "New Dorp",
    "csv_notes": "Bar & grill at 61 New Dorp Plaza North; local burger favorite",
-   "csv_row": 621,
+   "csv_row": 617,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -18134,7 +17984,7 @@
    "csv_name": "Towne Deli & Pizzeria",
    "csv_neighborhood": "Tottenville",
    "csv_notes": "Deli-pizzeria with burgers on the menu",
-   "csv_row": 622,
+   "csv_row": 618,
    "match": {
     "score": 93.0,
     "method": "name+neighborhood",
@@ -18162,7 +18012,7 @@
    "csv_name": "Rab's Country Lanes",
    "csv_neighborhood": "Dongan Hills",
    "csv_notes": "Bowling alley whose burgers get local recommendations",
-   "csv_row": 623,
+   "csv_row": 619,
    "match": {
     "score": 97.1,
     "method": "name+neighborhood",
@@ -18190,7 +18040,7 @@
    "csv_name": "Tommy's Tavern and Tap",
    "csv_neighborhood": "New Springville",
    "csv_notes": "Tavern chain at 2655 Richmond Ave",
-   "csv_row": 624,
+   "csv_row": 620,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -18218,7 +18068,7 @@
    "csv_name": "DaddyO's BBQ and Sports Bar",
    "csv_neighborhood": "Charleston",
    "csv_notes": "BBQ sports bar at 35 Androvette St",
-   "csv_row": 625,
+   "csv_row": 621,
    "match": null
   },
   {
@@ -18242,7 +18092,7 @@
    "csv_name": "SI Diner",
    "csv_neighborhood": "Westerleigh",
    "csv_notes": "Classic diner at 1877 Victory Blvd",
-   "csv_row": 626,
+   "csv_row": 622,
    "match": {
     "score": 58.3,
     "method": "name-word+neighborhood+notes-address",
@@ -18270,7 +18120,7 @@
    "csv_name": "Joe Broadway's Billiards & Sports Pub",
    "csv_neighborhood": "Graniteville",
    "csv_notes": "Sports pub at 2178 Forest Ave",
-   "csv_row": 627,
+   "csv_row": 623,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
@@ -18298,7 +18148,7 @@
    "csv_name": "PepperJack Grill",
    "csv_neighborhood": "Castleton Corners",
    "csv_notes": "Grill at 316 Manor Rd",
-   "csv_row": 628,
+   "csv_row": 624,
    "match": null
   },
   {
@@ -18322,7 +18172,7 @@
    "csv_name": "West Shore Inn",
    "csv_neighborhood": "Chelsea",
    "csv_notes": "Inn/bar at 3955 Victory Blvd",
-   "csv_row": 629,
+   "csv_row": 625,
    "match": {
     "score": 100.0,
     "method": "name+notes-address",
@@ -18350,7 +18200,7 @@
    "csv_name": "Adobe Blues",
    "csv_neighborhood": "New Brighton",
    "csv_notes": "Southwest restaurant at 63 Lafayette Ave",
-   "csv_row": 630,
+   "csv_row": 626,
    "match": null
   },
   {
@@ -18374,7 +18224,7 @@
    "csv_name": "Bravo Pizza & Sports Bar",
    "csv_neighborhood": "New Dorp",
    "csv_notes": "Pizza sports bar at 413 New Dorp Ln advertising fresh Angus burgers",
-   "csv_row": 631,
+   "csv_row": 627,
    "match": {
     "score": 90.0,
     "method": "name+neighborhood+notes-address",
@@ -18402,7 +18252,7 @@
    "csv_name": "7th Street Burger (Astoria)",
    "csv_neighborhood": "Astoria",
    "csv_notes": "Smashburger chain; distinct location from East Village pilot entry",
-   "csv_row": 634,
+   "csv_row": 630,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -18430,7 +18280,7 @@
    "csv_name": "7th Street Burger (Forest Hills)",
    "csv_neighborhood": "Forest Hills",
    "csv_notes": "Smashburger chain; distinct location from East Village pilot entry",
-   "csv_row": 635,
+   "csv_row": 631,
    "match": {
     "score": 100.0,
     "method": "name+neighborhood",
@@ -18458,7 +18308,7 @@
    "csv_name": "Hillstone",
    "csv_neighborhood": "NoMad",
    "csv_notes": "American restaurant at 378 Park Ave S famous for its burgers (the chain's one NYC location)",
-   "csv_row": 636,
+   "csv_row": 632,
    "match": {
     "score": 82.0,
     "method": "name+neighborhood+notes-address",

@@ -48,13 +48,14 @@ export function BoroughBars({ boroughs, cityMedian, current, labelledBy }: { bor
                 </div>
                 <div className="relative min-h-9">
                   <div
-                    className="hbar-fill absolute top-[calc(50%-10px)] left-0 h-5 rounded-r-[3px]"
+                    className="hbar-fill absolute top-[calc(50%-10px)] left-0 h-5 rounded-r-[4px]"
                     style={{ width: pct(v), ["--d" as string]: `${i * 40}ms` }}
                   />
                   {/* The NYC line first, so a value label that lands on it paints over it: the label's
-                      --bg knockout breaks the line instead of the line cutting through a digit. */}
+                      --surface knockout (the chart card's paper) breaks the line instead of the line
+                      cutting through a digit. */}
                   {cityMedian !== null ? <span className="absolute top-0 bottom-0 w-px bg-ink" style={{ left: pct(cityMedian) }} /> : null}
-                  <span className="t-num-m absolute top-1/2 -translate-y-1/2 bg-bg pr-1 pl-2 whitespace-nowrap" style={{ left: pct(v) }}>
+                  <span className="t-num-m absolute top-1/2 -translate-y-1/2 bg-surface pr-1 pl-2 whitespace-nowrap" style={{ left: pct(v) }}>
                     {formatPrice(v, { cents: "always" })}
                   </span>
                 </div>
@@ -94,9 +95,13 @@ export function BoroughTable({ boroughs }: { boroughs: BoroughEntry[] }) {
         {boroughs.map((b) => (
           <tr key={b.slug}>
             <th scope="row">
+              {/* The chart's name links are pointer-only (the chart is one image to a screen reader);
+                  the table view carries the keyboard-reachable links. */}
               <span className="inline-flex items-center gap-2">
                 <BoroughDot borough={b.name} />
-                {b.name}
+                <Link href={`/boroughs/${b.slug}`} className="ui-link">
+                  {b.name}
+                </Link>
               </span>
               {b.menuCounts.menus ? <span className="t-ui-s muted block">{isChainOnly(b.menuCounts) ? "Chain prices only" : menuBreakdownShort(b.menuCounts)}</span> : null}
             </th>
