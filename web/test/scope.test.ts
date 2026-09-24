@@ -2,14 +2,17 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 import {
+  chainLocationsWhere,
   coverageSentence,
   cuisineNames,
   lookedUpSoFar,
+  lookedUpWhen,
   mostlyIn,
   restaurantScope,
   scopeCredit,
   scopeMethod,
   scopeRestaurants,
+  scopeSources,
   scopeWhere,
 } from "../src/lib/scope";
 import type { BurgerIndex } from "../src/lib/schema";
@@ -48,10 +51,69 @@ test("list only: our curated list, matched to DOHMH for address and location", (
   assert.equal(coverageSentence(scope), "We have looked up 80 of the 658 New York restaurants on our list of burger places.");
   assert.equal(lookedUpSoFar(scope), "80 of 658 restaurants looked up so far");
   const method = scopeMethod(scope);
-  assert.match(method, /^List restaurants: our own list of New York burger places, leaving out national fast-food chains\./);
-  assert.match(method, /matched to the city health department's inspection records for its address and map location/);
+  assert.match(method, /^List restaurants: our own list of New York burger places, leaving out national chains\./);
+  assert.match(method, /We match each restaurant we can to the city health department's inspection records, which give its address and map location\./);
   assert.doesNotMatch(method, /files under|hamburgers/i, "list only: the health department adds no restaurants");
-  assert.equal(scopeCredit(scope), "Restaurants from our own list of New York burger places, matched to city health-inspection records (NYC Open Data); 80 of 658 looked up so far.");
+  assert.doesNotMatch(method, /\bEach one is matched\b/, "not every restaurant on the list matches a health-department record");
+  assert.equal(
+    scopeCredit(scope),
+    "Restaurants from our own list of New York burger places, with addresses from city health-inspection records (NYC Open Data) where they match; 80 of 658 looked up so far.",
+  );
+  assert.equal(lookedUpWhen(scope), "looked up so far");
+  assert.equal(chainLocationsWhere(scope), " on our list");
+});
+
+test("method: how many restaurants the health department's records place, from the dataset", () => {
+  const scope = restaurantScope(note(LIST_ONLY), 80);
+  assert.equal(
+    scopeMethod(scope, 77),
+    "List restaurants: our own list of New York burger places, leaving out national chains. We match each restaurant we can to the city health department's inspection records, which give its address and map location (77 of the 80 looked up so far). The rest keep the neighborhood from our list and are not on the map.",
+  );
+  assert.match(scopeMethod(scope, 80), /which give its address and map location \(all 80 looked up so far\)\.$/, "all matched: no 'the rest'");
+  const done = restaurantScope(note(LIST_ONLY_DONE), 658);
+  assert.match(scopeMethod(done, 499), /\(499 of the 658\)\. The rest keep the neighborhood from our list and are not on the map\.$/);
+  assert.match(scopeMethod(done, 499), /^List restaurants: our own list of New York burger places\. /, "national chains included: no 'leaving out'");
+});
+
+test("the note's matching clause and chain wording can change without losing the scope", () => {
+  const softened = LIST_ONLY.replace(
+    "matched to NYC DOHMH inspection records for address and location",
+    "matched where possible (499 of 658) to NYC DOHMH inspection records for address and location",
+  ).replace(
+    "except national fast-food chains (McDonald's, Burger King, Wendy's, Shake Shack and the like)",
+    "except national fast-food and casual-dining chains (Shake Shack, Five Guys, McDonald's, White Castle, Applebee's, Outback and the like)",
+  );
+  const scope = restaurantScope(note(softened), 80);
+  assert.deepEqual([scope.kind, scope.inScope, scope.pending, scope.excludesNationalChains], ["list", 658, 578, true]);
+  assert.equal(scope.nationalChainExamples, "Shake Shack, Five Guys, McDonald's, White Castle, Applebee's, Outback and the like");
+  const bare = restaurantScope(note(LIST_ONLY.replace("national fast-food chains", "national chains")), 80);
+  assert.equal(bare.excludesNationalChains, true);
+  assert.equal(bare.nationalChainExamples, "McDonald's, Burger King, Wendy's, Shake Shack and the like");
+});
+
+// methodology.sources as pipeline/build.py SOURCES wrote them when the list became ours.
+const SOURCES = [
+  "NYC DOHMH Restaurant Inspection Results (NYC Open Data 43nn-pn8j): restaurant list, addresses, coordinates, cuisine.",
+  "2010 Neighborhood Tabulation Areas (NYC Open Data 8ius-dhrr): neighborhood names.",
+  "The Burger Index restaurant list: a curated list of NYC burger restaurants.",
+  "Menu prices from each restaurant's own site or menu PDF, online-ordering pages, menu aggregators and delivery apps, read with Context.dev web scraping.",
+];
+
+test("sources: with our list, the health department's records only match it, and the list goes first", () => {
+  assert.deepEqual(scopeSources(SOURCES, restaurantScope(note(LIST_ONLY), 80)), [
+    "The Burger Index restaurant list: a curated list of NYC burger restaurants.",
+    "NYC DOHMH Restaurant Inspection Results (NYC Open Data 43nn-pn8j): addresses, coordinates and cuisine for the restaurants on our list that match its records.",
+    SOURCES[1],
+    SOURCES[3],
+  ]);
+  assert.equal(
+    scopeSources(SOURCES, restaurantScope(note(WITH_CUISINES), 129))[1],
+    "NYC DOHMH Restaurant Inspection Results (NYC Open Data 43nn-pn8j): every restaurant it files under “Hamburgers” inspected since Jan 1, 2023 (or not inspected yet), and addresses, coordinates and cuisine for the restaurants on our list that match its records.",
+  );
+  // A DOHMH line that no longer claims the list is left as it is; an unknown scope changes nothing.
+  const fixed = ["The Burger Index restaurant list: a curated list of NYC burger restaurants.", "NYC DOHMH Restaurant Inspection Results (NYC Open Data 43nn-pn8j): addresses and coordinates."];
+  assert.deepEqual(scopeSources(fixed, restaurantScope(note(LIST_ONLY), 80)), fixed);
+  assert.deepEqual(scopeSources(SOURCES, restaurantScope(note(FIXTURE_NOTE), 52)), SOURCES);
 });
 
 test("list plus DOHMH cuisines: every restaurant the health department files under them", () => {
@@ -64,9 +126,10 @@ test("list plus DOHMH cuisines: every restaurant the health department files und
   assert.equal(scopeRestaurants(scope), "242 New York restaurants on our list of burger places or filed under “Hamburgers” by the city's health department");
   assert.equal(scopeWhere(scope), "in scope");
   assert.equal(
-    scopeMethod(scope),
-    "List restaurants: our own list of New York burger places, plus every restaurant the city's health department files under “Hamburgers” that it has inspected since Jan 1, 2023 (or not inspected yet), leaving out national fast-food chains.",
+    scopeMethod(scope, 120),
+    "List restaurants: our own list of New York burger places, plus every restaurant the city's health department files under “Hamburgers” that it has inspected since Jan 1, 2023 (or not inspected yet), leaving out national chains. We match each restaurant we can to the city health department's inspection records, which give its address and map location (120 of the 129 looked up so far). The rest keep the neighborhood from our list and are not on the map.",
   );
+  assert.equal(chainLocationsWhere(scope), " in scope");
   assert.equal(scopeCredit(scope), "Restaurants from our own list of New York burger places plus city health-inspection records (NYC Open Data); 129 of 242 looked up so far.");
 });
 
@@ -84,6 +147,7 @@ test("everything scraped: no pending count, no 'so far'", () => {
   assert.deepEqual([list.kind, list.inScope, list.pending, list.excludesNationalChains], ["list", 658, 0, false]);
   assert.equal(coverageSentence(list), "We looked up all 658 New York restaurants on our list of burger places.");
   assert.doesNotMatch(scopeCredit(list), /so far/);
+  assert.equal(lookedUpWhen(list), "looked up");
 });
 
 test("an unrecognised note names no source and claims nothing", () => {
@@ -92,7 +156,9 @@ test("an unrecognised note names no source and claims nothing", () => {
   assert.equal(coverageSentence(scope), null);
   assert.equal(scopeRestaurants(scope), "52 New York restaurants");
   assert.doesNotMatch(scopeMethod(scope), /DOHMH|health|curated|our own list/);
+  assert.doesNotMatch(scopeMethod(scope, 40), /DOHMH|health|curated|our own list/);
   assert.doesNotMatch(scopeCredit(scope), /Open Data|our own list/);
+  assert.equal(chainLocationsWhere(scope), "", "an unknown scope names no list");
   assert.equal(restaurantScope(note(""), 0).kind, "unknown");
 });
 

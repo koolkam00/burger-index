@@ -118,6 +118,18 @@ export function splitByCoverage<T>(areas: readonly T[], counts: (a: T) => MenuCo
   return { comparable: priced.filter((a) => !isChainOnly(counts(a))), chainOnly: priced.filter((a) => isChainOnly(counts(a))) };
 }
 
+/**
+ * How much of the NYC index an area's menus are: "all" when every distinct priced menu citywide has
+ * a location in the area (the area median is then the NYC median by construction, so comparing the
+ * two says nothing), "most" when more than half do (the comparison is mostly the area against
+ * itself), else null.
+ */
+export function shareOfCity(area: MenuCounts, city: MenuCounts): "all" | "most" | null {
+  if (!area.menus || !city.menus) return null;
+  if (area.menus >= city.menus) return "all";
+  return area.menus * 2 > city.menus ? "most" : null;
+}
+
 /** A restaurant can be compared with its area's median only when the area has another priced menu. */
 export function hasOtherMenus(c: MenuCounts): boolean {
   return c.menus > 1;
@@ -233,7 +245,7 @@ export function listedNames(items: readonly string[], max = 3): string {
   return items.length <= max ? `: ${joinList(items)}` : `, including ${joinList(items.slice(0, max))}`;
 }
 
-// Whether national fast-food chains are left out is part of the scope: see ./scope (restaurantScope).
+// Whether national chains are left out is part of the scope: see ./scope (restaurantScope).
 
 // ---- chain source location ------------------------------------------------------------------------
 
@@ -256,6 +268,36 @@ export function isChainSourceLocation(r: Pick<Restaurant, "chain" | "address" | 
   if (!source) return false;
   const here = [r.address, r.borough].filter(Boolean).join(", ");
   return source.toLowerCase() === here.toLowerCase();
+}
+
+/**
+ * The rows whose burgers stand for a distinct menu: every independent restaurant, and for each chain
+ * the location its menu was read from (else its first priced row, else its first row). The pipeline
+ * pools the priced burgers of exactly these rows for stats.all_burgers_median (pipeline/build.py
+ * `compute_stats`, `menu_sources`), so a chain's copied menu counts once there too.
+ */
+export function menuSourceRows(list: readonly Restaurant[]): Restaurant[] {
+  const out: Restaurant[] = [];
+  const chains = new Map<string, Restaurant[]>();
+  for (const r of list) {
+    if (!r.chain) {
+      out.push(r);
+      continue;
+    }
+    const rows = chains.get(r.chain);
+    if (rows) rows.push(r);
+    else chains.set(r.chain, [r]);
+  }
+  for (const rows of chains.values()) out.push(rows.find(isChainSourceLocation) ?? rows.find((r) => r.index_price !== null) ?? rows[0]);
+  return out;
+}
+
+/** Priced burgers (any protein) on the distinct menus of `list`: the items behind stats.all_burgers_median. */
+export function pooledBurgerPrices(list: readonly Restaurant[]): number[] {
+  return menuSourceRows(list)
+    .flatMap((r) => r.burgers.map((b) => b.price))
+    .filter((p): p is number => p !== null)
+    .sort((a, b) => a - b);
 }
 
 // ---- what counting per location would do -----------------------------------------------------------

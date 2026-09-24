@@ -3,10 +3,11 @@ import { BoroughBars, BoroughTable } from "@/components/charts/BoroughBars";
 import { ChartFigure } from "@/components/charts/ChartFigure";
 import { BoroughDot, ChainOnlyBadge, Money, PageHeader } from "@/components/ui";
 import { BOROUGH_META, boroughInProse } from "@/lib/boroughs";
-import { getBoroughs, getNeighborhoodsInBorough, getStats } from "@/lib/data";
+import { getBoroughs, getMenuCounts, getNeighborhoodsInBorough, getScope, getStats } from "@/lib/data";
 import { capitalize, ends, formatDelta, formatPrice, pluralize } from "@/lib/format";
-import { isChainOnly, joinList, splitByCoverage } from "@/lib/menus";
+import { isChainOnly, joinList, shareOfCity, splitByCoverage } from "@/lib/menus";
 import { pageMetadata } from "@/lib/metadata";
+import { lookedUpWhen } from "@/lib/scope";
 
 // Name only the boroughs that have a median, and say so when some don't yet.
 const withMedian = getBoroughs().filter((b) => b.summary?.index_median != null);
@@ -72,12 +73,15 @@ export default function BoroughsPage() {
                 <p className="t-ui-s muted mt-2">
                   {b.menuCounts.menus ? (
                     <>
-                      {b.summary?.index_median != null && !isChainOnly(b.menuCounts) ? `${formatDelta(b.summary.index_median, median, { suffix: "vs NYC" })} · ` : ""}
+                      {/* No delta for a borough holding every menu of the NYC index: it would compare the median with itself. */}
+                      {b.summary?.index_median != null && !isChainOnly(b.menuCounts) && shareOfCity(b.menuCounts, getMenuCounts()) !== "all"
+                        ? `${formatDelta(b.summary.index_median, median, { suffix: "vs NYC" })} · `
+                        : ""}
                       {pluralize(b.menuCounts.menus, "menu")} · {pluralize(b.summary?.restaurants_priced ?? 0, "location")} priced ·{" "}
                       {pluralize(getNeighborhoodsInBorough(b.name).length, "neighborhood")}
                     </>
                   ) : b.summary?.restaurants ? (
-                    `Not priced yet · ${pluralize(b.summary.restaurants, "restaurant")} listed`
+                    `Not priced yet · ${pluralize(b.summary.restaurants, "restaurant")} ${lookedUpWhen(getScope())}`
                   ) : (
                     "Not priced yet"
                   )}

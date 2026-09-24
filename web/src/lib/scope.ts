@@ -14,9 +14,12 @@
 //      under 'Hamburgers' with an inspection since 2023-01-01 (or not yet inspected), except ..."
 //
 // " in scope" and "the other N are not yet scraped" are left out once everything in scope is in the
-// dataset; the "except national fast-food chains" clause only appears with `--national-chains
-// exclude`. A note in neither phrasing (the sample fixture's) gives kind "unknown", and pages fall
-// back to copy that names no source.
+// dataset; the "except national ... chains" clause only appears with `--national-chains exclude`.
+// Only the parts the patterns below name are load-bearing: how the list is matched to DOHMH ("matched
+// to ... for address and location") and what kind of national chains are left out ("fast-food",
+// "fast-food and casual-dining") can be reworded without changing the scope. A note in neither
+// phrasing (the sample fixture's) gives kind "unknown", and pages fall back to copy that names no
+// source.
 //
 // Client-safe and pure: types only from ./schema.
 import { formatCount, formatDate } from "./format";
@@ -37,15 +40,16 @@ export type RestaurantScope = {
   lookedUp: number;
   /** In scope but not yet scraped (0 once the dataset covers the whole scope). */
   pending: number;
-  /** National fast-food chains are left out (`--national-chains exclude`, the default). */
+  /** National chains (fast-food and casual-dining brands) are left out (`--national-chains exclude`, the default). */
   excludesNationalChains: boolean;
   /** The note's examples of them ("McDonald's, Burger King, Wendy's, Shake Shack and the like"), or null. */
   nationalChainExamples: string | null;
 };
 
-const LIST_ONLY = /\bour curated list of NYC burger restaurants, matched to NYC DOHMH inspection records\b/i;
+const LIST_ONLY = /\bour curated list of NYC burger restaurants\b/i;
 const WITH_CUISINES = /\bour curated restaurant list plus every restaurant NYC DOHMH lists under '([^']+)'(?: with an inspection since (\d{4}-\d{2}-\d{2}))?/i;
-const NATIONAL = /\bexcept national fast-food chains\b(?: \(([^)]+)\))?/i;
+// "except national fast-food chains (…)", "except national fast-food and casual-dining chains (…)", "except national chains (…)".
+const NATIONAL = /\bexcept national (?:[a-z-]+ (?:and [a-z-]+ )?)?chains\b(?: \(([^)]+)\))?/i;
 const PENDING = /\bthe other ([\d,]+) (?:are|is) not yet scraped\b/i;
 
 const toInt = (s: string) => Number.parseInt(s.replace(/,/g, ""), 10);
@@ -125,25 +129,79 @@ export function lookedUpSoFar(scope: RestaurantScope): string | null {
 }
 
 /**
- * Step one of "How we compute it": where the restaurant list comes from, from the data.
+ * After a count of restaurants in the dataset ("57 looked up so far"): the dataset is what we have
+ * looked up, never "our list" or "listed", which mean the whole scope.
  */
-export function scopeMethod(scope: RestaurantScope): string {
-  const national = scope.excludesNationalChains ? ", leaving out national fast-food chains" : "";
-  if (scope.kind === "list")
-    return `List restaurants: our own list of New York burger places${national}. Each one is matched to the city health department's inspection records for its address and map location.`;
-  if (scope.kind === "list+cuisines")
-    return `List restaurants: our own list of New York burger places, plus every restaurant the city's health department files under ${cuisineNames(scope.cuisines)}${
-      scope.inspectedSince ? ` that it has inspected since ${formatDate(scope.inspectedSince)} (or not inspected yet)` : ""
-    }${national}.`;
-  return `List the restaurants in scope${national}. The coverage note below says which.`;
+export function lookedUpWhen(scope: RestaurantScope): string {
+  return scope.pending ? "looked up so far" : "looked up";
+}
+
+/**
+ * After a count of a chain's locations: " on our list", " in scope", or "" when the scope is unknown.
+ * A chain is looked up as a whole, so the dataset holds every location of it that is in scope; the
+ * suffix keeps "chain, 3 locations" from reading as the size of the whole chain.
+ */
+export function chainLocationsWhere(scope: RestaurantScope): string {
+  return scope.kind === "unknown" ? "" : ` ${scopeWhere(scope)}`;
+}
+
+/**
+ * Step one of "How we compute it": where the restaurant list comes from, from the data. `matched`:
+ * restaurants in the dataset that match a health-department record (a camis), which is where their
+ * address and map location come from; the rest keep the neighborhood from our list.
+ */
+export function scopeMethod(scope: RestaurantScope, matched?: number): string {
+  const national = scope.excludesNationalChains ? ", leaving out national chains" : "";
+  if (scope.kind === "unknown") return `List the restaurants in scope${national}. The coverage note below says which.`;
+  const list =
+    scope.kind === "list"
+      ? `List restaurants: our own list of New York burger places${national}.`
+      : `List restaurants: our own list of New York burger places, plus every restaurant the city's health department files under ${cuisineNames(scope.cuisines)}${
+          scope.inspectedSince ? ` that it has inspected since ${formatDate(scope.inspectedSince)} (or not inspected yet)` : ""
+        }${national}.`;
+  const of = scope.lookedUp;
+  const allMatched = matched !== undefined && of > 0 && matched >= of;
+  const soFar = scope.pending ? " looked up so far" : "";
+  const count = matched === undefined || !of ? "" : allMatched ? ` (all ${formatCount(of)}${soFar})` : ` (${formatCount(matched)} of the ${formatCount(of)}${soFar})`;
+  const rest = allMatched ? "" : " The rest keep the neighborhood from our list and are not on the map.";
+  return `${list} We match each restaurant we can to the city health department's inspection records, which give its address and map location${count}.${rest}`;
 }
 
 /** The footer's source line for the restaurant list. */
 export function scopeCredit(scope: RestaurantScope): string {
   const soFar = scope.pending ? `; ${formatCount(scope.lookedUp)} of ${formatCount(scope.inScope)} looked up so far` : "";
-  if (scope.kind === "list") return `Restaurants from our own list of New York burger places, matched to city health-inspection records (NYC Open Data)${soFar}.`;
+  if (scope.kind === "list")
+    return `Restaurants from our own list of New York burger places, with addresses from city health-inspection records (NYC Open Data) where they match${soFar}.`;
   if (scope.kind === "list+cuisines") return `Restaurants from our own list of New York burger places plus city health-inspection records (NYC Open Data)${soFar}.`;
   return "Sources for the restaurant list are on the methodology page.";
+}
+
+// The dataset's source line for the health department's records, when it calls them the restaurant
+// list (as pipeline/build.py SOURCES did before the list became ours), and the line for our own list.
+const DOHMH_AS_LIST = /^(NYC DOHMH Restaurant Inspection Results\b[^:]*):\s*restaurant list\b/i;
+const CURATED_LIST = /\brestaurant list: a curated list\b/i;
+
+/**
+ * methodology.sources for the Sources list, as the dataset gives them, except that a known scope
+ * decides what the health department's records supply: with our list only, addresses, coordinates
+ * and cuisine for the restaurants that match them, never the list itself (plus the restaurants filed
+ * under the added cuisines, with `--cuisines`). Our own list goes first. An unknown scope, or a
+ * dataset whose DOHMH line doesn't claim the list, is left as it is.
+ */
+export function scopeSources(sources: readonly string[], scope: RestaurantScope): string[] {
+  if (scope.kind === "unknown") return [...sources];
+  const matches = "addresses, coordinates and cuisine for the restaurants on our list that match its records";
+  const role =
+    scope.kind === "list"
+      ? `${matches}.`
+      : `every restaurant it files under ${cuisineNames(scope.cuisines)}${
+          scope.inspectedSince ? ` inspected since ${formatDate(scope.inspectedSince)} (or not inspected yet)` : ""
+        }, and ${matches}.`;
+  const out = sources.map((s) => {
+    const m = DOHMH_AS_LIST.exec(s);
+    return m ? `${m[1]}: ${role}` : s;
+  });
+  return [...out.filter((s) => CURATED_LIST.test(s)), ...out.filter((s) => !CURATED_LIST.test(s))];
 }
 
 /**

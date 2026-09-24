@@ -87,12 +87,10 @@ P.J. Clarke's,Midtown,Manhattan,https://pjclarkes.com,,"Classic saloon, Cadillac
 Peter Luger Steak House,Williamsburg,Brooklyn,https://peterluger.com/,,Legendary lunch-only steakhouse burger,pilot-100
 Diner,Williamsburg,Brooklyn,https://www.dinernyc.com/,,Grass-fed burger in dining car,pilot-100
 The Commodore,Williamsburg,Brooklyn,https://www.thecommodorebrooklyn.com/,https://www.thecommodorebrooklyn.com/s/menus_for_web_3_22_DINNER.pdf,Southern pub classic hamburger,pilot-100
-Gertie,Williamsburg,Brooklyn,https://www.gertie.nyc/,,Jew-ish diner smashburger classic,pilot-100
 Dram Shop,Park Slope,Brooklyn,https://dramshopbrooklyn.com,https://dramshopbrooklyn.com/menu,Gastropub with multiple beef burgers,pilot-100
 Fulton Burger,Park Slope,Brooklyn,https://fultonburger.com/brooklyn,,Local counter-service burger joint,pilot-100
 Walter's,Fort Greene,Brooklyn,https://www.waltersbrooklyn.com,https://www.waltersbrooklyn.com/menu/lunch/,Classic pub Walter's Burger,pilot-100
 The Great Georgiana,Fort Greene,Brooklyn,http://www.thegreatgeorgiana.com/,,Classic burger at local pub,pilot-100
-Buttermilk Channel,Carroll Gardens,Brooklyn,https://buttermilkchannelnyc.com/,,Beef burger with NY cheddar,pilot-100
 Clover Club,Carroll Gardens,Brooklyn,http://cloverclubny.com/,,Cocktail bar prime beef burger,pilot-100
 The Long Island Bar,Cobble Hill,Brooklyn,http://thelongislandbar.com/,,Famed double-patty LI burger,pilot-100
 Emily,Clinton Hill,Brooklyn,https://www.pizzalovesemily.com/location/brooklyn/,,Emmy Burger pizza restaurant,pilot-100
@@ -105,7 +103,6 @@ Black Tap,SoHo,Manhattan,https://blacktap.com/location/soho/,,Craft burger joint
 Bronson's Burgers,SoHo,Manhattan,,,Smash-burger spot; thick butter-toasted buns,downtown
 Hamburger America (SoHo),SoHo,Manhattan,,,Smash-burger counter,downtown
 Balthazar,SoHo,Manhattan,,,French brasserie; Balthazar Burger,downtown
-Burger & Barrel,SoHo,Manhattan,,,Burger restaurant and wine bar,downtown
 Broome Street Bar,SoHo,Manhattan,,,Bar and restaurant with burgers,downtown
 The Mercer Kitchen,SoHo,Manhattan,,,Jean-Georges hotel restaurant; Mercer Burger,downtown
 Au Cheval,Tribeca,Manhattan,,,Burger-focused Chicago import,downtown
@@ -123,7 +120,7 @@ The Malt House,Financial District,Manhattan,,,Pub with burgers,downtown
 Underdog,Financial District,Manhattan,,,Bar with burgers,downtown
 O'Hara's Restaurant and Pub,Financial District,Manhattan,,,Irish pub with burgers,downtown
 Clinton Hall,Financial District,Manhattan,,,Beer hall with burgers,downtown
-Burger By Day,Financial District,Manhattan,,,Burger spot,downtown
+Burger By Day,Lower East Side,Manhattan,,,Burger spot at 242 Grand St,downtown
 Brooklyn Beef N' Cheese,Financial District,Manhattan,,,Burger spot,downtown
 London & Martin Co.,Financial District,Manhattan,,,Gastropub; wagyu burgers,downtown
 Manhatta,Financial District,Manhattan,,,Upscale American; burger on menu,downtown
@@ -134,22 +131,19 @@ Cobble & Co.,Financial District,Manhattan,,,Burger spot with milkshakes; Seaport
 Burger Bandit,Financial District,Manhattan,,,Burger joint; 2 Broadway,downtown
 ZAZA,Financial District,Manhattan,,,Modern diner with burgers,downtown
 Fraunces Tavern,Financial District,Manhattan,,,Historic tavern; Sam's Tavern Burger (verified on menu),downtown
-Treadwell Park Downtown,Battery Park City,Manhattan,,,Beer hall; Merchant's Signature Burger; 301 South End Ave,downtown
-Umami Burger,Battery Park City,Manhattan,,,"Burger chain; Hudson Eats, Brookfield Place",downtown
 The Chelsea Bell,Chelsea,Manhattan,,,Bar and grill; Chelsea Burger,downtown
 Chelsea Square Restaurant,Chelsea,Manhattan,https://www.chelseasquarediner.com/,,24-hour diner; broiled jumbo beefburger,downtown
 Coppelia,Chelsea,Manhattan,http://www.coppelianyc.com,,24-hour Cuban diner; Hamburguesa,downtown
 Cafeteria,Chelsea,Manhattan,,,Comfort-food bar and grill,downtown
 Dallas BBQ,Chelsea,Manhattan,,,Barbecue restaurant with burgers,downtown
-Burger & Lobster,Chelsea,Manhattan,,,Burger chain; 39 W 19th St,downtown
+Burger & Lobster,Midtown,Manhattan,,,Burger-and-lobster restaurant at 132 W 43rd St (Bryant Park),downtown
 Frying Pan,West Chelsea,Manhattan,,,Floating bar at Chelsea Piers; bar food and burgers,downtown
 Wildflower,Chelsea,Manhattan,,,Cocktail bar; smash burgers,downtown
 Twist Bar,Chelsea,Manhattan,,,Cocktail bar serving burgers,downtown
 O'Toole's Way,Chelsea,Manhattan,,,Irish restaurant with burgers,downtown
 Empire Diner,Chelsea,Manhattan,,,Iconic American diner near High Line,downtown
 The Chelsea Pub,Chelsea,Manhattan,http://chelseapubnyc.com,,Pub fare; sliders and burgers,downtown
-Black Iron Burger,Chelsea,Manhattan,,,Burger joint; voted one of NYC's best,downtown
-Bareburger,Chelsea,Manhattan,,,Burger joint; 153 8th Ave location,downtown
+Black Iron Burger,Midtown,Manhattan,,,Burger joint at 245 W 38th St; voted one of NYC's best,downtown
 Emmy Squared Pizza East Village,East Village,Manhattan,,,Pizza spot with acclaimed burger,downtown
 The Lion's Bar & Grill,East Village,Manhattan,https://www.thelionsbar.com/,,Bar and grill; dry-aged cheeseburger,downtown
 Virginia's,East Village,Manhattan,,,Neighborhood restaurant with burgers,downtown
@@ -162,14 +156,11 @@ Populares,East Village,Manhattan,,,EV burger counter,downtown
 The Hairy Lemon,East Village,Manhattan,,,Irish pub; burger menu,downtown
 Sunday Dreamin,East Village,Manhattan,,,Burger counter,downtown
 8-Bit Bites,East Village,Manhattan,,,Arcade bar with burgers,downtown
-Bronx Brewery,East Village,Manhattan,,,Brewery taproom with burger menu,downtown
-PLNT Burger,East Village,Manhattan,,,Plant-based burger chain,downtown
 Crispy Burger,East Village,Manhattan,https://1588burger.com/,,Chicken and burger spot,downtown
 Tallgrass Burger,East Village,Manhattan,,,Burger counter,downtown
 Chick-N-Smash,East Village,Manhattan,,,Chicken spot; smash burgers,downtown
 Superiority Burger,East Village,Manhattan,,,Vegetarian burger counter,downtown
 McDonald's (East Village),East Village,Manhattan,,,Fast-food chain,downtown
-Max Brenner,East Village,Manhattan,,,Chocolate restaurant; Brenner burger,downtown
 Mary O's Irish Pub,East Village,Manhattan,,,Irish pub with burger,downtown
 Bowery Meat Company,East Village,Manhattan,,,Steakhouse; burger on menu,downtown
 The Wren,East Village,Manhattan,,,Irish pub with kitchen; burger,downtown
@@ -183,7 +174,7 @@ Hearty & Healthy,East Village,Manhattan,https://heartyandhealthynyc.com/,,Health
 St Dymphna's,East Village,Manhattan,,,Irish pub with pub food,downtown
 Veselka,East Village,Manhattan,,,Ukrainian diner; char-broiled burgers (verified on menu),downtown
 Blue Road Burger,Lower East Side,Manhattan,https://blueroadnyc.com/,,Burger joint,downtown
-Holy Cow,Lower East Side,Manhattan,https://order.toasttab.com/online/holy-cow-lower-east-side-34-canal-st,,Halal burger spot,downtown
+Holy Burger,Lower East Side,Manhattan,https://order.toasttab.com/online/holy-cow-lower-east-side-34-canal-st,,Halal burger spot at 34 Canal St (the brand's original shop),downtown
 The Mayfly,Lower East Side,Manhattan,,,New American; burger on menu,downtown
 Bar Revival,Lower East Side,Manhattan,,,Cocktail bar with food; burger,downtown
 Balvanera,Lower East Side,Manhattan,,,Argentine spot with burger,downtown
@@ -199,22 +190,19 @@ Raf's,NoHo,Manhattan,http://rafsnewyork.com/,,Italian spot; dry-aged burger,down
 Great Jones Distilling Co.,NoHo,Manhattan,http://www.greatjonesdistillingco.com/,,Distillery restaurant; The Burger,downtown
 Sláinte Bar and Lounge,NoHo,Manhattan,,,Irish pub with burger menu,downtown
 El Sazón R.D.,Chinatown,Manhattan,,,Dominican spot with burger,downtown
-Spring Cafe,Chinatown,Manhattan,,,Vegan cafe with burgers,downtown
+Spring Cafe,Chinatown,Manhattan,,,"Vegan cafe at 153 Centre St; plant-based burgers only (Beyond, tofu, mushroom)",downtown
 K.O. Burger,Chinatown,Manhattan,,,Burger counter,downtown
 McDonald's (Chinatown),Chinatown,Manhattan,,,Fast-food chain; Canal Street,downtown
 Emily,West Village,Manhattan,,,Pizza restaurant; Emmy Burger (West Village location),downtown
 Fairfax,West Village,Manhattan,,,Cafe/wine bar; well-known burger,downtown
 Wild Cherry,West Village,Manhattan,https://www.wildcherrynyc.com/,,Supper club; signature cheeseburger,downtown
 Crevette,West Village,Manhattan,,,French restaurant; limited smash burger,downtown
-The Beatrice Inn,West Village,Manhattan,,,New American restaurant/bar,downtown
 The Surf Lodge,West Village,Manhattan,,,American restaurant/bar,downtown
-The Bedford,West Village,Manhattan,,,Gastropub,downtown
+The Bedford,Financial District,Manhattan,,,Gastropub at 55 Stone St (Manhattan outpost of the Williamsburg original); Bedford Plank Burger,downtown
 Bandits Burger + Dive,West Village,Manhattan,https://www.banditsnyc.com/,,Burger joint and cocktail bar,downtown
-Blue Ribbon Bakery,West Village,Manhattan,,,American bakery-restaurant,downtown
 The Loyal,West Village,Manhattan,,,Brasserie,downtown
 Stash Burger,Greenwich Village,Manhattan,https://stashburgers.com/,,Smashburger joint,downtown
 Butter Smashburgers,Greenwich Village,Manhattan,,,Burger joint on MacDougal,downtown
-Hamburger America (Greenwich Village),Greenwich Village,Manhattan,,,Burger luncheonette,downtown
 Wicked Willy's,Greenwich Village,Manhattan,,,Bar with specialty burgers,downtown
 Kettle of Fish,Greenwich Village,Manhattan,,,Sports bar with food,downtown
 The Half Pint,Greenwich Village,Manhattan,https://thehalfpint.com/,,Gastropub; Angry Burger,downtown
@@ -223,7 +211,6 @@ Amity Hall,Greenwich Village,Manhattan,,,Beer hall with food,downtown
 Blind Tiger Ale House,Greenwich Village,Manhattan,,,Craft-beer pub with food,downtown
 GMT Tavern,Greenwich Village,Manhattan,http://www.gmtnyc.com/,,British gastropub; Meantime burger,downtown
 Pubkey,Greenwich Village,Manhattan,http://pubkey.bar/,,Gastropub; smashburgers,downtown
-Gray's Papaya,Greenwich Village,Manhattan,,,Hot dog stand with burgers,downtown
 Cecchi's,Greenwich Village,Manhattan,https://cecchis.nyc/,,American bar and grill; Cecchi's Burger,downtown
 The Red Lion,Greenwich Village,Manhattan,http://redlionnyc.com/,,Pub; Red Lion Burger,downtown
 Da Andrea,Greenwich Village,Manhattan,,,Italian restaurant; burgers per reviews,downtown
@@ -231,34 +218,25 @@ Society Cafe,Greenwich Village,Manhattan,,,Hotel restaurant (Walker Hotel); bris
 Pop's of Brooklyn,Greenwich Village,Manhattan,,,Burger joint,downtown
 Peculier Pub,Greenwich Village,Manhattan,http://www.peculierpub.com/,,Pub; Ultimate Burger,downtown
 Garage Restaurant and Cafe,Greenwich Village,Manhattan,http://garagejazz.com/,,Casual American restaurant; burgers on menu,downtown
-Joy Burger Bar,Greenwich Village,Manhattan,,,Burger joint,downtown
 Knickerbocker Bar & Grill,Greenwich Village,Manhattan,,,American bar and grill,downtown
 Jekyll & Hyde,Greenwich Village,Manhattan,,,American pub/restaurant,downtown
-Waverly Restaurant,Greenwich Village,Manhattan,,,Diner,downtown
 Caroll Place,Greenwich Village,Manhattan,,,Wine bar and gastropub,downtown
 Old Homestead Steakhouse,Meatpacking District,Manhattan,https://www.theoldhomesteadsteakhouse.com/,,Steakhouse; multiple burgers,downtown
 Rory's Rooftop,Meatpacking District,Manhattan,http://rorysrooftop.com/,,American rooftop bar; smash/Rodeo burger,downtown
 Sirrah,Meatpacking District,Manhattan,https://sirrahny.com/,,Modern French steakhouse; Sirrah Burger,downtown
 STK Meatpacking,Meatpacking District,Manhattan,,,Steakhouse; Wagyu burger,downtown
-Bubby's High Line,Meatpacking District,Manhattan,,,American restaurant,downtown
 BFB Highline,Meatpacking District,Manhattan,,,Burger spot,downtown
 Gansevoort Rooftop,Meatpacking District,Manhattan,https://www.gansevoorthotelgroup.com/gansevoort-meatpacking-nyc/eat-drink/gansevoort-rooftop,,Hotel rooftop; House Burger,downtown
 Brass Monkey,Meatpacking District,Manhattan,,,Bar; Char Grilled Beef Burger,downtown
 The Chester,Meatpacking District,Manhattan,,,American bistro at Gansevoort Hotel; Chester Burger,downtown
-Catch Steak,Meatpacking District,Manhattan,,,Steakhouse,downtown
 The Collective,Meatpacking District,Manhattan,,,American restaurant,downtown
-The Wild Son,Meatpacking District,Manhattan,,,New American restaurant,downtown
 The Vinatta Project,Meatpacking District,Manhattan,,,Bar food,downtown
 The Standard Plaza,Meatpacking District,Manhattan,,,American restaurant at The Standard,downtown
 Puttery,Meatpacking District,Manhattan,,,Mini-golf venue; smash burgers,downtown
-Amor Cubano,East Harlem,Manhattan,,,Cuban restaurant at 2018 3rd Ave; Latin family restaurants commonly include burgers,uptown
 CakeBurgers,East Harlem,Manhattan,https://www.cakeburgersny.com/,,1950s retro malt shop at 400 E 120th; gourmet burgers plus cupcakes,uptown
 East Harlem Bottling Co.,East Harlem,Manhattan,,,Craft-beer bistro at 107th & Lexington; bistro menus typically include burgers,uptown
-Joy Burger Bar,East Harlem,Manhattan,,,Burger bar at 110th & Lexington; burgers are the core menu,uptown
-Prime One 16,East Harlem,Manhattan,,,New American restaurant at 2257 1st Ave; New American menus typically include burgers,uptown
 Ricardo's Steakhouse,East Harlem,Manhattan,,,Steakhouse on 2nd Ave; steakhouses typically serve burgers,uptown
 White Castle,East Harlem,Manhattan,https://www.whitecastle.com/,,Iconic slider chain at 351 E 103rd; mini burgers are the core menu,uptown
-Burger & Lobster (Flatiron),Flatiron,Manhattan,,,Burger-and-lobster restaurant with a Flatiron location,uptown
 Clemente Bar,Flatiron,Manhattan,,,Intimate bar known for the Clemente burger,uptown
 Gramercy Tavern,Flatiron,Manhattan,,,Tavern famous for the Tavern Burger (available in the Tavern room),uptown
 Motek Flatiron,Flatiron,Manhattan,,,Middle Eastern restaurant serving wagyu and Arayes burgers,uptown
@@ -276,7 +254,6 @@ B2 Harlem,Harlem,Manhattan,,,"Modern soul food restaurant; menu includes The B²
 BLVD Bistro,Harlem,Manhattan,,,French-soul bistro on Lenox Ave; bistro menus typically include burgers,uptown
 Corner Social,Harlem,Manhattan,,,Neighborhood pub on Lenox Ave; pub fare typically includes burgers,uptown
 Dinosaur Bar-B-Que,Harlem,Manhattan,,,BBQ joint at 700 W 125th; BBQ spots typically serve burgers,uptown
-Harlem Burger Co.,Harlem,Manhattan,,,Burger-focused spot at 2190 Frederick Douglass Blvd with an extensive burger menu,uptown
 Harlem Public,Harlem,Manhattan,http://www.harlempublic.com,,"Pub at 3612 Broadway known for burgers (BBQ pork burger, peanut butter burger, parmesan-crusted burger)",uptown
 Harlem Shake,Harlem,Manhattan,https://harlemshake.com,,Dedicated Harlem burger joint; featured on best-burger lists for its Hot Mess and Harlem Classic,uptown
 Harlem Tavern,Harlem,Manhattan,,,Tavern at 2153 Frederick Douglass Blvd; tavern menus center on burgers,uptown
@@ -296,7 +273,6 @@ Hibernia Bar,Hell's Kitchen,Manhattan,,,Irish pub (401 W 50th); pub burgers stan
 Rudy's Bar & Grill,Hell's Kitchen,Manhattan,,,Famous Hell's Kitchen dive bar (627 9th Ave); free hot dogs and classic bar burgers,uptown
 Shake Shack (Theater District),Hell's Kitchen,Manhattan,,,Fast-casual burger joint at 691 8th Ave; ShackBurgers,uptown
 Uncle Jack's Steakhouse,Hell's Kitchen,Manhattan,,,Steakhouse on 9th Ave; steakhouses serve lunch burgers,uptown
-Westway Diner,Hell's Kitchen,Manhattan,,,Classic 9th Ave diner (614 9th Ave); diner burgers standard,uptown
 Greywind,Hudson Yards,Manhattan,,,Dan Kluger vegetable-forward restaurant; serves a Greywind Burger with cheddar,uptown
 Hudson Yards Grill,Hudson Yards,Manhattan,https://hudsonyardsgrill.com/,,American grill by Michael Lomonaco; ML's Blend Aged Prime Beef Burger on the menu,uptown
 La Barra (Mercado Little Spain),Hudson Yards,Manhattan,,,Spanish food hall counter; hamburguesa-style sandwiches on Spanish menus,uptown
@@ -304,31 +280,25 @@ Queensyard,Hudson Yards,Manhattan,,,American brasserie at 20 Hudson Yards; brass
 Shake Shack (Hudson Yards),Hudson Yards,Manhattan,https://shakeshack.com/location/hudson-yards-level-4-ny,,Fast-casual burger joint inside the Shops at Hudson Yards,uptown
 Whitmans (Hudson Yards),Hudson Yards,Manhattan,,,Burger joint at 331 10th Ave; famous for the Juicy Lucy stuffed burger,uptown
 Dyckman Dogs,Inwood,Manhattan,,,Hot dog and burger spot at 105-A Dyckman St; smashburgers (Dyckman Burger) on the menu,uptown
-Indian Road Cafe,Inwood,Manhattan,,,New American cafe at 600 W 218th; American cafe menus typically include burgers,uptown
 Inwood Bar & Grill,Inwood,Manhattan,,,Bar and grill at 4892 Broadway; bar-and-grill menus center on burgers,uptown
-Inwood Burger,Inwood,Manhattan,,,Burger joint at 158 Dyckman St; burgers are the core menu,uptown
 Inwood Local,Inwood,Manhattan,,,Wine bar and beer garden; beer gardens typically serve burgers,uptown
 Mamajuana Cafe (Dyckman),Inwood,Manhattan,,,Latin restaurant at Dyckman St; Latin family restaurants commonly include burgers,uptown
 Tryon Public House,Inwood,Manhattan,,,Gastropub at Broadway & Thayer (Dyckman area); gastropub menus typically include burgers,uptown
 Tubby Hook Tavern,Inwood,Manhattan,,,Tavern; delivery listings show a classic burger and Tubby Hook Burger,uptown
-Uptown Social,Inwood,Manhattan,,,Gastropub and sports bar at 186 Dyckman St; sports bars typically serve burgers,uptown
 Banc Cafe,Kips Bay,Manhattan,,,Irish pub at 431 3rd Ave; pub menu includes burgers,uptown
 Bespoke,Kips Bay,Manhattan,,,Bar-food restaurant at 121 E 27th St,uptown
 Buddy's Sports Bar,Kips Bay,Manhattan,https://www.buddysnyc.com/,,Sports bar at 354 3rd Ave; bar-grill food incl. burgers,uptown
-Grass Cow,Kips Bay,Manhattan,,,Burger restaurant at 347 3rd Ave,uptown
 Hill and Bay,Kips Bay,Manhattan,,,Kips Bay spot known for juicy Angus beef burgers,uptown
 Kipsey's,Kips Bay,Manhattan,,,American restaurant at 438 2nd Ave,uptown
 Paddy Reilly's Music Bar,Kips Bay,Manhattan,,,Irish music bar; Irish bars serve pub burgers,uptown
 Penelope,Kips Bay,Manhattan,,,American restaurant at 159 Lexington Ave,uptown
 Riverpark,Kips Bay,Manhattan,,,Modern American at 450 E 29th; famous dry-aged Riverpark burger,uptown
 The Factory 380,Kips Bay,Manhattan,,,Sports bar in Kips Bay; sports bars serve burgers,uptown
-Three Hens,Kips Bay,Manhattan,,,Comfort-food restaurant at 115 Lexington Ave,uptown
-Little Ruby's,Koreatown,Manhattan,,,Koreatown brunch spot; Whaleys Burger is a praised signature,uptown
+Little Ruby's,Nolita,Manhattan,,,Nolita brunch spot at 219 Mulberry St; Whaleys Burger is a praised signature,uptown
 Space Billiards,Koreatown,Manhattan,,,Pool-hall tavern on W 32nd serving burgers with live music,uptown
 Benjamin Steak House,Midtown East,Manhattan,,,Steakhouse on E 41st; steakhouses almost always offer a burger,uptown
 Club A Steakhouse,Midtown East,Manhattan,,,Steakhouse famed for its 10oz dry-aged Club A Cheeseburger,uptown
-Hillstone,Midtown East,Manhattan,,,American restaurant (153 E 53rd) famous for its burgers,uptown
-Holy Cow Burgers,Midtown East,Manhattan,,,Halal fast-food burger joint,uptown
+Holy Cow Burgers,Midtown East,Manhattan,,,Halal fast-food burger joint at 906 3rd Ave,uptown
 International Burgers,Midtown East,Manhattan,,,Burger spot with global flavors incl. Japanese wagyu and American cheeseburgers,uptown
 Monkey Bar,Midtown East,Manhattan,,,Classic Midtown East steakhouse; praised for its burgers,uptown
 Moonstruck Eatery,Midtown East,Manhattan,https://www.moonstruckdinernycmidtown.com/,,Diner; known for a juicy Classic Burger on a brioche bun,uptown
@@ -357,18 +327,14 @@ Mustang Harry's,Midtown West,Manhattan,,,Irish sports bar (352 7th Ave); burgers
 Parker & Quinn,Midtown West,Manhattan,,,American restaurant at 62 W 39th; New American menus typically include a burger,uptown
 Porter House Bar and Grill,Midtown West,Manhattan,,,Michael Lomonaco steakhouse at 10 Columbus Circle; bar-and-grill burgers standard,uptown
 Skylight Diner,Midtown West,Manhattan,,,Classic diner at 402 W 34th; burgers are a staple,uptown
-Stout NYC,Midtown West,Manhattan,,,Irish pub and sports bar (133 W 33rd); pub burgers standard,uptown
+Stout NYC,Midtown West,Manhattan,,,"Irish pub and sports bar, Penn Station flagship at 213 W 35th St (moved from W 33rd St); pub burgers standard",uptown
 The Liberty NYC,Midtown West,Manhattan,,,American bar at 29 W 35th; bar-and-grill menu with burgers,uptown
-5 Napkin Burger,Morningside Heights,Manhattan,,,Gourmet burger chain; burgers are the core menu,uptown
 Community Food & Juice,Morningside Heights,Manhattan,,,New American cafe on Broadway; American cafe fare typically includes a burger,uptown
-Mel's Burger Bar,Morningside Heights,Manhattan,http://www.melsburgerbar.com,,"Sports bar at 2850 Broadway explicitly serving burgers, shakes, and beer",uptown
 Shake Shack (Morningside Heights),Morningside Heights,Manhattan,https://www.shakeshack.com,,Fast-casual burger chain at 2957 Broadway; burgers are the core menu,uptown
 The Heights Bar & Grill,Morningside Heights,Manhattan,,,American bar and grill; classic bar food menus include burgers,uptown
 Tom's Restaurant,Morningside Heights,Manhattan,,,Iconic Seinfeld-era diner at 2880 Broadway; classic diners serve burgers,uptown
-At The Office,Murray Hill,Manhattan,,,New upscale sports bar at 160 E 38th; sports bars serve burgers,uptown
+At The Office,Murray Hill,Manhattan,,,"Upscale sports bar at 160 E 38th St, opened April 2026 beside The Consulate (same address); sports bars serve burgers",uptown
 Bareburger,Murray Hill,Manhattan,,,Organic burger chain with a Murray Hill location,uptown
-Barking Dog,Murray Hill,Manhattan,,,American restaurant at 150 E 34th; American menus include burgers,uptown
-Black Shack Burger,Murray Hill,Manhattan,,,Burger joint at 320 Lexington Ave,uptown
 Black Sheep,Murray Hill,Manhattan,,,Irish sports pub; Irish pubs serve pub burgers,uptown
 Black Tap Craft Burgers & Beer,Murray Hill,Manhattan,https://blacktap.com/,,Award-winning burger joint with a Murray Hill location,uptown
 Blue Haven East,Murray Hill,Manhattan,,,American restaurant at 493 3rd Ave; American menus include burgers,uptown
@@ -378,10 +344,8 @@ Leslie New American,Murray Hill,Manhattan,,,New American restaurant on 3rd Ave; 
 Mulligan's Pub,Murray Hill,Manhattan,,,Irish pub; reviewers praise its fresh burgers,uptown
 Tara Rose,Murray Hill,Manhattan,,,Murray Hill bar; bar food includes pub burgers,uptown
 Ted's Corner Tavern,Murray Hill,Manhattan,,,Tavern on 3rd Ave at 35th St; taverns typically serve burgers,uptown
-Van Diemen's,Murray Hill,Manhattan,,,American restaurant at 383 3rd Ave; American menus include burgers,uptown
 Black Barn,NoMad,Manhattan,,,Rustic American restaurant; Black Barn burger is a signature,uptown
 Johny's Luncheonette,NoMad,Manhattan,,,Diner/luncheonette at 124 W 25th; diners serve burgers,uptown
-NoMad Bar,NoMad,Manhattan,,,American bar; its burger is a top-chef pick,uptown
 PLNT Burger,NoMad,Manhattan,https://www.plntburger.com/location/nomad,,Plant-based burger chain with a NoMad location,uptown
 Portrait Bar,NoMad,Manhattan,,,Bar in the Fifth Avenue Hotel; known for its dry-aged burger,uptown
 Skinny Louie,NoMad,Manhattan,,,Smash-burger joint at Broadway & 26th; 2025 SOBEWFF Very Best Burger winner,uptown
@@ -391,14 +355,11 @@ Granny Annie's Bar and Kitchen,Roosevelt Island,Manhattan,,,Categorized 'Bar Bur
 Jus' Bad Food,Roosevelt Island,Manhattan,,,American restaurant on Main St; American menus typically include burgers,uptown
 NISI Bistro,Roosevelt Island,Manhattan,http://nisibistro.com/,,Greek-American diner at 549 Main St with a build-your-own burger menu,uptown
 The Panorama Room,Roosevelt Island,Manhattan,,,Rooftop bar at Graduate Roosevelt Island; bar-food menu with burgers expected,uptown
-B.B. King Blues Club & Grill,Times Square,Manhattan,,,American grill and music venue (237 W 42nd); burgers central to the menu,uptown
 Black Iron Burger,Times Square,Manhattan,,,Dedicated burger joint at 250 W 54th; build-your-own burgers and craft cocktails in the Theater District,uptown
-Café Un Deux Trois,Times Square,Manhattan,,,French brasserie on Theater Row (123 W 44th); brasseries serve burgers au fromage,uptown
 Dave & Buster's Times Square,Times Square,Manhattan,,,Sports bar/entertainment venue; burgers are core menu items,uptown
 Ellen's Stardust Diner,Times Square,Manhattan,,,Retro diner with singing waitstaff; classic burgers and fries,uptown
 Farm to Burger,Times Square,Manhattan,http://www.alizhotel.com/dining/farm-to-burger,,Burger-forward hotel restaurant on the ground floor of Aliz Hotel Times Square,uptown
 Glass House Tavern,Times Square,Manhattan,,,Theater District tavern (252 W 47th); tavern fare centered on burgers,uptown
-Guy Fieri's American Kitchen & Bar,Times Square,Manhattan,,,Celeb chef American comfort food at 239 W 44th; burgers are menu centerpieces,uptown
 Handcraft Burgers and Brew,Times Square,Manhattan,https://handcraftburgers.com/,,Smash-burger joint with craft brews at 110 W 40th; Certified Angus burgers,uptown
 Hard Rock Cafe Times Square,Times Square,Manhattan,,,Rock-and-roll restaurant chain at 1501 Broadway; burgers are signature items,uptown
 Hurley's,Times Square,Manhattan,,,Classic Times Square Irish pub (232 W 48th); pub burgers standard,uptown
@@ -412,11 +373,9 @@ The Lambs Club,Times Square,Manhattan,,,Chatwal hotel American restaurant; New A
 The Mean Fiddler,Times Square,Manhattan,,,Irish pub on Restaurant Row (266 W 47th); pubs like this serve burgers,uptown
 The Rum House,Times Square,Manhattan,,,Hotel Edison cocktail bar with a full American bar menu; burgers standard fare,uptown
 Times Square Diner,Times Square,Manhattan,,,Classic NYC diner at 807 8th Ave; specialty hamburgers plus build-your-own burgers,uptown
-Tonic Bar & Restaurant,Times Square,Manhattan,,,American bar and restaurant (727 7th Ave); burgers on the menu,uptown
 West Bank Cafe,Times Square,Manhattan,,,Theater District bistro at 407 W 42nd; American bistro serving burgers,uptown
-Bareburger,Upper East Side,Manhattan,,,"Organic burger chain at 1370 1st Ave (beef, bison, veggie)",uptown
+Bareburger,Upper East Side,Manhattan,,,"Organic burger chain at 1681 1st Ave (beef, bison, veggie)",uptown
 Bedford Falls,Upper East Side,Manhattan,,,"UES bar at 206 E 67th St; full bar menu, burgers likely",uptown
-Black Tap Craft Burgers & Beer (UES),Upper East Side,Manhattan,https://blacktap.com,,Award-winning wagyu and All-American burgers plus craft beer,uptown
 Cafe Luka,Upper East Side,Manhattan,,,Neighborhood diner/cafe at 1317 1st Ave,uptown
 Chez Nick,Upper East Side,Manhattan,,,Cozy UES spot at 1737 York Ave; reviews single out its top-tier burger,uptown
 Doc Watson's,Upper East Side,Manhattan,http://docwatsonsnyc.com/,,Irish-style pub at 1490 2nd Ave; reviewers praise its burger,uptown
@@ -428,7 +387,6 @@ Horn's Hook Tavern,Upper East Side,Manhattan,,,Tavern at 1589 1st Ave; classic t
 Jackson Hole,Upper East Side,Manhattan,,,Classic NYC burger restaurant; hand-scooped made-to-order burgers at its UES spot,uptown
 J.G. Melon,Upper East Side,Manhattan,https://jgmelon-nyc.com,,Iconic cash-only pub (since 1972); Bobby Flay's favorite cheeseburger in NYC,uptown
 Lexington Candy Shop,Upper East Side,Manhattan,,,Historic 1925 luncheonette/diner; classic diner fare including burgers,uptown
-Mel's Burger Bar,Upper East Side,Manhattan,,,Burger bar at 1450 2nd Ave; burgers are the concept,uptown
 Midnight Express Diner,Upper East Side,Manhattan,http://www.midnightexpressdiner.com,,24/7 UES diner at 1715 2nd Ave; Angus burgers on the menu,uptown
 Orsay,Upper East Side,Manhattan,http://www.orsayrestaurant.com/,,French brasserie at 1057 Lexington; its burger is called the best in the UES,uptown
 Quality Eats (UES),Upper East Side,Manhattan,,,Steakhouse on 2nd Ave; menu includes a Butcher's Cut Burger with slab bacon,uptown
@@ -443,13 +401,11 @@ Treadwell Park,Upper East Side,Manhattan,,,Craft beer hall at 1125 1st Ave; beer
 5 Napkin Burger (UWS),Upper West Side,Manhattan,,,2315 Broadway burger spot; OpenTable reviewers call its burger 'one of the best ever',uptown
 Amsterdam Ale House,Upper West Side,Manhattan,,,Cited in a 'best burger in NYC' writeup; English-muffin-bun burger,uptown
 Arte Cafe,Upper West Side,Manhattan,,,Bistro/cafe at 106 W 73rd St; bistro-style American menu,uptown
-Black Tap Craft Burgers & Beer (UWS),Upper West Side,Manhattan,https://blacktap.com,,UWS location of the award-winning burger joint,uptown
 Cafe Luxembourg,Upper West Side,Manhattan,http://www.cafeluxembourg.com/,,French bistro at 200 W 70th St famous for the Luxemburger,uptown
 Florentin,Upper West Side,Manhattan,,,Chic neo-American bistro; classic bistro fare including burgers likely,uptown
 Fred's,Upper West Side,Manhattan,,,Cozy American bistro and neighborhood bar at 476 Amsterdam Ave,uptown
 Holy Cow Burgers,Upper West Side,Manhattan,,,Halal smashburger chain at 23 W 100th St,uptown
 Jacob's Pickles,Upper West Side,Manhattan,,,Southern comfort spot at 680 Columbus Ave; smashburger on the menu per reviews,uptown
-J.G. Melon (UWS),Upper West Side,Manhattan,https://jgmelon-nyc.com,,"Third location of the burger institution, same menu per Infatuation",uptown
 Lion's Head Tavern,Upper West Side,Manhattan,http://www.lionsheadnyc.com/,,Gastropub/sports tavern at 995 Amsterdam Ave; signature Lion's Head Burger,uptown
 Maison Pickle,Upper West Side,Manhattan,,,American bistro with patty melt and comfort food at 2315 Broadway,uptown
 Malachy's Irish Pub,Upper West Side,Manhattan,https://www.malachysirishpub.com/,,"Classic Irish pub at 103 W 72nd St; serves a 1/4 lb burger, well-reviewed burgers",uptown
@@ -462,7 +418,6 @@ The Milling Room,Upper West Side,Manhattan,,,American bistro at 446 Columbus Ave
 The Ribbon,Upper West Side,Manhattan,,,Neighborhood American restaurant with broad menu at 20 W 72nd St,uptown
 Viand Cafe,Upper West Side,Manhattan,http://www.viandnyc.com,,Classic old-school coffee-shop diner at 2130 Broadway; diner burgers,uptown
 Willet's Corner,Upper West Side,Manhattan,,,New American bistro at 420 Amsterdam Ave,uptown
-Buddha Beer Bar,Washington Heights,Manhattan,,,Beer bar; bar food menus typically include burgers,uptown
 Burger Heights,Washington Heights,Manhattan,http://www.burgerheights.com/,,Dedicated gourmet burger joint at 177 Wadsworth Ave,uptown
 Dallas BBQ,Washington Heights,Manhattan,,,BBQ chain at 166th & Broadway; BBQ chains typically serve burgers,uptown
 Fort Washington Public House,Washington Heights,Manhattan,,,Neighborhood pub noted in reviews for burgers,uptown
@@ -471,14 +426,13 @@ Locksmith Wine & Burger Bar,Washington Heights,Manhattan,,,Wine and burger bar; 
 Malecon Restaurant,Washington Heights,Manhattan,,,Dominican restaurant chain; large Latin family menus typically include burgers,uptown
 Mambi Steakhouse,Washington Heights,Manhattan,,,Dominican steakhouse at 4181 Broadway; steakhouses and Dominican family spots often serve burgers,uptown
 The Grange,Washington Heights,Manhattan,,,American pub at 1635 Amsterdam Ave; pub menus typically include burgers,uptown
-The Junction Bar,Washington Heights,Manhattan,,,Irish bar near 171st & Broadway; Irish bars typically serve burgers,uptown
 WaHi Diner,Washington Heights,Manhattan,,,Classic NYC diner at Broadway & 164th; diners serve burgers,uptown
 Bun Haus,Williamsburg,Brooklyn,,,Korean-American twist burgers; Kimcheez burger,outer
 Mekelburg's,Williamsburg,Brooklyn,,,Specialty food shop + craft beer bar; Double Butter Burger,outer
 Juanchi's Burger,Williamsburg,Brooklyn,,,American/Venezuelan burger spot on S 1st St,outer
 Frita Batidos,Williamsburg,Brooklyn,,,Cuban fritas (fry-topped burgers) + tropical shakes,outer
 DuMont Burger,Williamsburg,Brooklyn,http://www.dumontburger.com/,,Burger + sandwich spot on Bedford Ave,outer
-Burger Bhai,Williamsburg,Brooklyn,,,Halal smash burgers with desi twist; spicy mint chutney burger,outer
+Burger Bhai,Flatbush,Brooklyn,,,Halal smash burgers with desi twist at 1017 Cortelyou Rd (Ditmas Park); spicy mint chutney burger,outer
 Cozy Royale,Williamsburg,Brooklyn,,,Meat Hook butcher beef cheeseburgers; limited dry-aged burger,outer
 Allswell,Williamsburg,Brooklyn,,,One of the best burgers in Williamsburg per Infatuation,outer
 Blue Collar,Bushwick,Brooklyn,,,In-N-Out style burgers; best onion rings per Eater,outer
@@ -502,7 +456,7 @@ Cafe Spaghetti,Carroll Gardens,Brooklyn,,,Italian spot from Swoony's chef; likel
 two8two Bar & Burger,Cobble Hill,Brooklyn,,,Hatch green chile cheeseburger on Atlantic Ave,outer
 8-Bit Bites,Cobble Hill,Brooklyn,https://www.8bitbitesbk.com/,,Retro arcade diner; halal smash burgers,outer
 Bareburger Cobble Hill,Cobble Hill,Brooklyn,,,Organic build-your-own burgers on Court St,outer
-Blue Collar Cobble Hill,Cobble Hill,Brooklyn,,,Blue Collar's Court St outpost,outer
+Blue Collar Cobble Hill,Cobble Hill,Brooklyn,,,Blue Collar's outpost at 187 Court St,outer
 Henry Public,Cobble Hill,Brooklyn,,,Grass-fed burgers; classic cocktails,outer
 Belli Osteria,Clinton Hill,Brooklyn,,,Italian restaurant; grass-fed Angus beef burgers,outer
 Meme's Diner,Prospect Heights,Brooklyn,,,Neighborhood diner; veggie burger,outer
@@ -545,10 +499,9 @@ Shake Shack Flatbush,Flatbush,Brooklyn,,,Chain; across from Barclays Center,oute
 Butcher Bar,Astoria,Queens,,,BBQ smokehouse with famous smoked burgers; best BBQ in NYC contender,outer
 Petey's Burger,Astoria,Queens,http://www.peteysburger.com/,,In-N-Out-style double cheeseburger spot; also has LIC location,outer
 Burger Club,Astoria,Queens,http://www.burger-club.com/,,Bison and hanger-steak burgers with shakes,outer
-Holy Burger,Astoria,Queens,https://www.holyburger.nyc/holyburger-astoria-location,,Smash burgers and late-night bites on 36th Ave,outer
+Holy Burger,Astoria,Queens,https://www.holyburger.nyc/holyburger-astoria-location,,Smash burgers and late-night bites at 23-14 36th Ave,outer
 Bareburger,Astoria,Queens,,,Organic/bison/elk burgers regional chain,outer
 OG Burger Box,Astoria,Queens,,,Halal grass-fed smash burgers,outer
-Neptune Diner,Astoria,Queens,,,Classic 24-hour Greek-American diner,outer
 Bel Aire Diner,Astoria,Queens,,,Classic Greek diner,outer
 Bohemian Hall & Beer Garden,Astoria,Queens,,,Historic 1910 beer garden with burgers on menu,outer
 Cronin & Phelan's,Astoria,Queens,,,Irish pub with burgers,outer
@@ -556,7 +509,7 @@ Irish Rover,Astoria,Queens,,,Irish pub with burgers,outer
 The Baroness,Long Island City,Queens,,,Craft beer bar with 10+ burger combos; voted #1 burger in Queens by some lists,outer
 Petey's Burger,Long Island City,Queens,http://www.peteysburger.com/,,Second Queens location of In-N-Out-style burger spot,outer
 Bareburger,Long Island City,Queens,,,Organic/bison/elk burgers regional chain,outer
-F. Ottomanelli's,Long Island City,Queens,,,Burgers and Belgian fries by butcher family Ottomanelli,outer
+F. Ottomanelli's,Woodside,Queens,,,Burgers and Belgian fries by butcher family Ottomanelli at 60-15 Woodside Ave,outer
 The Huntress,Long Island City,Queens,,,Whiskey/wings/burger spot,outer
 PJ Leahy's,Long Island City,Queens,,,Irish pub and sports bar with burgers,outer
 Bantry Bay Publick House,Long Island City,Queens,www.bantrybaypub.com,,Irish pub with burgers incl. lamb burger,outer
@@ -622,10 +575,10 @@ Mo Gridder's BBQ,Hunts Point,Bronx,,,BBQ joint featured on Diners Drive-Ins and 
 Burger Time,Morris Park,Bronx,,,Classic burger restaurant; Excaliburger and French Fried Onion Burger,outer
 Nana's Kitchen,Morris Park,Bronx,http://www.nanaskitchenbronx.com/,,Albanian-Mediterranean eatery; Albanian Burger Combo on menu,outer
 Doyle's Pub,Morris Park,Bronx,,,Pub with pub-food menu,outer
-PJ Brady's Bar and Restaurant,Throggs Neck,Bronx,,,American pub food,outer
+P.J. Brady's,Throggs Neck,Bronx,,,American pub food at 3201 Philip Ave,outer
 Wicked Wolf Bronx,Throggs Neck,Bronx,http://www.wickedwolfbronx.com/,,Neighborhood sports bar; Wolf burger,outer
 Fiddler's Elbow Restaurant & Bar,Throggs Neck,Bronx,,,Irish-American restaurant and bar; burgers and steak on menu,outer
-Dale Diner,Throggs Neck,Bronx,,,Classic American diner; burgers on menu,outer
+Dale Diner,Kingsbridge,Bronx,,,Classic American diner at 189 W 231st St; burgers on menu,outer
 Ice House Café,Throggs Neck,Bronx,,,Waterfront American restaurant; burgers on menu,outer
 Jimmy's Grand Cafe,Unionport,Bronx,https://jimmysgrandcafe.com/,,"American diner/cafe; burgers, cheeseburgers, veggie and turkey burgers",outer
 John's Diner,Parkchester,Bronx,https://johnsdinerbronx.com/,,Classic Bronx diner since 1990s; Jumbo Beef Burger,outer
@@ -633,9 +586,9 @@ Step In Restaurant,Unionport,Bronx,,,"American restaurant; burgers, steak, sandw
 City Island Diner,City Island,Bronx,,,Classic diner; cheeseburgers and creative sandwiches,outer
 Black Whale,City Island,Bronx,,,Pub with seafaring decor; seafood and burgers,outer
 Johnny's Reef,City Island,Bronx,,,Seafood spot; burgers and shakes on menu,outer
-Bronx Beer Hall,Concourse,Bronx,,,Gastropub in Arthur Ave market; gourmet burgers and craft beer,outer
+Bronx Beer Hall,Belmont,Bronx,,,Gastropub in the Arthur Ave market (2344 Arthur Ave); gourmet burgers and craft beer,outer
 Stadium Sport Bar Restaurant & Pizzeria,Concourse,Bronx,,,Sports bar pizzeria; pub food and burgers,outer
-Jolly Tinker,Wakefield,Bronx,,,Cozy spot known for juicy burgers,outer
+Jolly Tinker,Bedford Park,Bronx,,,Cozy spot at 2875 Webster Ave known for juicy burgers,outer
 Tex's Chicken & Burgers,Fordham,Bronx,,,Fast-food chicken and burger chain location,outer
 Duffy's Tavern,West Brighton,Staten Island,,,Irish pub since 1985; famous flame-broiled cheeseburger on English muffin,outer
 Jody's Club Forest,West Brighton,Staten Island,https://www.jodysclubforest.com/,,Irish-American pub; Barstool Sports praised its burger,outer
@@ -645,8 +598,6 @@ G&G American Grill,West Brighton,Staten Island,,,American grill/diner at 891 Man
 Supreme Burger Company,West Brighton,Staten Island,,,Smash burgers at 646 Forest Ave,outer
 Steiny's Pub,St. George,Staten Island,,,Neighborhood pub near the ferry; beef and veggie burgers,outer
 Ruddy & Dean American Steakhouse,St. George,Staten Island,,,Steakhouse at 44 Richmond Ter,outer
-Fire Grilled Burgers,St. George,Staten Island,,,Angus burger joint at 1077 Bay St,outer
-J's On The Bay,St. George,Staten Island,,,American restaurant at 1189 Bay St,outer
 Shake Shack,St. George,Staten Island,https://www.shakeshack.com/location/empire-outlets-staten-island-ferry-ny,,Empire Outlets by the ferry,outer
 The Hop Shoppe,Stapleton,Staten Island,,,Bar at 372 Van Duzer St; frequent local burger pick,outer
 Craft House,Stapleton,Staten Island,,,American restaurant/bar at 60 Van Duzer St,outer
@@ -668,14 +619,11 @@ Da Damaso,Great Kills,Staten Island,,,Italian restaurant likely serving burgers,
 Flanagan's Tavern,Great Kills,Staten Island,http://www.jdstavern.net/,,Irish pub; Irish Prime Rib Burger (site listed as JD's Tavern),outer
 Tottenville Tavern,Tottenville,Staten Island,,,Neighborhood bar & grill; 1/2-lb Tavern Burger and Spicy Burger,outer
 Ralph's Sports Bar,Tottenville,Staten Island,,,Sports bar; local burger favorite,outer
-Trackside Bar & Grill,Tottenville,Staten Island,,,Bar & grill; local burger favorite,outer
+Trackside Bar & Grill,New Dorp,Staten Island,,,Bar & grill at 61 New Dorp Plaza North; local burger favorite,outer
 Towne Deli & Pizzeria,Tottenville,Staten Island,,,Deli-pizzeria with burgers on the menu,outer
 Rab's Country Lanes,Dongan Hills,Staten Island,,,Bowling alley whose burgers get local recommendations,outer
 Tommy's Tavern and Tap,New Springville,Staten Island,,,Tavern chain at 2655 Richmond Ave,outer
 DaddyO's BBQ and Sports Bar,Charleston,Staten Island,,,BBQ sports bar at 35 Androvette St,outer
-Cheeburger Cheeburger,Charleston,Staten Island,,,Build-your-own burger chain,outer
-The Wild Boar Inn,Prince's Bay,Staten Island,,,Inn/restaurant at 507 Seguine Ave,outer
-Lunchbox,Westerleigh,Staten Island,,,Casual spot at 1612 Forest Ave,outer
 SI Diner,Westerleigh,Staten Island,,,Classic diner at 1877 Victory Blvd,outer
 Joe Broadway's Billiards & Sports Pub,Graniteville,Staten Island,,,Sports pub at 2178 Forest Ave,outer
 PepperJack Grill,Castleton Corners,Staten Island,,,Grill at 316 Manor Rd,outer

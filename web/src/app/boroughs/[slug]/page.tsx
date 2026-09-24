@@ -15,6 +15,7 @@ import {
   getBorough,
   getBoroughs,
   getGeneratedAt,
+  getMenuCounts,
   getNeighborhoodsInBorough,
   getRestaurantsInBorough,
   getScope,
@@ -23,9 +24,20 @@ import {
   unrankedNeighborhoods,
 } from "@/lib/data";
 import { ends, formatCount, formatDate, formatDelta, formatPrice, pctDiff, pluralize } from "@/lib/format";
-import { chainNames, isChainOnly, isRankable, listedNames, menuBreakdown, menuBreakdownShort, menuIndexPrices, menusByIndexPrice, menusByIndexPriceDesc } from "@/lib/menus";
+import {
+  chainNames,
+  isChainOnly,
+  isRankable,
+  listedNames,
+  menuBreakdown,
+  menuBreakdownShort,
+  menuIndexPrices,
+  menusByIndexPrice,
+  menusByIndexPriceDesc,
+  shareOfCity,
+} from "@/lib/menus";
 import { pageMetadata } from "@/lib/metadata";
-import { scopeWhere } from "@/lib/scope";
+import { chainLocationsWhere, lookedUpWhen, scopeWhere } from "@/lib/scope";
 import { MIN_RANKED } from "@/lib/site";
 
 /**
@@ -86,6 +98,11 @@ export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug
   const showBoard = rankable && !chainOnly;
   const diff = s?.index_median != null && median !== null ? pctDiff(s.index_median, median) : null;
   const where = boroughInProse(b.name);
+  const scope = getScope();
+  const city = getMenuCounts();
+  // All of the NYC index's menus are here: the borough median IS the NYC median, so no comparison.
+  // Most of them: the comparison is mostly the borough against itself, and the copy says so.
+  const cityShare = chainOnly ? null : shareOfCity(c, city);
   // No restaurant of this borough is in the dataset at all (its route comes from the fixed borough
   // list): one lede and the other boroughs for reference, no empty stats, chart or neighborhood list.
   const unlisted = !s || s.restaurants === 0;
@@ -97,9 +114,18 @@ export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug
     lede = `Chain prices only so far. Every priced menu in ${where} comes from ${pluralize(c.chains, "chain")} at ${pluralize(c.locations, "location")}${listedNames(chainNames(restaurants))}. ${
       c.chains === 1 ? "Its price" : "Their median"
     }, ${formatPrice(s.index_median)}, is not a like-for-like comparison with the NYC median of ${formatPrice(median)}.`;
-  else if (diff !== null && Math.abs(diff) >= 0.5)
-    lede = `The median ${b.name} burger costs ${formatPrice(s.index_median)}, ${Math.round(Math.abs(diff))}% ${diff > 0 ? "above" : "below"} the NYC median of ${formatPrice(median)}. That is across ${pluralize(c.menus, "menu")}: ${menuBreakdown(c)}.`;
-  else lede = `The median ${b.name} burger costs ${formatPrice(s.index_median)}, right at the NYC median. That is across ${pluralize(c.menus, "menu")}: ${menuBreakdown(c)}.`;
+  else if (cityShare === "all")
+    lede = `Every menu priced${scope.pending ? " so far" : ""} is served in ${where}, so its median index price, ${formatPrice(s.index_median)}, is the NYC index${
+      scope.pending ? " for now" : ""
+    }. That is across ${pluralize(c.menus, "menu")}: ${menuBreakdown(c)}.`;
+  else {
+    // The median index price (each menu's cheapest beef burger), not "the median burger": the home
+    // page's pooled every-burger median is a different, lower number.
+    const vs = diff !== null && Math.abs(diff) >= 0.5 ? `${Math.round(Math.abs(diff))}% ${diff > 0 ? "above" : "below"} the NYC median of ${formatPrice(median)}` : "right at the NYC median";
+    lede = `The median index price in ${where} is ${formatPrice(s.index_median)}, ${vs}. That is across ${pluralize(c.menus, "menu")}: ${menuBreakdown(c)}.${
+      cityShare === "most" ? ` They are ${formatCount(c.menus)} of the ${formatCount(city.menus)} menus behind the NYC median.` : ""
+    }`;
+  }
 
   return (
     <div className="wrap">
@@ -135,17 +161,30 @@ export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug
 
       {!unlisted ? (
         <section className="mt-10" aria-label="Key numbers">
-          <StatGrid>
-            <StatTile label="Median" value={s?.index_median != null ? <Money value={s.index_median} /> : "—"} sub={chainOnly ? "Chain prices only" : "Index price, per menu"} />
-            <StatTile
-              label="vs NYC"
-              value={chainOnly ? "—" : formatDelta(s?.index_median ?? null, median)}
-              sub={chainOnly ? "Not like for like: chain prices only" : median !== null ? `NYC median ${formatPrice(median, { cents: "always" })}` : undefined}
-            />
+          <StatGrid cols={cityShare === "all" ? 3 : 4}>
+            <StatTile label="Median" value={s?.index_median != null ? <Money value={s.index_median} /> : "—"} sub={chainOnly ? "Chain prices only" : cityShare === "all" ? "Index price, per menu: the NYC index" : "Index price, per menu"} />
+            {cityShare === "all" ? null : (
+              <StatTile
+                label="vs NYC"
+                value={chainOnly ? "—" : formatDelta(s?.index_median ?? null, median)}
+                sub={
+                  chainOnly
+                    ? "Not like for like: chain prices only"
+                    : median !== null
+                      ? `NYC median ${formatPrice(median, { cents: "always" })}${cityShare === "most" ? ` · ${formatCount(c.menus)} of its ${formatCount(city.menus)} menus are here` : ""}`
+                      : undefined
+                }
+              />
+            )}
+            {/* Counts rows in the dataset: what we have looked up here, not the restaurants on our list. */}
             <StatTile
               label="Menus priced"
               value={formatCount(c.menus)}
-              sub={c.menus ? `${menuBreakdownShort(c)}, at ${pluralize(c.locations, "location")} of ${formatCount(s?.restaurants ?? 0)} listed` : `${formatCount(s?.restaurants ?? 0)} restaurants listed`}
+              sub={
+                c.menus
+                  ? `${menuBreakdownShort(c)}, at ${pluralize(c.locations, "location")} of ${formatCount(s?.restaurants ?? 0)} ${lookedUpWhen(scope)}`
+                  : `${pluralize(s?.restaurants ?? 0, "restaurant")} ${lookedUpWhen(scope)}`
+              }
             />
             <StatTile label="Burgers priced" value={formatCount(s?.burgers ?? 0)} sub={`${formatCount(beefBurgers)} beef · a row per location`} />
           </StatGrid>
@@ -188,7 +227,7 @@ export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug
           {/* Nothing ranked: the intro says so and leads straight into the list (no second empty box). */}
           <div className={ranked.length ? "mt-8" : ""}>
             {ranked.length === 1 ? (
-              <SoleRanked area={ranked[0]} cityMedian={median} />
+              <SoleRanked area={ranked[0]} cityMedian={median} cityMenus={getMenuCounts()} />
             ) : ranked.length ? (
               <ChartFigure
                 id="hood-range"
@@ -226,9 +265,9 @@ export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug
           <SectionHeading id="ends" title={cheapest.length >= MENU_ENDS_SPLIT ? `The cheapest and priciest in ${where}.` : `Every priced menu in ${where}.`}>
             {chainOnly
               ? `Chain prices only so far: every menu below is a chain's, counted once however many ${b.name} locations it has.`
-              : `One card per menu: a chain appears once, with the number of ${b.name} locations that share its price.`}
+              : `One card per menu: a chain appears once, with the number of its ${b.name} locations${chainLocationsWhere(scope)} that share its price.`}
           </SectionHeading>
-          <MenuEnds cheapest={cheapest} priciest={priciest} median={median} />
+          <MenuEnds cheapest={cheapest} priciest={priciest} median={median} chainCount={{ noun: `${b.name} location`, where: chainLocationsWhere(scope) }} />
           <p className="mt-6">
             <Link href={`/burgers?borough=${b.slug}`} className="btn btn-secondary">
               Every burger in {where}

@@ -2,7 +2,7 @@ import { AreaListItem, ChainMenuNote, SoleRanked } from "@/components/AreaList";
 import { NeighborhoodRanking } from "@/components/NeighborhoodRanking";
 import { BoroughDot, PageHeader, SectionHeading } from "@/components/ui";
 import { BOROUGH_META } from "@/lib/boroughs";
-import { getNeighborhoods, getStats, rankedNeighborhoods, unrankedNeighborhoods } from "@/lib/data";
+import { getMenuCounts, getNeighborhoods, getScope, getStats, rankedNeighborhoods, unrankedNeighborhoods } from "@/lib/data";
 import { ends, formatCount, formatPrice } from "@/lib/format";
 import { isChainOnly } from "@/lib/menus";
 import { pageMetadata } from "@/lib/metadata";
@@ -28,7 +28,10 @@ export default function NeighborhoodsPage() {
     ranked.filter((n) => !isChainOnly(n.menuCounts)),
     (n) => n.index_median,
   );
-  const qualify = `${formatCount(ranked.length)} of ${formatCount(all.length)} neighborhoods have at least ${MIN_RANKED} priced menus, enough to rank. A chain counts once, however many locations it has there.`;
+  // The dataset's neighborhoods are the ones where we have looked up a restaurant, not every
+  // neighborhood on our list: say so while part of the list is unread.
+  const ofAll = getScope().pending ? `of the ${formatCount(all.length)} neighborhoods with restaurants looked up so far` : `of ${formatCount(all.length)} neighborhoods`;
+  const qualify = `${formatCount(ranked.length)} ${ofAll} ${ranked.length === 1 ? "has" : "have"} at least ${MIN_RANKED} priced menus, enough to rank. A chain counts once, however many locations it has there.`;
   const chainNote = rankedChainOnly.length
     ? ` ${rankedChainOnly.length === 1 ? "One ranked neighborhood is" : `${formatCount(rankedChainOnly.length)} ranked neighborhoods are`} priced from chain menus only so far and marked “Chain prices only”.`
     : "";
@@ -39,7 +42,7 @@ export default function NeighborhoodsPage() {
   else if (e.kind === "one")
     lede =
       ranked.length === 1
-        ? `Only 1 of ${formatCount(all.length)} neighborhoods has at least ${MIN_RANKED} priced menus, enough to rank: ${e.top.name}, at ${formatPrice(e.top.index_median)}. A chain counts once.`
+        ? `Only 1 ${ofAll} has at least ${MIN_RANKED} priced menus, enough to rank: ${e.top.name}, at ${formatPrice(e.top.index_median)}. A chain counts once.`
         : `${qualify} ${e.top.name}, at ${formatPrice(e.top.index_median)}, is the only one with independent menus.${chainNote}`;
   else if (ranked.length) lede = `${qualify}${chainNote}`;
   else lede = `We rank a neighborhood once it has at least ${MIN_RANKED} priced menus, counting a chain once. None has that many yet.`;
@@ -51,7 +54,7 @@ export default function NeighborhoodsPage() {
 
       {ranked.length === 1 ? (
         <section className="mt-8" aria-label="The ranked neighborhood">
-          <SoleRanked area={ranked[0]} cityMedian={median} />
+          <SoleRanked area={ranked[0]} cityMedian={median} cityMenus={getMenuCounts()} />
           <p className="t-ui-s muted mt-3">
             Median and range use each menu&apos;s index price, its cheapest beef burger, with a chain counted once per neighborhood. NYC median{" "}
             {formatPrice(median, { cents: "always" })}.

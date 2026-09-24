@@ -6,12 +6,23 @@ import { MiniMap } from "@/components/map/MiniMap";
 import { repeatedNames } from "@/components/RestaurantBits";
 import { Breadcrumbs, BoroughName, Dagger, IndexTag, Money, PriceChip, SectionHeading, SourceBadge, StatGrid, StatTile, StatusBadge } from "@/components/ui";
 import { boroughSlug } from "@/lib/boroughs";
-import { getChainLocations, getIndexBurger, getNeighborhood, getRestaurant, getRestaurants, getRestaurantsInNeighborhood, getStats, neighborhoodMenuCounts } from "@/lib/data";
+import {
+  getChainLocations,
+  getIndexBurger,
+  getNeighborhood,
+  getRestaurant,
+  getRestaurants,
+  getRestaurantsInNeighborhood,
+  getScope,
+  getStats,
+  neighborhoodMenuCounts,
+} from "@/lib/data";
 import { formatCount, formatDate, formatDelta, formatPrice, hostname, pluralize, safeHttpUrl } from "@/lib/format";
 import { parseHandCheck, type HandCheck } from "@/lib/hand-checks";
 import { chainCoverage, hasOtherMenus, isAirportLocation, isChainOnly, isChainSourceLocation, menuKey, menusByIndexPrice } from "@/lib/menus";
 import { DELIVERY_NOTE, PRICE_SOURCE_MEANING, PROTEIN_LABEL, STATUS_COPY, STATUS_LABEL, WITHHELD_COPY } from "@/lib/labels";
 import { pageMetadata } from "@/lib/metadata";
+import { chainLocationsWhere } from "@/lib/scope";
 import { binFor } from "@/lib/price-bins";
 import type { Restaurant } from "@/lib/schema";
 import { atLeastOneParam, PLACEHOLDER_PARAM } from "@/lib/site";
@@ -125,12 +136,19 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
   const airport = isAirportLocation(r);
   // The location whose menu the chain's shared price was read from: its price is not an estimate.
   const chainSource = isChainSourceLocation(r);
-  const chainListedNote = chainListed > chainPricedLocations ? ` of the ${formatCount(chainListed)} we list` : "";
+  // Where the chain's locations are counted: a chain is looked up as a whole, so these are all of its
+  // locations on our list (not the whole chain, which can have more in the city).
+  const chainWhere = chainLocationsWhere(getScope()) || " we have looked up";
+  const chainListedNote = chainListed > chainPricedLocations ? ` of the ${formatCount(chainListed)}${chainWhere}` : "";
   const neighborRepeats = repeatedNames(
     neighbors.map((m) => m.restaurant),
     [r],
   );
   const check = parseHandCheck(r.status_detail);
+  // Beef burgers listed below the index price: they can only be priced for a later menu period (late
+  // night, lunch, brunch or other), since the index takes a dinner or all-day price first and
+  // happy-hour prices are never published (pipeline/extract.py `index_item`, build.py `assemble`).
+  const cheaperBeef = priced ? r.burgers.filter((b) => b.protein === "beef" && b.price !== null && b.price < (r.index_price as number)).length : 0;
   // The scrape's own note; the hand-check sentence gets its own card below. After a hand check the
   // scrape's note describes the menu as it was read before the check, so it is labelled as history.
   const detail = check ? (check.scrapeDetail ? `Before the hand check, the scrape noted: ${check.scrapeDetail}` : null) : r.status_detail;
@@ -176,7 +194,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
                 ? `A ${r.name} airport location. Airport concessions set their own prices, so the chain's street price isn't applied here and this location isn't in the index.`
                 : chainPricedLocations
                   ? `A ${r.name} location. Other ${r.name} locations carry the chain's menu price, but this one has no price on file, so it isn't counted.`
-                  : `A ${r.name} location. No location of this chain is priced yet, so it isn't in the index.${chainListed > 1 ? ` We list ${pluralize(chainListed, "location")}.` : ""}`}
+                  : `A ${r.name} location. No location of this chain is priced yet, so it isn't in the index.${chainListed > 1 ? ` It has ${pluralize(chainListed, "location")}${chainWhere}.` : ""}`}
           </p>
         ) : null}
       </header>
@@ -232,7 +250,11 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
         <SectionHeading id="menu" title={r.burgers.length ? "Burgers on the menu." : "No burgers listed."}>
           {r.burgers.length
             ? priced
-              ? "The highlighted row sets the index price: the cheapest priced beef burger."
+              ? cheaperBeef
+                ? `The highlighted row sets the index price: the cheapest beef burger at the menu's dinner or all-day prices (late-night, lunch and brunch prices count only when there are none). ${
+                    cheaperBeef === 1 ? "The cheaper beef burger listed here is priced for another time of day." : `The ${formatCount(cheaperBeef)} cheaper beef burgers listed here are priced for other times of day.`
+                  }`
+                : "The highlighted row sets the index price: the cheapest priced beef burger."
               : "We found these burgers but no prices we could record."
             : null}
         </SectionHeading>
@@ -360,7 +382,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
         <section className="section" aria-labelledby="chain">
           {chainPricedOthers.length ? (
             <>
-              <SectionHeading id="chain" title={priced ? `Other ${r.name} locations.` : `${r.name} locations with the chain price.`}>
+              <SectionHeading id="chain" title={priced ? `Other ${r.name} locations${chainWhere}.` : `${r.name} locations with the chain price.`}>
                 {priced ? "Same menu, same price." : `They share one menu and one price${airport ? "; airport concessions don't get it" : ""}.`}
               </SectionHeading>
               <ChainLocationList rows={chainPricedOthers.slice(0, 12)} />
@@ -380,7 +402,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
             </>
           ) : (
             <>
-              <SectionHeading id="chain" title={`Other ${r.name} locations.`}>
+              <SectionHeading id="chain" title={`Other ${r.name} locations${chainWhere}.`}>
                 {priced ? "Listed without the chain price." : "None of them is priced yet either."}
               </SectionHeading>
               <ChainLocationList rows={chainOthers.slice(0, 12)} unpriced />

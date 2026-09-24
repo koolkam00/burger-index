@@ -39,7 +39,7 @@ export const STATUS_LABEL: Record<Status, string> = {
 
 export const STATUS_COPY: Record<Status, string> = {
   priced: "We found a priced beef burger on this menu.",
-  no_burgers: "Menu found. No burgers on it. We checked.",
+  no_burgers: "Menu found, but no beef burger on the page we read.",
   no_prices: "There's a burger on the menu, but no price online. Market price, apparently.",
   no_menu_found: "We couldn't find a menu online for this place.",
   error: "Our scraper choked on this menu. It tries again next update.",

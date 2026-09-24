@@ -56,19 +56,24 @@ export function RestaurantCard({
   );
 }
 
+/** How a menu card counts a chain's locations: the noun ("Manhattan location") and where they are counted (" on our list"). */
+export type ChainCount = { noun?: string; where?: string };
+
 /**
  * One distinct menu as a card: an independent restaurant shows its neighborhood; a chain shows how
- * many priced locations in the slice share the menu (the link goes to one of them).
+ * many priced locations in the slice share the menu (the link goes to one of them), with where they
+ * are counted ("chain, 3 locations on our list"), so the count doesn't read as the whole chain's size.
  */
-export function MenuCard({ menu, median }: { menu: Menu; median: number | null }) {
-  return <RestaurantCard restaurant={menu.restaurant} median={median} where={menu.chain ? `chain, ${pluralize(menu.locations, "location")}` : undefined} />;
+export function MenuCard({ menu, median, chainCount = {} }: { menu: Menu; median: number | null; chainCount?: ChainCount }) {
+  const where = menu.chain ? `chain, ${pluralize(menu.locations, chainCount.noun ?? "location")}${chainCount.where ?? ""}` : undefined;
+  return <RestaurantCard restaurant={menu.restaurant} median={median} where={where} />;
 }
 
 /** Menus needed before MenuEnds splits into cheapest and priciest (two lists of four that can't overlap). */
 export const MENU_ENDS_SPLIT = 8;
 
 /** Cheapest and priciest distinct menus side by side, or one list when there are too few to split. */
-export function MenuEnds({ cheapest, priciest, median }: { cheapest: Menu[]; priciest: Menu[]; median: number | null }) {
+export function MenuEnds({ cheapest, priciest, median, chainCount }: { cheapest: Menu[]; priciest: Menu[]; median: number | null; chainCount?: ChainCount }) {
   // Two lists of four only when they can't overlap; otherwise every menu once, cheapest first.
   if (cheapest.length >= MENU_ENDS_SPLIT) {
     return (
@@ -78,7 +83,7 @@ export function MenuEnds({ cheapest, priciest, median }: { cheapest: Menu[]; pri
           <ul className="mt-3 grid gap-3 sm:grid-cols-2">
             {cheapest.slice(0, 4).map((m) => (
               <li key={m.key}>
-                <MenuCard menu={m} median={median} />
+                <MenuCard menu={m} median={median} chainCount={chainCount} />
               </li>
             ))}
           </ul>
@@ -88,7 +93,7 @@ export function MenuEnds({ cheapest, priciest, median }: { cheapest: Menu[]; pri
           <ul className="mt-3 grid gap-3 sm:grid-cols-2">
             {priciest.slice(0, 4).map((m) => (
               <li key={m.key}>
-                <MenuCard menu={m} median={median} />
+                <MenuCard menu={m} median={median} chainCount={chainCount} />
               </li>
             ))}
           </ul>
@@ -102,7 +107,7 @@ export function MenuEnds({ cheapest, priciest, median }: { cheapest: Menu[]; pri
       <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {cheapest.map((m) => (
           <li key={m.key}>
-            <MenuCard menu={m} median={median} />
+            <MenuCard menu={m} median={median} chainCount={chainCount} />
           </li>
         ))}
       </ul>

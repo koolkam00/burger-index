@@ -18,7 +18,7 @@ import { capitalize, formatCount, formatDate, formatDateTime, formatPrice, plura
 import { PRICE_SOURCE_MEANING, STATUS_COPY } from "@/lib/labels";
 import { isChainOnly, joinList, listedChainNames, listedMenus, menuBreakdown, perLocationNote, pricedMenus, splitByCoverage, statusTally, type StatusTally } from "@/lib/menus";
 import { pageMetadata } from "@/lib/metadata";
-import { cuisineNames, mostlyIn, scopeMethod, scopeRestaurants, scopeWhere } from "@/lib/scope";
+import { cuisineNames, mostlyIn, scopeMethod, scopeRestaurants, scopeSources, scopeWhere } from "@/lib/scope";
 import { binRanges } from "@/lib/price-bins";
 import { PRICE_SOURCES, STATUSES } from "@/lib/enums";
 import { MIN_HISTOGRAM, MIN_RANKED } from "@/lib/site";
@@ -63,9 +63,11 @@ export default function MethodologyPage() {
   );
   const perLocation = perLocationNote(menus, locationMedian, median);
   // Which restaurants are in scope, where the list comes from, how many are looked up so far, and
-  // whether national fast-food chains are left out: all read from coverage_note (lib/scope).
+  // whether national chains are left out: all read from coverage_note (lib/scope).
   const scope = getScope();
   const noNational = scope.excludesNationalChains;
+  // Restaurants matched to a health-department record (camis): where addresses and map locations come from.
+  const matched = restaurants.filter((r) => r.camis !== null).length;
   // The chains we do list (NYC's own), most locations first: the examples of what stays in.
   const localChainNames = listedChainNames(restaurants).slice(0, 2);
   // Where the priced menus so far are, when one neighborhood holds most of them (a chain once per area).
@@ -96,7 +98,7 @@ export default function MethodologyPage() {
       <PageHeader
         title="How the index works."
         lede={`One number for what a burger costs in New York, built from the menus we could price, with each chain counted once${
-          noNational ? " and national fast-food chains left out" : ""
+          noNational ? " and national chains left out" : ""
         }.${
           scope.pending
             ? ` So far we have looked up ${formatCount(scope.lookedUp)} of the ${scopeRestaurants(scope)} and priced ${pluralize(counts.menus, "menu")}.`
@@ -134,7 +136,7 @@ export default function MethodologyPage() {
         <section className="section" aria-labelledby="compute">
           <SectionHeading id="compute" title="How we compute it." />
           <ol className="mt-4">
-            <li>{scopeMethod(scope)}</li>
+            <li>{scopeMethod(scope, matched)}</li>
             <li>Find each menu online and read every burger on it: name, description, price and protein.</li>
             <li>Take the cheapest priced beef burger. That is the menu&apos;s index price, shared by every location of a chain.</li>
             <li>
@@ -252,13 +254,15 @@ export default function MethodologyPage() {
               </tbody>
             </table>
           </div>
-          <p className="mt-4">{m.coverage_note}</p>
+          {/* The dataset's own coverage note repeats the paragraphs above in pipeline terms; it is only
+              shown when its scope can't be read (then it is the only word on which restaurants are in). */}
+          {scope.kind === "unknown" ? <p className="mt-4">{m.coverage_note}</p> : null}
         </section>
 
         <section className="section" aria-labelledby="sources">
           <SectionHeading id="sources" title="Sources." />
           <ul className="mt-4">
-            {m.sources.map((s) => (
+            {scopeSources(m.sources, scope).map((s) => (
               <li key={s}>{s}</li>
             ))}
           </ul>
@@ -311,8 +315,8 @@ export default function MethodologyPage() {
         <section className="section" aria-labelledby="statuses">
           <SectionHeading id="statuses" title="When a menu has no price." />
           <p className="mt-4">
-            Only menus with a priced beef burger count toward the index. The rest are still listed, with the reason. Each count below is menus (a chain
-            once), then listed locations:
+            Only menus with a priced beef burger count toward the index. The rest are still on the site, with the reason. Each count below is menus (a
+            chain once), then locations:
           </p>
           <dl className="not-prose mt-4 grid gap-4">
             {STATUSES.map((s) => (
@@ -358,7 +362,7 @@ export default function MethodologyPage() {
             ) : null}
             {noNational ? (
               <li>
-                National fast-food chains{scope.nationalChainExamples ? ` (${scope.nationalChainExamples})` : ""}. They are not on the site at all.
+                National chains{scope.nationalChainExamples ? ` (${scope.nationalChainExamples})` : ""}. They are not on the site at all.
                 {localChainNames.length ? ` NYC's own small chains, like ${joinList(localChainNames)}, stay in.` : ""}
               </li>
             ) : null}
@@ -385,16 +389,16 @@ export default function MethodologyPage() {
               {counts.chains
                 ? listedChains.chains === counts.chains && listedChains.locations === pricedChainLocations
                   ? ` (${pluralize(counts.chains, "chain")} so far, at ${pluralize(pricedChainLocations, "location")}, all priced)`
-                  : ` (${pluralize(counts.chains, "chain")} priced so far, covering ${pluralize(pricedChainLocations, "location")}; we list ${pluralize(listedChains.chains, "chain")} at ${pluralize(listedChains.locations, "location")} in all)`
+                  : ` (${pluralize(counts.chains, "chain")} priced so far, covering ${pluralize(pricedChainLocations, "location")}; we have looked up ${pluralize(listedChains.chains, "chain")} at ${pluralize(listedChains.locations, "location")} in all)`
                 : listedChains.chains
-                  ? ` (we list ${pluralize(listedChains.chains, "chain")} at ${pluralize(listedChains.locations, "location")}, none priced yet)`
+                  ? ` (we have looked up ${pluralize(listedChains.chains, "chain")} at ${pluralize(listedChains.locations, "location")}, none priced yet)`
                   : ""}
               . Individual branches can charge a little more or less.
             </li>
             {noNational ? (
               <li>
                 National fast-food chains sell some of the cheapest burgers in the city, so leaving them out raises the index. It describes local
-                restaurants and NYC&apos;s own chains, not fast food.
+                restaurants and NYC&apos;s own chains, not national ones.
               </li>
             ) : null}
             <li>

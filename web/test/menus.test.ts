@@ -21,11 +21,14 @@ import {
   menuCounts,
   menuIndexPrices,
   menuKey,
+  menuSourceRows,
   menusByIndexPrice,
   menusByIndexPriceDesc,
   NO_MENUS,
   perLocationNote,
+  pooledBurgerPrices,
   pricedMenus,
+  shareOfCity,
   splitByCoverage,
   statusTally,
 } from "../src/lib/menus";
@@ -198,6 +201,35 @@ test("listed chain names count every listed location, priced or not", () => {
   ];
   assert.deepEqual(listedChainNames(list), ["Jimbo's", "Bareburger"]);
   assert.deepEqual(listedChainNames([place({ price: 9 })]), []);
+});
+
+test("share of the city: an area holding all or most of the NYC index's menus", () => {
+  const counts = (menus: number): MenuCounts => ({ menus, independents: menus, chains: 0, locations: menus });
+  assert.equal(shareOfCity(counts(57), counts(57)), "all");
+  assert.equal(shareOfCity(counts(44), counts(57)), "most");
+  assert.equal(shareOfCity(counts(4), counts(8)), null, "exactly half is not most");
+  assert.equal(shareOfCity(counts(1), counts(57)), null);
+  assert.equal(shareOfCity(NO_MENUS, counts(57)), null);
+  assert.equal(shareOfCity(NO_MENUS, NO_MENUS), null);
+});
+
+test("menu source rows: every independent once, a chain once at the location its menu was read from", () => {
+  const detail = "Chain-level prices from one NYC location (2 Test Street, Manhattan).";
+  const a = { ...place({ chain: "jh", price: 12, detail }), address: "1 Other Street" };
+  const b = { ...place({ chain: "jh", price: 12, detail }), address: "2 Test Street" };
+  const solo = place({ price: 15 });
+  const unpricedChain = place({ chain: "bb", price: null });
+  const rows = menuSourceRows([a, b, solo, unpricedChain]);
+  assert.deepEqual(
+    rows.map((r) => r.id),
+    [solo.id, b.id, unpricedChain.id],
+  );
+  const withBurgers = (r: Restaurant, prices: (number | null)[]): Restaurant => ({
+    ...r,
+    burgers: prices.map((price, i) => ({ id: `${r.id}--b${i}`, name: `B${i}`, price, description: null, protein: "beef", is_index_item: false })),
+  });
+  // The chain's copied menu (row a) is left out, unpriced items too.
+  assert.deepEqual(pooledBurgerPrices([withBurgers(a, [12, 14]), withBurgers(b, [12, 14]), withBurgers(solo, [15, null, 9])]), [9, 12, 14, 15]);
 });
 
 test("chain source location: the row whose menu was read, by its address", () => {
@@ -380,6 +412,7 @@ function assertMatchesPipeline(label: string, data: BurgerIndex) {
   };
   const city = menuIndexPrices(data.restaurants);
   close(median(city), data.stats.index_median, "index_median");
+  close(median(pooledBurgerPrices(data.restaurants)), data.stats.all_burgers_median, "all_burgers_median (pooled over distinct menus)");
   close(percentile(city, 0.1), data.stats.index_p10, "index_p10");
   close(percentile(city, 0.9), data.stats.index_p90, "index_p90");
   assert.equal(

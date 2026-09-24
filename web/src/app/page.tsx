@@ -11,9 +11,20 @@ import { ChartEmpty, Money, SectionHeading, StatGrid, StatTile } from "@/compone
 import { boroughInProse } from "@/lib/boroughs";
 import { allBurgers, getBoroughs, getBurger, getGeneratedAt, getMenuCounts, getNeighborhoods, getRestaurants, getScope, getStats, rankedNeighborhoods } from "@/lib/data";
 import { capitalize, ends, formatCount, formatDate, formatPrice, pluralize } from "@/lib/format";
-import { isChainOnly, joinList, listedMenus, menuBreakdown, menuBreakdownShort, menuIndexPrices, menusByIndexPrice, menusByIndexPriceDesc, splitByCoverage } from "@/lib/menus";
+import {
+  isChainOnly,
+  joinList,
+  listedMenus,
+  menuBreakdown,
+  menuBreakdownShort,
+  menuIndexPrices,
+  menusByIndexPrice,
+  menusByIndexPriceDesc,
+  pooledBurgerPrices,
+  splitByCoverage,
+} from "@/lib/menus";
 import { pageMetadata } from "@/lib/metadata";
-import { coverageSentence, lookedUpSoFar, mostlyIn, scopeRestaurants, scopeWhere } from "@/lib/scope";
+import { chainLocationsWhere, coverageSentence, lookedUpSoFar, mostlyIn, scopeRestaurants, scopeWhere } from "@/lib/scope";
 import { MIN_RANKED } from "@/lib/site";
 
 const homeMedian = getStats().index_median;
@@ -43,15 +54,21 @@ export default function HomePage() {
   const scope = getScope();
   // Everything we looked up, a chain counted once (its locations share one lookup).
   const listed = listedMenus(restaurants);
-  // Where the restaurants looked up so far are, when one neighborhood holds most of them.
+  // Where the restaurants looked up so far are, when one neighborhood holds most of them. Counted
+  // over what we looked up, so the numbers say so: after "our list" a bare "mostly in" would read as
+  // describing the whole list.
   const lookedUpHood = mostlyIn(getNeighborhoods(), (n) => n.restaurants, scope.lookedUp);
-  const mostly = lookedUpHood ? `, mostly in ${lookedUpHood.area.name},` : "";
+  const mostlyOf = lookedUpHood ? ` (${formatCount(lookedUpHood.n)} of the ${formatCount(scope.lookedUp)} in ${lookedUpHood.area.name})` : "";
   const lookedUp = scope.pending
-    ? `So far we have looked up ${formatCount(scope.lookedUp)} of the ${scopeRestaurants(scope)}${mostly}`
+    ? `So far we have looked up ${formatCount(scope.lookedUp)} of the ${scopeRestaurants(scope)}${mostlyOf}`
     : scope.kind !== "unknown"
-      ? `We looked up ${scope.inScope === 1 ? "the" : "all"} ${scopeRestaurants(scope)}${mostly}`
-      : `We looked up ${listed.chains ? `${pluralize(listed.independents, "New York restaurant")} and ${pluralize(listed.chains, "chain")} (${pluralize(listed.locations, "location")} in all)` : pluralize(listed.independents, "New York restaurant")}${mostly}`;
+      ? `We looked up ${scope.inScope === 1 ? "the" : "all"} ${scopeRestaurants(scope)}${mostlyOf}`
+      : `We looked up ${listed.chains ? `${pluralize(listed.independents, "New York restaurant")} and ${pluralize(listed.chains, "chain")} (${pluralize(listed.locations, "location")} in all)` : pluralize(listed.independents, "New York restaurant")}${
+          lookedUpHood ? `, mostly in ${lookedUpHood.area.name},` : ""
+        }`;
   const burgerRows = allBurgers().length;
+  // The items behind stats.all_burgers_median: every priced burger, any protein, on each distinct menu.
+  const pooledItems = pooledBurgerPrices(restaurants).length;
   // Every chart, range and list below counts distinct menus: a chain once, however many locations.
   const prices = menuIndexPrices(restaurants);
   const cheapest = menusByIndexPrice(restaurants);
@@ -60,11 +77,11 @@ export default function HomePage() {
   const ranked = rankedNeighborhoods();
   const cheapestBurger = getBurger(stats.cheapest_burger_id);
   const priciestBurger = getBurger(stats.priciest_burger_id);
-  // The chains here are NYC's own when the pipeline left national fast-food chains out (it says so in coverage_note).
+  // The chains here are NYC's own when the pipeline left national chains out (it says so in coverage_note).
   const chainRule = scope.excludesNationalChains
     ? counts.chains
-      ? " We leave out national fast-food chains, and each local chain counts once, however many locations it has."
-      : " We leave out national fast-food chains."
+      ? " We leave out national chains, and each local chain counts once, however many locations it has."
+      : " We leave out national chains."
     : counts.chains
       ? " A chain counts once, however many locations it has."
       : "";
@@ -176,10 +193,11 @@ export default function HomePage() {
           ) : (
             <StatTile label="Burgers priced" value={formatCount(stats.burgers)} sub={`${formatCount(stats.beef_burgers)} beef · a row per location`} />
           )}
+          {/* Pooled over every item, so long menus weigh more: it sits below the index, which is one cheapest beef burger per menu. */}
           <StatTile
-            label="Every burger, median"
+            label="Every burger, pooled"
             value={stats.all_burgers_median !== null ? <Money value={stats.all_burgers_median} /> : "—"}
-            sub="Every priced item on those menus"
+            sub={pooledItems ? `Median of all ${formatCount(pooledItems)} priced items, any protein` : "Every priced item on those menus"}
           />
         </StatGrid>
       </section>
@@ -188,8 +206,9 @@ export default function HomePage() {
         <SectionHeading
           id="spread"
           title={
+            // p10–p90 of index prices: what most menus' cheapest beef burger costs, not most burgers.
             stats.index_p10 !== null && stats.index_p90 !== null && Math.floor(stats.index_p10) !== Math.ceil(stats.index_p90)
-              ? `Most burgers land between ${formatPrice(Math.floor(stats.index_p10))} and ${formatPrice(Math.ceil(stats.index_p90))}.`
+              ? `Most menus${scope.pending ? " so far" : ""} start between ${formatPrice(Math.floor(stats.index_p10))} and ${formatPrice(Math.ceil(stats.index_p90))}.`
               : "How the prices spread."
           }
         >
@@ -222,9 +241,9 @@ export default function HomePage() {
       {cheapest.length ? (
         <section className="section" aria-labelledby="cheap">
           <SectionHeading id="cheap" title={`Where ${formatPrice(cheapest[0].indexPrice)} still gets you lunch.`}>
-            One card per menu: a chain appears once, with the number of locations that share its price.
+            One card per menu: a chain appears once, with the number of its locations{chainLocationsWhere(scope)} that share its price.
           </SectionHeading>
-          <MenuEnds cheapest={cheapest} priciest={priciest} median={median} />
+          <MenuEnds cheapest={cheapest} priciest={priciest} median={median} chainCount={{ where: chainLocationsWhere(scope) }} />
           {cheapestBurger && priciestBurger ? (
             <p className="t-body muted prose-width mt-6">
               Counting every burger on every menu, any protein: the cheapest is the {cheapestBurger.burger.name} at{" "}
@@ -264,7 +283,7 @@ export default function HomePage() {
         </SectionHeading>
         <div className="mt-8">
           {ranked.length === 1 ? (
-            <SoleRanked area={ranked[0]} cityMedian={median} />
+            <SoleRanked area={ranked[0]} cityMedian={median} cityMenus={getMenuCounts()} />
           ) : ranked.length ? (
             <ChartFigure
               id="hood-range"

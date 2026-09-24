@@ -6,24 +6,32 @@ import { RestaurantTable } from "@/components/RestaurantBits";
 import { PageHeader, PriceChip, SectionHeading, StatusBadge } from "@/components/ui";
 import { boroughInProse } from "@/lib/boroughs";
 import { getBoroughs, getIndexBurger, getMenuCounts, getRestaurants, getScope, getStats } from "@/lib/data";
-import { capitalize, pluralize } from "@/lib/format";
+import { capitalize, formatCount, pluralize } from "@/lib/format";
 import { DELIVERY_NOTE } from "@/lib/labels";
 import { joinList, splitByCoverage } from "@/lib/menus";
 import { pageMetadata } from "@/lib/metadata";
 import { binFor } from "@/lib/price-bins";
 
+const hasCoords = (r: { lat: number | null; lng: number | null }) => r.lat !== null && r.lng !== null;
+const pricedCount = getRestaurants().filter((r) => r.index_price !== null).length;
+const pinCount = getRestaurants().filter((r) => r.index_price !== null && hasCoords(r)).length;
+
 export const metadata = pageMetadata({
   title: "Burger price map",
-  description: `Every New York burger restaurant we have priced${getScope().pending ? " so far" : ""}, on a map, colored from Steal to Splurge against the NYC median.`,
+  // Not "every": a priced location without coordinates has no pin (the page lists it below the map).
+  description: `The New York burger restaurants we have priced${getScope().pending ? " so far" : ""}, on a map${
+    pinCount < pricedCount ? ` (${formatCount(pinCount)} of ${formatCount(pricedCount)} priced locations have coordinates)` : ""
+  }, colored from Steal to Splurge against the NYC median.`,
   path: "/map",
 });
 
 export default function MapPage() {
   const median = getStats().index_median;
   const restaurants = getRestaurants();
-  const onMap = restaurants.filter((r) => r.index_price !== null && r.lat !== null && r.lng !== null);
-  const noCoords = restaurants.filter((r) => r.lat === null || r.lng === null);
-  const unpricedWithCoords = restaurants.filter((r) => r.index_price === null && r.lat !== null && r.lng !== null).length;
+  const onMap = restaurants.filter((r) => r.index_price !== null && hasCoords(r));
+  const noCoords = restaurants.filter((r) => !hasCoords(r));
+  const pricedNoCoords = noCoords.filter((r) => r.index_price !== null).length;
+  const unpricedWithCoords = restaurants.filter((r) => r.index_price === null && hasCoords(r)).length;
   const noCoordsDelivery = noCoords.some((r) => r.index_price !== null && r.price_source === "delivery_app");
   const pins: MapPin[] = onMap.map((r) => ({
     id: r.id,
@@ -49,7 +57,11 @@ export default function MapPage() {
       <div className="wrap">
         <PageHeader
           title="The map."
-          lede={`${pluralize(onMap.length, "priced location")}, one pin each, colored by index price against the NYC median. Tap a pin for the burger and the price. Every location of a chain gets a pin, though the index counts the chain once (${pluralize(getMenuCounts().menus, "menu")} in all).${coverage}${unpricedWithCoords ? ` ${pluralize(unpricedWithCoords, "location")} without a price ${unpricedWithCoords === 1 ? "is" : "are"} left off.` : ""}`}
+          lede={`${
+            pricedNoCoords ? `${formatCount(onMap.length)} of the ${pluralize(onMap.length + pricedNoCoords, "priced location")}` : pluralize(onMap.length, "priced location")
+          }, one pin each, colored by index price against the NYC median. Tap a pin for the burger and the price. Every location of a chain gets a pin, though the index counts the chain once (${pluralize(getMenuCounts().menus, "menu")} in all).${
+            pricedNoCoords ? ` The other ${pluralize(pricedNoCoords, "priced location")} ${pricedNoCoords === 1 ? "has" : "have"} no coordinates yet and ${pricedNoCoords === 1 ? "is" : "are"} listed below the map.` : ""
+          }${coverage}${unpricedWithCoords ? ` ${pluralize(unpricedWithCoords, "location")} without a price ${unpricedWithCoords === 1 ? "is" : "are"} left off.` : ""}`}
         />
       </div>
       <div className="mt-8">
