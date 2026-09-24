@@ -187,8 +187,11 @@ def coverage_note(meta: dict, n_restaurants: int, n_pending: int, n_airport: int
         f"{n_restaurants} restaurants: a curated pilot list plus every restaurant NYC DOHMH lists under "
         f"'{cuisines}' with an inspection since {meta.get('min_inspection_date') or config.DEFAULT_MIN_INSPECTION} "
         "(or not yet inspected). Chain locations share one menu price scraped from a single NYC location. "
-        "Delivery-app prices usually run above in-store prices."
     )
+    if (meta.get("national_chains") or config.DEFAULT_NATIONAL_CHAINS) == "exclude":
+        note += ("National fast-food chains (McDonald's, Burger King, Wendy's, Shake Shack and the like) are left "
+                 "out; NYC's own small chains stay in. ")
+    note += "Delivery-app prices usually run above in-store prices."
     if n_airport:
         note += (f" {n_airport} airport chain location{'s are' if n_airport != 1 else ' is'} listed without the "
                  "chain's street price.")

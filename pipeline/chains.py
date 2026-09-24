@@ -26,37 +26,58 @@ class ChainDef:
     cheapest_item: str | None = None
     # A known-good NYC menu page to scrape first (e.g. a full store page on Grubhub).
     menu_url: str | None = None
+    # National fast-food chain: left out of the index entirely (product decision 2026-09-23);
+    # NYC's own small chains (7th Street Burger, Jackson Hole...) stay. See is_national_chain().
+    national: bool = False
 
 
 def _c(slug: str, display: str, pattern: str, official_has_prices: bool = True, *, cheapest_item: str | None = None,
-       menu_url: str | None = None) -> ChainDef:
-    return ChainDef(slug, display, re.compile(pattern), official_has_prices, cheapest_item, menu_url)
+       menu_url: str | None = None, national: bool = False) -> ChainDef:
+    return ChainDef(slug, display, re.compile(pattern), official_has_prices, cheapest_item, menu_url, national)
 
 
 # Patterns match norm_name(strip_store_number(dba)) — lowercase, apostrophes dropped, '&' -> 'and'.
 CURATED_CHAINS: tuple[ChainDef, ...] = (
-    _c("mcdonalds", "McDonald's", r"^mc ?donalds\b", False, cheapest_item="hamburger"),
-    _c("burger-king", "Burger King", r"^burger king\b", False, cheapest_item="hamburger"),  # incl. 'BURGER KING, POPEYES'
-    _c("shake-shack", "Shake Shack", r"^shake shack\b", False),
-    _c("wendys", "Wendy's", r"^wendys\b", False, cheapest_item="jr hamburger"),
-    _c("white-castle", "White Castle", r"^white castle\b", False, cheapest_item="original slider"),
+    _c("mcdonalds", "McDonald's", r"^mc ?donalds\b", False, cheapest_item="hamburger", national=True),
+    _c("burger-king", "Burger King", r"^burger king\b", False, cheapest_item="hamburger", national=True),  # incl. 'BURGER KING, POPEYES'
+    _c("shake-shack", "Shake Shack", r"^shake shack\b", False, national=True),
+    _c("wendys", "Wendy's", r"^wendys\b", False, cheapest_item="jr hamburger", national=True),
+    _c("white-castle", "White Castle", r"^white castle\b", False, cheapest_item="original slider", national=True),
     _c("7th-street-burger", "7th Street Burger", r"^7th street burger\b"),
-    _c("checkers", "Checkers", r"^checkers\b", False),
-    _c("five-guys", "Five Guys", r"^five guys\b", False, cheapest_item="little hamburger"),  # incl. FIVE GUYS FAMOUS BURGERS AND FRIES
+    _c("checkers", "Checkers", r"^checkers\b", False, national=True),
+    _c("five-guys", "Five Guys", r"^five guys\b", False, cheapest_item="little hamburger", national=True),  # incl. FIVE GUYS FAMOUS BURGERS AND FRIES
     _c("jimbos-hamburger-palace", "Jimbo's Hamburger Palace", r"^(the )?(famous )?jimbos hamburger"),
     _c("bareburger", "Bareburger", r"^bareburger\b"),
-    _c("smashburger", "Smashburger", r"^smashburger\b", False),
+    _c("smashburger", "Smashburger", r"^smashburger\b", False, national=True),
     _c("jackson-hole", "Jackson Hole", r"^jackson hole\b"),
-    _c("sonic", "Sonic Drive-In", r"^sonic( drive ?in)?$", False),
+    _c("sonic", "Sonic Drive-In", r"^sonic( drive ?in)?$", False, national=True),
     _c("black-tap", "Black Tap", r"^black tap\b"),
     _c("bills-bar-and-burger", "Bill's Bar & Burger", r"^bills bar and burger\b"),
     _c("5-napkin-burger", "5 Napkin Burger", r"^5 napkin burger\b"),
     _c("burger-joint", "Burger Joint", r"^burger joint$"),
     _c("harlem-shake", "Harlem Shake", r"^harlem shake\b"),
-    _c("burgerfi", "BurgerFi", r"^burgerfi\b", False),
-    _c("fatburger", "Fatburger", r"^fatburger\b", False),
-    _c("johnny-rockets", "Johnny Rockets", r"^johnny rockets\b", False),
-    _c("applebees", "Applebee's", r"^applebees\b", False),
+    _c("burgerfi", "BurgerFi", r"^burgerfi\b", False, national=True),
+    _c("fatburger", "Fatburger", r"^fatburger\b", False, national=True),
+    _c("johnny-rockets", "Johnny Rockets", r"^johnny rockets\b", False, national=True),
+    _c("applebees", "Applebee's", r"^applebees\b", False, national=True),
+)
+# More national burger/fast-food brands, so widening --cuisines never lets them in. Not grouped
+# as chains here (they're excluded before grouping); patterns match norm_name() like the list above.
+NATIONAL_ONLY: tuple[ChainDef, ...] = tuple(
+    _c(slug, display, pattern, False, national=True) for slug, display, pattern in (
+        ("wayback-burgers", "Wayback Burgers", r"^wayback burgers?\b"),
+        ("red-robin", "Red Robin", r"^red robin\b"),
+        ("carls-jr", "Carl's Jr.", r"^carls jr\b"),
+        ("steak-n-shake", "Steak 'n Shake", r"^steak ?n ?shake\b"),
+        ("habit-burger", "The Habit Burger Grill", r"^(the )?habit burger\b"),
+        ("jack-in-the-box", "Jack in the Box", r"^jack in the box\b"),
+        ("whataburger", "Whataburger", r"^whataburger\b"),
+        ("in-n-out", "In-N-Out Burger", r"^in ?n ?out\b"),
+        ("culvers", "Culver's", r"^culvers\b"),
+        ("tgi-fridays", "TGI Fridays", r"^t ?g ?i fridays?\b"),
+        ("chilis", "Chili's", r"^chilis\b"),
+        ("arbys", "Arby's", r"^arbys\b"),
+    )
 )
 MIN_AUTO_LOCATIONS = 3
 MIN_CURATED_LOCATIONS = 2
@@ -74,6 +95,20 @@ def brand_of(rec: dict) -> tuple[str, ChainDef | None]:
     nn = re.sub(r"^the ", "", nn)
     nn = re.sub(r"\s+\d{3,}$", "", nn)  # store numbers: 'shake shack 1692' (not 'pier 17')
     return nn, None
+
+
+def is_national_chain(rec: dict) -> ChainDef | None:
+    """The national fast-food chain this restaurant belongs to, or None (independents and local chains)."""
+    _, cd = brand_of(rec)
+    if cd is not None:
+        return cd if cd.national else None
+    for n in (rec.get("dba"), rec.get("csv_name"), rec.get("name")):
+        if n:
+            nn = norm_name(strip_store_number(n))
+            for nd in NATIONAL_ONLY:
+                if nd.pattern.search(nn):
+                    return nd
+    return None
 
 
 @dataclass

@@ -101,7 +101,8 @@ def test_csv_matching_dedupe_and_unmatched(nta_map):
         csv_row("SoHo Park", neighborhood="SoHo", row=5),
         csv_row("Nowhere Burgers", row=6),
     ]
-    out, report = sources.build_restaurants(rows, dohmh_rows, nta_map, cuisines=["Hamburgers"], min_date="2023-01-01")
+    out, report = sources.build_restaurants(rows, dohmh_rows, nta_map, cuisines=["Hamburgers"], min_date="2023-01-01",
+                                            national_chains="include")  # matching is what's under test here
     by_name = {r["name"]: r for r in out if r["csv"]}
     # URL address beats an exact-name match elsewhere in the same neighborhood
     assert by_name["Five Guys"]["camis"] == "101"
@@ -199,8 +200,28 @@ def test_repermitted_restaurant_is_listed_once(nta_map):
         dohmh("50180342", "SHAKE SHACK", building="2655", street="RICHMOND AVENUE", boro="Staten Island", nta="SI01",
               last="2026-04-24T00:00:00.000"),
     ]
-    out, report = sources.build_restaurants([], rows, nta_map, cuisines=["Hamburgers"], min_date="2023-01-01")
+    out, report = sources.build_restaurants([], rows, nta_map, cuisines=["Hamburgers"], min_date="2023-01-01",
+                                            national_chains="include")  # re-permit dedupe is what's under test
     camis = sorted(r["camis"] for r in out)
     assert camis == ["50044590", "50044622", "50144161", "50180342", "50183866", "50185072"]
     assert {d["dropped"]: d["kept"] for d in report["dohmh_superseded_permits"]} == {
         "40538662": "50183866", "50087334": "50185072"}
+
+
+def test_national_chains_dropped_local_chains_kept(nta_map):
+    dohmh_rows = [
+        dohmh("200", "MCDONALD'S #13068"), dohmh("201", "BURGER KING, POPEYES"), dohmh("202", "SHAKE SHACK 1692"),
+        dohmh("203", "FIVE GUYS FAMOUS BURGERS AND FRIES"), dohmh("204", "WENDY'S (CONCOURSE F)"),
+        dohmh("205", "WAYBACK BURGERS"), dohmh("206", "CARL'S JR."),
+        dohmh("210", "7TH STREET BURGER"), dohmh("211", "JACKSON HOLE"), dohmh("212", "BAREBURGER"),
+        dohmh("213", "WHITE HORSE TAVERN", cuisine="Hamburgers"), dohmh("214", "KING OF BURGERS"),
+    ]
+    rows = [csv_row("Shake Shack West Village", row=1), csv_row("Due West", row=2)]
+    out, report = sources.build_restaurants(rows, dohmh_rows, nta_map, cuisines=["Hamburgers"], min_date="2023-01-01")
+    names = sorted(r["name"] for r in out)
+    assert names == ["7th Street Burger", "Bareburger", "Due West", "Jackson Hole", "King of Burgers",
+                     "White Horse Tavern"]
+    assert report["national_chains_excluded"] == {
+        "Burger King": 1, "Carl's Jr.": 1, "Five Guys": 1, "McDonald's": 1, "Shake Shack": 1, "Wayback Burgers": 1,
+        "Wendy's": 1}
+    assert report["csv_matched"] == 1  # the Shake Shack pilot row merged with its DOHMH record, then both dropped

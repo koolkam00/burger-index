@@ -22,7 +22,7 @@ from typing import Any, Iterable
 from rapidfuzz import fuzz, process
 
 from . import config
-from .chains import brand_of
+from .chains import brand_of, is_national_chain
 from .names import display_case, display_name, norm_name, slugify
 
 DOHMH_DATASET = "43nn-pn8j"
@@ -470,8 +470,11 @@ def build_restaurants(
     *,
     cuisines: Iterable[str] = config.DEFAULT_CUISINES,
     min_date: str = config.DEFAULT_MIN_INSPECTION,
+    national_chains: str = config.DEFAULT_NATIONAL_CHAINS,
 ) -> tuple[list[dict], dict]:
-    """CSV rows first (CSV order, merged with their DOHMH match), then in-scope DOHMH records."""
+    """CSV rows first (CSV order, merged with their DOHMH match), then in-scope DOHMH records.
+    national_chains='exclude' drops national fast-food chains (McDonald's, Shake Shack...) after
+    matching, so a pilot row for one never falls through to a namesake."""
     cuisines = {c.strip().lower() for c in cuisines if c.strip()}
     latest = latest_per_camis(dohmh_rows)
     zip_nta = zip_to_nta(latest)
@@ -540,6 +543,17 @@ def build_restaurants(
         added += 1
     report["dohmh_added"] = added
     report["dohmh_merged_with_csv"] = len(recent) - added
+    if national_chains == "exclude":
+        dropped: Counter = Counter()
+        kept = []
+        for r in out:
+            nd = is_national_chain(r)
+            if nd is None:
+                kept.append(r)
+            else:
+                dropped[nd.display] += 1
+        out = kept
+        report["national_chains_excluded"] = dict(sorted(dropped.items(), key=lambda kv: (-kv[1], kv[0])))
     report["no_neighborhood"] = sum(1 for r in out if not r["neighborhood"])
     report["restaurants"] = len(out)
     dupes = [k for k, n in Counter(r["key"] for r in out).items() if n > 1]
@@ -552,6 +566,7 @@ def load_restaurants(
     *,
     cuisines: Iterable[str] = config.DEFAULT_CUISINES,
     min_date: str = config.DEFAULT_MIN_INSPECTION,
+    national_chains: str = config.DEFAULT_NATIONAL_CHAINS,
     cache_dir: Path = config.CACHE_DIR,
     csv_path: Path = config.PILOT_CSV,
     nta_path: Path = config.NTA_PATH,
@@ -562,10 +577,12 @@ def load_restaurants(
     cuisines = list(cuisines)
     snap = load_dohmh_snapshot(cache_dir, refresh=refresh, offline=offline)
     restaurants, report = build_restaurants(
-        load_csv(csv_path), snap["rows"], load_nta_map(nta_path), cuisines=cuisines, min_date=min_date
+        load_csv(csv_path), snap["rows"], load_nta_map(nta_path), cuisines=cuisines, min_date=min_date,
+        national_chains=national_chains,
     )
     report["dohmh_fetched_at"] = snap.get("fetched_at")
-    meta = {"cuisines": cuisines, "min_inspection_date": min_date, "dohmh_fetched_at": snap.get("fetched_at")}
+    meta = {"cuisines": cuisines, "min_inspection_date": min_date, "national_chains": national_chains,
+            "dohmh_fetched_at": snap.get("fetched_at")}
     if write_to is not None:
         _write_json_atomic(Path(write_to), {"meta": meta, "report": report, "restaurants": restaurants}, indent=1)
     return restaurants, report

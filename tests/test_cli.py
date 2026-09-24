@@ -44,7 +44,9 @@ def data_dir(tmp_path, monkeypatch):
 
 
 def test_sources_plan_run_build(data_dir, fake, capsys):
-    assert cli.main(["sources"]) == 0
+    # McDonald's is a national chain (excluded by default); this flow opts in, and the flag is
+    # remembered by plan/run/build like the other scope flags.
+    assert cli.main(["sources", "--national-chains", "include"]) == 0
     doc = json.loads(config.RESTAURANTS_PATH.read_text())
     assert len(doc["restaurants"]) == 5 and doc["restaurants"][0]["name"] == "Due West"
 
@@ -100,7 +102,8 @@ def test_scope_flags_are_remembered_by_later_commands(data_dir, fake, capsys, mo
     irish = {**DOHMH_ROWS[3], "camis": "6", "dba": "THE IRISH PUB", "building": "7", "street": "BARROW STREET",
              "cuisine_description": "Irish"}
     monkeypatch.setattr(sources, "socrata_get", lambda url, params, http=None: DOHMH_ROWS + [irish])
-    assert cli.main(["sources", "--cuisines", "Hamburgers,Irish", "--min-inspection-date", "2024-01-01"]) == 0
+    assert cli.main(["sources", "--cuisines", "Hamburgers,Irish", "--min-inspection-date", "2024-01-01",
+                     "--national-chains", "include"]) == 0
     wide = json.loads(config.RESTAURANTS_PATH.read_text())
     assert len(wide["restaurants"]) == 6
 
@@ -118,6 +121,19 @@ def test_scope_flags_are_remembered_by_later_commands(data_dir, fake, capsys, mo
     assert cli.main(["sources", "--cuisines", "Hamburgers"]) == 0
     doc = json.loads(config.RESTAURANTS_PATH.read_text())
     assert doc["meta"]["cuisines"] == ["Hamburgers"] and doc["meta"]["min_inspection_date"] == "2024-01-01"
+    assert doc["meta"]["national_chains"] == "include"
+
+
+def test_national_chains_excluded_by_default(data_dir, capsys):
+    assert cli.main(["sources"]) == 0
+    doc = json.loads(config.RESTAURANTS_PATH.read_text())
+    assert [r["name"] for r in doc["restaurants"]] == ["Due West", "Hamburger America"]
+    assert doc["report"]["national_chains_excluded"] == {"McDonald's": 3}
+    assert doc["meta"]["national_chains"] == "exclude"
+    capsys.readouterr()
+    assert cli.main(["plan"]) == 0
+    plan = json.loads(capsys.readouterr().out)
+    assert plan["targets"] == 2 and plan["chains"] == 0
 
 
 def test_ctrl_c_exits_cleanly(data_dir, monkeypatch):

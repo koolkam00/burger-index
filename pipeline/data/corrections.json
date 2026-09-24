@@ -1,27 +1,38 @@
 {
-  "about": "Hand-checked corrections applied by `pipeline build` (see pipeline/corrections.py). Each was found by re-reading the live menu during the 2026-09-23 price check; all but McDonald's and Tavern on Jane were confirmed by two independent checks.",
+  "about": "Hand-checked corrections applied by `pipeline build` (see pipeline/corrections.py). Each was found by re-reading the live menu during the 2026-09-23 price check; all but Tavern on Jane were confirmed by two independent checks.",
   "corrections": [
     {
       "target": "camis:50054294",
       "checked_at": "2026-09-23",
       "source_url": "https://www.boucherieus.com/boucherie-west-village-menus/",
       "reason": "the $32 Boucherie Burger is the lunch price; dinner, late lunch and brunch list it at $34. The $18 beef sliders are a bar-only Green Hour (happy hour) item.",
-      "set": {"Boucherie Burger": {"price": 34, "menu_period": "dinner"}},
-      "drop": ["Beef Sliders"]
+      "set": {
+        "Boucherie Burger": {
+          "price": 34,
+          "menu_period": "dinner"
+        }
+      },
+      "drop": [
+        "Beef Sliders"
+      ]
     },
     {
       "target": "camis:40400155",
       "checked_at": "2026-09-23",
       "source_url": "https://www.busstopcafe-nyc.com/all-day-menu",
       "reason": "'Create Your Own Burger' is a section heading; its $5.95 is the lettuce, tomato and fries add-on, not a burger.",
-      "drop": ["Create Your Own Burger"]
+      "drop": [
+        "Create Your Own Burger"
+      ]
     },
     {
       "target": "camis:50131932",
       "checked_at": "2026-09-23",
       "source_url": "https://www.houstonhallny.com/menu/food-menu/",
       "reason": "the $14.95 beef sliders are a shared plate of three sliders, not a burger; the Houston Hall Burger & Fries ($21.95) is the only full-size burger.",
-      "drop": ["Pat LaFreida Beef Sliders"]
+      "drop": [
+        "Pat LaFreida Beef Sliders"
+      ]
     },
     {
       "target": "camis:40798329",
@@ -29,9 +40,21 @@
       "source_url": "https://hudsonhoundnyc.com/new-york-west-village-hudson-hound-food-menu",
       "price_source": "official_site",
       "reason": "the $20 prices came from an out-of-date aggregator copy; the restaurant's own menu lists its burgers at $23.71 (beef sliders are $3.09 each, minimum two, bar menu only).",
-      "set": {"The Hound Burger": 23.71, "Turkey Burger": 23.71},
-      "drop": ["Mushroom & Black Bean Veggie Burger", "Beef Sliders"],
-      "add": [{"name": "Beyond Burger", "price": 23.71, "protein": "veggie"}]
+      "set": {
+        "The Hound Burger": 23.71,
+        "Turkey Burger": 23.71
+      },
+      "drop": [
+        "Mushroom & Black Bean Veggie Burger",
+        "Beef Sliders"
+      ],
+      "add": [
+        {
+          "name": "Beyond Burger",
+          "price": 23.71,
+          "protein": "veggie"
+        }
+      ]
     },
     {
       "target": "camis:50113632",
@@ -39,35 +62,38 @@
       "source_url": "https://www.jackandcharlies118.com/menus/",
       "price_source": "official_site",
       "reason": "the $26 came from an aggregator copy last updated in 2022; the restaurant's dinner and brunch menus list the Bacon Cheeseburger at $30.",
-      "set": {"Bacon Cheeseburger": {"price": 30, "menu_period": "dinner"}}
+      "set": {
+        "Bacon Cheeseburger": {
+          "price": 30,
+          "menu_period": "dinner"
+        }
+      }
     },
     {
       "target": "camis:41541928",
       "checked_at": "2026-09-23",
       "source_url": "https://www.jeffreysgrocery.com/menus/",
       "reason": "$24 is the lunch price; the JG Burger is $28 on the dinner menu (Monday addition) and at brunch, and the index uses dinner prices.",
-      "set": {"JG Burger": {"price": 28, "menu_period": "dinner"}}
-    },
-    {
-      "target": "chain:mcdonalds",
-      "checked_at": "2026-09-23",
-      "source_url": "https://www.ubereats.com/store/mcdonalds-fidi-160-broadway/Cn7rm31RTym93cHeWFUSow",
-      "reason": "the scrape read only the page's featured items; the store's full Burgers section starts at a $4.39 Hamburger.",
-      "set": {"Cheeseburger": 4.49},
-      "add": [
-        {"name": "Hamburger", "price": 4.39, "protein": "beef"},
-        {"name": "McDouble", "price": 5.79, "protein": "beef"},
-        {"name": "Double Hamburger", "price": 5.99, "protein": "beef"},
-        {"name": "Quarter Pounder with Cheese", "price": 7.99, "protein": "beef"}
-      ]
+      "set": {
+        "JG Burger": {
+          "price": 28,
+          "menu_period": "dinner"
+        }
+      }
     },
     {
       "target": "camis:50124304",
       "checked_at": "2026-09-23",
       "source_url": "https://www.grubhub.com/restaurant/pauls-da-burger-joint-131-2nd-ave-new-york/4381032",
       "reason": "the scrape missed the Smash Burgers section; Paul's Smash Burger ($9.25) is cheaper than the $9.50 Beef Burger.",
-      "add": [{"name": "Paul's Smash Burger", "price": 9.25, "protein": "beef",
-               "description": "2.5 oz patty with cheese, lettuce, tomato, raw onion, pickles and Russian dressing"}]
+      "add": [
+        {
+          "name": "Paul's Smash Burger",
+          "price": 9.25,
+          "protein": "beef",
+          "description": "2.5 oz patty with cheese, lettuce, tomato, raw onion, pickles and Russian dressing"
+        }
+      ]
     },
     {
       "target": "camis:40573138",
@@ -76,11 +102,31 @@
       "price_source": "online_ordering",
       "reason": "the page scraped showed only four featured burgers; the full ordering menu starts at the $24 Original Tavern Burger. Its dine-in menu may list lower prices.",
       "add": [
-        {"name": "Original Tavern Burger", "price": 24, "protein": "beef"},
-        {"name": "Jane Street Burger", "price": 26, "protein": "beef"},
-        {"name": "Santa Fe Burger", "price": 26, "protein": "beef"},
-        {"name": "Creekstone 28-Day Dry Aged Burger", "price": 28, "protein": "beef"},
-        {"name": "Turkey Burger", "price": 22, "protein": "turkey"}
+        {
+          "name": "Original Tavern Burger",
+          "price": 24,
+          "protein": "beef"
+        },
+        {
+          "name": "Jane Street Burger",
+          "price": 26,
+          "protein": "beef"
+        },
+        {
+          "name": "Santa Fe Burger",
+          "price": 26,
+          "protein": "beef"
+        },
+        {
+          "name": "Creekstone 28-Day Dry Aged Burger",
+          "price": 28,
+          "protein": "beef"
+        },
+        {
+          "name": "Turkey Burger",
+          "price": 22,
+          "protein": "turkey"
+        }
       ]
     },
     {
@@ -89,8 +135,18 @@
       "source_url": "https://thelittleowlnyc.com/",
       "price_source": "official_site",
       "reason": "the $16 came from a retired online-ordering page; the restaurant's lunch menu lists the Bacon Cheeseburger & Fries at $24 (dinner has no burger).",
-      "drop": ["6 Oz. La Freida Bacon Cheese Burger", "Bacon Cheese Burger"],
-      "add": [{"name": "Bacon Cheeseburger & Fries", "price": 24, "protein": "beef", "menu_period": "lunch"}]
+      "drop": [
+        "6 Oz. La Freida Bacon Cheese Burger",
+        "Bacon Cheese Burger"
+      ],
+      "add": [
+        {
+          "name": "Bacon Cheeseburger & Fries",
+          "price": 24,
+          "protein": "beef",
+          "menu_period": "lunch"
+        }
+      ]
     },
     {
       "target": "camis:41219088",

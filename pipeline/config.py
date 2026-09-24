@@ -25,6 +25,8 @@ DEFAULT_CUISINES = ("Hamburgers",)
 # Restaurants whose latest DOHMH inspection is older than this are treated as closed.
 # 1900-01-01 means "not yet inspected" (new restaurant) and is always kept.
 DEFAULT_MIN_INSPECTION = "2023-01-01"
+# National fast-food chains (chains.ChainDef.national) are left out of the index: "exclude" | "include".
+DEFAULT_NATIONAL_CHAINS = "exclude"
 
 DEFAULT_MAX_CREDITS = 6000
 DEFAULT_WORKERS = 6

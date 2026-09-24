@@ -36,6 +36,8 @@ def _cuisines(s: str | None) -> list[str] | None:
 def _add_scope(p: argparse.ArgumentParser, *, refresh: bool = True) -> None:
     p.add_argument("--cuisines", help=f'comma-separated DOHMH cuisine_description values (default "{",".join(config.DEFAULT_CUISINES)}")')
     p.add_argument("--min-inspection-date", help=f"drop restaurants whose latest inspection is older (default {config.DEFAULT_MIN_INSPECTION}; 1900-01-01 = not yet inspected, always kept)")
+    p.add_argument("--national-chains", choices=("exclude", "include"),
+                   help=f"national fast-food chains (McDonald's, Shake Shack...): default {config.DEFAULT_NATIONAL_CHAINS}")
     if refresh:
         p.add_argument("--refresh-sources", action="store_true", help="re-download the DOHMH snapshot (free)")
 
@@ -58,22 +60,25 @@ def _scope(args, *, offline: bool = False, write: bool = True):
 
     Each scope flag that is not passed keeps the value data/restaurants.json was written with, so a
     `run --only X` after a wider `run --cuisines ...` does not silently shrink the dataset."""
-    explicit = bool(getattr(args, "cuisines", None) or getattr(args, "min_inspection_date", None) or getattr(args, "refresh_sources", False))
+    explicit = bool(getattr(args, "cuisines", None) or getattr(args, "min_inspection_date", None)
+                    or getattr(args, "national_chains", None) or getattr(args, "refresh_sources", False))
     if offline and not explicit and config.RESTAURANTS_PATH.exists():
         doc = json.loads(config.RESTAURANTS_PATH.read_text())
         return doc["restaurants"], doc.get("report", {}), doc.get("meta", {})
     saved = _saved_scope()
     cuisines = _cuisines(getattr(args, "cuisines", None)) or saved.get("cuisines") or list(config.DEFAULT_CUISINES)
     min_date = getattr(args, "min_inspection_date", None) or saved.get("min_inspection_date") or config.DEFAULT_MIN_INSPECTION
+    national = getattr(args, "national_chains", None) or saved.get("national_chains") or config.DEFAULT_NATIONAL_CHAINS
     if (list(cuisines), min_date) != (list(config.DEFAULT_CUISINES), config.DEFAULT_MIN_INSPECTION):
         log(f"scope: cuisines={','.join(cuisines)} min-inspection-date={min_date}"
             + (" (saved in data/restaurants.json; pass the flags to change)" if saved and not explicit else ""))
     restaurants, report = load_restaurants(
-        cuisines=cuisines, min_date=min_date, cache_dir=config.CACHE_DIR, csv_path=config.PILOT_CSV,
+        cuisines=cuisines, min_date=min_date, national_chains=national, cache_dir=config.CACHE_DIR, csv_path=config.PILOT_CSV,
         nta_path=config.NTA_PATH, refresh=getattr(args, "refresh_sources", False), offline=offline,
         write_to=config.RESTAURANTS_PATH if write else None,
     )
-    meta = {"cuisines": cuisines, "min_inspection_date": min_date, "dohmh_fetched_at": report.get("dohmh_fetched_at")}
+    meta = {"cuisines": cuisines, "min_inspection_date": min_date, "national_chains": national,
+            "dohmh_fetched_at": report.get("dohmh_fetched_at")}
     return restaurants, report, meta
 
 
