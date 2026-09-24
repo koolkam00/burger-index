@@ -54,6 +54,7 @@ MIN_DELIVERY_BURGERS = 3
 STALE_MENU_DAYS = 365
 
 # Scroll delivery-app store pages before extraction so lazy-loaded menu sections render.
-# Browser actions need a paid Context.dev plan (403 PAID_PLAN_REQUIRED on the current key),
-# so this is off; turning it on changes those scrapes' cache keys (+1 credit each).
-SCROLL_DELIVERY_APPS = False
+# Scroll lazy-loading delivery-app menus (Uber Eats, DoorDash, Postmates) before extracting, so the
+# page shows the whole menu. Browser actions need a paid Context.dev plan (on since the account moved
+# to Developer, 2026-09-24); +1 credit per such scrape, and it changes those scrapes' cache keys.
+SCROLL_DELIVERY_APPS = True
