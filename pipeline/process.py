@@ -4,8 +4,9 @@ process_target() is deterministic given the cache, so `build` replays it offline
 (Api(offline=True)) and gets exactly what the live run got — without spending credits.
 
 Per target (restaurant or chain) hard caps: 1 search, 1 map, 3 scrapes.
-  1. candidates from the restaurant list CSV (menu_url, then website — website first when the menu_url is a
-     special menu such as brunch or restaurant week); none -> web search
+  1. candidates: a hand-checked menu page (pipeline/data/menu_urls.json) first, then the restaurant list
+     CSV (menu_url, then website — website first when the menu_url is a special menu such as brunch or
+     restaurant week); none -> web search
   2. an official homepage is resolved to a menu page with Map URLs (homepage kept as fallback)
   3. scrape candidates in rank order until one yields a priced beef burger with no caveat
      (a delivery page that looks partial, a special menu, a menu file over a year old keep the
@@ -13,7 +14,10 @@ Per target (restaurant or chain) hard caps: 1 search, 1 map, 3 scrapes.
   4. candidates exhausted before the cap -> search once (if not done yet) and continue
 
 A target whose result may have been changed by a temporary Context.dev failure is marked
-retry_pending: replays treat it as not yet scraped, and the next live run retries the call.
+retry_pending: replays treat it as not yet scraped, and the next live run retries the call. When
+the same call has failed temporarily on config.TRANSIENT_ACCEPT_RUNS separate runs (data/run_log.jsonl,
+transient_history), the best result without it is accepted as final and status_detail says so; live
+runs still retry the call (a failing retry costs nothing).
 """
 
 from __future__ import annotations
@@ -24,6 +28,7 @@ import sys
 import threading
 import time
 import traceback
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -138,10 +143,14 @@ def evaluate_scrape(rec: dict, cand: Candidate, target: Target) -> Evaluation:
     menu = extract.normalize_menu(extracted)
     final_url = data.get("url") or cand.url
     fetched_at = rec.get("fetched_at")
-    if cand.category not in discover.OFFICIAL and not discover.same_restaurant(target, menu["restaurant_name"]):
+    # A hand-checked menu page (pipeline/data/menu_urls.json) is this restaurant's, whatever name or
+    # address it shows (a renamed place, a burger counter inside a bar, a brand page shared with another city).
+    checked = cand.origin == discover.OVERRIDE_ORIGIN
+    if not checked and cand.category not in discover.OFFICIAL and not discover.same_restaurant(
+            target, menu["restaurant_name"]):
         return Evaluation("wrong_restaurant", cand, final_url, fetched_at, menu,
                           f"page is for {menu['restaurant_name']!r}")
-    conflict = discover.page_location_conflict(target, menu["location"], cand.category)
+    conflict = None if checked else discover.page_location_conflict(target, menu["location"], cand.category)
     if conflict:
         return Evaluation("wrong_location", cand, final_url, fetched_at, menu, conflict)
     kind = extract.classify_menu(menu)
@@ -172,10 +181,61 @@ CAVEAT_TEXT = {
 }
 
 
+Call = tuple[str, str]  # (step, what it was on: search query, mapped domain or scraped URL)
+
+
+def _attempt_on(a: dict) -> str:
+    return str(a.get("url") or a.get("domain") or a.get("query") or "")
+
+
+def _legacy_transient_calls(line: dict) -> list[Call]:
+    """Temporary failures of a run-log line written before lines carried transient_calls: its
+    status_detail names the failed steps ('failed temporarily (map)'); scrape and search attempts
+    say TRANSIENT, a failed map attempt said only 'failed'."""
+    if not line.get("retry_pending"):
+        return []
+    m = re.search(r"failed temporarily \(([^)]*)\)", line.get("status_detail") or "")
+    steps = {x.strip() for x in m.group(1).split(",")} if m else set()
+    return [(a["step"], _attempt_on(a)) for a in line.get("attempts") or []
+            if a.get("step") in steps
+            and ("TRANSIENT" in str(a.get("outcome")) or (a["step"] == "map" and a.get("outcome") == "failed"))]
+
+
+def transient_history(run_log_path: Path | None = config.RUN_LOG_PATH) -> dict[str, dict[Call, set[str]]]:
+    """Per target key: each Context.dev call that failed temporarily -> the ids of the runs it failed
+    in, from data/run_log.jsonl. process_target uses it to stop waiting for a call that keeps failing."""
+    out: dict[str, dict[Call, set[str]]] = defaultdict(lambda: defaultdict(set))
+    try:
+        lines = Path(run_log_path).read_text().splitlines() if run_log_path else []
+    except FileNotFoundError:
+        return {}
+    for raw in lines:
+        try:
+            line = json.loads(raw) if raw.strip() else {}
+        except json.JSONDecodeError:
+            continue
+        target, run = line.get("target"), line.get("run_id")
+        if not target or not run:
+            continue
+        calls = ([tuple(c) for c in line["transient_calls"]] if "transient_calls" in line
+                 else _legacy_transient_calls(line))
+        for c in calls:
+            out[target][c].add(run)
+    return {t: dict(v) for t, v in out.items()}
+
+
+def _call_text(call: Call) -> str:
+    step, on = call
+    return {"map": f"site map of {on}", "search": "web search"}.get(step, f"{step} of {discover.host_of(on)}")
+
+
 @dataclass
 class TargetRun:
     target: Target
     api: Api
+    # transient_history() for this target: calls that failed temporarily -> the runs they failed in
+    history: dict[Call, set[str]] | None = None
+    run_id: str | None = None  # the live run this is part of (None: an offline replay)
     attempts: list[dict] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
     queue: list[Candidate] = field(default_factory=list)
@@ -190,13 +250,20 @@ class TargetRun:
     stop_reason: str | None = None
     search_error: str | None = None
     transient: list[str] = field(default_factory=list)  # steps that failed temporarily
+    transient_calls: list[Call] = field(default_factory=list)
 
     # -- steps -----------------------------------------------------------------------------
-    def _track(self, rec: dict, step: str) -> None:
+    def _track(self, rec: dict, step: str, on: str) -> None:
         self.credits += rec.get("charged", 0)
         self.cache_hits += 1 if rec.get("cached") else 0
         if rec.get("transient"):
             self.transient.append(step)
+            self.transient_calls.append((step, on))
+
+    def _failed_runs(self) -> dict[Call, set[str]]:
+        """Each call that failed temporarily here -> the separate runs it has failed in, this one included."""
+        now = {self.run_id} if self.run_id else set()
+        return {c: set((self.history or {}).get(c, ())) | now for c in dict.fromkeys(self.transient_calls)}
 
     def _queued(self, url: str) -> bool:
         k = discover.url_key(url)
@@ -211,11 +278,11 @@ class TargetRun:
         if special and any(o == "csv website" for _, o in urls):
             urls = [x for x in urls if x not in special] + special
         for url, origin in urls:
-            category, reason = discover.classify_url(url)
+            category, reason = discover.candidate_category(url, origin)
             if category == "reject":
                 self.notes.append(f"skipped {origin} ({reason})")
                 continue
-            if t.chain and not t.official_has_prices and category in discover.OFFICIAL:
+            if t.chain and not t.official_has_prices and category in discover.OFFICIAL and origin != discover.OVERRIDE_ORIGIN:
                 self.notes.append(f"skipped {origin} {discover.host_of(url)} (chain site shows no prices)")
                 if category in ("official_home", "official_menu") and not self.website:
                     self.website = discover.root_url(url)
@@ -227,7 +294,7 @@ class TargetRun:
         self.searches += 1
         q = discover.search_query(self.target)
         rec = self.api.search(q, target=self.target.key, exclude_domains=discover.SEARCH_EXCLUDE_DOMAINS)
-        self._track(rec, "search")
+        self._track(rec, "search", q)
         if not rec.get("ok"):
             err = (rec.get("error") or {}).get("code") or "error"
             self.search_error = err
@@ -250,12 +317,13 @@ class TargetRun:
         self.maps += 1
         domain = discover.host_of(home.url)
         rec = self.api.map_urls(domain, target=self.target.key, url_regex=discover.MAP_URL_REGEX, max_links=100)
-        self._track(rec, "map")
+        self._track(rec, "map", domain)
         urls = discover.pick_menu_urls(rec.get("data"), home.url, self.target) if rec.get("ok") else []
         found = [Candidate(u, discover.classify_url(u)[0], "map") for u in urls if not self._queued(u)]
         found = [c for c in found if c.category != "reject"]
+        failed = f"failed: {(rec.get('error') or {}).get('code') or 'error'}"
         self.attempts.append({"step": "map", "domain": domain,
-                              "outcome": f"{len(found)} menu page(s)" if rec.get("ok") else "failed",
+                              "outcome": f"{len(found)} menu page(s)" if rec.get("ok") else failed,
                               "credits": rec.get("charged", 0), "cached": rec.get("cached")})
         return found
 
@@ -264,7 +332,7 @@ class TargetRun:
         self.tried.add(discover.url_key(cand.url))
         rec = self.api.scrape(cand.url, target=self.target.key, maybe_pdf=discover.maybe_pdf(cand.url),
                               scroll=config.SCROLL_DELIVERY_APPS and cand.category == "delivery_app")
-        self._track(rec, "scrape")
+        self._track(rec, "scrape", cand.url)
         ev = evaluate_scrape(rec, cand, self.target)
         n_priced = sum(1 for b in (ev.menu or {}).get("burgers", []) if b["price"] is not None)
         outcome = OUTCOME_TEXT[ev.kind] + (f": {ev.message}" if ev.message else "")
@@ -328,8 +396,12 @@ class TargetRun:
         menu_url = best.url if has_menu else None
         price_source = best.candidate.price_source if has_menu else None
         # A temporary failure may have hidden the answer: unless a price was found anyway, the result
-        # is provisional (replays count the target as not yet scraped; the next live run retries).
-        retry_pending = bool(self.transient) and not (best and (best.final or best.kind == "priced"))
+        # is provisional (replays count the target as not yet scraped; the next live run retries) —
+        # until the same calls have failed on TRANSIENT_ACCEPT_RUNS separate runs: then it stands.
+        hidden = bool(self.transient) and not (best and (best.final or best.kind == "priced"))
+        failed_runs = self._failed_runs()
+        accepted = hidden and all(len(r) >= config.TRANSIENT_ACCEPT_RUNS for r in failed_runs.values())
+        retry_pending = hidden and not accepted
         parts: list[str] = []
         if status == "priced":
             parts.append(f"Prices from {discover.SOURCE_LABEL[price_source]} ({discover.host_of(menu_url)}).")
@@ -375,6 +447,11 @@ class TargetRun:
         if retry_pending:
             steps = ", ".join(dict.fromkeys(self.transient))
             parts.append(f"A Context.dev call failed temporarily ({steps}); the next run retries it.")
+        elif accepted:
+            calls = ", ".join(_call_text(c) for c in failed_runs)
+            n = min(len(r) for r in failed_runs.values())
+            parts.append(f"A Context.dev call ({calls}) failed temporarily on {n} separate runs, so this is the best "
+                         "result without it; later runs still retry it.")
         if status != "priced":
             tried = [f"{discover.host_of(a['url'])} ({a['outcome']})" for a in self.attempts if a["step"] == "scrape"]
             if tried:
@@ -385,7 +462,8 @@ class TargetRun:
         if skipped and status != "priced":
             parts.append(_sentence("; ".join(skipped)))
         website = self.website or next((u for u, o in t.csv_urls if o == "csv website"), None)
-        if not website and menu_url and best and best.candidate.category in discover.OFFICIAL:
+        if (not website and menu_url and best and best.candidate.category in discover.OFFICIAL
+                and best.candidate.origin != discover.OVERRIDE_ORIGIN):  # an override may be an ordering app's page
             website = discover.root_url(menu_url)
         return {
             "target": t.key,
@@ -407,6 +485,8 @@ class TargetRun:
             "credits": self.credits,
             "cache_hits": self.cache_hits,
             "retry_pending": retry_pending,
+            "transient_calls": [list(c) for c in dict.fromkeys(self.transient_calls)],
+            "transient_accepted": accepted,
             # the chain location whose menu was read (build treats it as the chain's source row)
             "source_key": source.get("key"),
         }
@@ -423,27 +503,31 @@ def source_member(t: Target, ev: Evaluation) -> dict:
         at = [m for m in t.members if address_in_text(m.get("address"), loc)]
         if len(at) == 1:
             return at[0]
-    if ev.candidate.origin.startswith("csv"):
+    if ev.candidate.origin.startswith("csv") or ev.candidate.origin == discover.OVERRIDE_ORIGIN:
         for m in t.members:
             if ev.candidate.url in (m.get("menu_url"), m.get("website")):
                 return m
     return t.rep
 
 
-def process_target(target: Target, api: Api) -> dict:
-    return TargetRun(target, api).run()
+def process_target(target: Target, api: Api, *, history: dict[Call, set[str]] | None = None,
+                   run_id: str | None = None) -> dict:
+    """history: transient_history()[target.key]; run_id: the live run (None for an offline replay)."""
+    return TargetRun(target, api, history=history, run_id=run_id).run()
 
 
-def replay(targets: list[Target], api: Api) -> tuple[dict[str, dict], list[Target]]:
+def replay(targets: list[Target], api: Api, *, history: dict[str, dict[Call, set[str]]] | None = None,
+           ) -> tuple[dict[str, dict], list[Target]]:
     """Offline replay from cache: (results for fully-cached targets, targets not yet scraped).
 
     A target whose cached path includes a temporary failure that may have changed its result
-    (retry_pending) counts as not yet scraped: `plan` prices its retry, `build` leaves it out."""
+    (retry_pending) counts as not yet scraped: `plan` prices its retry, `build` leaves it out —
+    unless history (transient_history()) shows the same calls failing on TRANSIENT_ACCEPT_RUNS runs."""
     results: dict[str, dict] = {}
     pending: list[Target] = []
     for t in targets:
         try:
-            res = process_target(t, api)
+            res = process_target(t, api, history=(history or {}).get(t.key))
         except CacheMiss:
             pending.append(t)
             continue
@@ -465,9 +549,11 @@ def run_targets(
     workers: int = config.DEFAULT_WORKERS,
     run_log_path: Path | None = config.RUN_LOG_PATH,
     run_id: str | None = None,
+    history: dict[str, dict[Call, set[str]]] | None = None,
 ) -> dict[str, Any]:
     """Process targets concurrently. Stops cleanly at --max-credits: finished targets are kept
     (their responses are cached), unstarted/aborted ones are reported as 'stopped'.
+    history: transient_history() of earlier runs (a call failing temporarily again is accepted).
 
     Ctrl-C (KeyboardInterrupt in the main thread) stops the run: queued targets are cancelled,
     in-flight ones make no further live call (Api.stop_event), and the interrupt is re-raised."""
@@ -485,7 +571,7 @@ def run_targets(
         if interrupted.is_set():
             return "stopped", "run interrupted"
         try:
-            return "done", process_target(t, api)
+            return "done", process_target(t, api, history=(history or {}).get(t.key), run_id=run_id)
         except CreditCapReached as e:
             return "stopped", str(e)
         except FatalError as e:
@@ -523,7 +609,8 @@ def run_targets(
                 "urls_tried": [a["url"] for a in res["attempts"] if a["step"] == "scrape"],
                 "attempts": res["attempts"], "searches": res["searches"], "maps": res["maps"],
                 "scrapes": res["scrapes"], "credits": res["credits"], "cache_hits": res["cache_hits"],
-                "retry_pending": res.get("retry_pending", False), "status_detail": res["status_detail"],
+                "retry_pending": res.get("retry_pending", False), "transient_calls": res.get("transient_calls", []),
+                "status_detail": res["status_detail"],
             }
         else:
             log(f"{prefix}: {kind.upper()} — {payload}")

@@ -25,8 +25,8 @@ from .api import Api, CreditLedger, DiskCache, estimate_credits, last_known_bala
 from .build import assemble, write_dataset
 from .chains import build_targets, select_targets
 from .context_client import scrape_request
-from .discover import OFFICIAL, classify_url
-from .process import log, replay, run_targets
+from .discover import OFFICIAL, OVERRIDE_ORIGIN, candidate_category
+from .process import log, replay, run_targets, transient_history
 from .sources import ScopeError, fetch_nta2010, load_restaurants
 
 
@@ -125,9 +125,9 @@ def _estimate(targets) -> dict:
     credits = {"first_pass": 0, "expected": 0.0, "worst_case": 0}
     for t in targets:
         usable = []
-        for url, _origin in t.csv_urls:
-            cat, _ = classify_url(url)
-            if cat == "reject" or (t.chain and not t.official_has_prices and cat in OFFICIAL):
+        for url, origin in t.csv_urls:
+            cat, _ = candidate_category(url, origin)
+            if cat == "reject" or (t.chain and not t.official_has_prices and cat in OFFICIAL and origin != OVERRIDE_ORIGIN):
                 continue
             usable.append((url, cat))
         if usable:
@@ -160,9 +160,11 @@ def cmd_plan(args) -> int:
     restaurants, report, meta = _scope(args, write=False)
     targets = build_targets(restaurants)
     selected = select_targets(targets, only=args.only, limit=args.limit)
-    cached, pending = replay(selected, Api(DiskCache(config.CACHE_DIR), offline=True))
+    cached, pending = replay(selected, Api(DiskCache(config.CACHE_DIR), offline=True),
+                             history=transient_history(config.RUN_LOG_PATH))
     chains = [t for t in selected if t.chain]
     est = _estimate(pending)
+    overrides = {m["key"] for t in selected for m in t.members if m.get("menu_url_override")}
     plan = {
         "scope": meta,
         "restaurants": len(restaurants),
@@ -178,6 +180,12 @@ def cmd_plan(args) -> int:
         "targets_already_cached": len(cached),
         "targets_to_scrape": len(pending),
         "targets_to_scrape_with_csv_url": sum(1 for t in pending if t.csv_urls),
+        # pipeline/data/menu_urls.json: a changed menu_url means a new scrape path (not cached yet)
+        "targets_to_scrape_with_menu_url_override": sum(
+            1 for t in pending if any(m["key"] in overrides for m in t.members)),
+        # the same Context.dev call failed temporarily on config.TRANSIENT_ACCEPT_RUNS runs: result accepted
+        "targets_accepted_after_repeated_temporary_failures": sorted(
+            r["name"] for r in cached.values() if r.get("transient_accepted")),
         **est,
         "caps_per_target": {"searches": config.MAX_SEARCHES, "maps": config.MAX_MAPS, "scrapes": config.MAX_SCRAPES},
         "max_credits": args.max_credits,
@@ -198,7 +206,7 @@ def cmd_plan(args) -> int:
 
 def _build(targets, meta, *, output: Path, report: dict | None = None) -> dict:
     api = Api(DiskCache(config.CACHE_DIR), offline=True)
-    results, pending = replay(targets, api)
+    results, pending = replay(targets, api, history=transient_history(config.RUN_LOG_PATH))
     dataset = assemble(targets, results, meta=meta, n_pending_restaurants=sum(len(t.members) for t in pending),
                        corrections=corrections.load(), report=report)
     write_dataset(dataset, output, config.CONTRACT_PATH)
@@ -242,7 +250,8 @@ def cmd_run(args) -> int:
     api = Api(DiskCache(config.CACHE_DIR), ledger, refresh=args.refresh, max_age_ms=0 if args.refresh else None)
     log(f"run {run_id}: {len(selected)} target(s) ({sum(len(t.members) for t in selected)} restaurants), "
         f"workers={args.workers}, max-credits={args.max_credits}{', refresh' if args.refresh else ''}")
-    summary = run_targets(selected, api, workers=args.workers, run_log_path=config.RUN_LOG_PATH, run_id=run_id)
+    summary = run_targets(selected, api, workers=args.workers, run_log_path=config.RUN_LOG_PATH, run_id=run_id,
+                          history=transient_history(config.RUN_LOG_PATH))
     summary.pop("results", None)
     summary["lifetime_credits_spent"] = lifetime_spend(config.LEDGER_PATH)
     if summary["capped"]:

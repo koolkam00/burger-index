@@ -1,0 +1,365 @@
+{
+  "about": "Hand-checked menu pages per restaurant key (camis:... or csv:..., as in data/restaurants.json), applied by `pipeline sources` (see pipeline/sources.py load_menu_url_overrides): the page becomes the restaurant's menu_url, is scraped first and is trusted as this restaurant's menu; burger-list-master.csv is not edited. Use one when the page the list names (or the scrape found) is stale, partial or another restaurant's, and the restaurant's own current menu page (or, when it publishes none, this location's full menu on an ordering or delivery site) was checked by hand. A changed menu_url means a new scrape on the next `run` (credits); an override the list catches up with, or whose key leaves the scope, is reported as unused. Entries from the 2026-09-24 price check and unpriced-restaurant recovery.",
+  "overrides": {
+    "camis:50135016": {
+      "name": "Bay Ridge House of Wings",
+      "menu_url": "https://www.houseofwingsnyc.com/order/brooklyn",
+      "checked_at": "2026-09-24",
+      "reason": "The order.online store page scraped (not viewable when checked) gave item names and prices that match neither current source ('Single Patty Burger' $7.99); the restaurant's own ordering page for 8812 3rd Ave lists its current menu (Smash Burger $7)."
+    },
+    "camis:50168958": {
+      "name": "Burger Spot",
+      "menu_url": "https://order.toasttab.com/online/burgerspot",
+      "checked_at": "2026-09-24",
+      "reason": "The homepage scraped shows only a 3-item 'Popular' carousel; the full menu (Little Burger and other cheaper beef burgers) is on the restaurant's own Toast ordering page, linked from its site."
+    },
+    "camis:41713405": {
+      "name": "Café Rue Dix",
+      "menu_url": "https://www.ruedixbrooklyn.com/menus",
+      "checked_at": "2026-09-24",
+      "reason": "The SinglePlatform copy is out of date (Rue Dix Burger $14); the restaurant's own menu lists it at $24."
+    },
+    "camis:40852659": {
+      "name": "Chelsea Square Restaurant",
+      "menu_url": "https://menupages.com/chelsea-square-restaurant/368-w-23rd-st-new-york",
+      "checked_at": "2026-09-24",
+      "reason": "The BeyondMenu listing scraped is inactive and years out of date (Broiled Jumbo Beefburger $8.58); the active MenuPages/Grubhub menu for 368 W 23rd St lists it at $15."
+    },
+    "camis:40393395": {
+      "name": "Court Square Diner",
+      "menu_url": "https://www.courtsquarediner.com/sandwiches-wraps-and-burgers",
+      "checked_at": "2026-09-24",
+      "reason": "The /menus page scraped shows only appetizers and salads; the diner's own 'Sandwiches, Wraps & Burgers' page lists its 1/2 lb burgers from $8.95."
+    },
+    "camis:41386105": {
+      "name": "Gracie Mews Diner",
+      "menu_url": "https://graciemews.hngr.co/menu",
+      "checked_at": "2026-09-24",
+      "reason": "The SinglePlatform copy is out of date (Beefburger $7.80); the diner's own ordering menu is current. The two checks read different current prices (Grubhub $16.32, the ordering menu's API $15), so the page is re-scraped rather than priced by hand."
+    },
+    "camis:41437865": {
+      "name": "Henry Public",
+      "menu_url": "https://www.henrypublic.com/onlinemenu-supper",
+      "checked_at": "2026-09-24",
+      "reason": "The brunch menu was scraped (Hamburger Sandwich $17); the Supper menu lists it at $22 and the index uses dinner prices."
+    },
+    "camis:50040374": {
+      "name": "Inwood Bar & Grill",
+      "menu_url": "https://inwoodbarandgrill.com/new-york-inwood-inwood-bar-and-grill-food-menu",
+      "checked_at": "2026-09-24",
+      "reason": "The SinglePlatform copy is out of date (no Kobe Burger or Turkey Burger on the current menu); the restaurant's own food menu lists its current burgers."
+    },
+    "camis:41172734": {
+      "name": "Junior's Restaurant",
+      "menu_url": "https://cdn.shopify.com/s/files/1/0694/7517/2609/files/45th_Main_Menu_3.1.26.pdf",
+      "checked_at": "2026-09-24",
+      "reason": "The SinglePlatform copy is out of date (B Steakburger $15.25); the official 45th St main menu PDF dated 3.1.26, linked from juniorscheesecake.com/pages/45th-st-nyc, lists it at $16.25."
+    },
+    "camis:40369521": {
+      "name": "Knickerbocker Bar & Grill",
+      "menu_url": "https://www.knickerbockerbarandgrill.com/dinner",
+      "checked_at": "2026-09-24",
+      "reason": "The lunch menu was scraped ($18.95); the dinner menu lists the 9 oz House Blend Burger at $28.50 and the index uses dinner prices."
+    },
+    "camis:50100549": {
+      "name": "Ritz Diner",
+      "menu_url": "https://food.orders.co/jmzugxat",
+      "checked_at": "2026-09-24",
+      "reason": "The homepage scraped shows only featured items (Ritz Burger $14.75); the full menu, with the plain Basics Burger ($14.25 on Grubhub), is on the diner's own online-ordering page."
+    },
+    "camis:50066399": {
+      "name": "Serafina",
+      "menu_url": "https://www.serafinarestaurant.com/tribeca",
+      "checked_at": "2026-09-24",
+      "reason": "The Financial District location's page was scraped; the record is the TriBeCa location (95 West Broadway at Reade St), whose All Day menu lists the Serafina Burger at $31."
+    },
+    "camis:40800483": {
+      "name": "Step In Restaurant",
+      "menu_url": "https://www.stepinnyc.com/menus/dinner-menu?location=step-in-restaurant",
+      "checked_at": "2026-09-24",
+      "reason": "The $24 Country Prime Burger came from the brunch menu; the official dinner menu has a '9oz USDA Prime Burgers' section (Classic Hamburger $17 in a 2025 snapshot; Grubhub $21.50), so its current price is re-scraped."
+    },
+    "csv:sunday-dreamin-manhattan": {
+      "name": "Sunday Dreamin",
+      "menu_url": "https://www.beyondmenu.com/61749/new-york/sunday-dreamin--new-york-10003.aspx",
+      "checked_at": "2026-09-24",
+      "reason": "The source was a June 2024 brunch blog post naming only the Fuego Burger; the restaurant's online-ordering menu lists its full Burgers section (Sunday Burger $18.40, Fuego $19.55)."
+    },
+    "camis:41298603": {
+      "name": "The Smith",
+      "menu_url": "https://thesmithrestaurant.com/location/east-village/",
+      "checked_at": "2026-09-24",
+      "reason": "The Midtown location's menu was scraped; this is the East Village restaurant at 55 Third Ave, whose own page lists Burger royale $26 and The Smith Burger $28."
+    },
+    "camis:40388218": {
+      "name": "Walker's",
+      "menu_url": "https://www.walkersbarnyc.com/dinner",
+      "checked_at": "2026-09-24",
+      "reason": "The /menu page is an older copy the restaurant stopped updating (Cheeseburger $19); its current /dinner page lists the Burger at $22."
+    },
+    "camis:50088377": {
+      "name": "77 Burger",
+      "menu_url": "https://perkchops.com/77-burger-77-pearl-st-new-york-ny-10004",
+      "checked_at": "2026-09-24",
+      "reason": "The restaurant's own site (77burgernyc.com) links its full menu and ordering to this page for 77 Pearl St (Angus Beef Burger $15.75)."
+    },
+    "csv:98k-burger-staten-island": {
+      "name": "98K Burger",
+      "menu_url": "https://www.seamless.com/menu/98k-hamburgers-357a-new-dorp-ln-staten-island/7838424",
+      "checked_at": "2026-09-24",
+      "reason": "98K Hamburgers, 357A New Dorp Ln: Seamless page of the same Grubhub store (Context.dev scrapes of grubhub.com store pages returned no menu on 2026-09-24; seamless.com store pages do). Grubhub listed a standalone Cheeseburger ($7.98, marked unavailable when checked)."
+    },
+    "camis:40720393": {
+      "name": "Andrew's Diner",
+      "menu_url": "https://andrewsdiner.com/wp-content/uploads/2022/07/Andrews-Main-Menu-01-22-3.pdf",
+      "checked_at": "2026-09-24",
+      "reason": "The 'Full Menu' PDF linked from the diner's own site (4160 Hylan Blvd); the page scraped before (andrewsnycdiner.com) is a different Andrews diner in Manhattan. The PDF dates from 2022."
+    },
+    "camis:41107259": {
+      "name": "Bantry Bay Publick House",
+      "menu_url": "https://bantrybaynyc.com/long-island-city-blissville-bantry-bay-food-menu",
+      "checked_at": "2026-09-24",
+      "reason": "The restaurant's own food menu page ('Bantry Bay's Famous Burgers', House Deluxe Burger $15)."
+    },
+    "camis:50127892": {
+      "name": "Bar Burger",
+      "menu_url": "https://www.barburgerjacksonheights.com/order",
+      "checked_at": "2026-09-24",
+      "reason": "The restaurant's own Menufy ordering page for 85-16 Roosevelt Ave; it showed only bar categories when checked in the morning (closed until 5 PM), so the burger price is unconfirmed."
+    },
+    "camis:41052309": {
+      "name": "Bean Post Pub",
+      "menu_url": "https://www.beanpostpub.com/menu",
+      "checked_at": "2026-09-24",
+      "reason": "The restaurant's main menu page (loaded by JavaScript; Beef Burger $13 when checked); the scrape had landed on its seafood samplers subpage."
+    },
+    "camis:50000726": {
+      "name": "Bill's Bar & Burger Downtown",
+      "menu_url": "https://www.billsbarandburger.com/location/bills-bar-and-burger-downtown-nyc/",
+      "checked_at": "2026-09-24",
+      "reason": "The official page for the Downtown NYC location at 85 West St, with its menu (The Bill's Burger $16.99)."
+    },
+    "camis:50009539": {
+      "name": "Blackstone Bar & Grill",
+      "menu_url": "https://www.seamless.com/menu/blackstone-bar--grill-3713-riverdale-ave-bronx/313711",
+      "checked_at": "2026-09-24",
+      "reason": "Blackstone Bar & Grill, 3713 Riverdale Ave: Seamless page of the same Grubhub store (Context.dev scrapes of grubhub.com store pages returned no menu on 2026-09-24; seamless.com store pages do); its own ordering page renders no prices. Grubhub listed the Classic Burger at $18."
+    },
+    "camis:41577394": {
+      "name": "Bronx Burger House",
+      "menu_url": "https://www.seamless.com/menu/bronx-burger-house-5816-mosholu-ave-the-bronx/1784191",
+      "checked_at": "2026-09-24",
+      "reason": "Bronx Burger House, 5816 Mosholu Ave (its own site now redirects to 'Site Not Available'): Seamless page of the same Grubhub store (Context.dev scrapes of grubhub.com store pages returned no menu on 2026-09-24; seamless.com store pages do). Grubhub listed the Classic Burger at $15."
+    },
+    "camis:50065601": {
+      "name": "Burger & Lobster",
+      "menu_url": "https://www.burgerandlobster.com/locations/new-york/bryant-park/menu/",
+      "checked_at": "2026-09-24",
+      "reason": "The official menu page of the Bryant Park location (132 W 43rd St); Original Burger $25."
+    },
+    "camis:50165320": {
+      "name": "Burger Bhai",
+      "menu_url": "https://burgerbhaii.com/",
+      "checked_at": "2026-09-24",
+      "reason": "The restaurant's own site carries its menu for 1017 Cortelyou Rd in the page itself (Classic Smash Burger $7.99)."
+    },
+    "camis:50123103": {
+      "name": "Burger Village",
+      "menu_url": "https://burgervillage.thefastbite.com/categories.php?location=13",
+      "checked_at": "2026-09-24",
+      "reason": "burgervillage.com's menu page shows no prices; the chain's own ordering site with location 13 (120 Church Street) selected lists its burgers ($26.25 and up)."
+    },
+    "camis:50153065": {
+      "name": "Butcher's Burger",
+      "menu_url": "https://www.butchersburger.com/images/FILE_7086.pdf",
+      "checked_at": "2026-09-24",
+      "reason": "The menu PDF linked from butchersburger.com/menu.html (7501 New Utrecht Ave); the ordering site searched before (orderbutchersburger.com) is an unrelated restaurant in Egypt."
+    },
+    "camis:40604207": {
+      "name": "City Island Diner",
+      "menu_url": "https://ordering.chownow.com/order/32443/locations/48237",
+      "checked_at": "2026-09-24",
+      "reason": "The diner's own 'Order Online' link (ChowNow, 304 City Island Ave); its site's menu is JPG images only."
+    },
+    "camis:50064635": {
+      "name": "DuMont Burger",
+      "menu_url": "https://www.seamless.com/menu/dumont-burger-314-bedford-ave-brooklyn/392718",
+      "checked_at": "2026-09-24",
+      "reason": "DuMont Burger, 314 Bedford Ave (dumontburger.com is now an unrelated blog): Seamless page of the same Grubhub store (Context.dev scrapes of grubhub.com store pages returned no menu on 2026-09-24; seamless.com store pages do). Grubhub listed the Classic Burger 4oz at $10.95."
+    },
+    "camis:41329576": {
+      "name": "Dutch Boy Burger",
+      "menu_url": "https://www.seamless.com/menu/franklin-park-766-franklin-ave-brooklyn/2878081",
+      "checked_at": "2026-09-24",
+      "reason": "Dutch Boy Burger operates inside the Franklin Park bar (liquor license: Franklin Park LLC, 618 St Johns Pl; ordering sites use 766 Franklin Ave, the same corner), so its store is listed as Franklin Park: Seamless page of the same Grubhub store (Context.dev scrapes of grubhub.com store pages returned no menu on 2026-09-24; seamless.com store pages do). Grubhub listed the Classic Smash Burger at $11."
+    },
+    "camis:50063906": {
+      "name": "First Stop Bar and Grill",
+      "menu_url": "https://www.seamless.com/menu/first-stop-bar-and-grill-27-08-queens-plaza-south-queens/6645216",
+      "checked_at": "2026-09-24",
+      "reason": "First Stop Bar and Grill, 27-08 Queens Plaza South: Seamless page of the same Grubhub store (Context.dev scrapes of grubhub.com store pages returned no menu on 2026-09-24; seamless.com store pages do). Grubhub listed the Grass Fed Angus Burger with Cheese at $16.95."
+    },
+    "csv:flanagans-tavern-staten-island": {
+      "name": "Flanagan's Tavern",
+      "menu_url": "https://www.seamless.com/menu/jds-tavern-3932-amboy-rd-staten-island/7842024",
+      "checked_at": "2026-09-24",
+      "reason": "Flanagan's Tavern at 3932 Amboy Rd is now JD's Tavern; its own menu page shows no prices and links this store: Seamless page of the same Grubhub store (Context.dev scrapes of grubhub.com store pages returned no menu on 2026-09-24; seamless.com store pages do). Grubhub listed JD's Burger at $15.99."
+    },
+    "camis:41151163": {
+      "name": "Galaxy Diner",
+      "menu_url": "https://www.seamless.com/menu/galaxy-diner-665-9th-ave-new-york/65634",
+      "checked_at": "2026-09-24",
+      "reason": "Galaxy Diner, 665 9th Ave (its own order link uses the same store id): Seamless page of the same Grubhub store (Context.dev scrapes of grubhub.com store pages returned no menu on 2026-09-24; seamless.com store pages do). Grubhub listed the plain 8 oz Country Beef Burger at $13.95."
+    },
+    "camis:50143115": {
+      "name": "Hamburger America (SoHo)",
+      "menu_url": "https://www.hamburgeramerica.com/menus/",
+      "checked_at": "2026-09-24",
+      "reason": "The restaurant's own menu page (155 W Houston St, the MacDougal St corner): single smash and fried onion burgers $7.75."
+    },
+    "camis:50116518": {
+      "name": "Handcraft Burgers & Brew",
+      "menu_url": "https://www.seamless.com/menu/handcraft-burgers--brew-110-w-40th-st-new-york/3040499",
+      "checked_at": "2026-09-24",
+      "reason": "Handcraft Burgers & Brew, 110 W 40th St (its own site shows no prices): Seamless page of the same Grubhub store (Context.dev scrapes of grubhub.com store pages returned no menu on 2026-09-24; seamless.com store pages do). Grubhub listed the Single Ultimate Smash at $8."
+    },
+    "camis:41645852": {
+      "name": "Harlem Public",
+      "menu_url": "https://www.harlempublic.com/s/Harlem-Public-Menu-Summer-2026.pdf",
+      "checked_at": "2026-09-24",
+      "reason": "The Summer 2026 lunch and dinner menu PDF linked from harlempublic.com/menus (scanned pages, read by OCR); its 'Build It Your Damn Self' beef burger is $13."
+    },
+    "camis:50166387": {
+      "name": "Holy Burger",
+      "menu_url": "https://www.seamless.com/menu/holy-cow-burgers-23-14-36th-avenue-astoria/10781928",
+      "checked_at": "2026-09-24",
+      "reason": "Holy Burger (Holy Cow) Astoria, 23-14 36th Ave, linked from holyburger.nyc (its Toast page did not load): Seamless page of the same Grubhub store (Context.dev scrapes of grubhub.com store pages returned no menu on 2026-09-24; seamless.com store pages do). Grubhub listed the Classic Burger at $11.35."
+    },
+    "camis:50164398": {
+      "name": "Holy Cow Burgers",
+      "menu_url": "https://www.seamless.com/menu/holy-burger-midtown-906-3rd-ave-new-york/10309136",
+      "checked_at": "2026-09-24",
+      "reason": "Holy Cow Midtown, 906 3rd Ave, now Holy Burger (Midtown): Seamless page of the same Grubhub store (Context.dev scrapes of grubhub.com store pages returned no menu on 2026-09-24; seamless.com store pages do). Grubhub listed the Classic Burger at $11.35 but marked every item unavailable when checked."
+    },
+    "camis:50160423": {
+      "name": "Holy Cow Burgers",
+      "menu_url": "https://www.seamless.com/menu/holy-burger-upper-west-side-23-w-100th-st-new-york/8990232",
+      "checked_at": "2026-09-24",
+      "reason": "Holy Cow at 23 W 100th St, now Holy Burger Upper West Side: Seamless page of the same Grubhub store (Context.dev scrapes of grubhub.com store pages returned no menu on 2026-09-24; seamless.com store pages do). Grubhub listed the Classic Burger at $11.35."
+    },
+    "camis:50035412": {
+      "name": "Joyce's Tavern",
+      "menu_url": "https://www.joycestavern.com/app/download/971382449/Winter+2026-Daily+Menu-Final.pdf",
+      "checked_at": "2026-09-24",
+      "reason": "The restaurant's 2026 daily menu PDF, linked from its /food-menu-specials/ page (Classic Hamburger $14.95, cash price)."
+    },
+    "camis:50143768": {
+      "name": "K.O Burger",
+      "menu_url": "https://www.seamless.com/menu/ko-burger-1-3-eldridge-street-new-york/7187728",
+      "checked_at": "2026-09-24",
+      "reason": "K.O Burger, 1-3 Eldridge St (its own menu shows no prices; its Toast page is blocked): Seamless page of the same Grubhub store (Context.dev scrapes of grubhub.com store pages returned no menu on 2026-09-24; seamless.com store pages do). Grubhub listed the single Knockout Burger at $9."
+    },
+    "camis:41410066": {
+      "name": "Locksmith Wine & Burger Bar",
+      "menu_url": "https://menu.locksmithbarnyc.com",
+      "checked_at": "2026-09-24",
+      "reason": "The restaurant's own menu site, linked from locksmithbarnyc.com (4463 Broadway): Locksmith Burger $18."
+    },
+    "camis:50088692": {
+      "name": "Milk Burger",
+      "menu_url": "https://www.seamless.com/menu/milk-burger-148-bruckner-blvd-the-bronx/1733453",
+      "checked_at": "2026-09-24",
+      "reason": "Milk Burger, 148 Bruckner Blvd; its own site links only delivery apps: Seamless page of the same Grubhub store (Context.dev scrapes of grubhub.com store pages returned no menu on 2026-09-24; seamless.com store pages do). Grubhub listed the Smash Burger at $11."
+    },
+    "csv:millard-fillmore-tavern-queens": {
+      "name": "Millard Fillmore Tavern",
+      "menu_url": "https://fillmorestavern.com/new-york-flushing-fillmore-s-tavern-food-menu",
+      "checked_at": "2026-09-24",
+      "reason": "Now Fillmore's Tavern, same building (166-02 65th Ave); its own food menu lists The Fillmore Burger at $16.78."
+    },
+    "camis:50180624": {
+      "name": "Moe's Pastrami & Burgers",
+      "menu_url": "https://www.getsauce.com/order/moes-pastrami-and-burgers/menu",
+      "checked_at": "2026-09-24",
+      "reason": "The restaurant's own direct-ordering page for 569 Flatbush Ave (Hamburgers $8.99)."
+    },
+    "camis:50150993": {
+      "name": "New York Luncheonette",
+      "menu_url": "https://uqrmecdn.s3.us-east-2.amazonaws.com/u/575141/989431-23979648d92e9a79c59cb83c5c2bff4f4295044.pdf",
+      "checked_at": "2026-09-24",
+      "reason": "The Lunch/Dinner menu PDF behind the 'Browse Menu' link on newyorkluncheonette.com (Hamburger $14.95); the DoorDash page scraped before had no burgers."
+    },
+    "csv:og-burger-box-queens": {
+      "name": "OG Burger Box",
+      "menu_url": "https://ogburgerbox.com/menu/",
+      "checked_at": "2026-09-24",
+      "reason": "The brand's own menu page (shared with its Wayne, NJ shop); Grubhub's Astoria store (36-18 30th Ave) shows the same Single Burger $7.95."
+    },
+    "camis:40387277": {
+      "name": "Peculier Pub",
+      "menu_url": "http://www.peculierpub.com/menu.pdf",
+      "checked_at": "2026-09-24",
+      "reason": "The menu PDF behind the menu button on the pub's own site, updated 07.03.2026 (Hamburger $12)."
+    },
+    "camis:40860723": {
+      "name": "Purity Diner",
+      "menu_url": "https://www.doordash.com/store/purity-diner-brooklyn-35756745/",
+      "checked_at": "2026-09-24",
+      "reason": "The DoorDash store for 289 7th Ave is the diner's current online menu (Hamburger Deluxe); Grubhub has ordering off. Its price could not be read when checked."
+    },
+    "camis:50153998": {
+      "name": "Smacking Burger",
+      "menu_url": "https://smackingburger.com/order/smacking-burger/menu",
+      "checked_at": "2026-09-24",
+      "reason": "The restaurant's own ordering page, linked as 'Order Now' from smackingburger.com (THE CLASSIC $7.49); the list's DoorDash page had no burgers."
+    },
+    "camis:41006719": {
+      "name": "Square Diner",
+      "menu_url": "https://www.squaredinernyc.com/menu-1?location=Leonard+Street&menu=lunch--dinner",
+      "checked_at": "2026-09-24",
+      "reason": "The Lunch & Dinner tab of the diner's own menu (1/2 Pound Beef Burger $22); the scrape reached only the All-Day Breakfast tab."
+    },
+    "camis:50059995": {
+      "name": "The Grill",
+      "menu_url": "https://thegrillnewyork.com/?menu=lunch",
+      "checked_at": "2026-09-24",
+      "reason": "The Grill's own site picks its menu tab with ?menu= (the scraped ?menu=dinner tab has no burger; this URL follows that pattern); its Lunch menu lists the CHEESEBURGER ($36) under Lunch Specialties, and no dinner or bar menu has a burger."
+    },
+    "camis:50071497": {
+      "name": "The Standard Grill",
+      "menu_url": "https://www.thestandardgrill.com/s/Dinner_73126-Marketing.pdf",
+      "checked_at": "2026-09-24",
+      "reason": "The dinner menu PDF linked from the New York page (The Standard Burger $29); the scrape had followed the Bangkok restaurant's page."
+    },
+    "camis:50079799": {
+      "name": "Tommy's Tavern + Tap",
+      "menu_url": "https://www.tommystavernandtap.com/_files/ugd/29ea2c_ff0db8c5af034e6196c8ffc34465cb83.pdf",
+      "checked_at": "2026-09-24",
+      "reason": "The Tavern Menu PDF behind the 'FOOD' button on the Staten Island page (Triple T's Cheeseburger $19)."
+    },
+    "camis:40645039": {
+      "name": "Townhouse Diner",
+      "menu_url": "https://www.seamless.com/menu/townhouse-diner-696-2nd-ave-new-york/65472",
+      "checked_at": "2026-09-24",
+      "reason": "Townhouse Diner, 696 2nd Ave (its own menu page shows no burgers): Seamless page of the same Grubhub store (Context.dev scrapes of grubhub.com store pages returned no menu on 2026-09-24; seamless.com store pages do). Grubhub listed the Beef Burger at $12."
+    },
+    "camis:50018261": {
+      "name": "Tryon Public House",
+      "menu_url": "https://tryonpublichouse.com/food-menu",
+      "checked_at": "2026-09-24",
+      "reason": "The restaurant's own food menu (O.G. Classic Burger $18 on the main menu)."
+    },
+    "camis:40824395": {
+      "name": "Uncle Peter's Bar & Grill",
+      "menu_url": "https://www.unclepetersrestaurant.com/main-menu",
+      "checked_at": "2026-09-24",
+      "reason": "The restaurant's own main menu (83-15 Northern Blvd): Uncle Peter's Burger $24."
+    },
+    "camis:40977209": {
+      "name": "Waverly Diner",
+      "menu_url": "https://www.seamless.com/menu/waverly-restaurant-385-6th-ave-new-york/64940",
+      "checked_at": "2026-09-24",
+      "reason": "Waverly Restaurant, 385 6th Ave; the diner's own ordering site is the Grubhub-powered waverlyrestaurant.dine.online: Seamless page of the same Grubhub store (Context.dev scrapes of grubhub.com store pages returned no menu on 2026-09-24; seamless.com store pages do). Grubhub listed the Beef Burger at $13.45; the list's Postmates page had no burgers."
+    }
+  }
+}

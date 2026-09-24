@@ -11,6 +11,7 @@ import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 
+from .discover import OVERRIDE_ORIGIN
 from .names import display_name, norm_name, slugify, strip_store_number
 
 
@@ -193,7 +194,9 @@ class Target:
     chain: str | None
     members: list[dict]
     rep: dict  # location used for the search query and the "different location" check
-    csv_urls: list[tuple[str, str]]  # (url, origin) from the restaurant list CSV (or a pinned chain menu), in priority order
+    # (url, origin) in priority order: hand-checked menu pages (pipeline/data/menu_urls.json), a pinned chain
+    # menu, then the restaurant list CSV's menu_url and website
+    csv_urls: list[tuple[str, str]]
     official_has_prices: bool = True
     cheapest_item: str | None = None  # curated chains: see ChainDef.cheapest_item
 
@@ -232,11 +235,14 @@ def choose_rep(members: list[dict]) -> dict:
 
 
 def _csv_urls(members: list[dict]) -> list[tuple[str, str]]:
-    out: list[tuple[str, str]] = []
+    """Hand-checked menu pages first (a record's menu_url set by pipeline/data/menu_urls.json, see
+    sources.apply_menu_url_overrides; any record, listed or not), then each list row's menu_url and website."""
+    out: list[tuple[str, str]] = [(m["menu_url"], OVERRIDE_ORIGIN) for m in members
+                                  if m.get("menu_url_override") and m.get("menu_url")]
     for m in members:
         if not m.get("csv"):
             continue
-        if m.get("menu_url"):
+        if m.get("menu_url") and not m.get("menu_url_override"):
             out.append((m["menu_url"], "csv menu_url"))
         if m.get("website"):
             out.append((m["website"], "csv website"))
@@ -257,10 +263,12 @@ def build_targets(restaurants: list[dict], chains: dict[str, ChainGroup] | None 
                 continue
             emitted.add(slug)
             g = chains[slug]
-            pinned = [(g.menu_url, "chain menu_url")] if g.menu_url else []
+            urls = _csv_urls(g.members)
+            checked = [(u, o) for u, o in urls if o == OVERRIDE_ORIGIN]  # hand-checked pages before the pinned one
+            pinned = [(g.menu_url, "chain menu_url")] if g.menu_url and g.menu_url not in {u for u, _ in checked} else []
             targets.append(Target(
                 key=f"chain:{slug}", name=g.display, chain=slug, members=g.members, rep=choose_rep(g.members),
-                csv_urls=pinned + [(u, o) for u, o in _csv_urls(g.members) if u != g.menu_url],
+                csv_urls=checked + pinned + [(u, o) for u, o in urls if o != OVERRIDE_ORIGIN and u != g.menu_url],
                 official_has_prices=g.official_has_prices, cheapest_item=g.cheapest_item,
             ))
         else:

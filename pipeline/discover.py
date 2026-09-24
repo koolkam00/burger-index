@@ -128,12 +128,15 @@ SOURCE_LABEL = {
 # aggregators (which reliably list prices) but before delivery apps (marked-up prices).
 UNMAPPED_HOME_TIER = 3.5
 
+# Candidate.origin of a hand-checked menu page from pipeline/data/menu_urls.json (sources.load_menu_url_overrides).
+OVERRIDE_ORIGIN = "menu_url override"
+
 
 @dataclass
 class Candidate:
     url: str
     category: str
-    origin: str  # "csv menu_url" | "csv website" | "search" | "map"
+    origin: str  # "menu_url override" | "csv menu_url" | "csv website" | "search" | "map"
     tier: float | None = None  # overrides TIERS[category] when set
 
     @property
@@ -228,6 +231,16 @@ def classify_url(url: str) -> tuple[str, str | None]:
     if MENU_PATH_RE.search(path):
         return "official_menu", None
     return "official_home", None
+
+
+def candidate_category(url: str, origin: str) -> tuple[str, str | None]:
+    """classify_url, except that a hand-checked menu-URL override is the menu page itself: a URL
+    that looks like a homepage (thesmithrestaurant.com/location/east-village/, an ordering app's
+    store page) is scraped as it is instead of being resolved with a site map."""
+    category, reason = classify_url(url)
+    if origin == OVERRIDE_ORIGIN and category == "official_home":
+        return "official_menu", None
+    return category, reason
 
 
 def _compact(s: str) -> str:

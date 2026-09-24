@@ -53,6 +53,11 @@ PRICE_MAX = 150.0
 MIN_DELIVERY_BURGERS = 3
 STALE_MENU_DAYS = 365
 
+# A result a temporary Context.dev failure may have changed is retried by the next run (plan/build
+# count it as not yet scraped) until the same call has failed on this many separate runs
+# (data/run_log.jsonl): then the best result without it stands, with a note in status_detail.
+TRANSIENT_ACCEPT_RUNS = 2
+
 # Scroll delivery-app store pages before extraction so lazy-loaded menu sections render.
 # Scroll lazy-loading delivery-app menus (Uber Eats, DoorDash, Postmates) before extracting, so the
 # page shows the whole menu. Browser actions need a paid Context.dev plan (on since the account moved

@@ -65,7 +65,8 @@ more than `config.STALE_MENU_DAYS` before the scrape (Squarespace upload timesta
 a date in the file name) keeps the search going; at the caps the best result wins and `status_detail` says why.
 **Hard caps per target: 1 search, 1 map, 3 scrapes** (reason goes in `status_detail`). A target whose result may
 have been changed by a temporary failure (429/5xx/timeout after SDK retries) is `retry_pending`: `plan`/`build`
-count it as not yet scraped and the next `run` retries. Chains: one NYC location's menu (a CSV member's URL if any,
+count it as not yet scraped and the next `run` retries — until the same call has failed on
+`config.TRANSIENT_ACCEPT_RUNS` (2) separate runs in `data/run_log.jsonl`; then the best result stands, with a note. Chains: one NYC location's menu (a CSV member's URL if any,
 else a search on a representative address) is applied to every location except airport concessions; its
 `status_detail` names the location whose menu was read (the member at the address the scraped page names, else the
 restaurant-list member whose URL it was, else the representative), and that row is the chain's source row in `build`.
@@ -116,6 +117,9 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
 - `pipeline/data/dohmh_overrides.json` — per-CAMIS fixes for typos in DOHMH records (e.g. Rosemary's `1820` → `18`
   Greenwich Ave with real coordinates), applied by `sources`; `report.dohmh_overrides_applied` lists them and an unused
   override is reported. `pipeline/data/corrections.json` — hand-checked menu price corrections applied by `build`.
+- `pipeline/data/menu_urls.json` — hand-checked menu pages per restaurant key (`camis:…`/`csv:…` → `menu_url`, `checked_at`,
+  `reason`), applied by `sources` (CSV untouched; `report.menu_url_overrides_applied`/`_unused`): scraped first, as is, and
+  trusted as that restaurant's page. Each new one is a re-scrape on the next `run` (credits); never also correct that target.
 - `data/run_log.jsonl` — one line per target per run: status, urls tried, attempts, credits.
 - `data/credit_ledger.jsonl` — one line per **billed** live call: estimate, actual, run total, account balance, rate-limit headers.
 - `data/cache/` (gitignored) — `socrata/` DOHMH snapshot; `search/`, `map/`, `scrape/` Context.dev responses at

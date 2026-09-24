@@ -4,7 +4,9 @@ Everything here is free (NYC Open Data / Socrata, no key). The DOHMH snapshot is
 under data/cache/socrata/ so builds are offline-reproducible; the NTA code -> name
 mapping is committed at pipeline/data/nta_2010.json. DOHMH records with a hand-checked error
 (a typo'd address with 0,0 coordinates) are fixed per CAMIS from pipeline/data/dohmh_overrides.json
-before matching (load_dohmh_overrides).
+before matching (load_dohmh_overrides). Hand-checked menu pages from pipeline/data/menu_urls.json replace a
+restaurant's menu_url after matching (load_menu_url_overrides), so the scrape tries them first; the
+restaurant list CSV is never edited.
 """
 
 from __future__ import annotations
@@ -50,6 +52,10 @@ NOT_INSPECTED = "1900-01-01"
 # Hand-checked per-CAMIS fixes to DOHMH records (typo'd address, 0,0 coordinates): see load_dohmh_overrides.
 DOHMH_OVERRIDES_PATH = config.PACKAGE_DIR / "data" / "dohmh_overrides.json"
 OVERRIDE_FIELDS = ("building", "street", "zipcode", "latitude", "longitude", "nta")
+# Hand-checked menu pages per restaurant key (the list's menu_url is stale, partial or another restaurant's):
+# see load_menu_url_overrides.
+MENU_URLS_PATH = config.PACKAGE_DIR / "data" / "menu_urls.json"
+MENU_URL_FIELDS = ("menu_url", "checked_at", "reason", "name")
 # CAMIS ids are issued in sequence; venue stands permitted together are a few numbers apart,
 # a re-permit months or years later is thousands apart.
 SAME_ISSUE_CAMIS_GAP = 1000
@@ -344,6 +350,63 @@ def apply_dohmh_overrides(rows: list[dict], overrides: list[dict]) -> tuple[list
     for u in unused:
         log(f"sources: DOHMH override for camis {u['camis']} not applied ({u['why']}); delete it from "
             f"{DOHMH_OVERRIDES_PATH.name} if DOHMH has fixed the record")
+    return out, {"applied": applied, "unused": unused}
+
+
+def load_menu_url_overrides(path: Path = MENU_URLS_PATH) -> dict[str, dict]:
+    """Hand-checked menu pages (pipeline/data/menu_urls.json -> "overrides": {restaurant key: entry}).
+
+    Keys are restaurant keys as data/restaurants.json has them (camis:..., csv:...). Entry fields:
+      menu_url    the restaurant's own current menu page (or, when it has none, the full menu of this
+                  location on an ordering / delivery site): becomes the record's menu_url, scraped first
+      checked_at  YYYY-MM-DD the page was checked
+      reason      one sentence: why the list's page is wrong and what was checked
+      name        optional, for the reader (not checked)
+    A record's menu_url changes its scrape path, so the target is re-scraped on the next `run`
+    (credits); plan/build count it as not yet scraped until then.
+    """
+    if not Path(path).exists():
+        return {}
+    overrides = json.loads(Path(path).read_text())["overrides"]
+    for key, o in overrides.items():
+        bad = sorted(set(o) - set(MENU_URL_FIELDS))
+        problem = (
+            "key must be camis:<id> or csv:<slug>" if not re.match(r"^(camis|csv):\S+$", key)
+            else f"unknown fields {bad}" if bad
+            else "menu_url must be an http(s) URL" if not re.match(r"^https?://\S+$", str(o.get("menu_url") or ""))
+            else "checked_at must be YYYY-MM-DD" if not re.match(r"^\d{4}-\d{2}-\d{2}$", str(o.get("checked_at") or ""))
+            else "needs a reason" if not str(o.get("reason") or "").strip()
+            else None
+        )
+        if problem:
+            raise ValueError(f"{path}: bad menu-URL override for {key}: {problem}")
+    return overrides
+
+
+def apply_menu_url_overrides(records: list[dict], overrides: Mapping[str, dict]) -> tuple[list[dict], dict]:
+    """Set the menu_url of each record with an override (the list's own value is kept as
+    list_menu_url and no longer tried) and mark it menu_url_override, so the scrape tries the page
+    first and trusts it as this restaurant's menu (chains._csv_urls, process.evaluate_scrape).
+    Report: which keys were applied, and which were not (the key is not in scope, or the list
+    already names that page) and can be deleted."""
+    applied: list[str] = []
+    unused: list[dict] = []
+    have = set()
+    out: list[dict] = []
+    for r in records:
+        have.add(r["key"])
+        o = overrides.get(r["key"])
+        if o is not None and r.get("menu_url") == o["menu_url"]:
+            unused.append({"key": r["key"], "why": "the restaurant list already has this menu_url"})
+        elif o is not None:
+            r = {**r, "list_menu_url": r.get("menu_url"), "menu_url": o["menu_url"],
+                 "menu_url_override": {"checked_at": o["checked_at"], "reason": o["reason"]}}
+            applied.append(r["key"])
+        out.append(r)
+    unused += [{"key": k, "why": "no restaurant with this key in scope (renamed or dropped from the list, or excluded)"}
+               for k in overrides if k not in have]
+    for u in unused:
+        log(f"sources: menu-URL override for {u['key']} not applied ({u['why']}); delete it from {MENU_URLS_PATH.name}")
     return out, {"applied": applied, "unused": unused}
 
 
@@ -1096,9 +1159,11 @@ def build_restaurants(
     min_date: str = config.DEFAULT_MIN_INSPECTION,
     national_chains: str = config.DEFAULT_NATIONAL_CHAINS,
     overrides: list[dict] | None = None,
+    menu_urls: Mapping[str, dict] | None = None,
 ) -> tuple[list[dict], dict]:
     """CSV rows first (CSV order, merged with their DOHMH match), then in-scope DOHMH records.
     overrides: hand-checked DOHMH record fixes (load_dohmh_overrides), applied before matching.
+    menu_urls: hand-checked menu pages per restaurant key (load_menu_url_overrides), applied last.
     national_chains='exclude' drops national chains (McDonald's, Shake Shack...) after matching.
 
     A pilot row only matches a DOHMH record of the same national chain, or (for everything else)
@@ -1220,6 +1285,9 @@ def build_restaurants(
                 dropped[nd.display] += 1
         out = kept
         report["national_chains_excluded"] = dict(sorted(dropped.items(), key=lambda kv: (-kv[1], kv[0])))
+    out, menu_fixed = apply_menu_url_overrides(out, menu_urls or {})
+    report["menu_url_overrides_applied"] = menu_fixed["applied"]
+    report["menu_url_overrides_unused"] = menu_fixed["unused"]
     report["no_neighborhood"] = sum(1 for r in out if not r["neighborhood"])
     report["restaurants"] = len(out)
     dupes = [k for k, n in Counter(r["key"] for r in out).items() if n > 1]
@@ -1237,6 +1305,7 @@ def load_restaurants(
     csv_path: Path = config.RESTAURANT_LIST_CSV,
     nta_path: Path = config.NTA_PATH,
     overrides_path: Path = DOHMH_OVERRIDES_PATH,
+    menu_urls_path: Path | None = None,  # default MENU_URLS_PATH (looked up at call time, so tests can point it away)
     refresh: bool = False,
     offline: bool = False,
     write_to: Path | None = config.RESTAURANTS_PATH,
@@ -1246,6 +1315,7 @@ def load_restaurants(
     restaurants, report = build_restaurants(
         load_csv(csv_path), snap["rows"], load_nta_map(nta_path), cuisines=cuisines, min_date=min_date,
         national_chains=national_chains, overrides=load_dohmh_overrides(overrides_path),
+        menu_urls=load_menu_url_overrides(menu_urls_path or MENU_URLS_PATH),
     )
     report["dohmh_fetched_at"] = snap.get("fetched_at")
     meta = {"cuisines": cuisines, "min_inspection_date": min_date, "national_chains": national_chains,

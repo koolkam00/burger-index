@@ -325,3 +325,114 @@ def test_chain_note_names_the_location_whose_menu_was_read(tmp_path, fake):
         d = build.assemble([t], {t.key: res}, generated_at="2026-09-23T12:00:00Z")
         src = next(r for r in d["restaurants"] if f"camis:{r['camis']}" == source)
         assert d["stats"]["cheapest_burger_id"] == f"{src['id']}--hamburger"
+
+
+def test_menu_url_override_is_scraped_as_the_menu_and_trusted(tmp_path, fake):
+    # Dutch Boy Burger is a counter inside the Franklin Park bar: its store page names the bar. A
+    # hand-checked override page is scraped first, as it is (no site map for a URL that looks like a
+    # homepage), and is not rejected as another restaurant's or another location's.
+    checked = {"checked_at": "2026-09-24", "reason": "hand-checked"}
+    store = "https://www.seamless.com/menu/franklin-park-766-franklin-ave-brooklyn/2878081"
+    page = {**menu(("Classic Smash Burger", 11), ("The Dutch Boy", 14), ("The Cowboy", 17), restaurant_name="Franklin Park"),
+            "location": "766 Franklin Ave, Brooklyn, NY 11238"}
+    f = fake(pages={store: page}, search={})
+    r = {**rec("Dutch Boy Burger", camis="41329576", address="618 St Johns Place", borough="Brooklyn", nta="BK61",
+               neighborhood="Crown Heights North", menu_url=store, csv=True), "menu_url_override": checked}
+    (t,) = build_targets([r])
+    res = process_target(t, api_for(tmp_path))
+    assert res["status"] == "priced" and res["menu_url"] == store and res["burgers"][0]["price"] == 11
+    assert res["attempts"][0]["origin"] == "menu_url override" and f.count("search") == 0
+    # without the override the same page is another restaurant's
+    (t,) = build_targets([{k: v for k, v in r.items() if k != "menu_url_override"}])
+    res = process_target(t, api_for(tmp_path / "2"))
+    assert res["status"] == "no_menu_found" and "a different restaurant" in res["status_detail"]
+
+    # an override that looks like a homepage is the menu page itself: scraped, never mapped
+    home = "https://thesmithrestaurant.com/location/east-village/"
+    f = fake(pages={home: menu(("Burger royale", 26), restaurant_name="The Smith")}, maps={}, search={})
+    r = {**rec("The Smith", camis="41298603", address="55 3 Avenue", website=home, menu_url=home, csv=True),
+         "menu_url_override": checked}
+    (t,) = build_targets([r])
+    res = process_target(t, api_for(tmp_path / "3"))
+    assert res["status"] == "priced" and res["price_source"] == "official_site"
+    assert (f.count("map"), f.count("scrape")) == (0, 1)
+
+
+def test_repeated_temporary_failure_is_accepted_after_two_runs(tmp_path, fake, monkeypatch):
+    from pipeline import cli, context_client
+    from pipeline.process import transient_history
+
+    home = "http://www.professorthoms.com/"
+    f = fake(search={}, pages={home: menu(is_menu=False, has_prices=False)})
+
+    def failing_map(endpoint, request, *, max_age_ms=None):
+        if endpoint == "map":
+            f.calls.append((endpoint, request))
+            raise context_client.TransientError("map: HTTP 503")
+        return f(endpoint, request, max_age_ms=max_age_ms)
+
+    monkeypatch.setattr(context_client, "execute", failing_map)
+    t = one("Professor Thom's", csv=True, website=home, address="219 2 Avenue")
+    run_log = tmp_path / "run_log.jsonl"
+    cache = tmp_path / "cache"
+
+    def live_run(run_id):
+        return run_targets([t], Api(DiskCache(cache), CreditLedger(100)), workers=1, run_log_path=run_log,
+                           run_id=run_id, history=transient_history(run_log))["results"][t.key]
+
+    def offline():
+        return replay([t], Api(DiskCache(cache), offline=True), history=transient_history(run_log))
+
+    # run 1: the map call fails temporarily -> provisional, not published, priced for a retry
+    first = live_run("run1")
+    assert first["retry_pending"] and not first["transient_accepted"]
+    assert first["transient_calls"] == [["map", "professorthoms.com"]]
+    results, pending = offline()
+    assert results == {} and pending == [t] and cli._estimate(pending)["credits"]["first_pass"] > 0
+
+    # run 2 retries it (0 credits), it fails the same way again: the best result stands, with a note
+    second = live_run("run2")
+    assert f.count("map") == 2 and not second["retry_pending"] and second["transient_accepted"]
+    note = ("A Context.dev call (site map of professorthoms.com) failed temporarily on 2 separate runs, so this is "
+            "the best result without it; later runs still retry it.")
+    assert note in second["status_detail"] and "the next run retries it" not in second["status_detail"]
+    results, pending = offline()
+    assert pending == [] and results[t.key]["status"] == "no_menu_found" and note in results[t.key]["status_detail"]
+    lines = [json.loads(x) for x in run_log.read_text().splitlines()]
+    assert [(x["run_id"], x["retry_pending"], x["transient_calls"]) for x in lines] == [
+        ("run1", True, [["map", "professorthoms.com"]]), ("run2", False, [["map", "professorthoms.com"]])]
+
+    # the same run logged twice is one run, and without the log a replay still waits for the retry
+    assert transient_history(run_log)[t.key] == {("map", "professorthoms.com"): {"run1", "run2"}}
+    assert replay([t], Api(DiskCache(cache), offline=True))[1] == [t]
+
+    # a later run where the call gets through replaces the placeholder: a normal result again
+    monkeypatch.setattr(context_client, "execute", f)
+    f.maps["professorthoms.com"] = ["http://www.professorthoms.com/menu"]
+    f.pages["http://www.professorthoms.com/menu"] = menu(("Thom's Burger", 17))
+    third = live_run("run3")
+    assert third["status"] == "priced" and not third["transient_calls"] and not third["transient_accepted"]
+
+
+def test_transient_history_reads_run_log_lines_written_before_transient_calls(tmp_path):
+    from pipeline.process import transient_history
+
+    def old_line(run_id, target="csv:professor-thoms-manhattan"):
+        return {"run_id": run_id, "target": target, "status": "no_menu_found", "retry_pending": True,
+                "status_detail": "The pages found were not menus. A Context.dev call failed temporarily (map); the "
+                                 "next run retries it. Tried: professorthoms.com (not a menu).",
+                "attempts": [{"step": "map", "domain": "professorthoms.com", "outcome": "failed", "credits": 0},
+                             {"step": "search", "query": "\"Professor Thom's\" menu", "outcome": "10 results, 2 usable"},
+                             {"step": "scrape", "url": "http://www.professorthoms.com/", "outcome": "not a menu"}]}
+
+    scrape_line = {"run_id": "r1", "target": "camis:1", "retry_pending": True,
+                   "status_detail": "A Context.dev call failed temporarily (scrape); the next run retries it.",
+                   "attempts": [{"step": "scrape", "url": "https://a.example/menu", "outcome": "error: TRANSIENT"},
+                                {"step": "scrape", "url": "https://b.example/menu", "outcome": "not a menu"}]}
+    log_path = tmp_path / "run_log.jsonl"
+    log_path.write_text("\n".join(json.dumps(x) for x in (old_line("r1"), old_line("r2"), scrape_line,
+                                                            {"run_id": "r2", "status": "interrupted"})) + "\n\n")
+    h = transient_history(log_path)
+    assert h == {"csv:professor-thoms-manhattan": {("map", "professorthoms.com"): {"r1", "r2"}},
+                 "camis:1": {("scrape", "https://a.example/menu"): {"r1"}}}
+    assert transient_history(tmp_path / "missing.jsonl") == {}

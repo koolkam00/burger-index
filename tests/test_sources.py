@@ -743,3 +743,61 @@ def test_dohmh_overrides_file_is_strict(tmp_path):
     bad.write_text(json.dumps({"overrides": [ROSEMARYS_FIX, ROSEMARYS_FIX]}))
     with pytest.raises(ValueError, match="duplicate"):
         sources.load_dohmh_overrides(bad)
+
+
+def menu_fix(url, reason="the list's page is a stale aggregator copy."):
+    return {"menu_url": url, "checked_at": "2026-09-24", "reason": reason}
+
+
+def test_menu_url_overrides_replace_the_list_menu_url_and_report(nta_map):
+    rows = [csv_row("Due West", website="https://duewestnyc.com/", menu_url="https://agg.example/due-west/menu"),
+            csv_row("Walker's", "TriBeCa", menu_url="https://www.walkersbarnyc.com/dinner", row=2),
+            csv_row("Burger Plus", "Flushing", "Queens", row=3)]
+    recs = [dohmh("4", "DUE WEST", building="189", street="WEST 10 STREET")]
+    overrides = {
+        "camis:4": menu_fix("https://duewestnyc.com/menus/dinner"),
+        "csv:walkers-manhattan": menu_fix("https://www.walkersbarnyc.com/dinner"),  # the list caught up
+        "csv:gone-manhattan": menu_fix("https://gone.example/menu"),
+    }
+    out, report = sources.build_restaurants(rows, recs, nta_map, menu_urls=overrides)
+    due, walkers, plus = out
+    assert due["key"] == "camis:4" and due["menu_url"] == "https://duewestnyc.com/menus/dinner"
+    assert due["list_menu_url"] == "https://agg.example/due-west/menu"  # kept for the record, no longer tried
+    assert due["menu_url_override"] == {"checked_at": "2026-09-24", "reason": "the list's page is a stale aggregator copy."}
+    assert due["website"] == "https://duewestnyc.com/"  # the website stays a fallback
+    assert "menu_url_override" not in walkers and "menu_url_override" not in plus and plus["menu_url"] is None
+    assert report["menu_url_overrides_applied"] == ["camis:4"]
+    assert report["menu_url_overrides_unused"] == [
+        {"key": "csv:walkers-manhattan", "why": "the restaurant list already has this menu_url"},
+        {"key": "csv:gone-manhattan",
+         "why": "no restaurant with this key in scope (renamed or dropped from the list, or excluded)"}]
+    # without overrides nothing changes
+    out, report = sources.build_restaurants(rows, recs, nta_map)
+    assert out[0]["menu_url"] == "https://agg.example/due-west/menu" and report["menu_url_overrides_applied"] == []
+
+
+def test_menu_url_overrides_file_is_strict(tmp_path):
+    assert sources.load_menu_url_overrides(tmp_path / "missing.json") == {}
+    committed = sources.load_menu_url_overrides()  # pipeline/data/menu_urls.json
+    assert committed and all(k.startswith(("camis:", "csv:")) for k in committed)
+    assert all(o["reason"] and o["checked_at"] and o["menu_url"].startswith("http") for o in committed.values())
+    bad = tmp_path / "bad.json"
+    for key, entry in (("Due West", menu_fix("https://a.example/menu")),  # not a restaurant key
+                       ("camis:4", {**menu_fix("https://a.example/menu"), "price": 12}),  # unknown field
+                       ("camis:4", menu_fix("a.example/menu")),
+                       ("camis:4", {**menu_fix("https://a.example/menu"), "checked_at": "Sept 24"}),
+                       ("camis:4", menu_fix("https://a.example/menu", reason=" "))):
+        bad.write_text(json.dumps({"overrides": {key: entry}}))
+        with pytest.raises(ValueError, match="bad menu-URL override"):
+            sources.load_menu_url_overrides(bad)
+
+
+def test_committed_menu_url_overrides_name_restaurants_on_the_list():
+    # every committed override should apply to the current restaurant list (data/restaurants.json); a
+    # key that no longer exists is reported by `sources`, and this catches it before a run
+    from pipeline import config
+
+    if not config.RESTAURANTS_PATH.exists():
+        pytest.skip("no data/restaurants.json")
+    keys = {r["key"] for r in json.loads(config.RESTAURANTS_PATH.read_text())["restaurants"]}
+    assert set(sources.load_menu_url_overrides()) <= keys

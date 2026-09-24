@@ -67,7 +67,8 @@ def test_committed_corrections_file_is_well_formed():
     allowed = {"target", "checked_at", "source_url", "price_source", "reason", "drop", "set", "add", "withhold"}
     for c in entries:
         assert set(c) <= allowed and {"target", "checked_at", "source_url", "reason"} <= set(c), c["target"]
-        assert c["source_url"].startswith("https://")
+        assert c["source_url"].startswith(("https://", "http://"))  # some aggregator pages are http only
+        assert not (c.get("withhold") and (c.get("set") or c.get("add"))), c["target"]  # withheld: no hand prices
         for a in c.get("add", []):
             assert a["protein"] in ("beef", "chicken", "turkey", "fish", "veggie", "lamb", "pork", "other")
     json.dumps(entries)

@@ -70,3 +70,23 @@ def test_pinned_chain_menu_url_is_tried_first_and_airports_are_not_the_rep():
     chains = {"wendys": ChainGroup("wendys", "Wendy's", False, rs, "jr hamburger", pinned)}
     t = build_targets(rs, chains)[0]
     assert t.rep["camis"] == "2" and t.csv_urls[0] == (pinned, "chain menu_url") and t.cheapest_item == "jr hamburger"
+
+
+def test_menu_url_override_is_tried_first_even_before_a_pinned_chain_menu():
+    from pipeline.discover import OVERRIDE_ORIGIN
+
+    checked = {"checked_at": "2026-09-24", "reason": "stale list page"}
+    r = rec("Due West", camis="9", csv=True, website="https://duewestnyc.com", menu_url="https://duewestnyc.com/dinner")
+    (t,) = build_targets([{**r, "menu_url_override": checked}])
+    assert t.csv_urls == [("https://duewestnyc.com/dinner", OVERRIDE_ORIGIN), ("https://duewestnyc.com", "csv website")]
+    # a DOHMH-only record (not on the list) with an override gets it too
+    (t,) = build_targets([{**rec("Other", camis="8", menu_url="https://other.example/menu"), "menu_url_override": checked}])
+    assert t.csv_urls == [("https://other.example/menu", OVERRIDE_ORIGIN)]
+    # chains: the hand-checked page of a member goes ahead of the chain's pinned menu
+    rs = [rec("McDonald's", camis=str(i), dba="MCDONALD'S") for i in range(3)]
+    rs[1] = {**rs[1], "menu_url": "https://www.seamless.com/menu/mcdonalds-1/1", "menu_url_override": checked}
+    chains = group_chains(rs)
+    chains["mcdonalds"].menu_url = "https://www.grubhub.com/restaurant/mcdonalds-2/2"
+    (t,) = build_targets(rs, chains)
+    assert t.chain == "mcdonalds" and t.csv_urls == [("https://www.seamless.com/menu/mcdonalds-1/1", OVERRIDE_ORIGIN),
+                                                     ("https://www.grubhub.com/restaurant/mcdonalds-2/2", "chain menu_url")]

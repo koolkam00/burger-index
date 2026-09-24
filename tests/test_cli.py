@@ -40,6 +40,7 @@ def data_dir(tmp_path, monkeypatch):
                    "Due West,West Village,Manhattan,http://www.duewestnyc.com/,https://www.duewestnyc.com/menus/,x\n")
     monkeypatch.setattr(config, "RESTAURANT_LIST_CSV", csv)
     monkeypatch.setattr(sources, "socrata_get", lambda url, params, http=None: DOHMH_ROWS)
+    monkeypatch.setattr(sources, "MENU_URLS_PATH", tmp_path / "menu_urls.json")  # none unless a test writes one
     return d
 
 
@@ -166,3 +167,28 @@ def test_misspelled_cuisine_stops_before_anything_is_written(data_dir, capsys):
     assert not config.RESTAURANTS_PATH.exists()
     assert cli.main(["sources", "--cuisines", "Hamburgers,American"]) == 0
     assert json.loads(config.RESTAURANTS_PATH.read_text())["meta"]["cuisines"] == ["Hamburgers", "American"]
+
+
+def test_menu_url_override_reaches_plan_and_run(data_dir, fake, capsys):
+    # the list names /menus/ (cached after a first run); a hand-checked dinner page replaces it, which
+    # makes the target "not yet scraped" again until the next run scrapes the new page first
+    fake(pages={"https://www.duewestnyc.com/menus/": menu(("Brunch Burger", 19, "beef", "brunch"))}, search={})
+    assert cli.main(["run"]) == 0
+    capsys.readouterr()
+    sources.MENU_URLS_PATH.write_text(json.dumps({"overrides": {
+        "camis:4": {"name": "Due West", "menu_url": "https://www.duewestnyc.com/menus/dinner", "checked_at": "2026-09-24",
+                    "reason": "the list's page is the brunch menu."},
+        "csv:closed-place-manhattan": {"menu_url": "https://closed.example/menu", "checked_at": "2026-09-24",
+                                       "reason": "x"}}}))
+    assert cli.main(["sources"]) == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["report"]["menu_url_overrides_applied"] == ["camis:4"]
+    assert [u["key"] for u in out["report"]["menu_url_overrides_unused"]] == ["csv:closed-place-manhattan"]
+    assert cli.main(["plan"]) == 0
+    plan = json.loads(capsys.readouterr().out)
+    assert plan["targets_to_scrape"] == 1 and plan["targets_to_scrape_with_menu_url_override"] == 1
+    f = fake(pages={"https://www.duewestnyc.com/menus/dinner": menu(("Due Burger", 24, "beef", "dinner"))}, search={})
+    assert cli.main(["run"]) == 0
+    assert [r["url"] for _, r in f.calls] == ["https://www.duewestnyc.com/menus/dinner"]
+    due = next(r for r in json.loads(config.OUTPUT_PATH.read_text())["restaurants"] if r["name"] == "Due West")
+    assert due["index_price"] == 24 and due["menu_url"] == "https://www.duewestnyc.com/menus/dinner"
