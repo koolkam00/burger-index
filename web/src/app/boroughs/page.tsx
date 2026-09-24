@@ -2,15 +2,20 @@ import Link from "next/link";
 import { BoroughBars, BoroughTable } from "@/components/charts/BoroughBars";
 import { ChartFigure } from "@/components/charts/ChartFigure";
 import { BoroughDot, ChainOnlyBadge, Money, PageHeader } from "@/components/ui";
-import { boroughInProse } from "@/lib/boroughs";
+import { BOROUGH_META, boroughInProse } from "@/lib/boroughs";
 import { getBoroughs, getNeighborhoodsInBorough, getStats } from "@/lib/data";
-import { capitalize, ends, formatCount, formatDelta, formatPrice, pluralize } from "@/lib/format";
+import { capitalize, ends, formatDelta, formatPrice, pluralize } from "@/lib/format";
 import { isChainOnly, joinList, splitByCoverage } from "@/lib/menus";
 import { pageMetadata } from "@/lib/metadata";
 
+// Name only the boroughs that have a median, and say so when some don't yet.
+const withMedian = getBoroughs().filter((b) => b.summary?.index_median != null);
+
 export const metadata = pageMetadata({
   title: "Boroughs",
-  description: "What a burger costs in Manhattan, Brooklyn, Queens, the Bronx and Staten Island: the median index price in each borough.",
+  description: withMedian.length
+    ? `What a burger costs in ${joinList(withMedian.map((b) => boroughInProse(b.name)))}: the median index price in each borough${withMedian.length < BOROUGH_META.length ? " we have priced so far" : ""}.`
+    : "What a burger costs in each New York borough: the median index price, once its menus are priced.",
   path: "/boroughs",
 });
 
@@ -65,9 +70,17 @@ export default function BoroughsPage() {
                 </h2>
                 <p className="t-stat mt-4">{b.summary?.index_median != null ? <Money value={b.summary.index_median} /> : "—"}</p>
                 <p className="t-ui-s muted mt-2">
-                  {b.summary?.index_median != null && !isChainOnly(b.menuCounts) ? `${formatDelta(b.summary.index_median, median, { suffix: "vs NYC" })} · ` : ""}
-                  {pluralize(b.menuCounts.menus, "menu")} · {pluralize(b.summary?.restaurants_priced ?? 0, "location")} priced ·{" "}
-                  {formatCount(getNeighborhoodsInBorough(b.name).length)} neighborhoods
+                  {b.menuCounts.menus ? (
+                    <>
+                      {b.summary?.index_median != null && !isChainOnly(b.menuCounts) ? `${formatDelta(b.summary.index_median, median, { suffix: "vs NYC" })} · ` : ""}
+                      {pluralize(b.menuCounts.menus, "menu")} · {pluralize(b.summary?.restaurants_priced ?? 0, "location")} priced ·{" "}
+                      {pluralize(getNeighborhoodsInBorough(b.name).length, "neighborhood")}
+                    </>
+                  ) : b.summary?.restaurants ? (
+                    `Not priced yet · ${pluralize(b.summary.restaurants, "restaurant")} listed`
+                  ) : (
+                    "Not priced yet"
+                  )}
                 </p>
                 {isChainOnly(b.menuCounts) ? (
                   <p className="mt-3">

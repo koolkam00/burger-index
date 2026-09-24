@@ -1,5 +1,5 @@
 {
-  "about": "Hand-checked corrections applied by `pipeline build` (see pipeline/corrections.py). Each was found by re-reading the live menu during the 2026-09-23 price check; all but Tavern on Jane were confirmed by two independent checks.",
+  "about": "Hand-checked corrections applied by `pipeline build` (see pipeline/corrections.py). Each was found by re-reading the live menu during the 2026-09-23 price check; all but Tavern on Jane and Jimbo's Hamburger Palace were confirmed by two independent checks.",
   "corrections": [
     {
       "target": "camis:50054294",
@@ -154,6 +154,93 @@
       "source_url": "https://cititour.com/NYC_Restaurants/The-Waverly-Inn/1178/menu",
       "reason": "the $13 Waverly Burger came from an aggregator copy that looks years out of date (recent menus list it well above $30), and the restaurant publishes no menu to check against.",
       "withhold": true
+    },
+    {
+      "target": "chain:jimbos-hamburger-palace",
+      "checked_at": "2026-09-23",
+      "source_url": "https://www.grubhub.com/restaurant/jimbos-hamburger-palace-1345-amsterdam-ave-new-york/1000439",
+      "reason": "the $17.50 and $18.50 'Deluxe' items on the Postmates page are platters (Jimbo's serves its platters with French fries, lettuce and tomatoes), not the burger by itself, and that page showed no plain burger price. The full Grubhub menu for the same store (1345 Amsterdam Ave) lists the 5 oz Beef Burger at $7.55 and the Cheese Burger at $8.35; 7 oz burgers start at $8.55.",
+      "drop": [
+        "Bacon Cheese Burger Deluxe",
+        "7oz Cheese Burger Deluxe"
+      ],
+      "set": {
+        "Cheese Burger": 8.35
+      },
+      "add": [
+        {
+          "name": "Beef Burger",
+          "price": 7.55,
+          "protein": "beef",
+          "description": "5 oz"
+        },
+        {
+          "name": "Egg Cheese Burger",
+          "price": 8.55,
+          "protein": "beef"
+        },
+        {
+          "name": "Swiss Burger",
+          "price": 8.95,
+          "protein": "beef"
+        },
+        {
+          "name": "Cheddar Burger",
+          "price": 8.95,
+          "protein": "beef"
+        },
+        {
+          "name": "Mozzarella Burger",
+          "price": 8.95,
+          "protein": "beef"
+        },
+        {
+          "name": "Bacon Burger",
+          "price": 9.95,
+          "protein": "beef"
+        },
+        {
+          "name": "Bacon Cheese Burger",
+          "price": 10.95,
+          "protein": "beef"
+        },
+        {
+          "name": "Beef Burger 7oz",
+          "price": 8.55,
+          "protein": "beef",
+          "description": "7 oz"
+        },
+        {
+          "name": "Cheese Burger 7oz",
+          "price": 9.55,
+          "protein": "beef"
+        },
+        {
+          "name": "Bacon Burger 7oz",
+          "price": 10.55,
+          "protein": "beef"
+        },
+        {
+          "name": "Egg Cheese Burger 7oz",
+          "price": 10.75,
+          "protein": "beef"
+        },
+        {
+          "name": "Bacon Cheese Burger 7oz",
+          "price": 11.95,
+          "protein": "beef"
+        },
+        {
+          "name": "Turkey Burger",
+          "price": 7.95,
+          "protein": "turkey"
+        },
+        {
+          "name": "Veggie Burger",
+          "price": 8.45,
+          "protein": "veggie"
+        }
+      ]
     }
   ]
 }

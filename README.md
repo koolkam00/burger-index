@@ -2,8 +2,9 @@
 
 What a burger costs in New York City. For each NYC restaurant that sells burgers, we find its menu online, read
 every burger price, and take its **index price**: the cheapest beef burger, on its own, at the dinner or all-day
-price. The Burger Index is the median of those prices, with a chain's menu counted once. The website shows that
-number by borough, neighborhood and restaurant, plus a searchable table of every priced burger and a map.
+price. The Burger Index is the median of those prices, with a chain's menu counted once. National chains
+(McDonald's, Burger King, Wendy's, Shake Shack and the like) are left out; NYC's own small chains, such as 7th Street
+Burger, stay in. The website shows that number by borough, neighborhood and restaurant, plus a searchable table of every priced burger and a map.
 
 ```
 NYC Open Data (DOHMH inspections) + burger pilot list.csv

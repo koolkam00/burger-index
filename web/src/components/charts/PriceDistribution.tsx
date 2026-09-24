@@ -37,7 +37,9 @@ export function PriceDistribution({
   const p90 = percentile(prices, 0.9) as number;
   const lo = formatPrice(Math.floor(p10), { cents: "auto" });
   const hi = formatPrice(Math.ceil(p90), { cents: "auto" });
-  const spread = lo === hi ? `Most ${sliceName} burgers cost about ${lo}` : `Most ${sliceName} burgers cost ${lo}–${hi}`;
+  // Says "these menus", not "NYC burgers": the slice is the menus priced so far, not every menu in town.
+  const these = `Most of these ${formatCount(prices.length)} menus charge`;
+  const spread = lo === hi ? `${these} about ${lo} for their cheapest beef burger` : `${these} ${lo}–${hi} for their cheapest beef burger`;
   const bins = histogram(prices, 1, 10);
   return (
     <ChartFigure

@@ -3,7 +3,7 @@
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useDeferredValue, useEffect, useId, useMemo, useRef, useState } from "react";
-import { BOROUGH_META, boroughBySlug, type BoroughSlug } from "@/lib/boroughs";
+import { BOROUGH_META, boroughBySlug, boroughInProse, type BoroughSlug } from "@/lib/boroughs";
 import {
   activeFilterCount,
   EMPTY_FILTERS,
@@ -109,6 +109,10 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
     [data],
   );
 
+  // Boroughs with at least one burger row: a borough with none gets "none yet" in the filter and its
+  // own empty message, since no change of filters would bring rows back.
+  const boroughsWithRows = useMemo(() => new Set<string>(rows.map(({ r }) => r.borough)), [rows]);
+
   const deferredQuery = useDeferredValue(query);
   const tokens = useMemo(() => queryTokens(deferredQuery), [deferredQuery]);
 
@@ -184,6 +188,7 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
           <span className="inline-flex items-center gap-2">
             <BoroughDot borough={m.name} />
             {m.name}
+            {boroughsWithRows.has(m.name) ? null : <span className="t-ui-s muted">none yet</span>}
           </span>
         ),
       }))}
@@ -307,14 +312,17 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
   ];
 
   const scope = [
-    filters.boroughs.length ? filters.boroughs.map((s) => boroughBySlug(s)!.name).join(" or ") : null,
+    filters.boroughs.length ? filters.boroughs.map((s) => boroughInProse(boroughBySlug(s)!.name)).join(" or ") : null,
     selectedNeighborhood?.name ?? null,
   ]
     .filter(Boolean)
     .join(", ");
-  const emptyMessage = query.trim()
-    ? `No burgers match “${query.trim()}”${scope ? ` in ${scope}` : ""}. Try fewer filters.`
-    : `No burgers match these filters${scope ? ` in ${scope}` : ""}. Try fewer filters.`;
+  const unpricedScope = filters.boroughs.length > 0 && filters.boroughs.every((s) => !boroughsWithRows.has(boroughBySlug(s)!.name));
+  const emptyMessage = unpricedScope
+    ? `We haven't priced any burgers in ${filters.boroughs.map((s) => boroughInProse(boroughBySlug(s)!.name)).join(" or ")} yet.`
+    : query.trim()
+      ? `No burgers match “${query.trim()}”${scope ? ` in ${scope}` : ""}. Try fewer filters.`
+      : `No burgers match these filters${scope ? ` in ${scope}` : ""}. Try fewer filters.`;
 
   return (
     <div>

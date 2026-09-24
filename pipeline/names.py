@@ -110,3 +110,31 @@ def display_name(dba: str | None) -> str:
     if override:
         return override
     return display_case(base)
+
+
+# Street-address words folded to one spelling, so '383 West 31 Street' (DOHMH) and
+# '383 W 31st St' (a menu page) compare equal.
+_ADDRESS_WORDS = {
+    "west": "w", "east": "e", "north": "n", "south": "s", "street": "st", "avenue": "ave", "av": "ave",
+    "road": "rd", "boulevard": "blvd", "place": "pl", "drive": "dr", "parkway": "pkwy", "lane": "ln",
+    "first": "1", "second": "2", "third": "3", "fourth": "4", "fifth": "5", "sixth": "6", "seventh": "7",
+    "eighth": "8", "ninth": "9", "tenth": "10",
+}
+
+
+def address_tokens(s: str | None) -> list[str]:
+    """'383 West 31st Street, Unit 31' -> ['383', 'w', '31', 'st', 'unit', '31']."""
+    s = re.sub(r"\b(\d+)(st|nd|rd|th)\b", r"\1", norm_name(s))
+    return [_ADDRESS_WORDS.get(w, w) for w in s.split()]
+
+
+def address_in_text(address: str | None, text: str | None) -> bool:
+    """True when `text` names this street address: the house number followed by the same street
+    ('383 West 31 Street' in '383 west 31st street, unit 31, new york, ny 10001'; '320 West 36
+    Street' in 'burger joint at 320 W 36th'). Compares the number and the next two words."""
+    a = address_tokens(address)
+    if len(a) < 2 or not a[0].isdigit():
+        return False
+    key = a[:3]
+    t = address_tokens(text)
+    return any(t[i:i + len(key)] == key for i in range(len(t) - len(key) + 1))

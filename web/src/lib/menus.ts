@@ -10,7 +10,7 @@
 // Client-safe and pure: types only from ./schema, so zod stays out of the browser bundle, and every
 // function takes the list it counts, so the same call gives citywide or per-area answers.
 import { STATUSES } from "./enums";
-import { formatCount, pluralize } from "./format";
+import { formatCount, formatPrice, pluralize } from "./format";
 import type { AreaSummary, Restaurant, Status } from "./schema";
 import { MIN_RANKED } from "./site";
 
@@ -103,7 +103,7 @@ export function isChainOnly(c: MenuCounts): boolean {
   return c.chains > 0 && c.independents === 0;
 }
 
-/** Enough distinct priced menus to rank an area (5 McDonald's in one neighborhood are one menu). */
+/** Enough distinct priced menus to rank an area (5 locations of one chain in a neighborhood are one menu). */
 export function isRankable(c: MenuCounts, median: number | null, min: number = MIN_RANKED): boolean {
   return median !== null && c.menus >= min;
 }
@@ -200,14 +200,91 @@ export function chainNames(list: readonly Restaurant[]): string[] {
     .map((m) => m.restaurant.name);
 }
 
+/** Every chain listed in `list`, priced or not, most listed locations first (ties by name). */
+export function listedChainNames(list: readonly Restaurant[]): string[] {
+  const byChain = new Map<string, { name: string; n: number }>();
+  for (const r of list) {
+    if (!r.chain) continue;
+    const seen = byChain.get(r.chain);
+    if (seen) seen.n += 1;
+    else byChain.set(r.chain, { name: r.name, n: 1 });
+  }
+  return [...byChain.values()].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).map((c) => c.name);
+}
+
 /** "A", "A and B", "A, B and C" (house style: no serial comma). */
 export function joinList(items: readonly string[]): string {
   if (items.length <= 1) return items[0] ?? "";
   return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 }
 
-/** Up to `max` names, then "and N more": "McDonald's, Wendy's, Checkers and 4 more". */
+/** Up to `max` names, then "and N more": "7th Street Burger, Jackson Hole, Burger Joint and 4 more". */
 export function joinSome(items: readonly string[], max = 3): string {
   if (items.length <= max) return joinList(items);
   return `${items.slice(0, max).join(", ")} and ${formatCount(items.length - max)} more`;
+}
+
+/**
+ * Names after a count: ": A and B" when `items` is the whole list, ", including A, B and C" only when
+ * it has to be cut to `max` (so "including" never implies names that don't exist).
+ */
+export function listedNames(items: readonly string[], max = 3): string {
+  if (!items.length) return "";
+  return items.length <= max ? `: ${joinList(items)}` : `, including ${joinList(items.slice(0, max))}`;
+}
+
+// Whether national fast-food chains are left out is part of the scope: see ./scope (restaurantScope).
+
+// ---- chain source location ------------------------------------------------------------------------
+
+const CHAIN_SOURCE = /\bone NYC location \(([^)]+)\)/;
+
+/**
+ * The location whose menu a chain's shared price was read from, as the pipeline writes it into every
+ * chain row's status_detail (process.py: "Chain-level prices from one NYC location (91 East 7 Street,
+ * Manhattan)"), or null when the note doesn't name one.
+ */
+export function chainSourceLocation(statusDetail: string | null | undefined): string | null {
+  const m = CHAIN_SOURCE.exec(statusDetail ?? "");
+  return m ? m[1].trim() : null;
+}
+
+/** This chain row is the location the chain's menu was read from (same "address, borough" as the note). */
+export function isChainSourceLocation(r: Pick<Restaurant, "chain" | "address" | "borough" | "status_detail">): boolean {
+  if (!r.chain) return false;
+  const source = chainSourceLocation(r.status_detail);
+  if (!source) return false;
+  const here = [r.address, r.borough].filter(Boolean).join(", ");
+  return source.toLowerCase() === here.toLowerCase();
+}
+
+// ---- what counting per location would do -----------------------------------------------------------
+
+const toCents = (x: number) => Math.round(x * 100);
+
+/**
+ * The methodology's "counted per location" sentence, computed from the priced menus: how many priced
+ * locations belong to chains, the biggest chain's share, and which chain's price (if any) a median over
+ * locations lands on. It says one chain "would set the number" only when that chain has more than half
+ * of the priced locations (then the location median is its price by construction). Null when counting
+ * per location changes nothing (no chain has a second priced location) or nothing is priced.
+ */
+export function perLocationNote(menus: readonly Menu[], locationMedian: number | null, menuMedian: number | null): string | null {
+  const chains = menus.filter((m) => m.chain !== null).sort((a, b) => b.locations - a.locations || a.restaurant.name.localeCompare(b.restaurant.name));
+  const total = menus.reduce((n, m) => n + m.locations, 0);
+  const chainLocations = chains.reduce((n, m) => n + m.locations, 0);
+  if (!total || !chains.length || chainLocations <= chains.length || locationMedian === null || menuMedian === null) return null;
+  const top = chains[0];
+  const dominant = top.locations * 2 > total;
+  const first = dominant
+    ? `Counted per location, one chain would set the number: ${top.restaurant.name} alone has ${formatCount(top.locations)} of the ${formatCount(total)} priced locations.`
+    : chains.length === 1
+      ? `Counted per location, ${top.restaurant.name} would count ${formatCount(top.locations)} times, not once: it has ${formatCount(top.locations)} of the ${formatCount(total)} priced locations.`
+      : `Counted per location, a chain would count again at every location: ${pluralize(chains.length, "chain")} hold ${formatCount(chainLocations)} of the ${formatCount(total)} priced locations, and ${top.restaurant.name} alone has ${formatCount(top.locations)}.`;
+  if (toCents(locationMedian) === toCents(menuMedian))
+    return `${first} Right now a median over locations happens to land on the same price, but it would move with every chain opening or closing, not with what burgers cost.`;
+  // The chain whose price the location median lands on (most locations first), if it lands on one.
+  const landsOn = chains.find((m) => toCents(m.indexPrice) === toCents(locationMedian));
+  const whose = landsOn ? (dominant && landsOn === top ? ", its price" : `, the ${landsOn.restaurant.name} price`) : "";
+  return `${first} A median over locations would be ${formatPrice(locationMedian, { cents: "always" })}${whose}; over distinct menus it is ${formatPrice(menuMedian, { cents: "always" })}.`;
 }

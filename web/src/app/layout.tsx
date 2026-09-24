@@ -2,9 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { Big_Shoulders, Libre_Franklin, Newsreader } from "next/font/google";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { getDataSource, getGeneratedAt, getIndexMedian, getMenuCounts, getStats } from "@/lib/data";
+import { getDataSource, getGeneratedAt, getIndexMedian, getMenuCounts, getScope, getStats } from "@/lib/data";
 import { formatPrice, pluralize } from "@/lib/format";
 import { OG_IMAGE, SITE_URL } from "@/lib/metadata";
+import { coverageSentence, scopeCredit } from "@/lib/scope";
 import { SITE_NAME } from "@/lib/site";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme-script";
 import "./globals.css";
@@ -14,10 +15,13 @@ const body = Newsreader({ subsets: ["latin"], display: "swap", axes: ["opsz"], s
 const ui = Libre_Franklin({ subsets: ["latin"], display: "swap", variable: "--lf" });
 
 const median = getIndexMedian();
+const scope = getScope();
+// While part of the restaurant list is unread, the description says how much is read so far.
+const soFar = scope.pending ? ` ${coverageSentence(scope)}` : "";
 const description =
   median !== null
-    ? `The NYC Burger Index: ${formatPrice(median)} is the median price of the cheapest beef burger across ${pluralize(getMenuCounts().menus, "New York menu")}, each chain counted once. Every burger we priced, by borough, neighborhood and restaurant.`
-    : "What a burger costs in New York: every burger we priced, by borough, neighborhood and restaurant.";
+    ? `The NYC Burger Index${scope.pending ? " so far" : ""}: ${formatPrice(median)} is the median price of the cheapest beef burger across ${pluralize(getMenuCounts().menus, "New York menu")}, each chain counted once.${soFar} Every burger we priced, by borough, neighborhood and restaurant.`
+    : `What a burger costs in New York: every burger we priced, by borough, neighborhood and restaurant.${soFar}`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -71,7 +75,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main id="main" tabIndex={-1} className="outline-none">
           {children}
         </main>
-        <SiteFooter generatedAt={getGeneratedAt()} menus={getMenuCounts().menus} locations={getStats().restaurants_priced} />
+        <SiteFooter generatedAt={getGeneratedAt()} menus={getMenuCounts().menus} locations={getStats().restaurants_priced} listCredit={scopeCredit(scope)} />
       </body>
     </html>
   );

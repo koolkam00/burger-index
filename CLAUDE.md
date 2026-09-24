@@ -15,18 +15,26 @@ direction are defined there; do not deviate without explicit user approval, and 
 ## Pipeline commands
 
 ```bash
-.venv/bin/python -m pipeline sources            # free: DOHMH + NTA names + pilot CSV -> data/restaurants.json
+.venv/bin/python -m pipeline sources            # free: restaurant list + DOHMH match + NTA names -> data/restaurants.json
 .venv/bin/python -m pipeline plan               # dry run: targets, calls, credit estimate. NO Context.dev calls
 .venv/bin/python -m pipeline run --limit 2      # sources -> discover -> scrape -> build (spends credits)
-.venv/bin/python -m pipeline run --only "Shake Shack" --only "Due West" --max-credits 50
+.venv/bin/python -m pipeline run --only "7th Street Burger" --only "Due West" --max-credits 50
 .venv/bin/python -m pipeline build              # data/burger_index.json from cache only (no API calls)
 .venv/bin/python -m pytest -q tests             # offline; Context.dev is mocked
 ```
 
-`run`/`plan`/`sources` flags: `--cuisines "Hamburgers,American,Irish,Steakhouses"` (widen scope — one flag),
-`--min-inspection-date 2023-01-01` (older latest inspection = treated as closed; `1900-01-01` = not yet inspected,
-always kept), `--refresh-sources`. Scope flags are **remembered** in `data/restaurants.json` (`meta`): every later
-`sources`/`plan`/`run`/`build` reuses them until you pass them again (`--cuisines Hamburgers` to narrow back).
+**The restaurant universe is `burger-list-master.csv` (user decision, 2026-09-23; `config.RESTAURANT_LIST_CSV`).**
+DOHMH inspection data only *matches* its rows (address, coordinates, neighborhood); it adds restaurants only when you
+pass `--cuisines`.
+
+`run`/`plan`/`sources` flags: `--cuisines "Hamburgers,American"` adds every DOHMH restaurant of those cuisines on top
+of the list (default: none; `--cuisines none` goes back to the list only; values are DOHMH `cuisine_description`s,
+case-insensitive, and one no restaurant has — `Steakhouses` — stops the command with a did-you-mean, exit 2, nothing
+written), `--min-inspection-date 2023-01-01` (older latest inspection = treated as
+closed; `1900-01-01` = not yet inspected, always kept), `--national-chains exclude|include` (default `exclude`, see
+"National chains are out" below), `--refresh-sources`. Scope flags are **remembered** in `data/restaurants.json`
+(`meta`): every later `sources`/`plan`/`run`/`build` reuses them until you pass them again (`--cuisines none` to go
+back to the list only).
 `run` (and `plan`) also: `--limit N` (targets; a chain counts as one), `--only NAME` (repeatable), `--max-credits`
 (default 6000); `run` only: `--workers` (default 6), `--refresh`, `--no-build`. `build --output PATH` writes elsewhere. Ctrl-C stops a run at once: queued targets are
 cancelled, in-flight ones make no further live call (exit 130, no build); finished targets stay cached.
@@ -35,9 +43,9 @@ cancelled, in-flight ones make no further live call (exit 130, no build); finish
 
 | module | job |
 | --- | --- |
-| `sources.py` | DOHMH inspections via Socrata (`43nn-pn8j`, free) → one record per CAMIS from its latest inspection; drops boro `0`/missing, lat/lng `0` → null, stale restaurants (flag), and the old CAMIS of a restaurant **re-permitted** at the same address (same brand/near-same name, permits issued apart, old one last inspected earlier; venue stands issued together stay) → `report.dohmh_superseded_permits`. Neighborhoods = **2010 NTA names** from `8ius-dhrr` (the 2010 NTA boundary datasets were retired), committed at `pipeline/data/nta_2010.json` (`sources --refresh-nta` to regenerate), with misleading ones relabeled in `NTA_DISPLAY_OVERRIDES` (MN27 Chinatown-Lower East Side, MN28 Lower East Side-Alphabet City, BK72 South Williamsburg, BK73 Williamsburg); missing NTA → most common NTA of the zipcode. Pilot CSV rows are fuzzy-matched (rapidfuzz, same borough) to DOHMH for camis/address/coords; an acceptable candidate in the row's neighborhood or at the address its URL names beats a name match elsewhere; unmatched rows keep CSV borough and map their neighborhood onto an NTA name, so every page uses one naming system (keys `csv:<name>-<borough>`, made unique on collision). CSV rows come first; DOHMH duplicates are merged. |
+| `sources.py` | DOHMH inspections via Socrata (`43nn-pn8j`, free) → one record per CAMIS from its latest inspection; drops boro `0`/missing, lat/lng `0` → null, stale restaurants (flag), and the old CAMIS of a restaurant **re-permitted** at the same address (same brand/near-same name, permits issued apart, old one last inspected earlier; venue stands issued together stay) → `report.dohmh_superseded_permits`. Neighborhoods = **2010 NTA names** from `8ius-dhrr` (the 2010 NTA boundary datasets were retired), committed at `pipeline/data/nta_2010.json` (`sources --refresh-nta` to regenerate), with misleading ones relabeled in `NTA_DISPLAY_OVERRIDES` (MN27 Chinatown-Lower East Side, MN28 Lower East Side-Alphabet City, BK72 South Williamsburg, BK73 Williamsburg); missing NTA → most common NTA of the zipcode. Restaurant-list rows are fuzzy-matched (rapidfuzz, same borough) to DOHMH for camis/address/coords, and only to records of the same national-chain status (a `Shake Shack (…)` row only to a Shake Shack permit, any other row never to one); an acceptable candidate in the row's neighborhood or at the address its URL or notes name (`at 320 W 36th`) beats a name match elsewhere; a shorter name only counts as contained in a longer one as a phrase or word-by-word from the same first word (`american bar` ≠ `guy fieris american kitchen and bar`); unmatched rows keep CSV borough and map their neighborhood onto an NTA name, so every page uses one naming system (keys `csv:<name>-<borough>`, made unique on collision). CSV rows come first; DOHMH duplicates are merged. With `--national-chains exclude` (default), national chains are dropped after matching → `report.national_chains_excluded` (display name → locations). |
 | `names.py` | normalization, display casing of ALL-CAPS dba (`McDonald's`, `7th Street Burger`, `BurgerFi`; overrides map), slugs |
-| `chains.py` | brand grouping (curated aliases + any brand with ≥3 locations) and scrape **targets**: one per chain, one per other restaurant. Curated chains can carry `cheapest_item` (a delivery page without it is partial) and a pinned `menu_url` (scraped first). Airport locations (JFK/LGA) never get the chain's street price |
+| `chains.py` | brand grouping (curated aliases + any brand with ≥3 locations) and scrape **targets**: one per chain, one per other restaurant. Curated chains can carry `cheapest_item` (a delivery page without it is partial) and a pinned `menu_url` (scraped first). Airport locations (JFK/LGA) never get the chain's street price. `ChainDef.national` marks national chains; `NATIONAL_ONLY` holds more national patterns (Shake Shack stands named after their venue, IHOP, Outback, PLNT Burger…) that are never grouped; `is_national_chain()` checks the DOHMH dba, then the restaurant-list name. Add a new national brand there, with a test in `tests/test_sources.py` for its DBA spellings and a local look-alike that must stay |
 | `discover.py` | URL classification/ranking: official menu page / PDF > official homepage (→ Map URLs) > online ordering > aggregators > delivery marketplaces with full store menus (Grubhub/Seamless, published as `delivery_app`) > unmapped homepage > lazy-loading delivery apps (Uber Eats, DoorDash, Postmates) > unknown third-party pages naming the restaurant. Own-domain check strips generic/place affixes (`duewestnyc` = Due West) and only trusts containment for names ≥6 chars. Rejects social/review/news, platform directory pages, and results (or scraped `location`s) for another location/address; other cities count only in a city/state position (`Houston, TX`, `White Plains, NY 10601`) or as a non-NYC ZIP, so Houston St / White Plains Rd / buffalo wings are fine; official pages are only rejected for another city when they name no NYC place |
 | `context_client.py` | **the only module that imports the Context.dev SDK** (request builders + `execute()`) |
 | `api.py` | disk cache, credit ledger, `--max-credits`, rate gate around `context_client` |
@@ -58,8 +66,11 @@ a date in the file name) keeps the search going; at the caps the best result win
 **Hard caps per target: 1 search, 1 map, 3 scrapes** (reason goes in `status_detail`). A target whose result may
 have been changed by a temporary failure (429/5xx/timeout after SDK retries) is `retry_pending`: `plan`/`build`
 count it as not yet scraped and the next `run` retries. Chains: one NYC location's menu (a CSV member's URL if any,
-else a search on a representative address) is applied to every location except airport concessions; big chains
-whose own site shows no prices (McDonald's, Burger King, Wendy's, Shake Shack…) skip their official site.
+else a search on a representative address) is applied to every location except airport concessions; its
+`status_detail` names the location whose menu was read (the member at the address the scraped page names, else the
+restaurant-list member whose URL it was, else the representative), and that row is the chain's source row in `build`.
+Curated chains whose own site shows no prices (`official_has_prices=False`: the national chains, so only with
+`--national-chains include`) skip their official site.
 
 Extraction rules (schema + instructions in `context_client.py`, clean-up in `extract.py`): numeric price of the
 burger alone; market price → null; single/standard size; no combo/meal upgrades or add-ons (meal-only → null);
@@ -76,12 +87,27 @@ are picked among distinct menus (a chain's source location, not its copies).
 **Chains count once (product decision, 2026-09-23).** The Burger Index (`index_median`/mean/p10/p90), the
 `all_burgers_median` and every borough/neighborhood median/min/max are computed over **distinct menus**
 (`build.menu_index_prices`): each independent restaurant once, each chain once citywide and at most once per area
-— otherwise 150+ McDonald's copies set the city number. Location counts (`restaurants_priced`, `burgers`, area
-`restaurants`) still count every location, since each has its own page and table rows.
+— otherwise one 7th Street Burger menu would count 22 times, once per location. Location counts
+(`restaurants_priced`, `burgers`, area `restaurants`) still count every location, since each has its own page and
+table rows.
+
+**National chains are out (product decision, 2026-09-23).** McDonald's, Burger King, Wendy's, White Castle,
+Checkers, Sonic, Five Guys, Smashburger and Shake Shack (the user chose to remove Shake Shack too), plus the other
+national burger and casual-dining brands in `chains.py`, are left out of the index entirely (`--national-chains
+exclude`, the default). NYC's own small chains stay and count once: 7th Street Burger, Jimbo's Hamburger Palace,
+Bareburger, Jackson Hole, Burger Joint, Harlem Shake (and Black Tap, Bill's Bar & Burger, 5 Napkin Burger when in
+scope). NY-area groups such as Burgerology and Nathan's stay too. Still open, ask the user before widening
+`--cuisines`: whether upscale national groups (Capital Grille, Del Frisco's, Morton's, Ocean Prime, Hillstone),
+entertainment venues (Lucky Strike, Alamo Drafthouse) and Wonder should go as well.
 
 ## Data files
 
 - `data/burger_index.json` — THE dataset (contract above). `build` validates before writing and fails loudly.
+- `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 687 rows: `name, neighborhood,
+  borough, website, menu_url, notes, source` where `source` is `pilot-100|uptown|downtown|outer`). It's the user's data:
+  don't edit it; report duplicates (`report.csv_duplicate_matches`), unmatched rows (`report.csv_unmatched`) and closed
+  places (e.g. "Guy Fieri's American Kitchen & Bar", Times Square, closed 2017) for the user to fix.
+  `burger pilot list.csv` — the original 100-row pilot, now the `pilot-100` rows of the master list (kept for history).
 - `data/restaurants.json` — resolved restaurant universe + match report (`build` reuses it; pass scope flags to re-derive).
 - `data/run_log.jsonl` — one line per target per run: status, urls tried, attempts, credits.
 - `data/credit_ledger.jsonl` — one line per **billed** live call: estimate, actual, run total, account balance, rate-limit headers.
@@ -157,7 +183,7 @@ npm run fixture          # regenerate + validate the fixture (deterministic, fic
   seen balance; until a live call reports the real one it only throttles, so a top-up never blocks a run.
   Finished targets are cached, unstarted ones are logged as `stopped`; the next `run` resumes where it stopped.
 - Always `plan` first. It prints first-pass / expected / worst-case credits and the last seen account balance.
-  Test with `--only "<name>"` or `--limit 1`. Never run the full pilot casually.
+  Test with `--only "<name>"` or `--limit 1`. Never run the full list casually (`plan` first: ~5,300 credits for the master list).
 - **Batch API** (https://docs.context.dev/guides/scrape-websites-in-batches): outputs Markdown or HTML only —
   **no JSON extraction** — at 1 credit per successful page (+OCR), with its own rate bucket. Switching makes sense
   once we scrape thousands of known menu URLs (e.g. after widening `--cuisines`, or monthly re-pricing) *and* run

@@ -5,13 +5,17 @@ import { handCheckedMenus, parseHandCheck } from "../src/lib/hand-checks";
 import {
   chainCoverage,
   chainNames,
+  chainSourceLocation,
   hasOtherMenus,
   isAirportLocation,
   isChainOnly,
+  isChainSourceLocation,
   isRankable,
   joinList,
   joinSome,
+  listedChainNames,
   listedMenus,
+  listedNames,
   menuBreakdown,
   menuBreakdownShort,
   menuCounts,
@@ -20,6 +24,7 @@ import {
   menusByIndexPrice,
   menusByIndexPriceDesc,
   NO_MENUS,
+  perLocationNote,
   pricedMenus,
   splitByCoverage,
   statusTally,
@@ -173,6 +178,77 @@ test("menu breakdown copy reads right for every mix", () => {
 test("chain names come most-locations first", () => {
   const list = [place({ chain: "wendys", name: "Wendy's", price: 4.01 }), mcd("a"), mcd("b"), place({ price: 12 })];
   assert.deepEqual(chainNames(list), ["McDonald's", "Wendy's"]);
+});
+
+test("listed names say 'including' only when the list is cut", () => {
+  assert.equal(listedNames(["7th Street Burger", "Burger Joint"]), ": 7th Street Burger and Burger Joint");
+  assert.equal(listedNames(["A", "B", "C"]), ": A, B and C");
+  assert.equal(listedNames(["A", "B", "C", "D"]), ", including A, B and C");
+  assert.equal(listedNames([]), "");
+});
+
+test("listed chain names count every listed location, priced or not", () => {
+  const list = [
+    place({ chain: "jimbos", name: "Jimbo's", price: 17.5 }),
+    place({ chain: "bareburger", name: "Bareburger", price: null }),
+    place({ chain: "bareburger", name: "Bareburger", price: null }),
+    place({ chain: "jimbos", name: "Jimbo's", price: 17.5 }),
+    place({ chain: "jimbos", name: "Jimbo's", price: 17.5 }),
+    place({ price: 12 }),
+  ];
+  assert.deepEqual(listedChainNames(list), ["Jimbo's", "Bareburger"]);
+  assert.deepEqual(listedChainNames([place({ price: 9 })]), []);
+});
+
+test("chain source location: the row whose menu was read, by its address", () => {
+  const detail = "Prices from an online-ordering page (order.toasttab.com). Chain-level prices from one NYC location (91 East 7 Street, Manhattan); prices may vary by location.";
+  assert.equal(chainSourceLocation(detail), "91 East 7 Street, Manhattan");
+  assert.equal(chainSourceLocation("The chain's menu was looked up for one NYC location (2233 Broadway, Manhattan)."), "2233 Broadway, Manhattan");
+  assert.equal(chainSourceLocation(null), null);
+  const at = (address: string | null, borough: Borough = "Manhattan", chain: string | null = "7th-street-burger") => ({ chain, address, borough, status_detail: detail });
+  assert.equal(isChainSourceLocation(at("91 East 7 Street")), true);
+  assert.equal(isChainSourceLocation(at("35-02 30 Avenue", "Queens")), false);
+  assert.equal(isChainSourceLocation(at("91 East 7 Street", "Brooklyn")), false, "same street, other borough");
+  assert.equal(isChainSourceLocation(at("91 East 7 Street", "Manhattan", null)), false, "independents have no chain source");
+  // A hand check appends its note after the scrape's; the source is still found.
+  assert.equal(isChainSourceLocation({ ...at("91 East 7 Street"), status_detail: `${detail} Prices corrected by hand after re-checking the menu on 2026-09-23: wrong item.` }), true);
+});
+
+test("per-location note: names the chains' share and whose price the location median lands on", () => {
+  const rows = (n: number, chain: string, name: string, price: number) => Array.from({ length: n }, () => place({ chain, name, price }));
+  // Shaped like the 2026-09-23 data: 7th Street Burger has the most locations, but the location
+  // median lands on Jimbo's price.
+  const independents = [
+    ...[9, 10, 12, 14, 15, 16, 17, 18, 19, 19.5].map((p) => place({ price: p })),
+    ...Array.from({ length: 46 }, (_, i) => place({ price: 20 + (i % 12) })),
+  ];
+  const list = [
+    ...rows(22, "7th", "7th Street Burger", 6.5),
+    ...rows(16, "jimbos", "Jimbo's Hamburger Palace", 17.5),
+    ...rows(3, "bj", "Burger Joint", 13.96),
+    ...rows(3, "jh", "Jackson Hole", 11),
+    ...independents,
+  ];
+  const menus = pricedMenus(list);
+  const locMedian = median(list.map((r) => r.index_price as number).sort((a, b) => a - b));
+  const menuMedian = median(menuIndexPrices(list));
+  assert.equal(locMedian, 17.5);
+  const note = perLocationNote(menus, locMedian, menuMedian);
+  assert.ok(note);
+  assert.doesNotMatch(note, /one chain would set the number/, "no chain has more than half the locations");
+  assert.match(note, /4 chains hold 44 of the 100 priced locations, and 7th Street Burger alone has 22\./);
+  assert.match(note, /A median over locations would be \$17\.50, the Jimbo's Hamburger Palace price; over distinct menus it is \$\d+\.\d\d\./);
+
+  // One chain with most of the locations does set the number, at its own price.
+  const dominated = [...rows(6, "big", "Big Chain", 5), place({ price: 20 }), place({ price: 22 }), place({ price: 24 })];
+  const dNote = perLocationNote(pricedMenus(dominated), 5, 21);
+  assert.equal(dNote, "Counted per location, one chain would set the number: Big Chain alone has 6 of the 9 priced locations. A median over locations would be $5.00, its price; over distinct menus it is $21.00.");
+
+  // Same median either way.
+  assert.match(perLocationNote(pricedMenus(dominated), 21, 21) ?? "", /happens to land on the same price/);
+  // No chain with a second priced location: counting per location changes nothing.
+  assert.equal(perLocationNote(pricedMenus([place({ chain: "a", price: 5 }), place({ price: 9 })]), 7, 7), null);
+  assert.equal(perLocationNote([], null, null), null);
 });
 
 test("hand checks: corrected and withheld notes are found and split from the scrape note", () => {

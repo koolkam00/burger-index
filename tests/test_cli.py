@@ -38,7 +38,7 @@ def data_dir(tmp_path, monkeypatch):
     csv = tmp_path / "pilot.csv"
     csv.write_text("name,neighborhood,borough,website,menu_url,notes\n"
                    "Due West,West Village,Manhattan,http://www.duewestnyc.com/,https://www.duewestnyc.com/menus/,x\n")
-    monkeypatch.setattr(config, "PILOT_CSV", csv)
+    monkeypatch.setattr(config, "RESTAURANT_LIST_CSV", csv)
     monkeypatch.setattr(sources, "socrata_get", lambda url, params, http=None: DOHMH_ROWS)
     return d
 
@@ -46,7 +46,7 @@ def data_dir(tmp_path, monkeypatch):
 def test_sources_plan_run_build(data_dir, fake, capsys):
     # McDonald's is a national chain (excluded by default); this flow opts in, and the flag is
     # remembered by plan/run/build like the other scope flags.
-    assert cli.main(["sources", "--national-chains", "include"]) == 0
+    assert cli.main(["sources", "--cuisines", "Hamburgers", "--national-chains", "include"]) == 0
     doc = json.loads(config.RESTAURANTS_PATH.read_text())
     assert len(doc["restaurants"]) == 5 and doc["restaurants"][0]["name"] == "Due West"
 
@@ -125,7 +125,7 @@ def test_scope_flags_are_remembered_by_later_commands(data_dir, fake, capsys, mo
 
 
 def test_national_chains_excluded_by_default(data_dir, capsys):
-    assert cli.main(["sources"]) == 0
+    assert cli.main(["sources", "--cuisines", "Hamburgers"]) == 0
     doc = json.loads(config.RESTAURANTS_PATH.read_text())
     assert [r["name"] for r in doc["restaurants"]] == ["Due West", "Hamburger America"]
     assert doc["report"]["national_chains_excluded"] == {"McDonald's": 3}
@@ -136,9 +136,33 @@ def test_national_chains_excluded_by_default(data_dir, capsys):
     assert plan["targets"] == 2 and plan["chains"] == 0
 
 
+def test_restaurant_list_only_by_default_and_none_resets(data_dir, capsys):
+    # default scope: the restaurant list is the universe; DOHMH only fills in address/coords
+    assert cli.main(["sources"]) == 0
+    doc = json.loads(config.RESTAURANTS_PATH.read_text())
+    assert [r["name"] for r in doc["restaurants"]] == ["Due West"]
+    assert doc["restaurants"][0]["camis"] == "4" and doc["restaurants"][0]["address"]
+    assert doc["meta"]["cuisines"] == [] and doc["meta"]["restaurant_list"] == "pilot.csv"
+    # adding a cuisine is remembered; 'none' goes back to the list only (and [] is remembered too)
+    assert cli.main(["sources", "--cuisines", "Hamburgers"]) == 0
+    assert len(json.loads(config.RESTAURANTS_PATH.read_text())["restaurants"]) == 2  # + Hamburger America
+    assert cli.main(["sources", "--cuisines", "none"]) == 0
+    assert cli.main(["sources"]) == 0
+    doc = json.loads(config.RESTAURANTS_PATH.read_text())
+    assert doc["meta"]["cuisines"] == [] and [r["name"] for r in doc["restaurants"]] == ["Due West"]
+
+
 def test_ctrl_c_exits_cleanly(data_dir, monkeypatch):
     def interrupted(*a, **k):
         raise KeyboardInterrupt
 
     monkeypatch.setattr(cli, "run_targets", interrupted)
     assert cli.main(["run", "--only", "Due West"]) == 130
+
+
+def test_misspelled_cuisine_stops_before_anything_is_written(data_dir, capsys):
+    assert cli.main(["sources", "--cuisines", "Hamburgers,Americans"]) == 2
+    assert "did you mean 'American'" in capsys.readouterr().err
+    assert not config.RESTAURANTS_PATH.exists()
+    assert cli.main(["sources", "--cuisines", "Hamburgers,American"]) == 0
+    assert json.loads(config.RESTAURANTS_PATH.read_text())["meta"]["cuisines"] == ["Hamburgers", "American"]

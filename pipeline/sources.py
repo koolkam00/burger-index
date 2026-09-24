@@ -1,4 +1,4 @@
-"""Restaurant universe: NYC DOHMH inspections + 2010 NTA names + the pilot CSV.
+"""Restaurant universe: the restaurant list CSV, matched to NYC DOHMH inspections + 2010 NTA names.
 
 Everything here is free (NYC Open Data / Socrata, no key). The DOHMH snapshot is cached
 under data/cache/socrata/ so builds are offline-reproducible; the NTA code -> name
@@ -8,6 +8,7 @@ mapping is committed at pipeline/data/nta_2010.json.
 from __future__ import annotations
 
 import csv
+import difflib
 import hashlib
 import json
 import os
@@ -23,7 +24,7 @@ from rapidfuzz import fuzz, process
 
 from . import config
 from .chains import brand_of, is_national_chain
-from .names import display_case, display_name, norm_name, slugify
+from .names import address_in_text, display_case, display_name, norm_name, slugify
 
 DOHMH_DATASET = "43nn-pn8j"
 DOHMH_URL = f"https://data.cityofnewyork.us/resource/{DOHMH_DATASET}.json"
@@ -72,6 +73,10 @@ NTA_DISPLAY_OVERRIDES = {
 _log_lock = threading.Lock()
 
 
+class ScopeError(ValueError):
+    """A scope flag that would silently shrink the dataset (e.g. a misspelled --cuisines value)."""
+
+
 def log(msg: str) -> None:
     with _log_lock:
         print(msg, file=sys.stderr, flush=True)
@@ -115,7 +120,7 @@ def socrata_get(url: str, params: dict[str, str], *, http=None) -> list[dict]:
 
 def dohmh_query() -> dict[str, str]:
     """One row per (camis, location fields) with its latest inspection date — every cuisine,
-    so pilot-CSV restaurants of any cuisine can be matched. ~31k rows, ~8.5 MB."""
+    so restaurant-list rows of any cuisine can be matched. ~31k rows, ~8.5 MB."""
     fields = ",".join(DOHMH_GROUP_FIELDS)
     return {"$select": f"{fields},max(inspection_date) as last_inspection", "$group": fields, "$order": "camis"}
 
@@ -270,7 +275,7 @@ def clean_url(u: Any) -> str | None:
     return u
 
 
-def load_csv(path: Path = config.PILOT_CSV) -> list[dict]:
+def load_csv(path: Path = config.RESTAURANT_LIST_CSV) -> list[dict]:
     with open(path, newline="", encoding="utf-8-sig") as f:
         rows = list(csv.DictReader(f))
     out = []
@@ -339,12 +344,23 @@ def _strip_city(n: str) -> str:
     return re.sub(r"\s+(nyc|ny|new york)$", "", n)
 
 
+def _words_in_order(short: list[str], long: list[str]) -> bool:
+    rest = iter(long)
+    return all(w in rest for w in short)
+
+
 def name_score(a: str, b: str) -> float:
     """max(token_sort_ratio, ratio ignoring spaces), lifted to 90 when one multi-word name is
-    contained in the other ('peter luger' vs 'peter luger steak house')."""
+    contained in the other: as a phrase ('peter luger' in 'peter luger steak house', 'the nines' in
+    'acme the nines'), or word by word in order from the same first word ('benjamin prime' in
+    'benjamin steakhouse prime'). Scattered shared words don't count: 'american bar' is not
+    "guy fieris american kitchen and bar", 'the club' is not 'the lambs club'."""
     s = max(fuzz.token_sort_ratio(a, b), fuzz.ratio(a.replace(" ", ""), b.replace(" ", "")))
-    short = min((a, b), key=len)
-    if len(short.split()) >= 2 and len(short) >= 8 and fuzz.token_set_ratio(a, b) == 100:
+    short, long = sorted((a, b), key=len)
+    ws, wl = re.sub(r"^the ", "", short).split(), re.sub(r"^the ", "", long).split()
+    if len(short.split()) >= 2 and len(short) >= 8 and (
+            re.search(rf"\b{re.escape(short)}\b", long)
+            or (len(ws) >= 2 and ws[0] == wl[0] and _words_in_order(ws, wl))):
         s = max(s, 90.0)
     return s
 
@@ -365,7 +381,7 @@ def match_csv_row(
     nta_map: dict[str, dict],
     min_date: str,
 ) -> tuple[dict | None, float, str]:
-    """Best DOHMH record for a pilot row (same borough), or None. Returns (record, score, method)."""
+    """Best DOHMH record for a restaurant-list row (same borough), or None. Returns (record, score, method)."""
     if not candidates:
         return None, 0.0, "no candidates"
     choices = [_strip_city(c[0]) for c in candidates]
@@ -391,27 +407,31 @@ def match_csv_row(
         rec = candidates[idx][1]
         bonus = 0.0
         nb_ok = bool(rec.get("nta") and (rec["nta"] == csv_nta or (csv_nb and csv_nb in (rec.get("neighborhood") or "").lower())))
+        # the pilot URL names this exact address (e.g. /296-bleecker-st), or its notes do ('at 320 W 36th')
         url_ok = _address_in_urls(rec, urls)
+        notes_ok = not url_ok and address_in_text(rec.get("address"), row.get("notes"))
+        addr_ok = url_ok or notes_ok
         bonus += 6 if nb_ok else 0
-        bonus += 15 if url_ok else 0  # the pilot URL names this exact address (e.g. /296-bleecker-st)
+        bonus += 15 if addr_ok else 0
         bonus += 2 if is_recent(rec, min_date) else -5
         bonus += 3 if choices[idx] in _name_variants(row) else 0
-        lifted = idx in subset and (nb_ok or url_ok)  # "Keens" vs "KEENS STEAKHOUSE" in the same NTA
+        lifted = idx in subset and (nb_ok or addr_ok)  # "Keens" vs "KEENS STEAKHOUSE" in the same NTA
         if lifted:
             s = max(s, 82.0)
-        accept = s >= 86 or lifted or (s >= 80 and url_ok)
-        scored.append((s + bonus, s, accept, nb_ok, url_ok, rec["camis"], rec))
-    # An acceptable candidate in the pilot row's neighborhood (or at the address its URL names)
-    # beats any name match elsewhere: 'Burger Joint', Midtown is the hotel counter on W 57th St,
-    # not the BURGER JOINT on W 31st St.
+        accept = s >= 86 or lifted or (s >= 80 and addr_ok)
+        scored.append((s + bonus, s, accept, nb_ok, addr_ok, rec["camis"], rec, url_ok))
+    # An acceptable candidate in the pilot row's neighborhood (or at the address its URL or notes
+    # name) beats any name match elsewhere: 'Burger Joint', Midtown is the hotel counter on
+    # W 57th St, not the BURGER JOINT on W 31st St.
     located = [x for x in scored if x[2] and (x[3] or x[4])]
     if located:
         scored = located
     scored.sort(key=lambda t: (-t[0], t[5]))
-    total, s, accept, nb_ok, url_ok, _, rec = scored[0]
+    total, s, accept, nb_ok, addr_ok, _, rec, url_ok = scored[0]
     if not accept:
         return None, s, f"best candidate {rec['dba']!r} scored {s:.0f}"
-    method = "name" + ("+neighborhood" if nb_ok else "") + ("+url-address" if url_ok else "")
+    method = ("name" + ("+neighborhood" if nb_ok else "") + ("+url-address" if url_ok else "")
+              + ("+notes-address" if addr_ok and not url_ok else ""))
     return rec, s, method
 
 
@@ -463,6 +483,11 @@ def drop_superseded_permits(records: list[dict]) -> tuple[list[dict], list[dict]
 # Assembly
 
 
+def _national_slug(rec: dict) -> str | None:
+    nd = is_national_chain(rec)
+    return nd.slug if nd else None
+
+
 def build_restaurants(
     csv_rows: list[dict],
     dohmh_rows: list[dict],
@@ -473,16 +498,30 @@ def build_restaurants(
     national_chains: str = config.DEFAULT_NATIONAL_CHAINS,
 ) -> tuple[list[dict], dict]:
     """CSV rows first (CSV order, merged with their DOHMH match), then in-scope DOHMH records.
-    national_chains='exclude' drops national fast-food chains (McDonald's, Shake Shack...) after
-    matching, so a pilot row for one never falls through to a namesake."""
-    cuisines = {c.strip().lower() for c in cuisines if c.strip()}
+    national_chains='exclude' drops national chains (McDonald's, Shake Shack...) after matching.
+
+    A pilot row only matches a DOHMH record of the same national chain, or (for everything else)
+    a record that is not a national chain: 'Shake Shack (Madison Square Park)' can't take the
+    CAMIS of the local MADISON SQUARE, and a local row can't take a McDonald's permit.
+
+    Raises ScopeError when a requested cuisine is no DOHMH cuisine_description ('Steakhouses')."""
+    requested = [c.strip() for c in cuisines if c.strip()]
+    cuisines = {c.lower() for c in requested}
     latest = latest_per_camis(dohmh_rows)
     zip_nta = zip_to_nta(latest)
     records = [r for r in (normalize_dohmh(x, nta_map, zip_nta) for x in latest) if r]
+    known = sorted({r["cuisine"] for r in records if r["cuisine"]})
+    known_lower = {k.lower() for k in known}
+    unknown = [c for c in requested if c.lower() not in known_lower] if records else []
+    if unknown:
+        hints = [f"{c!r} (did you mean {', '.join(repr(m) for m in close)}?)" if close else repr(c)
+                 for c in unknown for close in [difflib.get_close_matches(c, known, n=2, cutoff=0.6)]]
+        raise ScopeError(f"--cuisines: no DOHMH restaurant has cuisine {', '.join(hints)}; "
+                         "values must match cuisine_description exactly (case-insensitive)")
     records, repermits = drop_superseded_permits(records)
-    by_boro: dict[str, list[tuple[str, dict]]] = defaultdict(list)
+    by_boro: dict[tuple[str, str | None], list[tuple[str, dict]]] = defaultdict(list)
     for r in records:
-        by_boro[r["borough"]].append((norm_name(r["dba"]), r))
+        by_boro[(r["borough"], _national_slug(r))].append((norm_name(r["dba"]), r))
 
     report: dict[str, Any] = {
         "csv_rows": len(csv_rows), "csv_matched": 0, "csv_unmatched": [], "csv_duplicate_matches": [],
@@ -493,7 +532,8 @@ def build_restaurants(
     seen: set[str] = set()
     keys: set[str] = set()
     for row in csv_rows:
-        rec, score, method = match_csv_row(row, by_boro.get(row["borough"], []), nta_map, min_date)
+        pool = by_boro.get((row["borough"], _national_slug({"csv_name": row["name"], "name": row["name"]})), [])
+        rec, score, method = match_csv_row(row, pool, nta_map, min_date)
         if rec is not None and rec["camis"] in seen:
             report["csv_duplicate_matches"].append({"row": row["row"], "name": row["name"], "camis": rec["camis"]})
             rec = None
@@ -568,7 +608,7 @@ def load_restaurants(
     min_date: str = config.DEFAULT_MIN_INSPECTION,
     national_chains: str = config.DEFAULT_NATIONAL_CHAINS,
     cache_dir: Path = config.CACHE_DIR,
-    csv_path: Path = config.PILOT_CSV,
+    csv_path: Path = config.RESTAURANT_LIST_CSV,
     nta_path: Path = config.NTA_PATH,
     refresh: bool = False,
     offline: bool = False,
@@ -582,6 +622,7 @@ def load_restaurants(
     )
     report["dohmh_fetched_at"] = snap.get("fetched_at")
     meta = {"cuisines": cuisines, "min_inspection_date": min_date, "national_chains": national_chains,
+            "restaurant_list": Path(csv_path).name,
             "dohmh_fetched_at": snap.get("fetched_at")}
     if write_to is not None:
         _write_json_atomic(Path(write_to), {"meta": meta, "report": report, "restaurants": restaurants}, indent=1)

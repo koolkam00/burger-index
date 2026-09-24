@@ -4,7 +4,7 @@ process_target() is deterministic given the cache, so `build` replays it offline
 (Api(offline=True)) and gets exactly what the live run got — without spending credits.
 
 Per target (restaurant or chain) hard caps: 1 search, 1 map, 3 scrapes.
-  1. candidates from the pilot CSV (menu_url, then website — website first when the menu_url is a
+  1. candidates from the restaurant list CSV (menu_url, then website — website first when the menu_url is a
      special menu such as brunch or restaurant week); none -> web search
   2. an official homepage is resolved to a menu page with Map URLs (homepage kept as fallback)
   3. scrape candidates in rank order until one yields a priced beef burger with no caveat
@@ -35,7 +35,7 @@ from .api import Api, CacheMiss, CreditCapReached
 from .chains import Target
 from .context_client import FatalError
 from .discover import Candidate
-from .names import norm_name
+from .names import address_in_text, norm_name
 
 _log_lock = threading.Lock()
 
@@ -348,7 +348,7 @@ class TargetRun:
             if self.search_error:
                 parts.append(f"Web search failed ({self.search_error}).")
             elif not t.csv_urls and self.searches:
-                parts.append("No menu URL in the pilot list and web search found no usable menu page.")
+                parts.append("No menu URL in the restaurant list and web search found no usable menu page.")
             else:
                 parts.append("No usable menu page found.")
         else:
@@ -361,9 +361,9 @@ class TargetRun:
             if best.kind == "nonbeef":
                 prots = sorted({b["protein"] for b in burgers})
                 parts[-1] = f"Only non-beef burgers ({', '.join(prots)}) on the menu; not in the beef index."
+        source = source_member(t, best) if has_menu else t.rep
         if t.chain:
-            rep = t.rep
-            where = ", ".join(x for x in (rep.get("address"), rep.get("borough")) if x)
+            where = ", ".join(x for x in (source.get("address"), source.get("borough")) if x)
             if status == "priced":
                 parts.append(f"Chain-level prices from one NYC location ({where}); prices may vary by location.")
             else:
@@ -407,7 +407,27 @@ class TargetRun:
             "credits": self.credits,
             "cache_hits": self.cache_hits,
             "retry_pending": retry_pending,
+            # the chain location whose menu was read (build treats it as the chain's source row)
+            "source_key": source.get("key"),
         }
+
+
+def source_member(t: Target, ev: Evaluation) -> dict:
+    """The location whose menu a scraped page is: the member at the address the page names (a
+    chain's site may serve another location's menu, e.g. Burger Joint's Moynihan Food Hall page for
+    383 W 31st St), else the pilot-list member whose URL it is, else the representative location."""
+    loc = (ev.menu or {}).get("location")
+    if loc:
+        if address_in_text(t.rep.get("address"), loc):
+            return t.rep
+        at = [m for m in t.members if address_in_text(m.get("address"), loc)]
+        if len(at) == 1:
+            return at[0]
+    if ev.candidate.origin.startswith("csv"):
+        for m in t.members:
+            if ev.candidate.url in (m.get("menu_url"), m.get("website")):
+                return m
+    return t.rep
 
 
 def process_target(target: Target, api: Api) -> dict:

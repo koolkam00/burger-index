@@ -5,7 +5,7 @@ import { MapShell } from "@/components/map/MapShell";
 import { RestaurantTable } from "@/components/RestaurantBits";
 import { PageHeader, PriceChip, SectionHeading, StatusBadge } from "@/components/ui";
 import { boroughInProse } from "@/lib/boroughs";
-import { getBoroughs, getIndexBurger, getMenuCounts, getRestaurants, getStats } from "@/lib/data";
+import { getBoroughs, getIndexBurger, getMenuCounts, getRestaurants, getScope, getStats } from "@/lib/data";
 import { capitalize, pluralize } from "@/lib/format";
 import { DELIVERY_NOTE } from "@/lib/labels";
 import { joinList, splitByCoverage } from "@/lib/menus";
@@ -14,7 +14,7 @@ import { binFor } from "@/lib/price-bins";
 
 export const metadata = pageMetadata({
   title: "Burger price map",
-  description: "Every priced New York burger restaurant on a map, colored from Steal to Splurge against the NYC median.",
+  description: `Every New York burger restaurant we have priced${getScope().pending ? " so far" : ""}, on a map, colored from Steal to Splurge against the NYC median.`,
   path: "/map",
 });
 

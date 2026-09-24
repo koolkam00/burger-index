@@ -5,7 +5,7 @@ import { AreaListItem, ChainMenuNote } from "@/components/AreaList";
 import { Letterboard } from "@/components/Letterboard";
 import { RestaurantTable } from "@/components/RestaurantBits";
 import { Breadcrumbs, BoroughName, ChainOnlyBadge, Money, PageHeader, SectionHeading, StatGrid, StatTile } from "@/components/ui";
-import { boroughSlug } from "@/lib/boroughs";
+import { boroughInProse, boroughSlug } from "@/lib/boroughs";
 import {
   getGeneratedAt,
   getNeighborhood,
@@ -50,7 +50,7 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
   const c = neighborhoodMenuCounts(slug);
   const chainOnly = isChainOnly(c);
   const siblings = withMenuCounts(getNeighborhoodsInBorough(n.borough).filter((x) => x.slug !== slug));
-  // Ranked on distinct menus: five McDonald's here are one menu.
+  // Ranked on distinct menus: five locations of one chain here are one menu.
   const ranked = isRankable(c, n.index_median);
   // A chain median is not this neighborhood's burger price: no board to screenshot.
   const showBoard = ranked && !chainOnly;
@@ -102,7 +102,7 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
             <Letterboard
               overline={`The Burger Index · ${n.name} median`}
               price={n.index_median}
-              line={`Cheapest beef burger on ${pluralize(c.menus, "menu")} · Updated ${formatDate(getGeneratedAt())}`}
+              line={[`Cheapest beef burger on ${pluralize(c.menus, "menu")}`, `Updated ${formatDate(getGeneratedAt())}`]}
             />
           </div>
         ) : null}
@@ -143,7 +143,7 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
       </section>
 
       <section className="section" aria-labelledby="places">
-        <SectionHeading id="places" title={`Every restaurant in ${n.name}.`}>
+        <SectionHeading id="places" title={`Every restaurant we list in ${n.name}.`}>
           Sorted by index price, cheapest first.
           {restaurants.some((r) => r.chain) ? " Every location is listed; a chain's locations share one menu, so they count as one menu above." : ""}
         </SectionHeading>
@@ -159,7 +159,7 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
 
       {siblings.length ? (
         <section className="section" aria-labelledby="nearby">
-          <SectionHeading id="nearby" title={`Elsewhere in ${n.borough}.`} />
+          <SectionHeading id="nearby" title={`Elsewhere in ${boroughInProse(n.borough)}.`} />
           <ul className="mt-6 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
             {siblings.map((s) => (
               <AreaListItem key={s.slug} area={s} />

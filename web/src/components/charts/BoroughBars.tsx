@@ -4,8 +4,9 @@
 // menus says "Chain prices only" under its name: its bar is a chain median, not a like-for-like one.
 import Link from "next/link";
 import type { BoroughEntry } from "@/lib/data";
+import { boroughInProse } from "@/lib/boroughs";
 import { formatCount, formatPrice } from "@/lib/format";
-import { isChainOnly, menuBreakdownShort } from "@/lib/menus";
+import { isChainOnly, joinList, menuBreakdownShort } from "@/lib/menus";
 import { BoroughDot } from "../ui";
 import { GrowOnView } from "./GrowOnView";
 
@@ -50,10 +51,12 @@ export function BoroughBars({ boroughs, cityMedian, current, labelledBy }: { bor
                     className="hbar-fill absolute top-[calc(50%-10px)] left-0 h-5 rounded-r-[3px]"
                     style={{ width: pct(v), ["--d" as string]: `${i * 40}ms` }}
                   />
-                  <span className="t-num-m absolute top-1/2 -translate-y-1/2 pl-2 whitespace-nowrap" style={{ left: pct(v) }}>
+                  {/* The NYC line first, so a value label that lands on it paints over it: the label's
+                      --bg knockout breaks the line instead of the line cutting through a digit. */}
+                  {cityMedian !== null ? <span className="absolute top-0 bottom-0 w-px bg-ink" style={{ left: pct(cityMedian) }} /> : null}
+                  <span className="t-num-m absolute top-1/2 -translate-y-1/2 bg-bg pr-1 pl-2 whitespace-nowrap" style={{ left: pct(v) }}>
                     {formatPrice(v, { cents: "always" })}
                   </span>
-                  {cityMedian !== null ? <span className="absolute top-0 bottom-0 w-px bg-ink" style={{ left: pct(cityMedian) }} /> : null}
                 </div>
               </div>
             );
@@ -61,7 +64,7 @@ export function BoroughBars({ boroughs, cityMedian, current, labelledBy }: { bor
         </div>
       </GrowOnView>
       {unpriced.length ? (
-        <p className="t-ui-s muted mt-3">No priced restaurants yet in {unpriced.map((b) => b.name).join(", ")}.</p>
+        <p className="t-ui-s muted mt-3">No priced restaurants yet in {joinList(unpriced.map((b) => boroughInProse(b.name)))}.</p>
       ) : null}
     </div>
   );

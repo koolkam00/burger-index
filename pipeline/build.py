@@ -31,7 +31,7 @@ SOURCES = [
     "NYC DOHMH Restaurant Inspection Results (NYC Open Data 43nn-pn8j): restaurant list, addresses, coordinates, cuisine.",
     "2010 Neighborhood Tabulation Areas (NYC Open Data 8ius-dhrr): neighborhood names, a few relabeled to current "
     "usage (" + ", ".join(f"{code} as {name}" for code, name in NTA_DISPLAY_OVERRIDES.items()) + ").",
-    "Curated pilot list of NYC burger restaurants.",
+    "The Burger Index restaurant list: a curated list of NYC burger restaurants.",
     "Menu prices from each restaurant's own site or menu PDF, online-ordering pages, menu aggregators and "
     "delivery apps, read with Context.dev web scraping.",
 ]
@@ -182,21 +182,29 @@ def area_summaries(restaurants: list[Restaurant], level: str) -> list[AreaSummar
 
 
 def coverage_note(meta: dict, n_restaurants: int, n_pending: int, n_airport: int = 0) -> str:
-    cuisines = ", ".join(meta.get("cuisines") or config.DEFAULT_CUISINES)
-    note = (
-        f"{n_restaurants} restaurants: a curated pilot list plus every restaurant NYC DOHMH lists under "
-        f"'{cuisines}' with an inspection since {meta.get('min_inspection_date') or config.DEFAULT_MIN_INSPECTION} "
-        "(or not yet inspected). Chain locations share one menu price scraped from a single NYC location. "
-    )
+    """n_restaurants: rows in the dataset; n_pending: restaurants in scope but not yet scraped."""
+    cuisines = ", ".join(meta["cuisines"] if isinstance(meta.get("cuisines"), list) else config.DEFAULT_CUISINES)
+    in_scope = n_restaurants + n_pending
+    note = f"{in_scope} restaurant{'s' if in_scope != 1 else ''}{' in scope' if n_pending else ''}: "
+    if cuisines:
+        note += (f"our curated restaurant list plus every restaurant NYC DOHMH lists under '{cuisines}' with an "
+                 f"inspection since {meta.get('min_inspection_date') or config.DEFAULT_MIN_INSPECTION} "
+                 "(or not yet inspected)")
+    else:
+        note += ("our curated list of NYC burger restaurants, matched to NYC DOHMH inspection records for address "
+                 "and location")
     if (meta.get("national_chains") or config.DEFAULT_NATIONAL_CHAINS) == "exclude":
-        note += ("National fast-food chains (McDonald's, Burger King, Wendy's, Shake Shack and the like) are left "
-                 "out; NYC's own small chains stay in. ")
-    note += "Delivery-app prices usually run above in-store prices."
+        note += (", except national fast-food chains (McDonald's, Burger King, Wendy's, Shake Shack and the "
+                 "like). NYC's own small chains stay in. ")
+    else:
+        note += ". "
+    if n_pending:
+        note += f"{n_restaurants} of them are in this dataset; the other {n_pending} are not yet scraped. "
+    note += ("Chain locations share one menu price scraped from a single NYC location. "
+             "Delivery-app prices usually run above in-store prices.")
     if n_airport:
         note += (f" {n_airport} airport chain location{'s are' if n_airport != 1 else ' is'} listed without the "
                  "chain's street price.")
-    if n_pending:
-        note += f" {n_pending} more restaurants are in scope but not yet scraped."
     return note
 
 
@@ -240,10 +248,12 @@ def assemble(
         res = results.get(t.key)
         if res is None:
             continue
-        if t.chain and m is not t.rep and is_airport(m):
+        # the chain location whose menu was read (process.source_member); older results: the rep
+        is_source = m["key"] == res["source_key"] if res.get("source_key") else m is t.rep
+        if t.chain and not is_source and is_airport(m):
             res = airport_result(t, res)
             n_airport += 1
-        elif not t.chain or m is t.rep:
+        elif not t.chain or is_source:
             menu_sources.add(rid)
         status = res["status"]
         # Happy-hour prices never set the index, and the contract has no field to label them, so a

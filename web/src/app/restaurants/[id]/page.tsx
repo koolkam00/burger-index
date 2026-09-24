@@ -9,7 +9,7 @@ import { boroughSlug } from "@/lib/boroughs";
 import { getChainLocations, getIndexBurger, getNeighborhood, getRestaurant, getRestaurants, getRestaurantsInNeighborhood, getStats, neighborhoodMenuCounts } from "@/lib/data";
 import { formatCount, formatDate, formatDelta, formatPrice, hostname, pluralize, safeHttpUrl } from "@/lib/format";
 import { parseHandCheck, type HandCheck } from "@/lib/hand-checks";
-import { chainCoverage, hasOtherMenus, isAirportLocation, isChainOnly, menuKey, menusByIndexPrice } from "@/lib/menus";
+import { chainCoverage, hasOtherMenus, isAirportLocation, isChainOnly, isChainSourceLocation, menuKey, menusByIndexPrice } from "@/lib/menus";
 import { DELIVERY_NOTE, PRICE_SOURCE_MEANING, PROTEIN_LABEL, STATUS_COPY, STATUS_LABEL, WITHHELD_COPY } from "@/lib/labels";
 import { pageMetadata } from "@/lib/metadata";
 import { binFor } from "@/lib/price-bins";
@@ -114,7 +114,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
   const hoodMenus = r.neighborhood_slug ? menusByIndexPrice(getRestaurantsInNeighborhood(r.neighborhood_slug)) : [];
   const neighbors = hoodMenus.filter((m) => m.key !== menuKey(r)).slice(0, 6);
   const hoodCounts = r.neighborhood_slug ? neighborhoodMenuCounts(r.neighborhood_slug) : null;
-  // "vs neighborhood" needs another priced menu there (five McDonald's are one menu).
+  // "vs neighborhood" needs another priced menu there (five locations of one chain are one menu).
   const compareHood = hood && hoodCounts && hood.index_median !== null && hasOtherMenus(hoodCounts) ? { median: hood.index_median, counts: hoodCounts } : null;
   // A chain's other locations share its menu price only where they carry one: an unpriced chain (no
   // location scraped with a price) isn't in the index, and airport concessions never get the street price.
@@ -123,6 +123,9 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
   const chainPricedLocations = chainPricedOthers.length + (priced ? 1 : 0);
   const chainListed = chainOthers.length + 1;
   const airport = isAirportLocation(r);
+  // The location whose menu the chain's shared price was read from: its price is not an estimate.
+  const chainSource = isChainSourceLocation(r);
+  const chainListedNote = chainListed > chainPricedLocations ? ` of the ${formatCount(chainListed)} we list` : "";
   const neighborRepeats = repeatedNames(
     neighbors.map((m) => m.restaurant),
     [r],
@@ -160,9 +163,15 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
         {r.chain ? (
           <p className="t-body-s muted prose-width mt-3">
             {priced
-              ? `A ${r.name} location. Chain locations share one menu price, scraped from a single NYC location, so this branch may differ by a little.${
-                  chainPricedLocations > 1 ? ` The same price covers ${pluralize(chainPricedLocations, "priced location")}${chainListed > chainPricedLocations ? ` of the ${formatCount(chainListed)} we list` : ""}.` : ""
-                } The index counts the chain once, not once per location.`
+              ? chainSource
+                ? `We read this ${r.name} location's menu${
+                    chainPricedOthers.length
+                      ? `; the chain's ${chainPricedOthers.length === 1 ? "one other priced location uses" : `other ${formatCount(chainPricedOthers.length)} priced locations use`} its prices`
+                      : ""
+                  }. The index counts the chain once, not once per location.`
+                : `A ${r.name} location. Chain locations share one menu price, scraped from a single NYC location, so this branch may differ by a little.${
+                    chainPricedLocations > 1 ? ` The same price covers ${pluralize(chainPricedLocations, "priced location")}${chainListedNote}.` : ""
+                  } The index counts the chain once, not once per location.`
               : airport
                 ? `A ${r.name} airport location. Airport concessions set their own prices, so the chain's street price isn't applied here and this location isn't in the index.`
                 : chainPricedLocations

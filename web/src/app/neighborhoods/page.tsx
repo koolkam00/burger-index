@@ -1,4 +1,4 @@
-import { AreaListItem, ChainMenuNote } from "@/components/AreaList";
+import { AreaListItem, ChainMenuNote, SoleRanked } from "@/components/AreaList";
 import { NeighborhoodRanking } from "@/components/NeighborhoodRanking";
 import { BoroughDot, PageHeader, SectionHeading } from "@/components/ui";
 import { BOROUGH_META } from "@/lib/boroughs";
@@ -10,7 +10,10 @@ import { MIN_RANKED } from "@/lib/site";
 
 export const metadata = pageMetadata({
   title: "Neighborhoods",
-  description: "New York neighborhoods ranked by the median price of a burger, with the cheapest and priciest index price in each.",
+  description:
+    rankedNeighborhoods().length > 1
+      ? "New York neighborhoods ranked by the median price of a burger, with the cheapest and priciest index price in each."
+      : "New York neighborhoods and the price of a burger in each: the median, cheapest and priciest index price, once a neighborhood has enough priced menus.",
   path: "/neighborhoods",
 });
 
@@ -43,9 +46,18 @@ export default function NeighborhoodsPage() {
 
   return (
     <div className="wrap">
-      <PageHeader title="Neighborhoods, ranked." lede={lede} />
+      {/* A ranking needs two rows: with one, it is a single row of numbers, not a sortable table. */}
+      <PageHeader title={ranked.length > 1 ? "Neighborhoods, ranked." : "Neighborhoods."} lede={lede} />
 
-      {ranked.length ? (
+      {ranked.length === 1 ? (
+        <section className="mt-8" aria-label="The ranked neighborhood">
+          <SoleRanked area={ranked[0]} cityMedian={median} />
+          <p className="t-ui-s muted mt-3">
+            Median and range use each menu&apos;s index price, its cheapest beef burger, with a chain counted once per neighborhood. NYC median{" "}
+            {formatPrice(median, { cents: "always" })}.
+          </p>
+        </section>
+      ) : ranked.length ? (
         <section className="mt-8" aria-label="Ranked neighborhoods">
           <NeighborhoodRanking areas={ranked} cityMedian={median} />
           <p className="t-ui-s muted mt-3">

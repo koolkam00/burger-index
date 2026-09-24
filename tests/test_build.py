@@ -194,3 +194,20 @@ def test_money_rounds_half_cents_up_and_possessives():
     assert build.money(None) is None and build.money(7) == 7.0
     assert build.possessive("McDonald's") == "McDonald's" and build.possessive("Five Guys") == "Five Guys'"
     assert build.possessive("Shake Shack") == "Shake Shack's"
+
+
+def test_coverage_note_counts_the_whole_scope_and_names_the_exclusion():
+    meta = {"cuisines": ["Hamburgers"], "min_inspection_date": "2023-01-01", "national_chains": "exclude"}
+    note = build.coverage_note(meta, 129, 113)
+    assert note.startswith("242 restaurants in scope: our curated restaurant list plus every restaurant NYC DOHMH lists "
+                           "under 'Hamburgers' with an inspection since 2023-01-01 (or not yet inspected), except "
+                           "national fast-food chains")
+    assert "NYC's own small chains stay in." in note
+    assert "129 of them are in this dataset; the other 113 are not yet scraped." in note
+    done = build.coverage_note({**meta, "national_chains": "include"}, 129, 0)
+    assert done.startswith("129 restaurants: our curated restaurant list") and "except" not in done
+    assert "not yet scraped" not in done and "in scope" not in done
+    listed = build.coverage_note({**meta, "cuisines": []}, 77, 589)
+    assert listed.startswith("666 restaurants in scope: our curated list of NYC burger restaurants, matched to NYC "
+                             "DOHMH inspection records for address and location, except national fast-food chains")
+    assert "DOHMH lists under" not in listed

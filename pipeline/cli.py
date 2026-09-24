@@ -1,14 +1,15 @@
 """The Burger Index data pipeline.
 
-    .venv/bin/python -m pipeline sources                 # free: DOHMH + NTA + pilot CSV -> data/restaurants.json
+    .venv/bin/python -m pipeline sources                 # free: restaurant list + DOHMH + NTA -> data/restaurants.json
     .venv/bin/python -m pipeline plan                    # dry run: counts + credit estimate, no Context.dev calls
     .venv/bin/python -m pipeline run --limit 2           # discover -> scrape -> build (spends credits)
-    .venv/bin/python -m pipeline run --only "Shake Shack" --max-credits 50
+    .venv/bin/python -m pipeline run --only "7th Street Burger" --max-credits 50
     .venv/bin/python -m pipeline build                   # data/burger_index.json purely from cache
 
 Every Context.dev response is cached under data/cache/, so re-runs spend 0 credits unless --refresh.
-Scope flags (--cuisines, --min-inspection-date) are remembered in data/restaurants.json: later
-commands reuse them until they are passed again.
+Scope flags (--cuisines, --min-inspection-date, --national-chains) are remembered in
+data/restaurants.json: later commands reuse them until they are passed again. National chains
+(McDonald's, Shake Shack...) are excluded by default; NYC's own chains (7th Street Burger...) stay.
 """
 
 from __future__ import annotations
@@ -26,18 +27,25 @@ from .chains import build_targets, select_targets
 from .context_client import scrape_request
 from .discover import OFFICIAL, classify_url
 from .process import log, replay, run_targets
-from .sources import fetch_nta2010, load_restaurants
+from .sources import ScopeError, fetch_nta2010, load_restaurants
 
 
 def _cuisines(s: str | None) -> list[str] | None:
-    return [c.strip() for c in s.split(",") if c.strip()] if s else None
+    """None when the flag wasn't passed; [] for 'none' (the restaurant list only)."""
+    if s is None:
+        return None
+    if s.strip().lower() == "none":
+        return []
+    return [c.strip() for c in s.split(",") if c.strip()]
 
 
 def _add_scope(p: argparse.ArgumentParser, *, refresh: bool = True) -> None:
-    p.add_argument("--cuisines", help=f'comma-separated DOHMH cuisine_description values (default "{",".join(config.DEFAULT_CUISINES)}")')
+    p.add_argument("--cuisines", help="DOHMH cuisine_description values whose restaurants are added to the restaurant "
+                                      "list, comma-separated, or 'none' (default: none, the list only)")
     p.add_argument("--min-inspection-date", help=f"drop restaurants whose latest inspection is older (default {config.DEFAULT_MIN_INSPECTION}; 1900-01-01 = not yet inspected, always kept)")
     p.add_argument("--national-chains", choices=("exclude", "include"),
-                   help=f"national fast-food chains (McDonald's, Shake Shack...): default {config.DEFAULT_NATIONAL_CHAINS}")
+                   help=f"national chains (McDonald's, Shake Shack...; NYC's own chains always stay): default "
+                        f"{config.DEFAULT_NATIONAL_CHAINS}")
     if refresh:
         p.add_argument("--refresh-sources", action="store_true", help="re-download the DOHMH snapshot (free)")
 
@@ -48,7 +56,7 @@ def _add_select(p: argparse.ArgumentParser) -> None:
 
 
 def _saved_scope() -> dict:
-    """The scope (cuisines, min inspection date) data/restaurants.json was last written with."""
+    """The scope (cuisines, min inspection date, national chains) data/restaurants.json was last written with."""
     try:
         return json.loads(config.RESTAURANTS_PATH.read_text()).get("meta") or {}
     except (FileNotFoundError, json.JSONDecodeError):
@@ -60,25 +68,28 @@ def _scope(args, *, offline: bool = False, write: bool = True):
 
     Each scope flag that is not passed keeps the value data/restaurants.json was written with, so a
     `run --only X` after a wider `run --cuisines ...` does not silently shrink the dataset."""
-    explicit = bool(getattr(args, "cuisines", None) or getattr(args, "min_inspection_date", None)
+    explicit = bool(getattr(args, "cuisines", None) is not None or getattr(args, "min_inspection_date", None)
                     or getattr(args, "national_chains", None) or getattr(args, "refresh_sources", False))
     if offline and not explicit and config.RESTAURANTS_PATH.exists():
         doc = json.loads(config.RESTAURANTS_PATH.read_text())
         return doc["restaurants"], doc.get("report", {}), doc.get("meta", {})
     saved = _saved_scope()
-    cuisines = _cuisines(getattr(args, "cuisines", None)) or saved.get("cuisines") or list(config.DEFAULT_CUISINES)
+    cuisines = _cuisines(getattr(args, "cuisines", None))
+    if cuisines is None:  # [] (list only) is a real, remembered value
+        cuisines = saved["cuisines"] if isinstance(saved.get("cuisines"), list) else list(config.DEFAULT_CUISINES)
     min_date = getattr(args, "min_inspection_date", None) or saved.get("min_inspection_date") or config.DEFAULT_MIN_INSPECTION
     national = getattr(args, "national_chains", None) or saved.get("national_chains") or config.DEFAULT_NATIONAL_CHAINS
-    if (list(cuisines), min_date) != (list(config.DEFAULT_CUISINES), config.DEFAULT_MIN_INSPECTION):
-        log(f"scope: cuisines={','.join(cuisines)} min-inspection-date={min_date}"
+    if (list(cuisines), min_date, national) != (list(config.DEFAULT_CUISINES), config.DEFAULT_MIN_INSPECTION,
+                                                config.DEFAULT_NATIONAL_CHAINS):
+        log(f"scope: cuisines={','.join(cuisines) or 'none'} min-inspection-date={min_date} national-chains={national}"
             + (" (saved in data/restaurants.json; pass the flags to change)" if saved and not explicit else ""))
     restaurants, report = load_restaurants(
-        cuisines=cuisines, min_date=min_date, national_chains=national, cache_dir=config.CACHE_DIR, csv_path=config.PILOT_CSV,
+        cuisines=cuisines, min_date=min_date, national_chains=national, cache_dir=config.CACHE_DIR, csv_path=config.RESTAURANT_LIST_CSV,
         nta_path=config.NTA_PATH, refresh=getattr(args, "refresh_sources", False), offline=offline,
         write_to=config.RESTAURANTS_PATH if write else None,
     )
     meta = {"cuisines": cuisines, "min_inspection_date": min_date, "national_chains": national,
-            "dohmh_fetched_at": report.get("dohmh_fetched_at")}
+            "restaurant_list": config.RESTAURANT_LIST_CSV.name, "dohmh_fetched_at": report.get("dohmh_fetched_at")}
     return restaurants, report, meta
 
 
@@ -274,6 +285,9 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
     try:
         return args.fn(args)
+    except ScopeError as e:  # nothing was written
+        log(f"{args.cmd}: {e}")
+        return 2
     except KeyboardInterrupt:
         log(f"{args.cmd}: interrupted (finished targets are cached; the next run resumes)")
         return 130

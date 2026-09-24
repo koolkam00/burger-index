@@ -1,11 +1,24 @@
 import Link from "next/link";
 import { PageHeader, SectionHeading, SourceBadge, StatusBadge } from "@/components/ui";
 import { boroughInProse } from "@/lib/boroughs";
-import { getBoroughs, getDataSource, getGeneratedAt, getHandCheckedMenus, getMenuCounts, getMethodology, getRestaurants, getStats, pricedLocations } from "@/lib/data";
+import {
+  getBoroughs,
+  getDataSource,
+  getGeneratedAt,
+  getHandCheckedMenus,
+  getMenuCounts,
+  getMethodology,
+  getRestaurants,
+  getScope,
+  getStats,
+  pricedLocations,
+  withMenuCounts,
+} from "@/lib/data";
 import { capitalize, formatCount, formatDate, formatDateTime, formatPrice, pluralize } from "@/lib/format";
 import { PRICE_SOURCE_MEANING, STATUS_COPY } from "@/lib/labels";
-import { isChainOnly, joinList, listedMenus, menuBreakdown, pricedMenus, splitByCoverage, statusTally, type StatusTally } from "@/lib/menus";
+import { isChainOnly, joinList, listedChainNames, listedMenus, menuBreakdown, perLocationNote, pricedMenus, splitByCoverage, statusTally, type StatusTally } from "@/lib/menus";
 import { pageMetadata } from "@/lib/metadata";
+import { cuisineNames, mostlyIn, scopeMethod, scopeRestaurants, scopeWhere } from "@/lib/scope";
 import { binRanges } from "@/lib/price-bins";
 import { PRICE_SOURCES, STATUSES } from "@/lib/enums";
 import { MIN_HISTOGRAM, MIN_RANKED } from "@/lib/site";
@@ -16,8 +29,6 @@ export const metadata = pageMetadata({
   description: "How the NYC Burger Index is built: which restaurants, which burger counts, why a chain counts once, where prices come from, and what we leave out.",
   path: "/methodology",
 });
-
-const cents = (x: number | null) => (x === null ? null : Math.round(x * 100));
 
 /** "56 independent restaurants and 9 chains". */
 function statusMenus(t: StatusTally): string {
@@ -43,15 +54,22 @@ export default function MethodologyPage() {
   const listedChains = listedMenus(restaurants.filter((r) => r.chain !== null));
   const pricedChainLocations = counts.locations - counts.independents;
 
-  // What counting per location would do: the chain with the most priced locations, and the median
-  // you would get if every location were its own entry.
-  const biggestChain = menus.filter((x) => x.chain !== null).sort((a, b) => b.locations - a.locations || a.restaurant.name.localeCompare(b.restaurant.name))[0];
+  // What counting per location would do: the chains' share of priced locations, and the median you
+  // would get if every location were its own entry (and whose price it lands on).
   const locationMedian = medianOf(
     pricedLocations()
       .map((r) => r.index_price as number)
       .sort((a, b) => a - b),
   );
-  const locationMedianDiffers = locationMedian !== null && cents(locationMedian) !== cents(median);
+  const perLocation = perLocationNote(menus, locationMedian, median);
+  // Which restaurants are in scope, where the list comes from, how many are looked up so far, and
+  // whether national fast-food chains are left out: all read from coverage_note (lib/scope).
+  const scope = getScope();
+  const noNational = scope.excludesNationalChains;
+  // The chains we do list (NYC's own), most locations first: the examples of what stays in.
+  const localChainNames = listedChainNames(restaurants).slice(0, 2);
+  // Where the priced menus so far are, when one neighborhood holds most of them (a chain once per area).
+  const menusMostlyIn = mostlyIn(withMenuCounts(), (n) => n.menuCounts.menus, counts.menus);
 
   // Coverage by borough: where independent restaurants are priced, and where only chains are.
   const boroughs = getBoroughs();
@@ -77,7 +95,13 @@ export default function MethodologyPage() {
     <div className="wrap">
       <PageHeader
         title="How the index works."
-        lede="One number for what a burger costs in New York, built from every menu we could price, with each chain counted once. Here is what counts, where the prices come from and what we leave out."
+        lede={`One number for what a burger costs in New York, built from the menus we could price, with each chain counted once${
+          noNational ? " and national fast-food chains left out" : ""
+        }.${
+          scope.pending
+            ? ` So far we have looked up ${formatCount(scope.lookedUp)} of the ${scopeRestaurants(scope)} and priced ${pluralize(counts.menus, "menu")}.`
+            : ""
+        } Here is what counts, where the prices come from and what we leave out.`}
       />
 
       <article className="prose mt-10">
@@ -98,15 +122,7 @@ export default function MethodologyPage() {
             concessions. So the index counts menus, not locations. Every independent restaurant counts once, and each chain counts once citywide,
             however many locations it has. Borough and neighborhood figures count a chain at most once in each area.
           </p>
-          {biggestChain && counts.locations ? (
-            <p>
-              Counted per location, one chain would set the number. {biggestChain.restaurant.name} alone has {pluralize(biggestChain.locations, "priced location")},{" "}
-              {Math.round((biggestChain.locations / counts.locations) * 100)}% of the {formatCount(counts.locations)} we priced.
-              {locationMedianDiffers
-                ? ` A median over locations would be ${formatPrice(locationMedian, { cents: "always" })}; over distinct menus it is ${formatPrice(median, { cents: "always" })}.`
-                : " Right now a median over locations happens to land on the same price, but it would move with every chain opening or closing, not with what burgers cost."}
-            </p>
-          ) : null}
+          {perLocation ? <p>{perLocation}</p> : null}
           <p>
             {counts.menus
               ? `The index rests on ${pluralize(counts.menus, "menu")}: ${menuBreakdown(counts)}. `
@@ -118,7 +134,7 @@ export default function MethodologyPage() {
         <section className="section" aria-labelledby="compute">
           <SectionHeading id="compute" title="How we compute it." />
           <ol className="mt-4">
-            <li>List restaurants: every NYC restaurant the health department files under hamburgers, plus a curated list of burger places.</li>
+            <li>{scopeMethod(scope)}</li>
             <li>Find each menu online and read every burger on it: name, description, price and protein.</li>
             <li>Take the cheapest priced beef burger. That is the menu&apos;s index price, shared by every location of a chain.</li>
             <li>
@@ -171,25 +187,38 @@ export default function MethodologyPage() {
 
         <section className="section" aria-labelledby="coverage">
           <SectionHeading id="coverage" title="Where we have prices so far." />
-          {comparable.length && chainOnly.length ? (
+          {scope.pending ? (
             <p className="mt-4">
+              We have looked up {formatCount(scope.lookedUp)} of the {scopeRestaurants(scope)} so far; the other {formatCount(scope.pending)} are not
+              read yet. Each one joins the site once we look it up, and the index once its menu has a priced beef burger.
+              {menusMostlyIn
+                ? ` Most of the menus priced so far are in ${menusMostlyIn.area.name}: ${formatCount(menusMostlyIn.n)} of ${formatCount(counts.menus)}.`
+                : ""}
+            </p>
+          ) : null}
+          {comparable.length && chainOnly.length ? (
+            <p className={scope.pending ? "" : "mt-4"}>
               {comparable.length === 1
                 ? `Every independent restaurant priced so far is in ${boroughInProse(comparable[0].name)}.`
                 : `Independent restaurants are priced so far in ${joinList(comparable.map((b) => boroughInProse(b.name)))}.`}{" "}
-              {capitalize(joinList(chainOnly.map((b) => boroughInProse(b.name))))} {chainOnly.length === 1 ? "is" : "are"} priced from chain menus only. Their
-              medians are chain prices: we mark them &ldquo;Chain prices only&rdquo; wherever they appear and never present them as a like-for-like
-              comparison.
+              {capitalize(joinList(chainOnly.map((b) => boroughInProse(b.name))))} {chainOnly.length === 1 ? "is" : "are"} priced from chain menus only.{" "}
+              {chainOnly.length === 1 ? "Its median is a chain price: we mark it" : "Their medians are chain prices: we mark them"} &ldquo;Chain prices
+              only&rdquo; wherever {chainOnly.length === 1 ? "it appears" : "they appear"} and never present {chainOnly.length === 1 ? "it" : "them"} as a
+              like-for-like comparison.
             </p>
           ) : chainOnly.length ? (
-            <p className="mt-4">
-              Every borough we have priced so far is priced from chain menus only. Their medians are chain prices, marked &ldquo;Chain prices only&rdquo;
-              wherever they appear.
+            <p className={scope.pending ? "" : "mt-4"}>
+              Every borough we have priced so far is priced from chain menus only.{" "}
+              {chainOnly.length === 1 ? "Its median is a chain price" : "Their medians are chain prices"}, marked &ldquo;Chain prices only&rdquo; wherever{" "}
+              {chainOnly.length === 1 ? "it appears" : "they appear"}.
             </p>
           ) : comparable.length ? (
-            <p className="mt-4">Every borough we have priced has at least one independent restaurant priced, alongside any chains.</p>
+            <p className={scope.pending ? "" : "mt-4"}>Every borough we have priced has at least one independent restaurant priced, alongside any chains.</p>
           ) : null}
           {unpricedBoroughs.length ? (
-            <p className={comparable.length || chainOnly.length ? "" : "mt-4"}>No menu is priced yet in {joinList(unpricedBoroughs.map((b) => boroughInProse(b.name)))}.</p>
+            <p className={comparable.length || chainOnly.length || scope.pending ? "" : "mt-4"}>
+              No menu is priced yet in {joinList(unpricedBoroughs.map((b) => boroughInProse(b.name)))}.
+            </p>
           ) : null}
           <div className="not-prose mt-4">
             <table className="data-table">
@@ -315,12 +344,37 @@ export default function MethodologyPage() {
             <li>Kids&apos; items.</li>
             <li>Tax and tip. Every price is the menu price in US dollars.</li>
             <li>Restaurants we couldn&apos;t price. They appear on the site but not in any median.</li>
+            {scope.pending ? (
+              <li>
+                The {formatCount(scope.pending)} restaurants {scopeWhere(scope)} we haven&apos;t looked up yet. They join the site as we look them up.
+              </li>
+            ) : null}
+            {scope.kind === "list" ? (
+              <li>Restaurants that aren&apos;t on our list, even if they sell a burger. The list is burger places we picked, not every restaurant in the city.</li>
+            ) : scope.kind === "list+cuisines" ? (
+              <li>
+                Restaurants that are neither on our list nor filed under {cuisineNames(scope.cuisines)} by the health department, even if they sell a burger.
+              </li>
+            ) : null}
+            {noNational ? (
+              <li>
+                National fast-food chains{scope.nationalChainExamples ? ` (${scope.nationalChainExamples})` : ""}. They are not on the site at all.
+                {localChainNames.length ? ` NYC's own small chains, like ${joinList(localChainNames)}, stay in.` : ""}
+              </li>
+            ) : null}
           </ul>
         </section>
 
         <section className="section" aria-labelledby="biases">
           <SectionHeading id="biases" title="Known biases." />
           <ul className="mt-4">
+            {scope.pending ? (
+              <li>
+                The index so far rests on the {formatCount(scope.lookedUp)} restaurants we looked up first, not all {formatCount(scope.inScope)}
+                {menusMostlyIn ? `, and ${formatCount(menusMostlyIn.n)} of its ${formatCount(counts.menus)} priced menus are in ${menusMostlyIn.area.name}` : ""}.
+                It will move as the other {formatCount(scope.pending)} are read.
+              </li>
+            ) : null}
             <li>
               Delivery-app prices usually run higher than ordering in person. {formatCount(sourceCounts.delivery_app)} of {pluralize(counts.menus, "menu")}{" "}
               take their index price from a delivery app; they are marked with † everywhere, and the burger table can hide them.
@@ -329,15 +383,28 @@ export default function MethodologyPage() {
             <li>
               Chain locations share one menu price, scraped from a single NYC location
               {counts.chains
-                ? ` (${pluralize(counts.chains, "chain")} priced so far, covering ${pluralize(pricedChainLocations, "location")}; we list ${pluralize(listedChains.chains, "chain")} at ${pluralize(listedChains.locations, "location")} in all)`
+                ? listedChains.chains === counts.chains && listedChains.locations === pricedChainLocations
+                  ? ` (${pluralize(counts.chains, "chain")} so far, at ${pluralize(pricedChainLocations, "location")}, all priced)`
+                  : ` (${pluralize(counts.chains, "chain")} priced so far, covering ${pluralize(pricedChainLocations, "location")}; we list ${pluralize(listedChains.chains, "chain")} at ${pluralize(listedChains.locations, "location")} in all)`
                 : listedChains.chains
                   ? ` (we list ${pluralize(listedChains.chains, "chain")} at ${pluralize(listedChains.locations, "location")}, none priced yet)`
                   : ""}
               . Individual branches can charge a little more or less.
             </li>
+            {noNational ? (
+              <li>
+                National fast-food chains sell some of the cheapest burgers in the city, so leaving them out raises the index. It describes local
+                restaurants and NYC&apos;s own chains, not fast food.
+              </li>
+            ) : null}
             <li>
-              Coverage follows what the city lists and what menus publish online. Places without a menu online are underrepresented, and areas priced
-              only from chains show chain prices until their independent restaurants are read.
+              {scope.kind === "list"
+                ? "Coverage follows our list and what menus publish online. The list is burger places we picked, not a random sample of the city's restaurants. "
+                : scope.kind === "list+cuisines"
+                  ? `Coverage follows our list, what the health department files under ${cuisineNames(scope.cuisines)}, and what menus publish online. `
+                  : "Coverage follows which restaurants are in scope and what menus publish online. "}
+              Places without a menu online are underrepresented, and areas priced only from chains show chain prices until their independent restaurants
+              are read.
             </li>
           </ul>
         </section>

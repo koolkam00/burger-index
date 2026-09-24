@@ -145,7 +145,9 @@ def test_max_credits_stop_keeps_finished_targets(tmp_path, fake):
     assert len(results) == 2 and len(pending) == 4
     d = build.assemble(targets, results, n_pending_restaurants=4, generated_at="2026-09-23T12:00:00Z")
     build.validate(d)
-    assert d["stats"]["restaurants_scanned"] == 2 and "4 more restaurants" in d["methodology"]["coverage_note"]
+    note = d["methodology"]["coverage_note"]
+    assert d["stats"]["restaurants_scanned"] == 2 and note.startswith("6 restaurants in scope: ")
+    assert "2 of them are in this dataset; the other 4 are not yet scraped." in note
 
     # the next run resumes: cached targets are free, the rest get scraped
     api2 = api_for(tmp_path, max_credits=100)
@@ -299,3 +301,27 @@ def test_scraped_page_for_another_city_is_rejected(tmp_path, fake):
     fake(search={"Due West": [sr(dd, "Due West - DoorDash")]}, pages={dd: page})
     res = process_target(one(), api_for(tmp_path))
     assert res["status"] == "no_menu_found" and "outside NYC" in res["status_detail"]
+
+
+def test_chain_note_names_the_location_whose_menu_was_read(tmp_path, fake):
+    # Burger Joint's site serves the Moynihan Food Hall menu (383 W 31st St), not the pilot row's
+    # hotel counter on W 57th St: the note and the chain's source row follow the page.
+    url = "https://www.burgerjointny.com/moynihan-food-hall"
+    rs = [rec("Burger Joint", camis="1", dba="BURGER JOINT", address="118 West 57 Street", csv=True, menu_url=url),
+          rec("Burger Joint", camis="2", dba="BURGER JOINT", address="383 West 31 Street"),
+          rec("Burger Joint", camis="3", dba="BURGER JOINT", address="220 36 Street", borough="Brooklyn",
+              nta="BK32", neighborhood="Sunset Park West")]
+    (t,) = build_targets(rs)
+    assert t.chain == "burger-joint" and t.rep["camis"] == "1"
+    for i, (location, where, source) in enumerate([
+        ("383 west 31st street, unit 31, new york, ny 10001", "383 West 31 Street, Manhattan", "camis:2"),
+        ("118 W 57th St, New York, NY 10019", "118 West 57 Street, Manhattan", "camis:1"),
+        (None, "118 West 57 Street, Manhattan", "camis:1"),  # page names no address: the pilot row's
+    ]):
+        fake(pages={url: {**menu(("Hamburger", 13.96)), "location": location}})
+        res = process_target(t, api_for(tmp_path / str(i)))
+        assert res["status"] == "priced" and res["source_key"] == source
+        assert f"Chain-level prices from one NYC location ({where})" in res["status_detail"]
+        d = build.assemble([t], {t.key: res}, generated_at="2026-09-23T12:00:00Z")
+        src = next(r for r in d["restaurants"] if f"camis:{r['camis']}" == source)
+        assert d["stats"]["cheapest_burger_id"] == f"{src['id']}--hamburger"

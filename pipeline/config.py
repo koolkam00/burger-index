@@ -14,18 +14,24 @@ RESTAURANTS_PATH = DATA_DIR / "restaurants.json"  # resolved restaurant universe
 RUN_LOG_PATH = DATA_DIR / "run_log.jsonl"  # one line per target per run
 LEDGER_PATH = DATA_DIR / "credit_ledger.jsonl"  # one line per live (billed) Context.dev call
 
-PILOT_CSV = ROOT / "burger pilot list.csv"
+# THE restaurant list (user decision 2026-09-23): a curated CSV of NYC burger restaurants
+# (name, neighborhood, borough, website, menu_url, notes[, source]). DOHMH records are used to
+# match its rows (address, coordinates, neighborhood); they add restaurants only via --cuisines.
+RESTAURANT_LIST_CSV = ROOT / "burger-list-master.csv"
 CONTRACT_PATH = ROOT / "contract" / "burger_index.schema.json"
 NTA_PATH = PACKAGE_DIR / "data" / "nta_2010.json"  # cached 2010 NTA code -> name mapping (committed)
 
 BOROUGHS = ("Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island")
 
-# Scope of the pilot run. Widen with --cuisines "Hamburgers,American,Irish,Steakhouses".
-DEFAULT_CUISINES = ("Hamburgers",)
+# DOHMH cuisines whose restaurants are added on top of the restaurant list. Empty (default): the list
+# is the whole universe. --cuisines "Hamburgers" adds every DOHMH hamburger place; --cuisines none
+# goes back to the list only (exact cuisine_description values; one no restaurant has fails).
+DEFAULT_CUISINES: tuple[str, ...] = ()
 # Restaurants whose latest DOHMH inspection is older than this are treated as closed.
 # 1900-01-01 means "not yet inspected" (new restaurant) and is always kept.
 DEFAULT_MIN_INSPECTION = "2023-01-01"
-# National fast-food chains (chains.ChainDef.national) are left out of the index: "exclude" | "include".
+# National chains (chains.ChainDef.national, chains.NATIONAL_ONLY) are left out of the index: "exclude" | "include".
+# NYC's own small chains (7th Street Burger, Jimbo's, Bareburger...) always stay.
 DEFAULT_NATIONAL_CHAINS = "exclude"
 
 DEFAULT_MAX_CREDITS = 6000

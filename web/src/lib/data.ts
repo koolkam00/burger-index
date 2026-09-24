@@ -8,6 +8,7 @@ import { z } from "zod";
 import { BOROUGH_META, boroughBySlug, type BoroughMeta } from "./boroughs";
 import { handCheckedMenus, type HandCheckedMenu } from "./hand-checks";
 import { isRankable, menuCounts, NO_MENUS, type AreaWithMenus, type MenuCounts } from "./menus";
+import { restaurantScope, type RestaurantScope } from "./scope";
 import {
   BurgerIndexSchema,
   type AreaSummary,
@@ -87,6 +88,7 @@ const CITY_MENUS = menuCounts(DATA.restaurants);
 const BOROUGH_MENUS = new Map([...groupBy((r) => r.borough)].map(([k, list]) => [k, menuCounts(list)]));
 const NEIGHBORHOOD_MENUS = new Map([...groupBy((r) => r.neighborhood_slug)].map(([k, list]) => [k, menuCounts(list)]));
 const HAND_CHECKED = handCheckedMenus(DATA.restaurants);
+const SCOPE = restaurantScope(DATA.methodology, DATA.restaurants.length);
 
 export type BurgerRow = { burger: Burger; restaurant: Restaurant };
 
@@ -114,6 +116,13 @@ export function getIndexMedian(): number | null {
 /** Distinct priced menus citywide (the count behind the index), with independents, chains and locations. */
 export function getMenuCounts(): MenuCounts {
   return CITY_MENUS;
+}
+/**
+ * Which restaurants the index covers and where the list comes from (read from
+ * methodology.coverage_note), and how many of them are in the dataset so far.
+ */
+export function getScope(): RestaurantScope {
+  return SCOPE;
 }
 /** Menus whose prices were corrected or withheld after a manual re-check (one entry per chain). */
 export function getHandCheckedMenus(): readonly HandCheckedMenu[] {

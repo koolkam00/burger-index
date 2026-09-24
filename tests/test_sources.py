@@ -1,5 +1,5 @@
 from pipeline import sources
-from pipeline.names import display_case, display_name, norm_name, slugify
+from pipeline.names import address_in_text, display_case, display_name, norm_name, slugify
 
 
 def dohmh(camis, dba, *, boro="Manhattan", building="1", street="MAIN STREET", nta="MN23", zipcode="10014",
@@ -225,3 +225,90 @@ def test_national_chains_dropped_local_chains_kept(nta_map):
         "Burger King": 1, "Carl's Jr.": 1, "Five Guys": 1, "McDonald's": 1, "Shake Shack": 1, "Wayback Burgers": 1,
         "Wendy's": 1}
     assert report["csv_matched"] == 1  # the Shake Shack pilot row merged with its DOHMH record, then both dropped
+
+
+NATIONAL_SPELLINGS = {
+    # DOHMH DBAs (and pilot-list names) of national chains -> slug
+    "CITI FIELD SHAKE SHACK - STAND 139": "shake-shack", "BROOKLYN DELI CB24/SHAKE SHACK CB26": "shake-shack",
+    "DUNKIN (38CC)/ SHAKE SHACK (40CC) POST GATE 22": "shake-shack", "IHOP#3715": "ihop", "IHOP": "ihop",
+    "DENNY'S": "dennys", "PERKINS RESTAURANT & BAKERY": "perkins", "BUFFALO WILD WINGS GO": "buffalo-wild-wings",
+    "HOOTERS": "hooters", "DAVE & BUSTER'S": "dave-and-busters", "Dave & Buster's Times Square": "dave-and-busters",
+    "OUTBACK STEAKHOUSE": "outback", "LONGHORN STEAKHOUSE": "longhorn", "THE CHEESECAKE FACTORY": "cheesecake-factory",
+    "HARD ROCK CAFE": "hard-rock-cafe", "PLANET HOLLYWOOD/CHICKEN GUY": "planet-hollywood",
+    "BUBBA GUMP SHRIMP CO.": "bubba-gump", "MARGARITAVILLE": "margaritaville", "YARD HOUSE": "yard-house",
+    "MILLER'S ALE HOUSE": "millers-ale-house", "UNO CHICAGO GRILL": "uno", "JOLLIBEE": "jollibee",
+    "PLNT BURGER": "plnt-burger", "SLUTTY VEGAN": "slutty-vegan", "SluttyVegan Brooklyn": "slutty-vegan",
+    "NEXT LEVEL BURGER": "next-level-burger", "Umami Burger": "umami-burger", "Cheeburger Cheeburger": "cheeburger",
+}
+# Look-alikes and NYC's own chains that must stay in.
+NOT_NATIONAL = ["DENNY'S PUB", "UNO CAFE & BILLIARDS", "UNO OF ASTORIA", "UNO MEXICAN GRILL", "UMAMI SUSHI",
+                "BAR MILLER", "DEBORAH MILLER", "LAS MARGARITAS", "BUBBA JOES", "HARLEM SHAKE", "MCDONALD AVENUE DINER",
+                "BURGEROLOGY", "7TH STREET BURGER", "THE FAMOUS JIMBO'S HAMBURGER PALACE", "BURGER JOINT"]
+
+
+def test_national_chain_spellings_are_caught_and_look_alikes_kept():
+    from pipeline.chains import is_national_chain
+
+    for dba, slug in NATIONAL_SPELLINGS.items():
+        nd = is_national_chain({"dba": dba, "name": display_name(dba)})
+        assert nd is not None and nd.slug == slug, dba
+        assert is_national_chain({"csv_name": dba, "name": dba}).slug == slug, dba  # as a pilot-list row
+    for dba in NOT_NATIONAL:
+        assert is_national_chain({"dba": dba, "name": display_name(dba)}) is None, dba
+
+
+def test_national_chain_pilot_row_never_takes_a_local_record(nta_map):
+    # 'Shake Shack (Madison Square Park)' is name-similar to the local MADISON SQUARE (51 Madison Ave);
+    # it may only match a Shake Shack permit, so the local restaurant is never swallowed and dropped.
+    rows = [dohmh("300", "MADISON SQUARE", building="51", street="MADISON AVENUE", nta="MN13", zipcode="10010",
+                  cuisine="American"),
+            dohmh("301", "SHAKE SHACK", building="0", street="MADISON SQUARE PARK", nta="MN13", zipcode="10010")]
+    pilot = [csv_row("Shake Shack (Madison Square Park)", neighborhood="Flatiron")]
+    out, report = sources.build_restaurants(pilot, rows, nta_map, cuisines=["Hamburgers", "American"])
+    assert [r["camis"] for r in out] == ["300"] and report["national_chains_excluded"] == {"Shake Shack": 1}
+    out, _ = sources.build_restaurants(pilot, rows, nta_map, cuisines=["Hamburgers", "American"],
+                                       national_chains="include")
+    assert out[0]["csv_name"] == "Shake Shack (Madison Square Park)" and out[0]["camis"] == "301"
+    assert sorted(r["camis"] for r in out) == ["300", "301"]
+    # and a local pilot row never takes a national chain's permit
+    rows = [dohmh("302", "MCDONALD'S", building="51", street="MCDONALD AVENUE", boro="Brooklyn", nta="BK40")]
+    out, _ = sources.build_restaurants([csv_row("McDonald Avenue Diner", neighborhood="Kensington", borough="Brooklyn")],
+                                       rows, nta_map, cuisines=["Hamburgers"], national_chains="include")
+    assert [(r["name"], r["camis"]) for r in out] == [("McDonald Avenue Diner", None), ("McDonald's", "302")]
+
+
+def test_unknown_cuisine_fails_instead_of_shrinking_the_scope(nta_map):
+    import pytest
+
+    rows = [dohmh("1", "A BURGER"), dohmh("2", "PETER'S STEAKS", cuisine="Steakhouse")]
+    with pytest.raises(sources.ScopeError, match=r"'Steakhouses' \(did you mean 'Steakhouse'\?\)"):
+        sources.build_restaurants([], rows, nta_map, cuisines=["Hamburgers", "Steakhouses"])
+    out, _ = sources.build_restaurants([], rows, nta_map, cuisines=["hamburgers", "Steakhouse"])  # case-insensitive
+    assert len(out) == 2
+
+
+def test_pilot_row_matches_the_address_in_its_notes(nta_map):
+    # 'Burgerology Midtown' (neighborhood 'Midtown West', no URL) is the BURGEROLOGY at 320 W 36th St
+    # its notes name, not a second, unmatched listing next to it.
+    rows = [dohmh("50125883", "BURGEROLOGY", building="320", street="WEST   36 STREET", nta="MN17", zipcode="10018")]
+    row = {**csv_row("Burgerology Midtown", neighborhood="Midtown West"),
+           "notes": "Burger joint at 320 W 36th (connected to Crowne Plaza)"}
+    out, report = sources.build_restaurants([row], rows, nta_map, cuisines=["Hamburgers"])
+    assert [(r["name"], r["camis"]) for r in out] == [("Burgerology Midtown", "50125883")]
+    assert out[0]["match"]["method"] == "name+notes-address"
+    assert address_in_text("383 West 31 Street", "383 west 31st street, unit 31, new york, ny 10001")
+    assert address_in_text("991 1 Avenue", "991 First Ave") and not address_in_text("991 1 Avenue", "99 1st Ave")
+    assert not address_in_text("383 West 31 Street", "383 East 31st Street")
+
+
+def test_shared_words_scattered_through_a_name_are_not_a_match(nta_map):
+    assert sources.name_score("peter luger", "peter luger steak house") >= 90
+    assert sources.name_score("acme the nines", "the nines") >= 90
+    assert sources.name_score("benjamin steakhouse prime", "benjamin prime") >= 90
+    assert sources.name_score("guy fieris american kitchen and bar", "american bar") < 80
+    assert sources.name_score("the lambs club", "the club") < 86
+    # the closed Times Square Guy Fieri's must not become the West Village AMERICAN BAR
+    rows = [dohmh("50059464", "AMERICAN BAR", building="33", street="GREENWICH AVENUE", cuisine="American")]
+    out, _ = sources.build_restaurants([csv_row("Guy Fieri's American Kitchen & Bar", neighborhood="Times Square")],
+                                       rows, nta_map, cuisines=["American"])
+    assert [(r["name"], r["camis"]) for r in out] == [("Guy Fieri's American Kitchen & Bar", None), ("American Bar", "50059464")]

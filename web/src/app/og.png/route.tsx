@@ -1,8 +1,9 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
-import { getGeneratedAt, getMenuCounts, getStats } from "@/lib/data";
+import { getGeneratedAt, getMenuCounts, getScope, getStats } from "@/lib/data";
 import { formatDate, pluralize, priceParts } from "@/lib/format";
+import { lookedUpSoFar } from "@/lib/scope";
 
 // The Open Graph image is the Letterboard at 1200×630 (DESIGN.md). Rendered once at build time and
 // written to out/og.png by the static export.
@@ -25,6 +26,11 @@ export async function GET() {
 
   const ink = "#F8F3E7";
   const muted = "#B5AB9C";
+  // The board's small print, as on the home page: while part of the restaurant list is unread, the
+  // image says how much is read, so a shared card never reads as a finished citywide census.
+  const line = [`Cheapest beef burger on ${pluralize(getMenuCounts().menus, "menu")}`, lookedUpSoFar(getScope()), `Updated ${formatDate(getGeneratedAt())}`].filter(
+    (x): x is string => !!x,
+  );
 
   return new ImageResponse(
     (
@@ -56,10 +62,10 @@ export async function GET() {
         ) : (
           <div style={{ display: "flex", fontFamily: "Big Shoulders", fontWeight: 900, fontSize: 200 }}>What a burger costs in New York</div>
         )}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", fontSize: 28, fontWeight: 500, color: muted }}>
-          <span>
-            Cheapest beef burger on {pluralize(getMenuCounts().menus, "menu")} · Updated {formatDate(getGeneratedAt())}
-          </span>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", columnGap: 8, rowGap: 6, fontSize: 28, fontWeight: 500, color: muted }}>
+          {line.map((part, i) => (
+            <span key={i}>{i < line.length - 1 ? `${part} ·` : part}</span>
+          ))}
         </div>
       </div>
     ),

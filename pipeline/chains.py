@@ -61,10 +61,18 @@ CURATED_CHAINS: tuple[ChainDef, ...] = (
     _c("johnny-rockets", "Johnny Rockets", r"^johnny rockets\b", False, national=True),
     _c("applebees", "Applebee's", r"^applebees\b", False, national=True),
 )
-# More national burger/fast-food brands, so widening --cuisines never lets them in. Not grouped
-# as chains here (they're excluded before grouping); patterns match norm_name() like the list above.
+# More national burger/fast-food and casual-dining brands, so widening --cuisines (American,
+# Steakhouse...) or a bigger pilot list never lets them in. Not grouped as chains here (they're
+# excluded before grouping); patterns match norm_name() like the list above. Only checked when no
+# curated pattern matched, so a slug shared with a curated chain merges its report counts.
+# Deliberately NOT here (NYC-born or NY-area groups stay, like 7th Street): Burgerology, Nathan's,
+# Texas / Tex's Chicken & Burgers. Upscale groups (Capital Grille, Del Frisco's, Morton's...),
+# entertainment venues and Wonder wait on a user decision.
 NATIONAL_ONLY: tuple[ChainDef, ...] = tuple(
     _c(slug, display, pattern, False, national=True) for slug, display, pattern in (
+        # stands whose DBA doesn't start with the brand: 'CITI FIELD SHAKE SHACK - STAND 139',
+        # 'BROOKLYN DELI CB24/SHAKE SHACK CB26', 'DUNKIN (38CC)/ SHAKE SHACK (40CC) POST GATE 22'
+        ("shake-shack", "Shake Shack", r"\bshake shack\b"),
         ("wayback-burgers", "Wayback Burgers", r"^wayback burgers?\b"),
         ("red-robin", "Red Robin", r"^red robin\b"),
         ("carls-jr", "Carl's Jr.", r"^carls jr\b"),
@@ -74,9 +82,31 @@ NATIONAL_ONLY: tuple[ChainDef, ...] = tuple(
         ("whataburger", "Whataburger", r"^whataburger\b"),
         ("in-n-out", "In-N-Out Burger", r"^in ?n ?out\b"),
         ("culvers", "Culver's", r"^culvers\b"),
+        ("umami-burger", "Umami Burger", r"^umami burger\b"),  # not 'UMAMI SUSHI'
+        ("cheeburger", "Cheeburger Cheeburger", r"^cheeburger\b"),
+        ("plnt-burger", "PLNT Burger", r"^plnt burger\b"),
+        ("slutty-vegan", "Slutty Vegan", r"^slutty ?vegan\b"),
+        ("next-level-burger", "Next Level Burger", r"^next level burger\b"),
+        ("jollibee", "Jollibee", r"^jollibee\b"),
+        ("arbys", "Arby's", r"^arbys\b"),
         ("tgi-fridays", "TGI Fridays", r"^t ?g ?i fridays?\b"),
         ("chilis", "Chili's", r"^chilis\b"),
-        ("arbys", "Arby's", r"^arbys\b"),
+        ("ihop", "IHOP", r"^ihop\b"),
+        ("dennys", "Denny's", r"^dennys( restaurant)?$"),  # not "DENNY'S PUB"
+        ("perkins", "Perkins", r"^perkins restaurant\b"),
+        ("buffalo-wild-wings", "Buffalo Wild Wings", r"^buffalo wild wings\b"),
+        ("hooters", "Hooters", r"^hooters\b"),
+        ("dave-and-busters", "Dave & Buster's", r"^dave and busters?\b"),
+        ("outback", "Outback Steakhouse", r"^outback steakhouse\b"),
+        ("longhorn", "LongHorn Steakhouse", r"^longhorn steakhouse\b"),
+        ("cheesecake-factory", "The Cheesecake Factory", r"^(the )?cheesecake factory\b"),
+        ("hard-rock-cafe", "Hard Rock Cafe", r"^hard rock cafe\b"),
+        ("planet-hollywood", "Planet Hollywood", r"^planet hollywood\b"),
+        ("bubba-gump", "Bubba Gump Shrimp Co.", r"^bubba gump\b"),
+        ("margaritaville", "Margaritaville", r"^(jimmy buffetts )?margaritaville\b"),
+        ("yard-house", "Yard House", r"^yard house\b"),
+        ("millers-ale-house", "Miller's Ale House", r"^millers ale house\b"),
+        ("uno", "Uno Pizzeria & Grill", r"^(pizzeria )?uno (chicago grill|pizzeria)\b"),  # not 'UNO OF ASTORIA'
     )
 )
 MIN_AUTO_LOCATIONS = 3
@@ -98,7 +128,8 @@ def brand_of(rec: dict) -> tuple[str, ChainDef | None]:
 
 
 def is_national_chain(rec: dict) -> ChainDef | None:
-    """The national fast-food chain this restaurant belongs to, or None (independents and local chains)."""
+    """The national chain this restaurant belongs to, or None (independents and NYC's own chains).
+    Checks the DOHMH dba first, then the pilot-list name (see brand_of)."""
     _, cd = brand_of(rec)
     if cd is not None:
         return cd if cd.national else None
@@ -156,7 +187,7 @@ class Target:
     chain: str | None
     members: list[dict]
     rep: dict  # location used for the search query and the "different location" check
-    csv_urls: list[tuple[str, str]]  # (url, origin) from the pilot CSV (or a pinned chain menu), in priority order
+    csv_urls: list[tuple[str, str]]  # (url, origin) from the restaurant list CSV (or a pinned chain menu), in priority order
     official_has_prices: bool = True
     cheapest_item: str | None = None  # curated chains: see ChainDef.cheapest_item
 

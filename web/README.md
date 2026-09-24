@@ -1,6 +1,7 @@
 # The Burger Index: website
 
-The public site for the NYC Burger Index: the median price of the cheapest beef burger at every New York restaurant we could price.
+The public site for the NYC Burger Index: the median price of the cheapest beef burger across the New York menus we have priced, from
+the restaurants in the pipeline's scope (by default our curated list of burger restaurants; see "Restaurant scope" below).
 It is a fully static Next.js site (App Router, TypeScript strict, Tailwind v4, zod). There is no server code and no API key: the Python
 pipeline writes one JSON file, and `next build` turns it into plain HTML in `out/`.
 
@@ -88,7 +89,7 @@ Notes:
 | `/neighborhoods`, `/neighborhoods/[slug]` | Sortable ranking (areas with at least 5 distinct priced menus; a chain counts once) and area pages |
 | `/boroughs`, `/boroughs/[slug]` | Borough comparison and borough pages |
 | `/map` | MapLibre GL map, pins colored by price level, legend, list view, restaurants without coordinates |
-| `/methodology` | The rule, sources, price-source meanings, statuses, exclusions, biases, update date |
+| `/methodology` | The rule, where the restaurant list comes from and how much of it is read, sources, price-source meanings, statuses, exclusions, biases, update date |
 | `/data/burger_index.json` | The validated dataset, for download |
 | `/og.png`, `/sitemap.xml`, `/robots.txt` | Open Graph image (the Letterboard), sitemap, robots |
 
@@ -102,6 +103,13 @@ Notes:
   `menuIndexPrices`, `menuCounts`, `isChainOnly`, `isRankable`). Location counts (`restaurants_priced`, map pins, table rows)
   stay per location. An area priced only from chain menus is labelled "Chain prices only" and never compared like for like.
   Hand corrections (`status_detail` "Prices corrected by hand / withheld after re-checking…") are parsed by `src/lib/hand-checks.ts`.
+- **Restaurant scope:** where the restaurant list comes from and how much of it is read so far are never hard-coded. The contract has no
+  field for them, so `src/lib/scope.ts` (`restaurantScope`, exposed as `getScope()` in `data.ts`) parses `methodology.coverage_note`
+  as `pipeline/build.py` `coverage_note` writes it: list only ("our curated list of NYC burger restaurants, matched to NYC DOHMH
+  inspection records...") or list plus DOHMH cuisines ("our curated restaurant list plus every restaurant NYC DOHMH lists under
+  'Hamburgers'..."), the in-scope and not-yet-scraped counts, and whether national fast-food chains are left out. The home lede,
+  Letterboard line, stat tiles, meta descriptions, Open Graph image, footer and methodology read it. `test/scope.test.ts` pins both
+  phrasings; if the pipeline rewords the note, update both together. An unrecognised note (the fixture's) gives copy that names no source.
 - **Price colors** (Steal → Splurge) are always measured against the citywide median, never a filtered subset. See `src/lib/price-bins.ts`.
 - **Map:** tiles and styles come from [OpenFreeMap](https://openfreemap.org) (`positron` for light, `dark` for dark), recolored to the
   DESIGN.md map tokens at runtime. MapLibre v6 loads its worker relative to its own module URL, which bundling breaks, so `sync-data`

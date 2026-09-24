@@ -3,7 +3,8 @@ import { formatDate, pluralize } from "@/lib/format";
 import { NAV } from "@/lib/site";
 import { UseSystemTheme } from "./theme";
 
-export function SiteFooter({ generatedAt, menus, locations }: { generatedAt: string; menus: number; locations: number }) {
+/** `listCredit`: where the restaurant list comes from, computed from the dataset (lib/scope `scopeCredit`). */
+export function SiteFooter({ generatedAt, menus, locations, listCredit }: { generatedAt: string; menus: number; locations: number; listCredit: string }) {
   return (
     <footer className="mt-12 md:mt-24">
       <div className="wrap">
@@ -38,9 +39,7 @@ export function SiteFooter({ generatedAt, menus, locations }: { generatedAt: str
           </nav>
           <div className="min-w-0">
             <p className="t-body-s muted">We index prices, not quality. Not affiliated with any restaurant.</p>
-            <p className="t-body-s muted mt-3">
-              Restaurant list from NYC Open Data (DOHMH). Map data © OpenStreetMap contributors, tiles by OpenFreeMap.
-            </p>
+            <p className="t-body-s muted mt-3">{listCredit} Map data © OpenStreetMap contributors, tiles by OpenFreeMap.</p>
           </div>
         </div>
       </div>
