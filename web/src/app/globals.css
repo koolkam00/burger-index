@@ -2301,6 +2301,274 @@
     width: 64px;
     height: 64px;
   }
+
+  /* ---- Vote picker ("order tickets"): ten numbered tickets, one radio group ------------------ */
+  .vote-picker {
+    min-width: 0;
+  }
+  .vote-picker-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 18px;
+    margin-bottom: 8px;
+  }
+  .vote-tickets {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 4px;
+    max-width: 480px;
+    /* room for the tickets' block shadow */
+    padding-bottom: 3px;
+  }
+  @media (min-width: 640px) {
+    .vote-tickets {
+      gap: 6px;
+    }
+  }
+  .vote-ticket {
+    position: relative;
+    min-width: 0;
+    height: 44px;
+    padding: 6px 0 0;
+    border: 1.5px solid var(--line-strong);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 3px 0 var(--block);
+    font-family: var(--font-ui);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums lining-nums;
+    cursor: pointer;
+    transition:
+      background-color var(--dur-1) var(--ease-out),
+      color var(--dur-1) var(--ease-out),
+      transform var(--dur-1) var(--ease-out),
+      box-shadow var(--dur-1) var(--ease-out);
+  }
+  /* The perforation across the top of an order ticket (decorative). */
+  .vote-ticket::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    right: 5px;
+    top: 7px;
+    border-top: 1.5px dotted currentColor;
+    opacity: 0.28;
+  }
+  .vote-ticket:hover {
+    background: var(--surface-2);
+  }
+  .vote-ticket[aria-checked="true"] {
+    background: var(--accent);
+    border-color: var(--accent-deep);
+    color: var(--accent-ink);
+    box-shadow: 0 3px 0 var(--accent-deep);
+  }
+  .vote-ticket[aria-checked="true"]::after {
+    opacity: 0.45;
+  }
+  .vote-ticket[aria-checked="true"]:hover {
+    background: var(--accent-hover);
+  }
+  .vote-ticket:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--block);
+  }
+  .vote-ticket[aria-checked="true"]:active:not(:disabled) {
+    box-shadow: 0 1px 0 var(--accent-deep);
+  }
+  .vote-ticket:focus-visible {
+    z-index: 1;
+  }
+  .vote-ticket:disabled {
+    opacity: 0.4;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+  .vote-ticket:disabled:hover {
+    background: var(--surface);
+  }
+  .vote-picker-sm .vote-ticket {
+    height: 36px;
+    padding-top: 5px;
+    font-size: 15px;
+    border-radius: 7px;
+  }
+  .vote-picker-sm .vote-ticket::after {
+    top: 6px;
+    left: 4px;
+    right: 4px;
+  }
+  .vote-status {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    min-height: 1.35em;
+    margin-top: 10px;
+  }
+  .vote-picker-sm .vote-status {
+    margin-top: 8px;
+  }
+  .vote-status-icon {
+    width: 16px;
+    height: 16px;
+    flex: none;
+    margin-top: 1px;
+    color: var(--err-icon);
+  }
+
+  /* ---- Restaurant vote card: the visitors' average beside the picker ------------------------ */
+  .vote-card {
+    display: grid;
+    gap: 20px;
+    padding: 16px;
+  }
+  @media (min-width: 768px) {
+    .vote-card {
+      grid-template-columns: 170px minmax(0, 1fr);
+      gap: 32px;
+      padding: 24px;
+      align-items: start;
+    }
+  }
+  .vote-card-score,
+  .vote-card-pick {
+    min-width: 0;
+  }
+
+  /* ---- Best burgers leaderboard ("the comment-card board"): a data zone -------------------- */
+  .vote-board-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    min-height: 24px;
+    margin-bottom: 12px;
+  }
+  .badge-live {
+    background: var(--ok-bg);
+  }
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ok-icon);
+    flex: none;
+  }
+  .vote-board-shell {
+    background: var(--surface);
+    border: 2px solid var(--line);
+    border-radius: var(--radius-3);
+    box-shadow: var(--shadow-block);
+    overflow: clip;
+  }
+  .vote-board {
+    position: relative;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .vote-row,
+  .vote-board-head {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "rank what avg"
+      "mine mine mine";
+    column-gap: 12px;
+    row-gap: 12px;
+    align-items: start;
+    padding: 14px 12px;
+  }
+  .vote-board-head {
+    display: none;
+  }
+  .is-unranked .vote-row,
+  .is-unranked .vote-board-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "what avg"
+      "mine mine";
+  }
+  .vote-row {
+    background: var(--surface);
+    border-top: 1.5px solid var(--line);
+  }
+  .vote-board > .vote-row:first-child {
+    border-top: 0;
+  }
+  .vote-rank {
+    grid-area: rank;
+    font-family: var(--font-ui);
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums lining-nums;
+    text-align: right;
+  }
+  .vote-what {
+    grid-area: what;
+    min-width: 0;
+  }
+  .vote-avg {
+    grid-area: avg;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    text-align: right;
+    white-space: nowrap;
+  }
+  .vote-mine {
+    grid-area: mine;
+    min-width: 0;
+  }
+  .vote-row-skeleton {
+    grid-template-areas: "rank what avg";
+  }
+  .skel {
+    display: block;
+    border-radius: 6px;
+    background: var(--surface-2);
+  }
+  @media (min-width: 640px) {
+    .vote-row,
+    .vote-board-head {
+      padding-inline: 16px;
+      column-gap: 16px;
+    }
+  }
+  @media (min-width: 900px) {
+    .vote-row,
+    .vote-board-head {
+      grid-template-columns: 44px minmax(0, 1fr) 88px minmax(300px, 380px);
+      grid-template-areas: "rank what avg mine";
+      align-items: center;
+    }
+    .is-unranked .vote-row,
+    .is-unranked .vote-board-head {
+      grid-template-columns: minmax(0, 1fr) 88px minmax(300px, 380px);
+      grid-template-areas: "what avg mine";
+    }
+    .vote-board-head {
+      display: grid;
+      padding-block: 12px;
+      background: var(--surface-2);
+      border-bottom: 2px solid var(--line-strong);
+    }
+    /* Header cells keep the label type (the rank cell would otherwise take the rank numerals'). */
+    .vote-board-head > * {
+      font: inherit;
+      letter-spacing: inherit;
+    }
+    .vote-row-skeleton {
+      grid-template-areas: "rank what avg mine";
+    }
+  }
 }
 
 @keyframes board-swing {

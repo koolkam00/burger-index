@@ -2,8 +2,9 @@
 
 The public site for the NYC Burger Index: the median index price across the New York menus we have priced, from
 the restaurants in the pipeline's scope (by default our curated list of burger restaurants; see "Restaurant scope" below).
-It is a fully static Next.js site (App Router, TypeScript strict, Tailwind v4, zod). There is no server code and no API key: the Python
-pipeline writes one JSON file, and `next build` turns it into plain HTML in `out/`.
+It is a fully static Next.js site (App Router, TypeScript strict, Tailwind v4, zod). There is no server code and no secret key: the Python
+pipeline writes one JSON file, and `next build` turns it into plain HTML in `out/`. The one live part, visitor voting, talks to
+Supabase straight from the browser with a public key (see "Visitor votes" below).
 
 Design rules live in [`../DESIGN.md`](../DESIGN.md) (fonts, color tokens, components, voice). Read it before changing anything visual.
 
@@ -60,6 +61,33 @@ Other scripts:
 | `npm run validate:data [file]` | Validate a dataset against the contract (defaults to the fixture) |
 | `npm run fixture` | Regenerate `fixtures/burger_index.sample.json` (deterministic, fictional restaurants on `.example` domains) and validate it |
 
+## Visitor votes (Supabase)
+
+Visitors rate each menu's burger 1–10 (whole numbers, one vote per device, changeable) on every priced restaurant page and on
+`/best-burgers`, a live ranking. The backend is the Supabase project `burger-index`; its schema, API (`cast_vote`, `my_votes`,
+the public `burger_scores` table and its realtime feed), rate limit and security notes are in
+[`../supabase/README.md`](../supabase/README.md) and `../supabase/migrations/`.
+
+The site needs two public build-time variables, in `web/.env.local` locally (gitignored) **and on Vercel** (Project → Settings →
+Environment Variables, for Production and Preview):
+
+| Variable | Value |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://<project-ref>.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the project's **publishable** key (`sb_publishable_…`), never the secret / `service_role` key |
+
+Both are inlined into the JavaScript at build time (so a change needs a rebuild) and are public by design: the database only lets
+that key call `cast_vote` / `my_votes` and read `burger_scores`. Without them the site still builds; every vote picker is disabled
+and says "Voting opens soon."
+
+Code map: `src/lib/vote-config.ts` (the two variables), `src/lib/voter.ts` (the anonymous voter id: a `crypto.randomUUID()` in
+`localStorage` under `burger-index-voter`, in memory when storage is blocked), `src/lib/vote-api.ts` (the only module that talks to
+Supabase; `@supabase/supabase-js` is imported lazily, so it is its own chunk and loads only where a vote component asks for it),
+`src/lib/vote-store.ts` (optimistic votes and live totals shared by every picker on a page), `src/lib/votes.ts` (pure helpers: score
+checks, the weighted ranking, search; tested in `test/votes.test.ts`), and `src/components/votes/` (the picker, the restaurant
+card and the `/best-burgers` board). The ranking is a weighted average (`(5·m + total) / (5 + votes)`, m = mean of all votes)
+over menus with at least 3 votes; like every rule behind the numbers, it is never explained on the site.
+
 ## Deploy to Vercel
 
 The Vercel project uses **Root Directory** `web`, **Build Command** `npm run build`, **Output Directory** `out`. Either:
@@ -74,6 +102,7 @@ Notes:
   keep Vercel's "Include files outside the root directory in the Build Step" setting on (the default for new projects).
 - The repo-root `.vercelignore` is an allowlist (`web/`, `contract/`, `data/burger_index.json`, `DESIGN.md`). Vercel does not read
   `.gitignore`, so without it a CLI deploy from the root would upload `.env` (the Context.dev key), `.venv/` and the scrape cache.
+- Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (see "Visitor votes"), or voting stays closed on the live site.
 - Set `NEXT_PUBLIC_SITE_URL` (for example `https://burgerindex.nyc`) so canonical URLs, the sitemap and Open Graph tags point at your
   domain. When it is unset, Vercel's production URL is used, then `https://burgerindex.nyc`.
 - Any static host works: upload `out/`. Routes are emitted as `name.html` files, so the host needs clean URLs (`/map` → `map.html`),
@@ -85,7 +114,8 @@ Notes:
 |---|---|
 | `/` | The headline index on the Order Board, typical range, counts, price histogram, borough bars, cheapest and priciest, neighborhood ranking |
 | `/burgers` | Every burger: search, filters (borough, neighborhood, price, protein, price source, index-only), sort, all synced to the URL |
-| `/restaurants/[id]` | Menu board, index price vs neighborhood and NYC, price source, menu link, menu date, hand-check label, other chain locations, locator map |
+| `/best-burgers` | Visitors' live ranking (loads the votes in the browser), burgers that need more votes, and a search to rate any burger |
+| `/restaurants/[id]` | Menu board, index price vs neighborhood and NYC, the visitor rating and vote picker, price source, menu link, menu date, hand-check label, other chain locations, locator map |
 | `/neighborhoods`, `/neighborhoods/[slug]` | Sortable ranking (areas with at least 5 distinct priced menus; a chain counts once) and area pages |
 | `/boroughs`, `/boroughs/[slug]` | Borough comparison and borough pages |
 | `/map` | MapLibre GL map, pins colored by price level, legend, list view, restaurants without coordinates |

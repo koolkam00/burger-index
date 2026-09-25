@@ -3,8 +3,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MiniMap } from "@/components/map/MiniMap";
+import { RestaurantVote } from "@/components/votes/RestaurantVote";
 import { repeatedNames } from "@/components/RestaurantBits";
-import { Anchor, Spatula } from "@/components/icons/nautical";
+import { Anchor, Pennant, Spatula } from "@/components/icons/nautical";
 import { BoroughName, DetailOverline, EmptyState, IndexTag, Money, PageHeader, PriceChip, SectionHeading, SourceBadge, StatGrid, StatTile, StatusBadge } from "@/components/ui";
 import { boroughSlug } from "@/lib/boroughs";
 import {
@@ -245,6 +246,16 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
           </div>
         )}
       </section>
+
+      {/* Visitors rate the menu's burger (a chain's locations share one menu, so one rating). */}
+      {priced && indexBurger ? (
+        <section className="section" aria-labelledby="rate">
+          <SectionHeading id="rate" kicker="Comment card" icon={Pennant} title="Rate this burger." />
+          <div className="mt-6 max-w-3xl">
+            <RestaurantVote menuKey={menuKey(r)} burger={indexBurger.name} restaurant={r.name} />
+          </div>
+        </section>
+      ) : null}
 
       <section className="section" aria-labelledby="source">
         <SectionHeading id="source" title="Source and location." />

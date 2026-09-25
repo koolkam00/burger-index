@@ -222,6 +222,21 @@ export function Buoy(props: IconProps) {
 }
 
 /**
+ * A burgee: the triangular club pennant flown from a mast, with a ball truck on top and a short
+ * foot. Marks the visitors' ranking ("Best burgers" menu row, its kickers and ticket).
+ */
+export function Pennant(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="6" cy="2.8" r="1.3" strokeWidth={1.5} />
+      <path d="M6 4.1V21.5" />
+      <path d="M6 5.5l13.5 4.25L6 14z" />
+      <path d="M3.5 21.5h5" />
+    </Svg>
+  );
+}
+
+/**
  * The life-ring emblem (wordmark, board corner, favicon, OG image): four red segments on cream,
  * outlined, with four rope-wrap ticks. Colors come from the --ring-* tokens.
  */
