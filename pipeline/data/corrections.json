@@ -1,0 +1,1526 @@
+{
+  "about": "Hand-checked corrections applied by `pipeline build` (see pipeline/corrections.py). The 2026-09-23 entries were found by re-reading the live menu during that day's price check; all but Tavern on Jane and Jimbo's Hamburger Palace were confirmed by two independent checks. Every 2026-09-24 entry was confirmed by two independent checks; where the restaurant's own current menu page can be scraped, the fix is a menu-URL override in pipeline/data/menu_urls.json instead (re-scraped on the next run). The 2026-09-25 entries come from the review of each restaurant's one published burger (its highest-priced beef burger): Boeuf & Bun and the two Carnegie Diners were re-read on their own current menu pages, and the Grubhub/Seamless entries withhold pages whose cached scrape shows only the Best Sellers / recently ordered items (the burger section never loaded). Remove one of those once a full menu for the restaurant has been scraped. A second 2026-09-25 batch records the errors two independent checks agreed on in that review: pages whose only prices are years old are withheld, and a missed or mispriced top burger is corrected from the page named in source_url. The user's decisions of 2026-09-25 then changed some entries: a price marked up for delivery or online ordering is published, labelled by its price_source, when it is the only price found (American Whiskey and Grillify-NYC are no longer withheld, and XO Burgers' entry is retired: its webshop's scraped $22.54, the price that page shows, is published; an own-site price already read, such as Boeuf & Bun's, stays); a burger club counts as a burger (Washington Square Diner, Tom's Restaurant, Murray Hill Diner and The Flame Diner gain the club their scrape missed); a diner's bunless diet plate never counts (extract.is_diet_plate, which replaces Mike's Oakwood Diner's Lo-Cal Burger entry); and the closed Abbey Tavern, Bell Book & Candle and Kelly's Tavern and True Burger at JFK were deleted from the restaurant list, with their entries. Brooklyn Diner's LaGuardia Terminal B row is withheld: its search found only the Manhattan restaurant's menu, and an airport concession never gets a street restaurant's price.",
+  "corrections": [
+    {
+      "target": "camis:50054294",
+      "checked_at": "2026-09-23",
+      "source_url": "https://www.boucherieus.com/boucherie-west-village-menus/",
+      "reason": "the $32 Boucherie Burger is the lunch price; dinner, late lunch and brunch list it at $34. The $18 beef sliders are a bar-only Green Hour (happy hour) item.",
+      "set": {
+        "Boucherie Burger": {
+          "price": 34,
+          "menu_period": "dinner"
+        }
+      },
+      "drop": [
+        "Beef Sliders"
+      ]
+    },
+    {
+      "target": "camis:40400155",
+      "checked_at": "2026-09-23",
+      "source_url": "https://www.busstopcafe-nyc.com/all-day-menu",
+      "reason": "'Create Your Own Burger' is a section heading; its $5.95 is the lettuce, tomato and fries add-on, not a burger.",
+      "drop": [
+        "Create Your Own Burger"
+      ]
+    },
+    {
+      "target": "camis:50131932",
+      "checked_at": "2026-09-23",
+      "source_url": "https://www.houstonhallny.com/menu/food-menu/",
+      "reason": "the $14.95 beef sliders are a shared plate of three sliders, not a burger; the Houston Hall Burger & Fries ($21.95) is the only full-size burger.",
+      "drop": [
+        "Pat LaFreida Beef Sliders"
+      ]
+    },
+    {
+      "target": "camis:40798329",
+      "checked_at": "2026-09-23",
+      "source_url": "https://hudsonhoundnyc.com/new-york-west-village-hudson-hound-food-menu",
+      "price_source": "official_site",
+      "reason": "the $20 prices came from an out-of-date aggregator copy; the restaurant's own menu lists its burgers at $23.71 (beef sliders are $3.09 each, minimum two, bar menu only).",
+      "set": {
+        "The Hound Burger": 23.71,
+        "Turkey Burger": 23.71
+      },
+      "drop": [
+        "Mushroom & Black Bean Veggie Burger",
+        "Beef Sliders"
+      ],
+      "add": [
+        {
+          "name": "Beyond Burger",
+          "price": 23.71,
+          "protein": "veggie"
+        }
+      ]
+    },
+    {
+      "target": "camis:50113632",
+      "checked_at": "2026-09-23",
+      "source_url": "https://www.jackandcharlies118.com/menus/",
+      "price_source": "official_site",
+      "reason": "the $26 came from an aggregator copy last updated in 2022; the restaurant's dinner and brunch menus list the Bacon Cheeseburger at $30.",
+      "set": {
+        "Bacon Cheeseburger": {
+          "price": 30,
+          "menu_period": "dinner"
+        }
+      }
+    },
+    {
+      "target": "camis:41541928",
+      "checked_at": "2026-09-23",
+      "source_url": "https://www.jeffreysgrocery.com/menus/",
+      "reason": "$24 is the lunch price; the JG Burger is $28 on the dinner menu (Monday addition) and at brunch, and the index uses dinner prices.",
+      "set": {
+        "JG Burger": {
+          "price": 28,
+          "menu_period": "dinner"
+        }
+      }
+    },
+    {
+      "target": "camis:50124304",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.grubhub.com/restaurant/pauls-da-burger-joint-131-2nd-ave-new-york/4381032",
+      "reason": "every half-pound burger is sold plain or as a Deluxe with french fries, lettuce and tomato, and the scrape missed several plain ones: the priciest plain burger is the Eastsider Burger at $18 (the $23 Soul Burger Deluxe is the $16 Soul Burger with fries). Deluxe rows whose plain burger the scrape missed are left out, and the missed Smash Burgers section starts at Paul's Smash Burger ($9.25).",
+      "drop": [
+        "Chili Burger Deluxe",
+        "Second Avenue Burger Deluxe",
+        "Mushroom Burger Deluxe",
+        "Pepper Jack Cheese Deluxe"
+      ],
+      "add": [
+        {
+          "name": "Paul's Smash Burger",
+          "price": 9.25,
+          "protein": "beef",
+          "description": "2.5 oz patty with cheese, lettuce, tomato, raw onion, pickles and Russian dressing"
+        },
+        {
+          "name": "Eastsider Burger",
+          "price": 18,
+          "protein": "beef",
+          "description": "A bacon cheeseburger with ham, mushrooms, tomatoes and onions."
+        },
+        {
+          "name": "Soul Burger",
+          "price": 16,
+          "protein": "beef",
+          "description": "A bacon cheeseburger with ham and fried onions."
+        }
+      ]
+    },
+    {
+      "target": "camis:40573138",
+      "checked_at": "2026-09-23",
+      "source_url": "https://tavernonjane.shop/menu",
+      "price_source": "online_ordering",
+      "reason": "the page scraped showed only four featured burgers; the full ordering menu starts at the $24 Original Tavern Burger. Its dine-in menu may list lower prices.",
+      "add": [
+        {
+          "name": "Original Tavern Burger",
+          "price": 24,
+          "protein": "beef"
+        },
+        {
+          "name": "Jane Street Burger",
+          "price": 26,
+          "protein": "beef"
+        },
+        {
+          "name": "Santa Fe Burger",
+          "price": 26,
+          "protein": "beef"
+        },
+        {
+          "name": "Creekstone 28-Day Dry Aged Burger",
+          "price": 28,
+          "protein": "beef"
+        },
+        {
+          "name": "Turkey Burger",
+          "price": 22,
+          "protein": "turkey"
+        }
+      ]
+    },
+    {
+      "target": "camis:41186217",
+      "checked_at": "2026-09-23",
+      "source_url": "https://thelittleowlnyc.com/",
+      "price_source": "official_site",
+      "reason": "the $16 came from a retired online-ordering page; the restaurant's lunch menu lists the Bacon Cheeseburger & Fries at $24 (dinner has no burger).",
+      "drop": [
+        "6 Oz. La Freida Bacon Cheese Burger",
+        "Bacon Cheese Burger"
+      ],
+      "add": [
+        {
+          "name": "Bacon Cheeseburger & Fries",
+          "price": 24,
+          "protein": "beef",
+          "menu_period": "lunch"
+        }
+      ]
+    },
+    {
+      "target": "camis:41219088",
+      "checked_at": "2026-09-23",
+      "source_url": "https://cititour.com/NYC_Restaurants/The-Waverly-Inn/1178/menu",
+      "reason": "the $13 Waverly Burger came from an aggregator copy that looks years out of date (recent menus list it well above $30), and the restaurant publishes no menu to check against.",
+      "withhold": true
+    },
+    {
+      "target": "camis:41448651",
+      "checked_at": "2026-09-24",
+      "source_url": "https://www.amityhallnyc.com/menus/",
+      "reason": "the $16 Mini Rodeo Burgers are listed under 'Shares & Sides' (a shared plate of mini burgers); the cheapest standalone beef burger is the Double Smash Burger at $19.",
+      "drop": [
+        "Mini Rodeo Burgers"
+      ]
+    },
+    {
+      "target": "camis:40576812",
+      "checked_at": "2026-09-24",
+      "source_url": "https://belairediner.nyc/menu",
+      "reason": "Astoria Park South ($12.99: smashed burger, two eggs, cheddar, grilled Texas toast) is a breakfast sandwich from the breakfast section, not a menu burger; the Burgers section starts at the BYO Burger ($16.99).",
+      "drop": [
+        "Astoria Park South"
+      ]
+    },
+    {
+      "target": "camis:41025084",
+      "checked_at": "2026-09-24",
+      "source_url": "https://brassmonkeynyc.com/lunch-dinner-menu",
+      "reason": "'Cheeseburger Sliders (2)' ($10.35) is a two-slider plate among the snacks and starters; the only full-size burger is the Double Patty Cheeseburger at $15.55.",
+      "drop": [
+        "Cheeseburger Sliders (2)"
+      ]
+    },
+    {
+      "target": "camis:50125091",
+      "checked_at": "2026-09-24",
+      "source_url": "https://order.toasttab.com/online/bbdnyc",
+      "reason": "the $3.25 Beef and Chicken Sliders are single mini patties, not standard-size burgers (Grubhub sells the beef ones only as a pair); the cheapest standard beef burger is the Classic Burger at $8.50.",
+      "drop": [
+        "Beef Slider",
+        "Chicken Slider"
+      ]
+    },
+    {
+      "target": "camis:50038460",
+      "checked_at": "2026-09-24",
+      "source_url": "https://clintonhallny.com/fidi/",
+      "price_source": "official_site",
+      "reason": "the $14 Cheeseburger Sliders (3) are listed 'For the Table' (a shared plate); on the official FiDi menu the cheapest standalone beef burgers are the Fondue and German Burgers at $18, the same prices as the SinglePlatform copy.",
+      "drop": [
+        "Cheeseburger Sliders (3)"
+      ]
+    },
+    {
+      "target": "camis:50166340",
+      "checked_at": "2026-09-24",
+      "source_url": "https://www.dirtypierres.com/menu",
+      "reason": "'2 Mini Slammers' ($12.95) are two slider-size versions of the house burger on dinner rolls, not a single standard-size burger; the cheapest standard beef burger is the Bistro Burger (1/2 lb, with fries) at $16.95.",
+      "drop": [
+        "2 Mini Slammers"
+      ]
+    },
+    {
+      "target": "camis:50006255",
+      "checked_at": "2026-09-24",
+      "source_url": "https://fhstationhouse.com/forest-hills-forest-hills-station-house-food-menu",
+      "reason": "the $17.50 Scotch Bonnet Sliders are a plate of sliders in the 'Classics' section; the cheapest standalone beef burger is the Bacon Cheddar Burger at $23.50.",
+      "drop": [
+        "Scotch Bonnet Sliders"
+      ]
+    },
+    {
+      "target": "camis:50152174",
+      "checked_at": "2026-09-24",
+      "source_url": "https://www.goldenkburgersnyc.com/order",
+      "reason": "Classic Sliders ($19.50, 3 pieces with fries) are a slider plate, and the $18 Golden B.E.C. Burger is on the 11am-2pm brunch menu only; the cheapest all-day standard beef burger is the Classic American at $20.50.",
+      "drop": [
+        "Classic Sliders"
+      ]
+    },
+    {
+      "target": "camis:50129815",
+      "checked_at": "2026-09-24",
+      "source_url": "https://www.greywindnyc.com/menus/",
+      "reason": "the $24 Cheeseburger Sliders are a 'Shareables' bar snack; the greywind burger is $34 on the dinner and all-day menus.",
+      "drop": [
+        "cheeseburger sliders"
+      ]
+    },
+    {
+      "target": "camis:41593541",
+      "checked_at": "2026-09-24",
+      "source_url": "https://harlemtavern.com/new-york-harlem-tavern-harlem-tavern-food-menu",
+      "reason": "the $15 slider plates (three sliders each) are appetizers; the HT Burger (8oz Angus, with fries) is $16.",
+      "drop": [
+        "HT Classic Sliders",
+        "Candy Bacon Cheeseburger Sliders"
+      ]
+    },
+    {
+      "target": "camis:40747820",
+      "checked_at": "2026-09-24",
+      "source_url": "https://www.hurleysnyc.com/menus",
+      "reason": "the $19 Beef Sliders (3 pieces) are a 'Sharable Starters' plate; the Hurley's Burger is $22.",
+      "drop": [
+        "Beef Sliders 3 Pc"
+      ]
+    },
+    {
+      "target": "camis:40369158",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.jodysclubforest.com/dinner",
+      "reason": "the $12 Cheeseburger Sliders (3) are an appetizer plate, and Jody's Cheeseburger Deluxe ($18) is the $15 Cheeseburger with lettuce, tomato and onion (every burger already comes with a side), so the priciest burger is the Blue Cheese Butter Burger at $17.",
+      "drop": [
+        "Cheeseburger Sliders (3)",
+        "Jody's Cheeseburger Deluxe"
+      ]
+    },
+    {
+      "target": "camis:40513164",
+      "checked_at": "2026-09-24",
+      "source_url": "https://mcgeespubny.com/new-york-midtown-west-mcgees-pub-food-menu",
+      "reason": "Classic Sliders ($18 for 3, $24 for 5, with fries) are a slider plate; the cheapest standalone beef burger is the 8oz Maclaren Sirloin Burger at $20.",
+      "drop": [
+        "Classic Sliders"
+      ]
+    },
+    {
+      "target": "camis:50103990",
+      "checked_at": "2026-09-24",
+      "source_url": "https://mulligansnyc.com/menus/food",
+      "reason": "the $16 Mini Blue Sliders and Beef Sliders are plates of mini burgers in a separate Sliders section; the cheapest standalone beef burger is Mulligan's Burger at $18.",
+      "drop": [
+        "Mini Blue Sliders",
+        "Beef Sliders"
+      ]
+    },
+    {
+      "target": "camis:40539007",
+      "checked_at": "2026-09-24",
+      "source_url": "https://www.mustangharrys.com/food-menu/",
+      "reason": "Mustang Sliders (4 for $21, 8 for $34) are a shared starter; the cheapest standalone beef burger is The Mustang Burger (with fries) at $23.",
+      "drop": [
+        "Mustang Sliders"
+      ]
+    },
+    {
+      "target": "camis:50131013",
+      "checked_at": "2026-09-24",
+      "source_url": "https://otoolesway.com/menu/",
+      "reason": "the $24 Wagyu Beef Sliders are a Small Plates item (a shared plate); O'Toole's Burger is $26 on the all-day menu.",
+      "drop": [
+        "Wagyu Beef Sliders"
+      ]
+    },
+    {
+      "target": "camis:40607093",
+      "checked_at": "2026-09-24",
+      "source_url": "https://slicelife.com/restaurants/ny/bronx/10465/pj-brady-s-bar-restaurant/menu",
+      "reason": "Sliders with Cheese ($12.50, 3 pieces) are an appetizer, also sold as a catering tray; the cheapest standalone beef burger is the Hamburger at $15.50.",
+      "drop": [
+        "Sliders with Cheese"
+      ]
+    },
+    {
+      "target": "camis:50136864",
+      "checked_at": "2026-09-24",
+      "source_url": "https://sincityburgernyc.com/menu",
+      "reason": "'The Frank' ($9.99) is a 1/4 lb beef frank in a hot dog bun, not a burger, and the '3 ... Sliders' items are slider plates; the cheapest beef burger is the Temptation at $15.99.",
+      "drop": [
+        "The Frank",
+        "3 Temptaition Sliders",
+        "3 Envy Sliders",
+        "3 Pulled Ribeye Sliders"
+      ]
+    },
+    {
+      "target": "camis:41012338",
+      "checked_at": "2026-09-24",
+      "source_url": "https://slaintebarnyc.com/food-menu",
+      "reason": "the $15 Beef Sliders (4 pieces) are a 'To Share' plate and the $3 sliders a daily special; the regular burgers are the Rasher and Slainte Burgers at $18 (the $15 Sunday Burger is a once-a-week special).",
+      "drop": [
+        "Beef Sliders",
+        "Sliders"
+      ]
+    },
+    {
+      "target": "camis:50178587",
+      "checked_at": "2026-09-24",
+      "source_url": "https://www.stoutnyc.com/menu/food/",
+      "reason": "Stout Mini Burgers ($18, 'extra mini burger $4', also sold as a party tray) are a shared appetizer; the cheapest standalone beef burger is the Double Stacked Smashed Burger at $20.",
+      "drop": [
+        "Stout Mini Burgers"
+      ]
+    },
+    {
+      "target": "camis:50002020",
+      "checked_at": "2026-09-24",
+      "source_url": "http://www.thegreatgeorgiana.com/dinner",
+      "reason": "the $13 Baby Burgers (3) are sliders among the snack plates (also part of the shared platter); the cheapest full-size beef burger is the Classic Cheeseburger (with fries) at $19.",
+      "drop": [
+        "Baby Burgers (3)"
+      ]
+    },
+    {
+      "target": "camis:41263879",
+      "checked_at": "2026-09-24",
+      "source_url": "https://thehalfpint.com/food-32627",
+      "reason": "the $16 Mini Burgers are a 'Shares & Sides' plate; the only standalone beef burger is the Signature Burger at $21.",
+      "drop": [
+        "Mini Burgers"
+      ]
+    },
+    {
+      "target": "camis:41297930",
+      "checked_at": "2026-09-24",
+      "source_url": "https://www.thehornyramnyc.com/lunch/dinner/",
+      "reason": "the $17 Mini Burgers (3) are a 'To Share' plate; the cheapest standalone beef burger is The Quality Burger at $18.",
+      "drop": [
+        "Mini Burgers (3)"
+      ]
+    },
+    {
+      "target": "camis:50118808",
+      "checked_at": "2026-09-24",
+      "source_url": "https://www.thenakedpignyc.com/lunch-dinner/",
+      "reason": "the $18 Cheeseburger Sliders are a 'Shares' plate; the index burger is The Standard Burger, also $18.",
+      "drop": [
+        "Cheeseburger Sliders"
+      ]
+    },
+    {
+      "target": "camis:41719517",
+      "checked_at": "2026-09-24",
+      "source_url": "https://www.torstnyc.com/food-menu",
+      "reason": "the $9.50 Burger Sliders are half-size sliders for groups (pre-order, 10 minimum); the Smash and Dry-Aged Burgers are $18.90.",
+      "drop": [
+        "Burger Sliders"
+      ]
+    },
+    {
+      "target": "camis:40918355",
+      "checked_at": "2026-09-24",
+      "source_url": "https://www.treadwellpark.com/menus/",
+      "reason": "Black Angus Beef Sliders (3 for $18, 10 for $55) are a Small Plates item; the cheapest standalone beef burger is the Treadwell Junior Burger (4 oz, with fries), also $18.",
+      "drop": [
+        "Black Angus Beef Sliders (3)"
+      ]
+    },
+    {
+      "target": "camis:50056930",
+      "checked_at": "2026-09-24",
+      "source_url": "https://tubbyhooktavern.com/new-york-city-tubby-hook-tavern-food-menu",
+      "reason": "Smash Sliders (3) ($17) are a starter plate; the Burgers section starts at the Classic ($18, with fries or salad).",
+      "drop": [
+        "Smash Sliders (3)"
+      ]
+    },
+    {
+      "target": "chain:8-bit-bites",
+      "checked_at": "2026-09-24",
+      "source_url": "https://8bitbitesusa.com/downtown-brooklyn",
+      "reason": "the scraped $6.39, $9.36 and $8.37 are an auto-applied 10%-off promotion; the menu prices at the Downtown Brooklyn shop (113 Court St) are $7.10, $10.40 and $9.30. Other locations differ (the Smashburger is $6.50 in Bushwick, $8.10 on Staten Island).",
+      "set": {
+        "Smashburger": 7.1,
+        "Double Smashburger": 10.4,
+        "The Flying Dutchman Burger": 9.3
+      }
+    },
+    {
+      "target": "camis:50079426",
+      "checked_at": "2026-09-24",
+      "source_url": "https://www.beatstro.com/dinner-menu",
+      "reason": "the brunch menu was scraped (Boogie Down Burger $22); the dinner menu lists the Beatstro UFO Burger at $25 and the index uses dinner prices (its $16 Murda Burgers are two sliders among the starters).",
+      "add": [
+        {
+          "name": "Beatstro UFO Burger",
+          "price": 25,
+          "protein": "beef",
+          "menu_period": "dinner",
+          "description": "8oz Angus beef patty, bacon jam, cheddar, brioche, fries"
+        }
+      ]
+    },
+    {
+      "target": "camis:50125883",
+      "checked_at": "2026-09-24",
+      "source_url": "https://burgerologymidtown.com/manhattan-midtown-burgerology-midtown-menus",
+      "reason": "$17.95 is the lunch price (11:30am-3pm) of the build-your-own USDA Prime Signature Blend burger; the dinner menu lists it at $19.95, bun included.",
+      "set": {
+        "USDA Prime Signature Blend": {
+          "price": 19.95,
+          "menu_period": "dinner"
+        }
+      }
+    },
+    {
+      "target": "camis:50112567",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/east-end-bar--grill-1672-3rd-ave-new-york/80726",
+      "reason": "the scrape read the Specialty Burgers only at their $13 weekday lunch-special price; the regular menu lists The East End, California, Boeheim and 44 Burgers at $18, and the 'Build a Burger' section also has a Single Smash Beef Burger ($14) and a Double Smash ($16) the scrape missed.",
+      "set": {
+        "The East End Burger": {
+          "price": 18,
+          "menu_period": "all_day"
+        },
+        "California Burger": {
+          "price": 18,
+          "menu_period": "all_day"
+        },
+        "Boeheim Burger": {
+          "price": 18,
+          "menu_period": "all_day"
+        },
+        "44 Burger": {
+          "price": 18,
+          "menu_period": "all_day"
+        }
+      },
+      "add": [
+        {
+          "name": "Single Smash Beef Burger",
+          "price": 14,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "4 oz"
+        },
+        {
+          "name": "Double Smash Beef Burger",
+          "price": 16,
+          "protein": "beef",
+          "menu_period": "all_day"
+        }
+      ]
+    },
+    {
+      "target": "camis:41404053",
+      "checked_at": "2026-09-24",
+      "source_url": "https://glasshousetavern.com/menus/bar-menu/",
+      "reason": "$28 is the Wednesday-only lunch price (the dinner menu has no burger); the bar menu, served in the bar area, lists The Glass House Burger at $23 (its $20 filet mignon sliders are a shared appetizer). The Salmon Burger is on the lunch menu only.",
+      "set": {
+        "The Glass House Burger": {
+          "price": 23,
+          "menu_period": "all_day"
+        },
+        "Salmon Burger": {
+          "price": 28,
+          "menu_period": "lunch"
+        }
+      }
+    },
+    {
+      "target": "camis:41575449",
+      "checked_at": "2026-09-24",
+      "source_url": "https://www.grubhub.com/restaurant/midnight-express-diner-1715-2nd-ave-new-york/24919",
+      "price_source": "delivery_app",
+      "reason": "the ordering page scraped missed the plain Beef Burger; Grubhub's '1/2 lb. Angus Burgers' for 1715 2nd Ave list it at $14.50, and its other burger prices match the scraped page to the cent.",
+      "add": [
+        {
+          "name": "Beef Burger",
+          "price": 14.5,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "1/2 lb Angus"
+        }
+      ]
+    },
+    {
+      "target": "camis:50129405",
+      "checked_at": "2026-09-24",
+      "source_url": "https://postmates.com/store/pipins-pub/H0M2bvoFSI6F7sg1dmqEQw",
+      "reason": "the Uber Eats page scraped missed the Beef Burger; the same Uber catalog on Postmates lists it at $18.95, below the $19.95 Cheese Burger (the $12 Monday burger is a promotion).",
+      "add": [
+        {
+          "name": "Beef Burger",
+          "price": 18.95,
+          "protein": "beef",
+          "menu_period": "all_day"
+        }
+      ]
+    },
+    {
+      "target": "camis:40513609",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/skylight-diner-402-w-34th-st-new-york/2316",
+      "reason": "the scrape caught two of the diner's charbroiled burgers; the full Seamless/Grubhub menu for 402 W 34th St runs from the plain 9 oz. Burger ($11.50) to the Chipotle Burger ($15.70), and its Patty Melt Sandwich (a burger on grilled rye with cheese and grilled onions) is $17.95.",
+      "add": [
+        {
+          "name": "9 oz. Burger",
+          "price": 11.5,
+          "protein": "beef",
+          "description": "served on a toasted bun"
+        },
+        {
+          "name": "Chili Burger",
+          "price": 12.5,
+          "protein": "beef"
+        },
+        {
+          "name": "Pizza Burger",
+          "price": 12.5,
+          "protein": "beef"
+        },
+        {
+          "name": "Feta Cheeseburger",
+          "price": 12.75,
+          "protein": "beef"
+        },
+        {
+          "name": "Our Famous Bacon Burger",
+          "price": 13.0,
+          "protein": "beef"
+        },
+        {
+          "name": "Chipotle Burger",
+          "price": 15.7,
+          "protein": "beef",
+          "description": "Avocado, bacon, Muenster cheese and chipotle mayo"
+        },
+        {
+          "name": "Patty Melt Sandwich",
+          "price": 17.95,
+          "protein": "beef",
+          "description": "Burger on grilled rye bread with cheese, grilled onions and french fries"
+        }
+      ]
+    },
+    {
+      "target": "camis:50005067",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/american-whiskey-247-west-30th-street-new-york/9190520",
+      "price_source": "delivery_app",
+      "reason": "the restaurant's own menu page read lists only its Beef Burger Sliders; its Burger is priced only on Grubhub/Seamless, at $20.40, a delivery price marked up about 20% over the in-house price (every price on that menu is a whole-dollar price times 1.2), which could not be confirmed.",
+      "add": [
+        {
+          "name": "Burger",
+          "price": 20.4,
+          "protein": "beef"
+        }
+      ]
+    },
+    {
+      "target": "camis:41626109",
+      "checked_at": "2026-09-24",
+      "source_url": "https://www.allswellnyc.com/home-1",
+      "price_source": "official_site",
+      "reason": "the SinglePlatform copy is out of date; the restaurant's current Fall 2026 dinner menu (an image on its site) lists one burger, the Classic Allswell Burger at $22 (no Cali, Kraut or Pioneer burger).",
+      "drop": [
+        "Cali Burger",
+        "Kraut Burger",
+        "Pioneer Burger"
+      ],
+      "set": {
+        "Classic Allswell": {
+          "price": 22,
+          "menu_period": "dinner"
+        }
+      }
+    },
+    {
+      "target": "camis:50043566",
+      "checked_at": "2026-09-24",
+      "source_url": "https://rowhouseharlem.com/menus/dinner-menu/",
+      "price_source": "official_site",
+      "reason": "the page scraped belongs to The Row Harlem, a different restaurant; Row House's own dinner menu (an image on its site, dated December 2023) lists the Row House Burger at $19 under 'Between the Bread'.",
+      "drop": [
+        "Turkey",
+        "Beef",
+        "Salmon Sliders",
+        "Chicken or Turkey Sliders"
+      ],
+      "add": [
+        {
+          "name": "Row House Burger",
+          "price": 19,
+          "protein": "beef",
+          "menu_period": "dinner",
+          "description": "Black Angus, black garlic aioli, lettuce, tomato, pickle, fries"
+        }
+      ]
+    },
+    {
+      "target": "camis:50069729",
+      "checked_at": "2026-09-24",
+      "source_url": "https://www.hairylemonnyc.com/menu-1",
+      "price_source": "official_site",
+      "reason": "the page scraped is an unedited website template (every item $9 with placeholder text); the real food menu, an image on the site's FOOD page, lists the Classic Burger at $17.53.",
+      "drop": [
+        "Beef Burger",
+        "Vegetarian Burger"
+      ],
+      "add": [
+        {
+          "name": "Classic Burger",
+          "price": 17.53,
+          "protein": "beef",
+          "description": "red onion, tomato, lettuce, pickle, french fries"
+        },
+        {
+          "name": "ABC Burger",
+          "price": 20.62,
+          "protein": "beef"
+        },
+        {
+          "name": "Manhattan Burger",
+          "price": 20.62,
+          "protein": "beef"
+        },
+        {
+          "name": "Bright-Eyed Burger",
+          "price": 18.56,
+          "protein": "veggie",
+          "description": "Beyond patty"
+        }
+      ]
+    },
+    {
+      "target": "csv:adobe-blues-staten-island",
+      "checked_at": "2026-09-24",
+      "source_url": "http://places.singleplatform.com/adobe-blues/menu",
+      "reason": "Adobe Blues appears to have closed (Yelp lists it as closed; adobeblues.com shows only a hosting error page), so the $11 House Cheeseburger on this old SinglePlatform copy is not a current price.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50013433",
+      "checked_at": "2026-09-24",
+      "source_url": "http://places.singleplatform.com/balvanera/menu",
+      "reason": "the NYC restaurant (152 Stanton St) closed in 2026 and this SinglePlatform page is an old copy (its wine list has 2010-2014 vintages); balvanerarestaurants.com lists only Pittsburgh now.",
+      "withhold": true
+    },
+    {
+      "target": "csv:bar-bacon-manhattan",
+      "checked_at": "2026-09-24",
+      "source_url": "https://menupages.com/barbacon/836-9th-avenue-new-york",
+      "reason": "BarBacon (836 9th Ave) has closed (Yelp lists it as closed; Bocca di Bacco is at the address), so this MenuPages copy is not a current menu. On it the $14 BarBacon Sliders are a shared bar bite; the BarBacon Burger was $15.",
+      "withhold": true
+    },
+    {
+      "target": "csv:blue-hour-brooklyn",
+      "checked_at": "2026-09-24",
+      "source_url": "https://bushwickdaily.com/food-and-drink/blue-hour-bp-myrtle-avenue-about/",
+      "reason": "Blue Hour, the counter inside the BP station at 1525 Myrtle Ave, closed on September 30, 2025 (BK Mag); the $7 smashburger is from its 2024 opening coverage.",
+      "withhold": true
+    },
+    {
+      "target": "csv:burger-plus-queens",
+      "checked_at": "2026-09-24",
+      "source_url": "https://custom.order.online/store/burger-plus-baton-rouge-2879633",
+      "reason": "the page scraped is Burger Plus in Baton Rouge, Louisiana, a different restaurant; the Queens place (kosher, 147-41 Union Tpke) is listed as closed, so there is no menu to price.",
+      "withhold": true
+    },
+    {
+      "target": "csv:croxley-ale-house-manhattan",
+      "checked_at": "2026-09-24",
+      "source_url": "https://www.croxley.com/farmingdale-menu/",
+      "reason": "the page scraped is the Farmingdale, Long Island menu of Croxley's (whose locations are all on Long Island); the East Village Croxley Ales at 28 Avenue B closed on August 30, 2017 (Gothamist, EV Grieve).",
+      "withhold": true
+    },
+    {
+      "target": "csv:ice-house-cafe-bronx",
+      "checked_at": "2026-09-24",
+      "source_url": "http://places.singleplatform.com/ice-house-cafe--restaurant/menu",
+      "reason": "the Icehouse Café lost its Hammond's Cove Marina concession and closed on April 1, 2023 (Bronx Times, PIX11); this SinglePlatform page ($12.95 Hamburger) is a leftover copy.",
+      "withhold": true
+    },
+    {
+      "target": "csv:idle-hands-manhattan",
+      "checked_at": "2026-09-24",
+      "source_url": "https://www.idlehandsbar.com/menu",
+      "reason": "the menu page is a 2013 copy and Idle Hands Bar (25 Ave B) is listed as closed (reported closed during the pandemic), so its prices are not current.",
+      "withhold": true
+    },
+    {
+      "target": "csv:korzo-brooklyn",
+      "checked_at": "2026-09-24",
+      "source_url": "http://places.singleplatform.com/eurotrip/menu",
+      "reason": "Korzo (667 5th Ave) closed in December 2022 (Patch) and its own domain now redirects to an unrelated site; this SinglePlatform page is a leftover copy.",
+      "withhold": true
+    },
+    {
+      "target": "csv:mekelburgs-brooklyn",
+      "checked_at": "2026-09-24",
+      "source_url": "https://order.online/store/mekelburg's-brooklyn-524439",
+      "reason": "Mekelburg's closed for good on January 1, 2026 (Greenpointers, Brooklyn Magazine) and mekelburgs.com is parked; the $22 Brunch Burger comes from a leftover ordering page.",
+      "withhold": true
+    },
+    {
+      "target": "csv:obrien-pub-bronx",
+      "checked_at": "2026-09-24",
+      "source_url": "https://order.spoton.com/so-obriens-pub-22133/hillsboro-or/677853f879360e25a55631ca/pickup",
+      "reason": "the page scraped is O'Brien's Pub in Hillsboro, Oregon (2020 NE Cornell Road), a different restaurant; no online menu was found for the Kingsbridge pub.",
+      "withhold": true
+    },
+    {
+      "target": "csv:riverdale-diner-bronx",
+      "checked_at": "2026-09-24",
+      "source_url": "http://places.singleplatform.com/riverdale-diner/menu",
+      "reason": "this SinglePlatform copy has years-old prices ($7.25 Classic Burger, $11.95 one-pound burgers) and Riverdale Diner (3657 Kingsbridge Ave) is listed as closed.",
+      "withhold": true
+    },
+    {
+      "target": "camis:40399560",
+      "checked_at": "2026-09-24",
+      "source_url": "http://places.singleplatform.com/sardis/menu",
+      "reason": "Sardi's is closed for a refresh under new owners (the Shubert Organization, with La Masseria Group operating) and due to reopen in fall 2026; this SinglePlatform menu is the previous operator's, and no new menu has been published.",
+      "withhold": true
+    },
+    {
+      "target": "csv:sojourn-manhattan",
+      "checked_at": "2026-09-24",
+      "source_url": "https://www.sojournnyc.com/menu-dinner/",
+      "reason": "the dinner page scraped is years out of date (Kobe Beef Sliders $18), and the two re-checks found different current prices for that sliders dish ($21 on the restaurant's homepage menu, $26 on Grubhub), so no price is shown until the menu is re-read.",
+      "withhold": true
+    },
+    {
+      "target": "csv:the-cecil-steakhouse-manhattan",
+      "checked_at": "2026-09-24",
+      "source_url": "http://places.singleplatform.com/the-cecil/menu",
+      "reason": "The Cecil Steakhouse is listed as permanently closed (The Infatuation, Yelp) and its domain now serves an unrelated site; this SinglePlatform copy ($17 Cecil Burger) is out of date (its closed Grubhub listing shows a different, higher-priced burger menu).",
+      "withhold": true
+    },
+    {
+      "target": "csv:the-mercer-kitchen-manhattan",
+      "checked_at": "2026-09-24",
+      "source_url": "http://places.singleplatform.com/mercer-kitchen/menu",
+      "reason": "Jean-Georges' Mercer Kitchen (99 Prince St) closed at the end of 2022 and another restaurant opened in the space in 2023; this SinglePlatform page ($27 Mercer Burger) is a leftover copy.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50018753",
+      "checked_at": "2026-09-25",
+      "source_url": "https://boeufbun.orders2me.com/order-now",
+      "price_source": "online_ordering",
+      "reason": "the Uber Eats prices scraped are the restaurant's own prices grossed up by about 79% (every one is the in-store price divided by 0.56). Boeuf & Bun's own ordering page lists the Double Trouble Burger (two patties, 1 lb total) at $32, not $57.14, and the other burgers at $13 to $28.",
+      "set": {
+        "Boeuf Classic Smash": 13.0,
+        "Sweet Onion Smash": 15.0,
+        "\"Bacon\" Jalapeno Smash": 18.0,
+        "Smash 'Cheeseburger'": 18.0,
+        "Smash XL": 20.0,
+        "Classic Boeuf": 20.0,
+        "Morning Scramble": 26.0,
+        "Chilin Burger": 24.0,
+        "Green Monster": 24.0,
+        "Double Trouble Burger": 32.0,
+        "Bondi Burger (an Australian Classic)": 23.0,
+        "The Bite": 23.0,
+        "Upstream Burger": 21.0,
+        "Bahh Bahh Burger": 28.0,
+        "Veg Out": 19.0
+      }
+    },
+    {
+      "target": "camis:50138084",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.carnegiediner.com/times-square-ny/",
+      "price_source": "official_site",
+      "reason": "the page scraped was the Vienna, Virginia location's menu. The Times Square menu lists the same burgers at $18.95 to $24.95 and no Pastrami Burger.",
+      "set": {
+        "Carnegie Classic": 18.95,
+        "The Corner Burger": 19.95,
+        "Central Park": 22.95,
+        "Columbus Circle": 22.95,
+        "Morning Sunshine": 22.95,
+        "Times Square": 24.95,
+        "Five Hills": 24.95,
+        "Chili Burger": 23.95,
+        "Smashed Double Stack": 24.95,
+        "The Late Night": 23.95,
+        "Impossible Vegan Burger": 25.95
+      },
+      "drop": [
+        "Pastrami Burger"
+      ]
+    },
+    {
+      "target": "camis:50164574",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.carnegiediner.com/central-park-ny/",
+      "price_source": "official_site",
+      "reason": "the page scraped was the Vienna, Virginia location's menu. The Central Park (205 W 57th St) menu lists the same burgers at $18.95 to $24.95 and the Pastrami Burger at $26.95.",
+      "set": {
+        "Carnegie Classic": 18.95,
+        "The Corner Burger": 19.95,
+        "Central Park": 22.95,
+        "Columbus Circle": 22.95,
+        "Morning Sunshine": 22.95,
+        "Times Square": 24.95,
+        "Five Hills": 24.95,
+        "Chili Burger": 23.95,
+        "Smashed Double Stack": 24.95,
+        "The Late Night": 23.95,
+        "Impossible Vegan Burger": 25.95,
+        "Pastrami Burger": 26.95
+      }
+    },
+    {
+      "target": "camis:50009539",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/blackstone-bar--grill-3713-riverdale-ave-the-bronx/313711",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Classic Burger, $18.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50145506",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/bridies-grill-room-64-54-dry-harbor-rd-queens/9195216",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (The New Yorker, $18.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:41577394",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/bronx-burger-house-5816-mosholu-ave-the-bronx/1784191",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Thomas Monster Burger, $19.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50084404",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.grubhub.com/restaurant/buccaneer-diner-93-01-astoria-blvd-queens/78104/reviews",
+      "reason": "the Grubhub page read showed only its Best Sellers and recently ordered items (BBQ Burger Deluxe, $18.65); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:41117739",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/cosmic-diner--52-888-8th-ave-new-york/65700",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Beef Burger Deluxe, $19.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:41137340",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/dillingers-pub--grill-46-19-30th-ave-new-york/2044266",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (The Burger, $15.95); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50064635",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/dumont-burger-314-bedford-ave-brooklyn/392718",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (DuMac & Cheese Burger, $21.73); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:40399986",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.grubhub.com/restaurant/5th-ave-diner-432-5th-ave-brooklyn/949946",
+      "reason": "the Grubhub page read showed only its Best Sellers and recently ordered items (7 oz. Cheeseburger Deluxe, $17.25); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50090491",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/fort-washington-public-house-3938-broadway-new-york/1247680",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (The F.W. Burger, $20.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:41151163",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/galaxy-diner-665-9th-ave-new-york/65634",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (8 oz. Country Beef Burger - Plain, $13.95); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50116518",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/handcraft-burgers--brew-110-w-40th-st-new-york/3040499",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (The 6.6, $18.50); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:41581905",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/le-cheile-839-w-181st-st-new-york/822953",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Le Cheile Burger - Build your own, $17.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:41537807",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/liberty-diner-2059-williamsbridge-rd-the-bronx/5460360",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Cheeseburger Deluxe, $14.95); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50074809",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/moonstruck-eatery-250-e-58th-st-new-york/708078",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Classic Burger, $13.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50109069",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/national-burger-house-470-e-tremont-ave-bronx/2674643",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (8 oz. Cheeseburger Platter, $13.50); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50146373",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/sherdor-burgers-and-sausages-inc-1123-quentin-rd-brooklyn/7418056",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Sherdor Burger, $22.09); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50017248",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/shore-haven-diner-622-castle-hill-ave-the-bronx/321615",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Beef Burger Deluxe, $13.50); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:40395310",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/sunrise-diner-45-04-parsons-blvd-flushing/264317",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (American Cheeseburger Deluxe, $14.95); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50076652",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/sunset-diner-593-meeker-ave-brooklyn/590559",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Cheese Burger Deluxe, $19.60); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50165990",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.grubhub.com/restaurant/the-borough-bar--grill-137-schenectady-ave-brooklyn/6819720",
+      "reason": "the Grubhub page read showed only its Best Sellers and recently ordered items (Classic Burger, $15.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50000851",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/the-classic-diner-117-33-myrtle-ave-richmond-hill/280552",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (9 oz. Cheeseburger Deluxe, $18.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:40394030",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/tibbett-diner-3033-tibbett-ave-bronx/2539986",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Cheeseburger Deluxe, $16.75); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:40645039",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/townhouse-diner-696-2nd-ave-new-york/65472",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Deluxe Cheeseburger, $18.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50057374",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/tria-diner--bakery-22-chatham-sq-new-york/346887",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Cheeseburger Deluxe, $15.45); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50117955",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/vip-grille-272--86-grand-central-pkwy-floral-park/5439464",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (8 oz. USDA Prime Burger, $10.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:40977209",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/waverly-restaurant-385-6th-ave-new-york/64940",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Cheeseburger Deluxe, $20.45); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:40536534",
+      "checked_at": "2026-09-25",
+      "source_url": "https://wnam-cdn.menuweb.menu/storage/media/companies_menu_pdf/116778373/cassidys-ale-house-east-elmhurst-menu.pdf",
+      "reason": "the menuweb.menu PDF is generated from years-old menu data (soup of the day $2, 20 oz T-bone $21) and an older burger list, and no current burger price could be read.",
+      "withhold": true
+    },
+    {
+      "target": "camis:41299324",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.foodboss.com/brooklyn-ny/little-purity-390-7th-ave-brooklyn-delivery",
+      "reason": "the FoodBoss copy was last updated on April 6, 2020, and no current menu with prices could be found: the diner's menu site returns an error and its Seamless listing is deactivated.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50069752",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.beermenus.com/places/66170-macdougal-street-alehouse",
+      "reason": "the BeerMenus page was last updated in March 2020 and no longer lists any food (its $12 two-slider plate is gone), and the bar's own site has only a drinks menu, so no current burger price could be found.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50176144",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/daves-smash-burgers-3009-westchester-ave-bronx/12426184",
+      "price_source": "delivery_app",
+      "reason": "the Uber Eats page read missed the triple specialty burgers; the restaurant's Grubhub/Seamless menu, whose other burger prices match Uber Eats, lists the Hawaiian Triple Smash Burger at $14.99 and the Triple Mushroom Pepperjack Smash Burger at $13.99.",
+      "add": [
+        {
+          "name": "Hawaiian Triple Smash Burger",
+          "price": 14.99,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Triple Mushroom Pepperjack Smash Burger",
+          "price": 13.99,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "Comes with Mushrooms, Onions, Pepperjack Cheese & Chipotle Mayo"
+        }
+      ]
+    },
+    {
+      "target": "camis:50032968",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/ellies-diner-58-metropolitan-oval-bronx/305994",
+      "price_source": "delivery_app",
+      "reason": "the Uber Eats page read showed a single burger; the diner's full Grubhub/Seamless menu lists its Char-Broiled Burgers from the $12.37 Cheeseburger to Ellie's Burger (avocado, fried onions, bacon, cheddar) at $16.51, and its Deluxe versions are the same burgers with sides.",
+      "drop": [
+        "Cheese Burger"
+      ],
+      "add": [
+        {
+          "name": "Cheeseburger",
+          "price": 12.37,
+          "protein": "beef"
+        },
+        {
+          "name": "Pizza Burger",
+          "price": 13.4,
+          "protein": "beef"
+        },
+        {
+          "name": "Texas Burger",
+          "price": 13.4,
+          "protein": "beef"
+        },
+        {
+          "name": "Patty Melt Burger",
+          "price": 14.44,
+          "protein": "beef"
+        },
+        {
+          "name": "Ellie's Burger",
+          "price": 16.51,
+          "protein": "beef",
+          "description": "Avocado, fried onions, bacon and cheddar cheese"
+        }
+      ]
+    },
+    {
+      "target": "camis:50143546",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.gbsc.nyc/lower-east-side/",
+      "price_source": "official_site",
+      "reason": "the Uber Eats page read gave California Dreamin' no price and listed a 'Dirty Love' that is not on the restaurant's menu; its own Lower East Side menu sells California Dreamin' as a Single ($12), Double ($15) or Triple ($18).",
+      "drop": [
+        "Dirty Love"
+      ],
+      "set": {
+        "California Dreamin": 12
+      },
+      "add": [
+        {
+          "name": "California Dreamin' (Double)",
+          "price": 15,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "California Dreamin' (Triple)",
+          "price": 18,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "Three smash patties with American cheese, onions and 1000 Island"
+        }
+      ]
+    },
+    {
+      "target": "camis:50164398",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/holy-burger-midtown-906-3rd-ave-new-york/10309136",
+      "reason": "$24.99 is the Double Smashed Onion Holy Burger with its required fries-and-drink combo (+$5.49); the burger alone is $19.50, the same as the Holy Burger.",
+      "set": {
+        "Double Smashed Onion Holy Burger": 19.5
+      }
+    },
+    {
+      "target": "chain:jimbos-hamburger-palace",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.grubhub.com/restaurant/jimbos-hamburger-palace-2027-lexington-new-york/529885",
+      "reason": "the scrape missed the 'Double Jimbos Burgers (7oz)' section of the Grubhub menu for 2027 Lexington Ave: the Double Super Pizza Burger (two 7 oz patties, mozzarella, marinara) is $21.75 and the Double Pizza Burger $17.85, both above the $16.90 BBQ Bacon Burger.",
+      "add": [
+        {
+          "name": "Double Super Pizza Burger",
+          "price": 21.75,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "Two 7oz beef patties with mozzarella cheese and marinara sauce"
+        },
+        {
+          "name": "Double Pizza Burger",
+          "price": 17.85,
+          "protein": "beef",
+          "menu_period": "all_day"
+        }
+      ]
+    },
+    {
+      "target": "camis:40368313",
+      "checked_at": "2026-09-25",
+      "source_url": "https://menupages.com/the-red-flame-diner/67-w-44th-st-new-york",
+      "reason": "the scrape missed the Club Sandwiches section, whose Bacon Burger Club ($22.95, a beef burger with bacon, lettuce and tomato) is the diner's priciest burger; the $19.95 Slim-Line Burger is a bunless diet plate.",
+      "add": [
+        {
+          "name": "Bacon Burger Club",
+          "price": 22.95,
+          "protein": "beef",
+          "description": "Comes with bacon, lettuce and tomato."
+        }
+      ]
+    },
+    {
+      "target": "camis:40863010",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.grubhub.com/restaurant/washington-square-diner-150-w-4th-st-new-york/64201",
+      "price_source": "delivery_app",
+      "reason": "the SinglePlatform copy is years out of date (7 oz burgers, Texas Cheeseburger $7.35); the diner's current Grubhub/Seamless menu lists its 8 oz beef burgers from $12.95 (Plain Beef Burger) to $14.95 (Texas Cheeseburger), and its Triple Deckers section has a Cheeseburger Club (bacon, lettuce and tomato, with coleslaw, pickle and french fries) at $18.95, the diner's highest-priced burger (a burger club counts).",
+      "drop": [
+        "Plain Beefburger",
+        "Pizza Burger",
+        "Mushroom Burger",
+        "Patty Melt",
+        "Patty Melt Deluxe"
+      ],
+      "set": {
+        "Cheeseburger": 13.45,
+        "Mushroom Cheeseburger": 14.45,
+        "Texas Burger": 14.45,
+        "Texas Cheeseburger": 14.95
+      },
+      "add": [
+        {
+          "name": "Plain Beef Burger",
+          "price": 12.95,
+          "protein": "beef"
+        },
+        {
+          "name": "Avocado Burger",
+          "price": 14.45,
+          "protein": "beef"
+        },
+        {
+          "name": "Patty Melt Burger",
+          "price": 14.45,
+          "protein": "beef"
+        },
+        {
+          "name": "Cheeseburger Club",
+          "price": 18.95,
+          "protein": "beef",
+          "description": "Bacon, lettuce and tomatoes. Served with coleslaw, pickle and french fries."
+        }
+      ]
+    },
+    {
+      "target": "camis:50095038",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.whitehorsetavern1880.com/items/wht-burger",
+      "price_source": "official_site",
+      "reason": "the Postmates copy is out of date (Double Smash Burger $18); the restaurant's own all-day menu lists the Double Smash Burger at $27 and the White Horse Tavern Burger (8 oz blend, smoked pork belly, egg, white cheddar) at $35.",
+      "set": {
+        "Double Smash Burger": {
+          "price": 27,
+          "menu_period": "all_day"
+        }
+      },
+      "add": [
+        {
+          "name": "White Horse Tavern Burger",
+          "price": 35,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "8 oz blend, smoked pork belly, sunny-side egg, onion straws, white cheddar, sesame bun, fries"
+        }
+      ]
+    },
+    {
+      "target": "camis:50105076",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.grubhub.com/restaurant/bugging-out-4-burgers-134-06-guy-r-brewer-blvd-jamaica/14460968",
+      "price_source": "delivery_app",
+      "reason": "the restaurant's Weebly site dates from 2020 (Double Cheeseburger $12.95); its current Grubhub menu at 134-06 Guy R Brewer Blvd starts at a $13 Beef Burger and tops out at the $18 Reggae Burger (beef, jerk, fried plantains, cheddar, grilled peppers).",
+      "drop": [
+        "Double Cheeseburger",
+        "Calypso Burger",
+        "Jerk Burgers"
+      ],
+      "add": [
+        {
+          "name": "Beef Burger",
+          "price": 13,
+          "protein": "beef"
+        },
+        {
+          "name": "Reggae Burger",
+          "price": 18,
+          "protein": "beef",
+          "description": "Beef burger with jerk, fried plantains, cheddar cheese and grilled peppers"
+        }
+      ]
+    },
+    {
+      "target": "camis:50063645",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.galotavern18.com/menu?menu=lunch",
+      "reason": "the $16.95 Kobe Beef Sliders are an appetizer slider plate; the 10 oz Tavern Burger has no price on the dinner menu, and the lunch menu lists it at $16.95.",
+      "set": {
+        "Tavern Burger": {
+          "price": 16.95,
+          "menu_period": "lunch"
+        }
+      }
+    },
+    {
+      "target": "camis:41317827",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.grubhub.com/restaurant/oasis-diner-2132-flatbush-ave-brooklyn/5402536",
+      "price_source": "delivery_app",
+      "reason": "the order.online page read showed only three burgers (the Cheeseburger Deluxe at $17.95, not $15.95); the diner's full Grubhub menu, the list's menu link, has burgers only in its lunch sections, topped by the Bonko Burger (bacon, ham, cheese, fried onions) at $18.95.",
+      "drop": [
+        "Western Burger Deluxe"
+      ],
+      "set": {
+        "Cheeseburger Deluxe": {
+          "price": 15.95,
+          "menu_period": "lunch"
+        },
+        "Brooklyn Burger": {
+          "price": 17.95,
+          "menu_period": "lunch"
+        }
+      },
+      "add": [
+        {
+          "name": "Bonko Burger",
+          "price": 18.95,
+          "protein": "beef",
+          "menu_period": "lunch",
+          "description": "Bacon, ham, cheese and fried onions"
+        },
+        {
+          "name": "Montana Burger",
+          "price": 17.95,
+          "protein": "beef",
+          "menu_period": "lunch"
+        },
+        {
+          "name": "Soul Burger",
+          "price": 17.95,
+          "protein": "beef",
+          "menu_period": "lunch"
+        }
+      ]
+    },
+    {
+      "target": "camis:41406341",
+      "checked_at": "2026-09-25",
+      "source_url": "https://naturesgrillcafe.com/menu/brooklyn",
+      "reason": "the menu read was the Staten Island location's (naturesgrillcafe.com/menu); the Bay Ridge location's own menu lists the Grass-Fed Kobe Burger at $18.20 and the Grass Fed Angus Burger at $15.60.",
+      "set": {
+        "Grass-Fed Kobe Burger": 18.2,
+        "Grass Fed Angus Burger": 15.6
+      }
+    },
+    {
+      "target": "camis:50033492",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.teddys.nyc/qrdinner",
+      "reason": "the page read was the credit-card price list, which adds 3% to every price; the regular dinner menu lists The Double Decker 1887 Burger at $25, the Spicy and Grilled Pineapple Burgers at $21 and the beef burger at $16.",
+      "set": {
+        "The Double Decker 1887 Burger": 25,
+        "Spicy Burger": 21,
+        "Grilled Pineapple Burger": 21,
+        "Teddy’s Beef Burger": 16
+      }
+    },
+    {
+      "target": "camis:40800483",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.stepinnyc.com/items/manhattan-burger",
+      "reason": "the page read gave only the brunch menu's Country Prime Burger ($24) and missed the dinner menu's Burgers section; the restaurant's own item page lists the Manhattan Burger at $21.50.",
+      "add": [
+        {
+          "name": "Manhattan Burger",
+          "price": 21.5,
+          "protein": "beef",
+          "menu_period": "dinner"
+        }
+      ]
+    },
+    {
+      "target": "camis:40604207",
+      "checked_at": "2026-09-25",
+      "source_url": "https://order.chownow.com/order/32443/locations/48237",
+      "reason": "the ordering page read carried ChowNow's website-channel price list, $2.99 above the diner's base menu on every item; the base menu for 304 City Island Ave lists the South Western, Da Bronx, Great Lakes and Double Smash Burgers at $17 and the Cheeseburger Deluxe at $16.",
+      "set": {
+        "South Western Burger": 17,
+        "Da Bronx Burger": 17,
+        "Great Lakes Burger": 17,
+        "Double Smash Burger": 17,
+        "Cheeseburger Deluxe": 16
+      }
+    },
+    {
+      "target": "camis:50151607",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.orchardbeachgrill.com/product/double-cheeseburger/70",
+      "reason": "the menu categories on the grill's site show only the $8 Cheeseburger and $7 Hamburger, but the same online store sells a Double Cheeseburger at $12 on its own product page.",
+      "add": [
+        {
+          "name": "Double Cheeseburger",
+          "price": 12,
+          "protein": "beef"
+        }
+      ]
+    },
+    {
+      "target": "camis:50172850",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.dadamasoinc.com/menu/",
+      "reason": "the scrape read only the menu's summary ('Hamburger', from $16.50); the menu image itself (July 2026) lists five beef burgers, from the Signorina at $16.50 to the Triple Hamburger Damaso (triple patty, bacon, cheddar, eggs, onion rings) at $30.",
+      "drop": [
+        "Hamburger"
+      ],
+      "add": [
+        {
+          "name": "Signorina",
+          "price": 16.5,
+          "protein": "beef"
+        },
+        {
+          "name": "Campania",
+          "price": 19.5,
+          "protein": "beef"
+        },
+        {
+          "name": "Hamburger Special",
+          "price": 20.5,
+          "protein": "beef"
+        },
+        {
+          "name": "Ami's Burger",
+          "price": 22.5,
+          "protein": "beef"
+        },
+        {
+          "name": "Triple Hamburger Damaso",
+          "price": 30,
+          "protein": "beef",
+          "description": "Triple patty, oven-roasted potatoes, spring mix, onion rings, bacon, cheddar and eggs"
+        }
+      ]
+    },
+    {
+      "target": "camis:41297788",
+      "checked_at": "2026-09-25",
+      "source_url": "https://pageplazasi.com/restaurant/order-online-1140.html",
+      "reason": "the scrape missed the Sourdough Melts section: the Frisco Melt (a hamburger with cheese, fried onions and tomato on sourdough) is $18.95, above the $18 Montana Burger.",
+      "add": [
+        {
+          "name": "Frisco Melt",
+          "price": 18.95,
+          "protein": "beef",
+          "description": "Hamburger, cheese, fried onions & tomato on sourdough, with french fries"
+        }
+      ]
+    },
+    {
+      "target": "camis:40604004",
+      "checked_at": "2026-09-25",
+      "source_url": "http://orderwrapnrun.com/print.php",
+      "price_source": "online_ordering",
+      "reason": "the SinglePlatform prices are years old (Beefburger $5.45, West Coast Burger $7.45); the restaurant's own ordering site lists its 8 oz sirloin burgers from the $8.93 Beef Burger to the West Coast Burger at $11.83.",
+      "set": {
+        "Beefburger": 8.93,
+        "Cheeseburger": 9.51,
+        "Barbecue Burger": 9.16,
+        "Mushroom Burger": 10.09,
+        "East Coast Burger": 10.09,
+        "Mexican Burger": 10.32,
+        "Bacon Burger": 10.67,
+        "Mushroom Burger with Cheese": 10.67,
+        "Texan Burger": 11.25,
+        "West Coast Burger": 11.83
+      }
+    },
+    {
+      "target": "camis:40389356",
+      "checked_at": "2026-09-24",
+      "source_url": "https://tomsrestaurant.net/menu",
+      "reason": "the menu read lists a Hamburger Club (beef patty, bacon, lettuce and tomato, with French fries) at $18.85 that the scrape's burger list missed; a burger club counts as a burger, so it is the restaurant's highest-priced burger, above the $14.96 Patty Melt.",
+      "add": [
+        {
+          "name": "Hamburger Club",
+          "price": 18.85,
+          "protein": "beef",
+          "description": "Beef patty, bacon, lettuce, and tomato. Served with French fries"
+        }
+      ]
+    },
+    {
+      "target": "camis:41089834",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.getsauce.com/order/murray-hill-diner/menu",
+      "reason": "the menu read lists a Cheeseburger Club Sandwich (#9) among its Triple Decker Sandwiches at $22.95 (bacon, cheese, lettuce, tomato and mayo, with French fries, coleslaw and pickle) that the scrape's burger list missed; a burger club counts as a burger, so it is the diner's highest-priced burger, above the $17.95 Texas Burger.",
+      "add": [
+        {
+          "name": "Cheeseburger Club Sandwich",
+          "price": 22.95,
+          "protein": "beef",
+          "description": "Bacon, cheese, lettuce, tomato & mayo. Served with French fries, coleslaw & pickle."
+        }
+      ]
+    },
+    {
+      "target": "camis:40367365",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.getsauce.com/order/the-flame-diner/menu",
+      "reason": "the menu read lists a Cheeseburger Club Sandwich among its Triple Decker Sandwiches at $23.95 (bacon, lettuce and tomato, with French fries) that the scrape's burger list missed; a burger club counts as a burger, so it is the diner's highest-priced burger (the $21.95 Slim-Line is a bunless diet plate, which never counts).",
+      "add": [
+        {
+          "name": "Cheeseburger Club Sandwich",
+          "price": 23.95,
+          "protein": "beef",
+          "description": "With Bacon, Lettuce, Tomato & French Fries."
+        }
+      ]
+    },
+    {
+      "target": "csv:brooklyn-diner-queens",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.brooklyndiner.com/menus/",
+      "reason": "this row is Brooklyn Diner's LaGuardia Terminal B concession (the list's notes: HH4L-332 Term B Laguardia Rd, 11371), but its search found only the Manhattan restaurant's menu (888 7th Avenue, published on its own page), and an airport concession never gets a street restaurant's price.",
+      "withhold": true
+    }
+  ]
+}

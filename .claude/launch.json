@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "burger-index",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "web", "run", "preview"],
+      "port": 4173
+    }
+  ]
+}

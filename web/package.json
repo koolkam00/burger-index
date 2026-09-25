@@ -1,0 +1,48 @@
+{
+  "name": "burger-index-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "sync-data": "node scripts/sync-data.mjs",
+    "predev": "npm run sync-data",
+    "dev": "next dev",
+    "prebuild": "npm run sync-data",
+    "build": "next build",
+    "preview": "serve out -l 4173",
+    "check:seo": "node scripts/check-seo.mjs",
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "validate:data": "node scripts/validate-contract.mjs",
+    "indexnow": "node scripts/indexnow.mjs",
+    "test": "node --experimental-strip-types --conditions=react-server --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./test/resolve-ts.mjs --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@fontsource/barlow": "^5.3.0",
+    "@fontsource/lilita-one": "^5.3.0",
+    "@supabase/supabase-js": "^2.117.1",
+    "lucide-react": "^1.47.0",
+    "maplibre-gl": "^6.11.1",
+    "next": "16.3.6",
+    "posthog-js": "^1.434.13",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.6",
+    "serve": "^14.2.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  }
+}

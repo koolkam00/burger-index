@@ -1,0 +1,23 @@
+{
+  "about": "Hand-checked fixes to NYC DOHMH inspection records, applied per CAMIS by `pipeline sources` before the restaurant list is matched (see pipeline/sources.py load_dohmh_overrides). Use one only when DOHMH's own record is wrong (a typo'd address, 0,0 coordinates), never to move a match: 'when' holds what DOHMH says now, so the override stops applying (and `sources` says so) once DOHMH fixes the record; 'set' holds the corrected raw DOHMH fields (building, street, zipcode, latitude, longitude, nta).",
+  "overrides": [
+    {
+      "camis": "41668282",
+      "dba": "ROSEMARY'S",
+      "when": {"building": "1820", "street": "GREENWICH AVENUE"},
+      "set": {"building": "18", "zipcode": "10011", "latitude": 40.734885, "longitude": -73.999713, "nta": "MN23"},
+      "reason": "DOHMH lists Rosemary's at 1820 Greenwich Avenue, which does not exist, with 0,0 coordinates and no zipcode or NTA on every inspection since 2022. The restaurant is at 18 Greenwich Avenue (its menu URL on our list names it); the coordinates, zipcode and BBL 1006060004 are NYC Planning's PAD geocode of that address, and its neighbors at 22 and 24 Greenwich Avenue are in MN23 (West Village).",
+      "source_url": "https://geosearch.planninglabs.nyc/v2/search?text=18%20Greenwich%20Avenue%2C%20Manhattan",
+      "checked_at": "2026-09-24"
+    },
+    {
+      "camis": "40942152",
+      "dba": "CROTON RESERVOIR TAVERN",
+      "when": {"building": "108110"},
+      "set": {"building": "108"},
+      "reason": "DOHMH's building number '108110' (its '108-110' run together) reads as 108110 West 40 Street, which does not exist. Croton Reservoir Tavern gives its address as 108 West 40th Street, between Sixth Avenue and Broadway. Only the building is set: the record has no zipcode or NTA, and adding one would move its neighborhood and so its restaurant id.",
+      "source_url": "https://www.crotonnyc.com/",
+      "checked_at": "2026-09-25"
+    }
+  ]
+}

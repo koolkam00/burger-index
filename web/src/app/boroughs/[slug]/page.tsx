@@ -1,0 +1,197 @@
+import { ArrowRight } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { AreaListItem, SoleRanked } from "@/components/AreaList";
+import { AreaStats } from "@/components/AreaStats";
+import { JsonLd } from "@/components/JsonLd";
+import { ChartFigure } from "@/components/charts/ChartFigure";
+import { PriceDistribution } from "@/components/charts/PriceDistribution";
+import { AreaTable, RangePlot } from "@/components/charts/RangePlot";
+import { Letterboard } from "@/components/Letterboard";
+import { QandA } from "@/components/QandA";
+import { MENU_ENDS_SPLIT, MenuEnds } from "@/components/RestaurantBits";
+import { Buoy, Net, Spatula } from "@/components/icons/nautical";
+import { BoroughDot, DetailOverline, PageHeader, SectionHeading } from "@/components/ui";
+import { boroughFaq } from "@/lib/answers";
+import { BOROUGH_META, boroughInProse, neighborhoodInProse } from "@/lib/boroughs";
+import {
+  getBorough,
+  getGeneratedAt,
+  getNeighborhoodsInBorough,
+  getPricedRestaurantsInBorough,
+  getStats,
+  hasNeighborhoodPage,
+  rankedNeighborhoods,
+  unrankedNeighborhoods,
+} from "@/lib/data";
+import { formatDate, formatPrice, pluralize, spreadEnds } from "@/lib/format";
+import { breadcrumbNode } from "@/lib/jsonld";
+import { isRankable, menuBreakdown, menuIndexPrices, menusByIndexPrice, menusByIndexPriceDesc, type Menu } from "@/lib/menus";
+import { pageMetadata, SITE_URL } from "@/lib/metadata";
+import { boroughRankings, rankingNameInSentence, rankingPath, rankMenus, topTied } from "@/lib/rankings";
+import { boroughSeo, type NamedPrice } from "@/lib/seo";
+import { BOROUGHS_HREF } from "@/lib/site";
+
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return BOROUGH_META.map((b) => ({ slug: b.slug }));
+}
+
+export async function generateMetadata({ params }: PageProps<"/boroughs/[slug]">): Promise<Metadata> {
+  const { slug } = await params;
+  const b = getBorough(slug);
+  if (!b) return {};
+  const restaurants = getPricedRestaurantsInBorough(b.name);
+  const named = (m: Menu | undefined): NamedPrice | null => (m ? { name: m.restaurant.name, price: m.indexPrice } : null);
+  const seo = boroughSeo({
+    borough: b.name,
+    median: b.summary?.index_median ?? null,
+    menus: b.menuCounts.menus,
+    cityMedian: getStats().index_median,
+    cheapest: named(menusByIndexPrice(restaurants)[0]),
+    priciest: named(menusByIndexPriceDesc(restaurants)[0]),
+    generatedAt: getGeneratedAt(),
+  });
+  return pageMetadata({ ...seo, path: `/boroughs/${b.slug}` });
+}
+
+export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug]">) {
+  const { slug } = await params;
+  const b = getBorough(slug);
+  if (!b) notFound();
+  const s = b.summary;
+  const c = b.menuCounts;
+  const median = getStats().index_median;
+  const restaurants = getPricedRestaurantsInBorough(b.name);
+  // Per menu, within the borough (menus.ts).
+  const prices = menuIndexPrices(restaurants);
+  const cheapest = menusByIndexPrice(restaurants);
+  const priciest = menusByIndexPriceDesc(restaurants);
+  const hoods = getNeighborhoodsInBorough(b.name);
+  const ranked = rankedNeighborhoods(hoods);
+  const hoodEnds = spreadEnds(ranked, (n) => n.index_median);
+  // Priced neighborhoods below the ranking threshold; those with nothing priced have no page (the
+  // /neighborhoods index lists them).
+  const unranked = unrankedNeighborhoods(hoods).filter(hasNeighborhoodPage);
+  const where = boroughInProse(b.name);
+  // Nothing priced here: one lede, no stats, chart or neighborhood list.
+  const priced = s !== null && s.index_median !== null && c.menus > 0;
+  // Ranked: the board carries the median and the menu count; otherwise the lede and a Median tile do.
+  const showBoard = priced && isRankable(c, s.index_median);
+  const crumbs = [{ href: BOROUGHS_HREF, label: "Boroughs" }, { label: b.name }];
+  // The borough's two ranking pages (cheapest, most expensive): the cards' "See all" and the answers link there.
+  const [cheapestList, priciestList] = boroughRankings(b);
+  const faq = priced
+    ? boroughFaq({
+        generatedAt: getGeneratedAt(),
+        borough: { name: b.name, slug: b.slug },
+        median: s.index_median,
+        cityMedian: median,
+        menus: c.menus,
+        cheapest: topTied(rankMenus(restaurants, cheapestList).rows),
+        priciest: topTied(rankMenus(restaurants, priciestList).rows),
+        neighborhoods: ranked.map((n) => ({ name: neighborhoodInProse(n.name), href: `/neighborhoods/${n.slug}`, median: n.index_median as number })),
+        ranking: { cheapest: cheapestList, priciest: priciestList },
+      })
+    : [];
+
+  return (
+    <>
+      <JsonLd nodes={[breadcrumbNode(SITE_URL, crumbs, `/boroughs/${b.slug}`)]} />
+      <PageHeader
+        crumbs={crumbs}
+        overline={<DetailOverline label="Borough" />}
+        title={
+          <>
+            <BoroughDot borough={b.name} ringed title />
+            {b.name}
+          </>
+        }
+        lede={!priced ? `No priced restaurants in ${where} yet.` : showBoard ? undefined : `${pluralize(c.menus, "priced menu")} in ${where}: ${menuBreakdown(c)}.`}
+        aside={
+          showBoard ? (
+            <Letterboard
+              overline={`The Burger Index · ${b.name} median`}
+              price={s.index_median}
+              line={[pluralize(c.menus, "menu"), `Updated ${formatDate(getGeneratedAt())}`]}
+            />
+          ) : undefined
+        }
+      />
+      <div className="wrap">
+        {priced ? (
+          <>
+            <AreaStats median={s.index_median} cityMedian={median} min={s.index_min} max={s.index_max} menus={c.menus} withMedian={!showBoard} range={false} />
+
+            <section className="section" aria-labelledby="spread">
+              <SectionHeading id="spread" kicker="Fresh off the grill" icon={Spatula} title={`How ${b.name} prices spread.`} />
+              <div className="mt-8">
+                <PriceDistribution id="hist-borough" prices={prices} cityMedian={median} sliceMedian={s.index_median} sliceName={b.name} />
+              </div>
+            </section>
+          </>
+        ) : null}
+
+        {ranked.length || unranked.length ? (
+          <section className="section" aria-labelledby="hoods">
+            <SectionHeading id="hoods" kicker="Neighborhood specials" icon={Buoy} title={`${b.name} neighborhoods.`}>
+              {ranked.length === 1 ? `Only ${ranked[0].name} is ranked.` : ranked.length ? null : "None is ranked yet."}
+            </SectionHeading>
+            {/* Nothing ranked: the intro says so and leads straight into the list (no second empty box). */}
+            <div className={ranked.length ? "mt-8" : ""}>
+              {ranked.length === 1 ? (
+                <SoleRanked area={ranked[0]} cityMedian={median} />
+              ) : ranked.length ? (
+                <ChartFigure
+                  id="hood-range"
+                  title={`${b.name} neighborhoods by median index price`}
+                  takeaway={
+                    hoodEnds ? `${hoodEnds.top.name} is the priciest at ${formatPrice(hoodEnds.top.index_median, { cents: "always" })}.` : "The line marks the NYC median."
+                  }
+                  chart={<RangePlot areas={ranked} cityMedian={median} labelledBy="hood-range-title hood-range-desc" />}
+                  table={<AreaTable areas={ranked} />}
+                />
+              ) : null}
+              {unranked.length ? (
+                <div className={ranked.length ? "mt-8" : "mt-6"}>
+                  <h3 className="t-label muted">Other neighborhoods</h3>
+                  <ul className="mt-2 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
+                    {unranked.map((n) => (
+                      <AreaListItem key={n.slug} area={n} />
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
+
+        {cheapest.length ? (
+          <section className="section" aria-labelledby="ends">
+            <SectionHeading id="ends" kicker="Catch of the day" icon={Net} title={cheapest.length >= MENU_ENDS_SPLIT ? `The cheapest and priciest in ${where}.` : `Every priced menu in ${where}.`} />
+            <MenuEnds
+              cheapest={cheapest}
+              priciest={priciest}
+              median={median}
+              chainCount={{ noun: `${b.name} location` }}
+              seeAll={{
+                cheapest: { href: rankingPath(cheapestList), what: rankingNameInSentence(cheapestList) },
+                priciest: { href: rankingPath(priciestList), what: rankingNameInSentence(priciestList) },
+              }}
+            />
+            <p className="mt-6">
+              <Link href={`/burgers?borough=${b.slug}`} className="btn btn-secondary">
+                Every burger in {where}
+                <ArrowRight strokeWidth={2} aria-hidden="true" />
+              </Link>
+            </p>
+          </section>
+        ) : null}
+
+        <QandA items={faq} />
+      </div>
+    </>
+  );
+}
