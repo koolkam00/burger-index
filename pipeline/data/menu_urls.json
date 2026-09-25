@@ -1,5 +1,5 @@
 {
-  "about": "Hand-checked menu pages per restaurant key (camis:... or csv:..., as in data/restaurants.json), applied by `pipeline sources` (see pipeline/sources.py load_menu_url_overrides): the page becomes the restaurant's menu_url, is scraped first and is trusted as this restaurant's menu; burger-list-master.csv is not edited. Use one when the page the list names (or the scrape found) is stale, partial or another restaurant's, and the restaurant's own current menu page (or, when it publishes none, this location's full menu on an ordering or delivery site) was checked by hand. A changed menu_url means a new scrape on the next `run` (credits); an override the list catches up with, or whose key leaves the scope, is reported as unused. Entries from the 2026-09-24 price check and unpriced-restaurant recovery, and from the 2026-09-25 review of each restaurant's one published burger.",
+  "about": "Hand-checked menu pages per restaurant key (camis:... or csv:..., as in data/restaurants.json), applied by `pipeline sources` (see pipeline/sources.py load_menu_url_overrides): the page becomes the restaurant's menu_url, is scraped first and is trusted as this restaurant's menu; burger-list-master.csv is not edited. Use one when the page the list names (or the scrape found) is stale, partial or another restaurant's, and the restaurant's own current menu page (or, when it publishes none, this location's full menu on an ordering or delivery site) was checked by hand. A changed menu_url means a new scrape on the next `run` (credits); an override the list catches up with, or whose key leaves the scope, is reported as unused. Entries from the 2026-09-24 price check and unpriced-restaurant recovery, and from the 2026-09-25 review of each restaurant's one published burger, and from the 2026-09-25 additions of places named on critics' best-burger lists (Deux Luxe, Eel Bar).",
   "overrides": {
     "camis:50135016": {
       "name": "Bay Ridge House of Wings",
@@ -378,6 +378,18 @@
       "menu_url": "https://sunsetparkdinerdonuts.com/menu",
       "checked_at": "2026-09-25",
       "reason": "The Grubhub-built ordering site the list names (sunsetparkdiner.com) marks every price up by about 18% (a round price divided by 0.85: $13.54 for $11.50); the diner's own current site lists round prices. The two checks read different burgers as its priciest ($12 Texas Burger, $13 Chili Cheese Burger), so the page is re-scraped rather than priced by hand."
+    },
+    "camis:50169020": {
+      "name": "Deux Luxe",
+      "menu_url": "https://www.canva.com/design/DAGvc02egOY/HhVE3JL_wQC4LrupW77ILA/view?embed",
+      "checked_at": "2026-09-25",
+      "reason": "The restaurant's own menu page (deuxluxeny.com/menu) shows its menu only inside an embedded Canva design; that design, read by hand, lists The Classic $16.50, Big Deux $18.50, the limited-release Au Poivre Burger $19 and two Jr burgers. The list's menu_url is kept; this page is scraped first."
+    },
+    "camis:50151982": {
+      "name": "Eel Bar",
+      "menu_url": "https://www.eelbarnyc.com/s/EB-Dinner-92426.pdf",
+      "checked_at": "2026-09-25",
+      "reason": "The restaurant's menu page (eelbarnyc.com/menu) shows the menu as images; its linked dinner menu PDF (created 2026-09-24), read by hand, lists the Grass-fed burger with boquerones and roquefort at $28. Menu PDFs here are renamed with each update, so the list keeps the menu page."
     }
   }
 }
