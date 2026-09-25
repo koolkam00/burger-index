@@ -94,7 +94,6 @@ export function BurgerTable({
         {rows.map(({ b, r }) => {
           const href = `/restaurants/${r.id}#${b.id}`;
           const where = r.nb ?? r.borough;
-          const delivery = r.source === "delivery_app";
           return (
             <tr key={b.id}>
               <td className="min-w-0">
@@ -129,10 +128,10 @@ export function BurgerTable({
               </td>
               <td className="num">
                 <span className="sm:hidden">
-                  <PriceChip price={b.price} median={median} dagger={delivery} suffix="" narrowWrap />
+                  <PriceChip price={b.price} median={median} suffix="" narrowWrap />
                 </span>
                 <span className="hidden sm:inline">
-                  <PriceChip price={b.price} median={median} delta={false} dagger={delivery} />
+                  <PriceChip price={b.price} median={median} delta={false} />
                 </span>
               </td>
               <td className="num t-num-s muted hidden whitespace-nowrap sm:table-cell">{b.price === null ? "—" : formatDelta(b.price, median)}</td>

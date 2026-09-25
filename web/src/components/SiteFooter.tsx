@@ -1,15 +1,11 @@
 import Link from "next/link";
 import { formatDate, pluralize } from "@/lib/format";
 import { NAV } from "@/lib/site";
-import { Anchor } from "./icons/nautical";
 import { UseSystemTheme } from "./theme";
 import { Wordmark } from "./Wordmark";
 
-/**
- * The deck: a rope rail, then dark stained deck planks. `listCredit`: where the restaurant list comes
- * from, computed from the dataset (lib/scope `scopeCredit`). The non-affiliation line ships on every page.
- */
-export function SiteFooter({ generatedAt, menus, locations, listCredit }: { generatedAt: string; menus: number; locations: number; listCredit: string }) {
+/** The deck: a rope rail, then dark stained deck planks. The non-affiliation line ships on every page. */
+export function SiteFooter({ generatedAt, menus, locations }: { generatedAt: string; menus: number; locations: number }) {
   return (
     <footer className="site-footer atmo">
       <span className="rope rope-flat" aria-hidden="true" />
@@ -47,13 +43,7 @@ export function SiteFooter({ generatedAt, menus, locations, listCredit }: { gene
             <p className="t-body-s deck-muted">
               We index prices, not quality. An original seaside-diner homage: not affiliated with any restaurant, TV show or network.
             </p>
-            <p className="t-body-s mt-3 flex items-start gap-2">
-              <Anchor size={18} className="mt-0.5 flex-none" />
-              <span>Fry-cook approved: every price comes from a menu online, and the methodology says which.</span>
-            </p>
-            <p className="t-body-s deck-muted mt-3">
-              {listCredit} Map data © OpenStreetMap contributors, tiles by OpenFreeMap.
-            </p>
+            <p className="t-body-s deck-muted mt-3">Map data © OpenStreetMap contributors, tiles by OpenFreeMap.</p>
           </div>
         </div>
       </div>

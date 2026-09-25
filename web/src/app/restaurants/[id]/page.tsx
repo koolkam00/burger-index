@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { MiniMap } from "@/components/map/MiniMap";
 import { repeatedNames } from "@/components/RestaurantBits";
 import { Anchor, Spatula } from "@/components/icons/nautical";
-import { BoroughName, Dagger, DetailOverline, EmptyState, IndexTag, Money, PageHeader, PriceChip, SectionHeading, SourceBadge, StatGrid, StatTile, StatusBadge } from "@/components/ui";
+import { BoroughName, DetailOverline, EmptyState, IndexTag, Money, PageHeader, PriceChip, SectionHeading, SourceBadge, StatGrid, StatTile, StatusBadge } from "@/components/ui";
 import { boroughSlug } from "@/lib/boroughs";
 import {
   getChainLocations,
@@ -14,16 +14,14 @@ import {
   getRestaurant,
   getRestaurants,
   getRestaurantsInNeighborhood,
-  getScope,
   getStats,
   neighborhoodMenuCounts,
 } from "@/lib/data";
 import { formatCount, formatDate, formatDelta, formatPrice, hostname, pluralize, safeHttpUrl } from "@/lib/format";
 import { parseHandCheck, type HandCheck } from "@/lib/hand-checks";
-import { chainCoverage, hasOtherMenus, isAirportLocation, isChainOnly, isChainSourceLocation, menuKey, menusByIndexPrice } from "@/lib/menus";
-import { DELIVERY_NOTE, PRICE_SOURCE_MEANING, PROTEIN_LABEL, STATUS_COPY, STATUS_LABEL, WITHHELD_COPY } from "@/lib/labels";
+import { chainCoverage, hasOtherMenus, menuKey, menusByIndexPrice } from "@/lib/menus";
+import { PROTEIN_LABEL, STATUS_COPY, STATUS_LABEL, WITHHELD_COPY } from "@/lib/labels";
 import { pageMetadata } from "@/lib/metadata";
-import { chainLocationsWhere } from "@/lib/scope";
 import { binFor } from "@/lib/price-bins";
 import type { Restaurant } from "@/lib/schema";
 import { atLeastOneParam, PLACEHOLDER_PARAM } from "@/lib/site";
@@ -42,8 +40,8 @@ export async function generateMetadata({ params }: PageProps<"/restaurants/[id]"
   const b = getIndexBurger(r);
   const description =
     r.index_price !== null && b
-      ? `${r.name} (${where}): the cheapest beef burger is the ${b.name} at ${formatPrice(r.index_price, { cents: "always" })}. Every burger on the menu, with prices and sources.`
-      : `${r.name} (${where}): ${statusCopy(r)}`;
+      ? `${r.name} (${where}): ${b.name}, ${formatPrice(r.index_price, { cents: "always" })}.`
+      : `${r.name} (${where}): ${statusLabel(r)}.`;
   return pageMetadata({ title: `${r.name}, ${r.neighborhood ?? r.borough}`, description, path: `/restaurants/${r.id}` });
 }
 
@@ -57,22 +55,30 @@ function ExternalA({ href, children }: { href: string; children: React.ReactNode
   );
 }
 
+const isWithheld = (r: Restaurant) => parseHandCheck(r.status_detail)?.kind === "withheld";
+
 /** The status line, unless a hand check withheld a price that was online: then "no price online" is untrue. */
 function statusCopy(r: Restaurant): string {
-  return parseHandCheck(r.status_detail)?.kind === "withheld" ? WITHHELD_COPY : STATUS_COPY[r.status];
+  return isWithheld(r) ? WITHHELD_COPY : STATUS_COPY[r.status];
+}
+
+/** The status as a short label for the meta description: the badge's words, or "Prices withheld". */
+function statusLabel(r: Restaurant): string {
+  return isWithheld(r) ? WITHHELD_COPY.replace(/\.$/, "") : STATUS_LABEL[r.status];
 }
 
 /**
- * The note a hand check leaves (pipeline/corrections.py): shown as its own card, not buried in the
- * status line, because it changes (or withholds) the price the page shows.
+ * The label a hand check leaves (pipeline/corrections.py): shown as its own slip, not buried in the
+ * status line, because it changes (or withholds) the price the page shows. A label only, so a
+ * paragraph rather than a heading: nothing sits under it.
  */
-function HandCheckNote({ check, chainName, locations }: { check: HandCheck; chainName: string | null; locations: number }) {
+function HandCheckNote({ check }: { check: HandCheck }) {
   const corrected = check.kind === "corrected";
   const Icon = corrected ? ClipboardCheck : EyeOff;
   // "The cook's correction slip": a ruled guest check with a torn top; its text sits on the rules.
   return (
-    <section className="slip mt-8" aria-labelledby="hand-check">
-      <h2 id="hand-check" className="t-label slip-line muted flex items-start gap-2">
+    <div className="slip mt-8">
+      <p className="t-label slip-line muted flex items-start gap-2">
         <Icon className="mt-[6px] size-4 flex-none" strokeWidth={2} aria-hidden="true" />
         <span className="min-w-0">
           {/* A no-break space binds the "·" to the words before it, so a wrap puts the date (which never
@@ -81,21 +87,12 @@ function HandCheckNote({ check, chainName, locations }: { check: HandCheck; chai
           {"\u00a0· "}
           <span className="whitespace-nowrap">{formatDate(check.checkedOn)}</span>
         </span>
-      </h2>
-      <p className="t-body-s slip-line">
-        {corrected ? "We re-read this menu ourselves and corrected what the scrape got wrong: " : "We re-read this menu ourselves and left its prices out: "}
-        {check.reason}
       </p>
-      {chainName && locations > 1 ? (
-        <p className="t-ui-s slip-line muted">
-          This applies to all {pluralize(locations, `${chainName} location`)}: they share one menu.
-        </p>
-      ) : null}
-    </section>
+    </div>
   );
 }
 
-/** A chain's other locations. `unpriced` rows say why they have no price instead of naming the borough. */
+/** A chain's other locations. `unpriced` rows show their status instead of the borough. */
 function ChainLocationList({ rows, unpriced = false, className = "mt-6" }: { rows: readonly Restaurant[]; unpriced?: boolean; className?: string }) {
   return (
     <ul className={`${className} grid gap-x-8 sm:grid-cols-2`}>
@@ -105,7 +102,7 @@ function ChainLocationList({ rows, unpriced = false, className = "mt-6" }: { row
             {n.neighborhood ?? n.borough}
             <span className="t-ui-s muted block">{n.address}</span>
           </Link>
-          <span className="t-ui-s muted text-right">{unpriced ? (isAirportLocation(n) ? "Airport, own prices" : STATUS_LABEL[n.status]) : n.borough}</span>
+          <span className="t-ui-s muted text-right">{unpriced ? STATUS_LABEL[n.status] : n.borough}</span>
         </li>
       ))}
     </ul>
@@ -133,31 +130,15 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
   const hoodCounts = r.neighborhood_slug ? neighborhoodMenuCounts(r.neighborhood_slug) : null;
   // "vs neighborhood" needs another priced menu there (five locations of one chain are one menu).
   const compareHood = hood && hoodCounts && hood.index_median !== null && hasOtherMenus(hoodCounts) ? { median: hood.index_median, counts: hoodCounts } : null;
-  // A chain's other locations share its menu price only where they carry one: an unpriced chain (no
-  // location scraped with a price) isn't in the index, and airport concessions never get the street price.
+  // A chain's other locations, split by whether they carry its menu price.
   const chainOthers = getChainLocations(r);
   const { priced: chainPricedOthers, unpriced: chainUnpricedOthers } = chainCoverage(chainOthers);
   const chainPricedLocations = chainPricedOthers.length + (priced ? 1 : 0);
-  const chainListed = chainOthers.length + 1;
-  const airport = isAirportLocation(r);
-  // The location whose menu the chain's shared price was read from: its price is not an estimate.
-  const chainSource = isChainSourceLocation(r);
-  // Where the chain's locations are counted: a chain is looked up as a whole, so these are all of its
-  // locations on our list (not the whole chain, which can have more in the city).
-  const chainWhere = chainLocationsWhere(getScope()) || " we have looked up";
-  const chainListedNote = chainListed > chainPricedLocations ? ` of the ${formatCount(chainListed)}${chainWhere}` : "";
   const neighborRepeats = repeatedNames(
     neighbors.map((m) => m.restaurant),
     [r],
   );
   const check = parseHandCheck(r.status_detail);
-  // Beef burgers listed below the index price: they can only be priced for a later menu period (late
-  // night, lunch, brunch or other), since the index takes a dinner or all-day price first and
-  // happy-hour prices are never published (pipeline/extract.py `index_item`, build.py `assemble`).
-  const cheaperBeef = priced ? r.burgers.filter((b) => b.protein === "beef" && b.price !== null && b.price < (r.index_price as number)).length : 0;
-  // The scrape's own note; the hand-check sentence gets its own card below. After a hand check the
-  // scrape's note describes the menu as it was read before the check, so it is labelled as history.
-  const detail = check ? (check.scrapeDetail ? `Before the hand check, the scrape noted: ${check.scrapeDetail}` : null) : r.status_detail;
 
   const crumbs = [
     { href: "/boroughs", label: "Boroughs" },
@@ -186,25 +167,6 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
           <StatusBadge status={r.status} />
           <SourceBadge source={r.price_source} />
         </div>
-        {r.chain ? (
-          <p className="t-body-s muted prose-width mt-3">
-            {priced
-              ? chainSource
-                ? `We read this ${r.name} location's menu${
-                    chainPricedOthers.length
-                      ? `; the chain's ${chainPricedOthers.length === 1 ? "one other priced location uses" : `other ${formatCount(chainPricedOthers.length)} priced locations use`} its prices`
-                      : ""
-                  }. The index counts the chain once, not once per location.`
-                : `A ${r.name} location. Chain locations share one menu price, scraped from a single NYC location, so this branch may differ by a little.${
-                    chainPricedLocations > 1 ? ` The same price covers ${pluralize(chainPricedLocations, "priced location")}${chainListedNote}.` : ""
-                  } The index counts the chain once, not once per location.`
-              : airport
-                ? `A ${r.name} airport location. Airport concessions set their own prices, so the chain's street price isn't applied here and this location isn't in the index.`
-                : chainPricedLocations
-                  ? `A ${r.name} location. Other ${r.name} locations carry the chain's menu price, but this one has no price on file, so it isn't counted.`
-                  : `A ${r.name} location. No location of this chain is priced yet, so it isn't in the index.${chainListed > 1 ? ` It has ${pluralize(chainListed, "location")}${chainWhere}.` : ""}`}
-          </p>
-        ) : null}
       </PageHeader>
       <div className="wrap">
       {priced && indexBurger ? (
@@ -218,7 +180,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
                 <>
                   {indexBurger.name}
                   {bin ? ` · ${bin.name}` : ""}
-                  {delivery ? " · delivery-app price †" : ""}
+                  {delivery ? " · delivery-app price" : ""}
                 </>
               }
             />
@@ -227,7 +189,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
               value={compareHood ? formatDelta(r.index_price, compareHood.median) : "—"}
               sub={
                 compareHood
-                  ? `Neighborhood median ${formatPrice(compareHood.median, { cents: "always" })} across ${pluralize(compareHood.counts.menus, "menu")}${isChainOnly(compareHood.counts) ? ", chain prices only" : ""}`
+                  ? `Neighborhood median ${formatPrice(compareHood.median, { cents: "always" })} across ${pluralize(compareHood.counts.menus, "menu")}`
                   : r.neighborhood_slug
                     ? "No other priced menu here to compare"
                     : "No neighborhood on file"
@@ -247,27 +209,13 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
             <StatusBadge status={r.status} />
           </div>
           <p className="t-body mt-3">{statusCopy(r)}</p>
-          {detail ? <p className="t-body-s muted mt-2">{detail}</p> : null}
-          <p className="t-body-s muted mt-2">Restaurants without a priced beef burger are left out of the index and every median on this site.</p>
         </section>
       )}
 
-      {check ? (
-        <HandCheckNote check={check} chainName={r.chain ? r.name : null} locations={[r, ...chainOthers].filter((x) => parseHandCheck(x.status_detail)?.checkedOn === check.checkedOn).length} />
-      ) : null}
+      {check ? <HandCheckNote check={check} /> : null}
 
       <section className="section" aria-labelledby="menu">
-        <SectionHeading id="menu" title={r.burgers.length ? "Burgers on the menu." : "No burgers listed."}>
-          {r.burgers.length
-            ? priced
-              ? cheaperBeef
-                ? `The highlighted row sets the index price: the cheapest beef burger at the menu's dinner or all-day prices (late-night, lunch and brunch prices count only when there are none). ${
-                    cheaperBeef === 1 ? "The cheaper beef burger listed here is priced for another time of day." : `The ${formatCount(cheaperBeef)} cheaper beef burgers listed here are priced for other times of day.`
-                  }`
-                : "The highlighted row sets the index price: the cheapest priced beef burger."
-              : "We found these burgers but no prices we could record."
-            : null}
-        </SectionHeading>
+        <SectionHeading id="menu" title={r.burgers.length ? "Burgers on the menu." : "No burgers listed."} />
         {r.burgers.length ? (
           <ul className="mt-6 max-w-3xl">
             {r.burgers.map((b) => (
@@ -277,7 +225,6 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
                   <span className="menu-leader" aria-hidden="true" />
                   <span className="t-num-l whitespace-nowrap">
                     {b.price === null ? <span className="t-ui-s muted">No price</span> : formatPrice(b.price, { cents: "always" })}
-                    {delivery && b.price !== null ? <Dagger /> : null}
                   </span>
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -290,30 +237,22 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
             ))}
           </ul>
         ) : (
-          // No burger rows: the status card above already says why, so this only fills the space.
+          // No burger rows: the status card above names the status, so this only fills the space.
           <div className="mt-6 max-w-3xl">
             <EmptyState height={160} art="trap">
-              Nothing on the menu board for this one. The status above says why.
+              Nothing on the menu board for this one.
             </EmptyState>
           </div>
         )}
-        {delivery ? <p className="t-ui-s muted mt-3">† Delivery-app price. {DELIVERY_NOTE}</p> : null}
       </section>
 
       <section className="section" aria-labelledby="source">
-        <SectionHeading id="source" title="Where the prices come from." />
+        <SectionHeading id="source" title="Source and location." />
         <div className="mt-6 grid gap-8 md:grid-cols-2">
           <dl className="t-ui-m grid min-w-0 grid-cols-[minmax(0,8rem)_minmax(0,1fr)] gap-x-4 gap-y-3 self-start">
             <dt className="t-label muted pt-0.5">Source</dt>
             <dd className="min-w-0">
-              {r.price_source ? (
-                <>
-                  <SourceBadge source={r.price_source} />
-                  <p className="t-body-s muted mt-1">{PRICE_SOURCE_MEANING[r.price_source]}</p>
-                </>
-              ) : (
-                <span className="muted">None found</span>
-              )}
+              {r.price_source ? <SourceBadge source={r.price_source} /> : <span className="muted">None found</span>}
             </dd>
             <dt className="t-label muted pt-0.5">Menu page</dt>
             <dd className="min-w-0 break-anywhere">{menuUrl ? <ExternalA href={menuUrl}>{hostname(menuUrl)}</ExternalA> : <span className="muted">None found</span>}</dd>
@@ -324,8 +263,6 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
             <dt className="t-label muted pt-0.5">Status</dt>
             <dd className="min-w-0">
               <StatusBadge status={r.status} />
-              {priced && detail ? <p className="t-body-s muted mt-1">{detail}</p> : null}
-              {check ? <p className="t-body-s mt-1">{check.kind === "corrected" ? "Prices corrected by hand" : "Prices withheld"} on {formatDate(check.checkedOn)} (see above).</p> : null}
             </dd>
             <dt className="t-label muted pt-0.5">Borough</dt>
             <dd>
@@ -381,7 +318,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
                     {[getIndexBurger(n)?.name, n.chain && locations > 1 ? `chain, ${locations} locations here` : neighborRepeats.has(n.name) ? n.address : null].filter(Boolean).join(" · ")}
                   </span>
                 </span>
-                <PriceChip price={n.index_price} median={median} delta={false} dagger={n.price_source === "delivery_app"} />
+                <PriceChip price={n.index_price} median={median} delta={false} />
               </li>
             ))}
           </ul>
@@ -399,9 +336,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
         <section className="section" aria-labelledby="chain">
           {chainPricedOthers.length ? (
             <>
-              <SectionHeading id="chain" title={priced ? `Other ${r.name} locations${chainWhere}.` : `${r.name} locations with the chain price.`}>
-                {priced ? "Same menu, same price." : `They share one menu and one price${airport ? "; airport concessions don't get it" : ""}.`}
-              </SectionHeading>
+              <SectionHeading id="chain" title={priced ? `Other ${r.name} locations.` : `${r.name} locations with the chain price.`} />
               <ChainLocationList rows={chainPricedOthers.slice(0, 12)} />
               {chainPricedOthers.length > 12 ? (
                 <p className="mt-4">
@@ -419,7 +354,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
             </>
           ) : (
             <>
-              <SectionHeading id="chain" title={`Other ${r.name} locations${chainWhere}.`}>
+              <SectionHeading id="chain" title={`Other ${r.name} locations.`}>
                 {priced ? "Listed without the chain price." : "None of them is priced yet either."}
               </SectionHeading>
               <ChainLocationList rows={chainOthers.slice(0, 12)} unpriced />

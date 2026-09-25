@@ -10,7 +10,7 @@
 // Client-safe and pure: types only from ./schema, so zod stays out of the browser bundle, and every
 // function takes the list it counts, so the same call gives citywide or per-area answers.
 import { STATUSES } from "./enums";
-import { formatCount, formatPrice, pluralize } from "./format";
+import { formatCount, pluralize } from "./format";
 import type { AreaSummary, Restaurant, Status } from "./schema";
 import { MIN_RANKED } from "./site";
 
@@ -298,35 +298,4 @@ export function pooledBurgerPrices(list: readonly Restaurant[]): number[] {
     .flatMap((r) => r.burgers.map((b) => b.price))
     .filter((p): p is number => p !== null)
     .sort((a, b) => a - b);
-}
-
-// ---- what counting per location would do -----------------------------------------------------------
-
-const toCents = (x: number) => Math.round(x * 100);
-
-/**
- * The methodology's "counted per location" sentence, computed from the priced menus: how many priced
- * locations belong to chains, the biggest chain's share, and which chain's price (if any) a median over
- * locations lands on. It says one chain "would set the number" only when that chain has more than half
- * of the priced locations (then the location median is its price by construction). Null when counting
- * per location changes nothing (no chain has a second priced location) or nothing is priced.
- */
-export function perLocationNote(menus: readonly Menu[], locationMedian: number | null, menuMedian: number | null): string | null {
-  const chains = menus.filter((m) => m.chain !== null).sort((a, b) => b.locations - a.locations || a.restaurant.name.localeCompare(b.restaurant.name));
-  const total = menus.reduce((n, m) => n + m.locations, 0);
-  const chainLocations = chains.reduce((n, m) => n + m.locations, 0);
-  if (!total || !chains.length || chainLocations <= chains.length || locationMedian === null || menuMedian === null) return null;
-  const top = chains[0];
-  const dominant = top.locations * 2 > total;
-  const first = dominant
-    ? `Counted per location, one chain would set the number: ${top.restaurant.name} alone has ${formatCount(top.locations)} of the ${formatCount(total)} priced locations.`
-    : chains.length === 1
-      ? `Counted per location, ${top.restaurant.name} would count ${formatCount(top.locations)} times, not once: it has ${formatCount(top.locations)} of the ${formatCount(total)} priced locations.`
-      : `Counted per location, a chain would count again at every location: ${pluralize(chains.length, "chain")} hold ${formatCount(chainLocations)} of the ${formatCount(total)} priced locations, and ${top.restaurant.name} alone has ${formatCount(top.locations)}.`;
-  if (toCents(locationMedian) === toCents(menuMedian))
-    return `${first} Right now a median over locations happens to land on the same price, but it would move with every chain opening or closing, not with what burgers cost.`;
-  // The chain whose price the location median lands on (most locations first), if it lands on one.
-  const landsOn = chains.find((m) => toCents(m.indexPrice) === toCents(locationMedian));
-  const whose = landsOn ? (dominant && landsOn === top ? ", its price" : `, the ${landsOn.restaurant.name} price`) : "";
-  return `${first} A median over locations would be ${formatPrice(locationMedian, { cents: "always" })}${whose}; over distinct menus it is ${formatPrice(menuMedian, { cents: "always" })}.`;
 }

@@ -29,7 +29,7 @@ export function PriceDistribution({
       <ChartEmpty height={298}>
         {prices.length === 0
           ? "No priced menus in these waters yet."
-          : `Only ${pluralize(prices.length, "priced menu")} in these waters. We draw the chart at ${MIN_HISTOGRAM}.`}
+          : `Only ${pluralize(prices.length, "priced menu")} in these waters.`}
       </ChartEmpty>
     );
   }
@@ -37,15 +37,15 @@ export function PriceDistribution({
   const p90 = percentile(prices, 0.9) as number;
   const lo = formatPrice(Math.floor(p10), { cents: "auto" });
   const hi = formatPrice(Math.ceil(p90), { cents: "auto" });
-  // Says "these menus", not "NYC burgers": the slice is the menus priced so far, not every menu in town.
-  const these = `Most of these ${formatCount(prices.length)} menus charge`;
-  const spread = lo === hi ? `${these} about ${lo} for their cheapest beef burger` : `${these} ${lo}–${hi} for their cheapest beef burger`;
+  // p10–p90 of the slice's index prices, one per menu. The takeaway states the numbers only.
+  const these = `Most of these ${formatCount(prices.length)} index prices`;
+  const spread = lo === hi ? `${these} are about ${lo}` : `${these} fall between ${lo} and ${hi}`;
   const bins = histogram(prices, 1, 10);
   return (
     <ChartFigure
       id={id}
       title={`Index prices on ${formatCount(prices.length)} menus`}
-      takeaway={`${chainOnly ? "Chain prices only. " : ""}${spread}; the median is ${formatPrice(sliceMedian, { cents: "always" })}. Bars count menus, so a chain counts once; they are colored by price level against the NYC median.`}
+      takeaway={`${chainOnly ? "Chain prices only. " : ""}${spread}; the median is ${formatPrice(sliceMedian, { cents: "always" })}.`}
       chart={<Histogram prices={prices} median={cityMedian} mark={{ value: sliceMedian, label: `${sliceName} median` }} labelledBy={`${id}-title ${id}-desc`} />}
       table={
         <table className="data-table">

@@ -208,7 +208,7 @@ export function CompassRose(props: IconProps) {
   );
 }
 
-/** A round mooring buoy riding the waterline: a banded ball with a small ring top mark (short and wide, unlike the lighthouse). */
+/** A round mooring buoy riding the waterline: a banded ball with a small ring top mark (short and wide). */
 export function Buoy(props: IconProps) {
   return (
     <Svg {...props}>
@@ -217,19 +217,6 @@ export function Buoy(props: IconProps) {
       <path d="M12 6.5V4" />
       <circle cx="12" cy="2.6" r="1.3" strokeWidth={1.5} />
       <path d="M2.5 19c1.6-1 3.2-1 4.8 0s3.2 1 4.8 0 3.2-1 4.8 0 3.2 1 4.6 0" />
-    </Svg>
-  );
-}
-
-export function Lighthouse(props: IconProps) {
-  return (
-    <Svg {...props}>
-      <path d="M5.5 21h13" />
-      <path d="M9 21l1.2-11.5h3.6L15 21z" />
-      <path d="M9.6 15h4.8" />
-      <path d="M9.5 9.5v-3h5v3" />
-      <path d="M9 6.5l3-3 3 3" />
-      <path d="M4.5 6.5l3 .8M19.5 6.5l-3 .8" />
     </Svg>
   );
 }

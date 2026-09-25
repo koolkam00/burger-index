@@ -19,7 +19,7 @@ import {
   type SourceKey,
 } from "@/lib/explorer";
 import { formatCount, formatPrice, pluralize } from "@/lib/format";
-import { DELIVERY_NOTE, PRICE_SOURCE_NAME, PROTEIN_LABEL } from "@/lib/labels";
+import { PRICE_SOURCE_LABEL, PROTEIN_LABEL } from "@/lib/labels";
 import { binRanges } from "@/lib/price-bins";
 import type { Borough, Protein } from "@/lib/schema";
 import { useMediaQuery } from "../charts/hooks";
@@ -34,7 +34,7 @@ const collator = new Intl.Collator("en", { sensitivity: "base", numeric: true })
 type Row = TableRow & { hay: string };
 
 function sourceLabel(s: SourceKey) {
-  return s === "unknown" ? "Unknown" : PRICE_SOURCE_NAME[s];
+  return s === "unknown" ? "Unknown" : PRICE_SOURCE_LABEL[s];
 }
 
 function priceLabel(min: number | null, max: number | null) {
@@ -158,7 +158,6 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
 
   const shown = results.slice(0, limit);
   const nActive = activeFilterCount(filters);
-  const anyDelivery = shown.some((row) => row.r.source === "delivery_app" && row.b.price !== null);
   const bins = data.median !== null ? binRanges(data.median) : [];
   const neighborhoods = useMemo(() => {
     const allowed = new Set(filters.boroughs.map((s) => boroughBySlug(s)!.name));
@@ -492,7 +491,6 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
       {results.length ? (
         <div className={deferredQuery !== query ? "opacity-50 transition-opacity" : "transition-opacity"}>
           <BurgerTable rows={shown} median={data.median} tokens={tokens} sort={filters.sort} onSort={(s) => update({ sort: s })} />
-          {anyDelivery ? <p className="t-ui-s muted mt-3">† Delivery-app price. {DELIVERY_NOTE}</p> : null}
           {results.length > shown.length ? (
             <div className="mt-6 flex flex-wrap items-center gap-4">
               <button type="button" className="btn btn-secondary" onClick={() => setLimit((l) => l + PAGE)}>

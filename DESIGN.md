@@ -1,7 +1,7 @@
 # Design System — The Burger Index
 
 ## Product Context
-- **What this is:** A public index of what a burger costs in New York City. The headline number is the NYC median *index price* (the cheapest priced beef burger) across distinct menus: every independent restaurant once, and each chain once, however many locations share its menu. Around it: rankings by borough and neighborhood, a searchable table of every priced burger, restaurant pages, a price map, and a methodology page.
+- **What this is:** A public index of what a burger costs in New York City. The headline number is the NYC median *index price* (the price of each restaurant's index burger; the pipeline's `methodology.index_price_rule` defines it, and the site never states it) across distinct menus: every independent restaurant once, and each chain once, however many locations share its menu. Around it: rankings by borough and neighborhood, a searchable table of every priced burger, restaurant pages and a price map. The site shows the numbers and short labels only: it carries no methodology page and no copy explaining how the data is gathered, computed, counted, filtered, corrected or limited (see Voice & Copy, "No methodology copy").
 - **Who it's for:** Curious New Yorkers, food media quoting the number, and people screenshotting "my neighborhood is the priciest" to a group chat. This look adds a fourth group: people who share it because it's fun to look at.
 - **Project type:** Next.js 16 static export (`web/`) reading `data/burger_index.json` (schema: `contract/burger_index.schema.json`). Every screen must survive a screenshot with no hover state.
 - **The brief:** "Design the website as if it was a website for the Krusty Krab in SpongeBob." We read that as: the site *is* a cheerful seaside fry-cook joint on the sea floor. It is an **original homage**. It evokes a cartoon undersea burger shack through generic nautical and diner vocabulary (planks, rope, portholes, brass, life rings, a scalloped awning, a hanging order board, deep water) and copies nothing from the show. It claims no affiliation (see Don'ts). The brand stays **The Burger Index**.
@@ -25,7 +25,7 @@
 
 - **The Two-Zone Rule** (how ornament is fenced in). The house motto is *cartoon on the walls, straight face on the numbers.*
   - **Atmosphere zones** (decoration allowed): nav, awning, home hero band, inner-page shallows band, the Order Board rig, stat-tile rims and the counter band, rope rules, section kickers, empty-state spot art, the 404 page, the footer.
-  - **Data zones** (flat, no decoration): chart plot areas and axis bands, legends and swatches, tables, the map canvas, price chips, tooltips, the filter bar, restaurant menu lists, the hand-check note body, methodology prose. Data zones sit on flat `--surface` or `--bg` and use only the tokens below.
+  - **Data zones** (flat, no decoration): chart plot areas and axis bands, legends and swatches, tables, the map canvas, price chips, tooltips, the filter bar, restaurant menu lists, the hand-check note. Data zones sit on flat `--surface` or `--bg` and use only the tokens below.
 - **Decoration level:** Expressive in atmosphere zones, zero in data zones. Nothing from the building (planks, rope, net, caustics, bubbles, brass, drop shades, block shadows) ever enters a plot, the map canvas, a table cell, a tooltip, or sits behind running text without a solid backing.
 - **Mood:** Cheerful, loud, proud of its burgers, and honest about the numbers. The voice is a fry cook who is a stickler for the receipt: the jokes go in the labels, never in the data.
 - **Signature element: The Order Board.** The headline median in chunky red cartoon numerals with a dark sign-painter drop shade, on a yellow sign that hangs from a beam. It keeps the deli-card cents (superscript, underlined). It is the brand, the screenshot and the Open Graph image.
@@ -42,7 +42,7 @@ const ui = Barlow({ subsets: ["latin"], weight: ["400", "500", "600", "700"], di
 ```
 
 - **Display: Lilita One** (400, its only weight). A chunky, rounded, hand-lettered sign face with cartoon energy and very legible numerals. Used for the Order Board price, H1–H3, stat values, the wordmark, section kickers, the hero kicker ticket and the "ORDER UP!" plaque. `--font-display: var(--lo), "Arial Rounded MT Bold", "Arial Black", sans-serif`. Every display class sets `font-weight: 400; font-synthesis-weight: none`, because headings default to bold and the browser would otherwise fake one. Never below 15px.
-- **Body: Nunito** (variable; 400, 400 italic, 700, 800). A rounded humanist sans that matches the display's soft corners and stays readable at paragraph length. Used for ledes, prose, methodology, footnotes and the hand-check note. `--font-body: var(--nu), "Trebuchet MS", sans-serif`.
+- **Body: Nunito** (variable; 400, 400 italic, 700, 800). A rounded humanist sans that matches the display's soft corners and stays readable at paragraph length. Used for ledes, prose, menu-item descriptions and the footer disclaimer. `--font-body: var(--nu), "Trebuchet MS", sans-serif`.
 - **UI + numeric: Barlow** (400, 500, 600, 700). A slightly rounded grotesk from the sign-painting and highway-plate lineage, warm next to Lilita but a proper data face. Used for nav, buttons, labels, chips, badges, tables, axis ticks, tooltips and every price outside display sizes. `--font-ui: var(--ba), "Helvetica Neue", Arial, sans-serif`.
 - **Numerals (measured in a browser, not assumed):**
   - **Barlow:** `tabular-nums` works ("1111" and "0000" both 85.3px at 40px, weight 500). Its *default* figures are proportional, so `font-variant-numeric: tabular-nums lining-nums` is set on `body` and on every price, count, percent, chip, table cell, tooltip and axis tick.
@@ -63,7 +63,7 @@ const ui = Barlow({ subsets: ["latin"], weight: ["400", "500", "600", "700"], di
 | kicker | Lilita One 400, UPPERCASE | 15 / 1.1 | 15 / 1.1 | 0.07em | Section kickers, hero kicker ticket |
 | lede | Nunito 400 | 18 / 1.5 | 21 / 1.5 | 0 | Intro paragraph under H1 |
 | body | Nunito 400 | 17 / 1.6 | 18 / 1.6 | 0 | Prose (max 68ch) |
-| body-s | Nunito 400 | 15 / 1.5 | 16 / 1.5 | 0 | Footnotes, methodology asides; 15/28 on the order slip |
+| body-s | Nunito 400 | 15 / 1.5 | 16 / 1.5 | 0 | Menu-item descriptions, the footer disclaimer |
 | ui-l | Barlow 500 | 16 / 1.4 | 16 / 1.4 | 0 | Inputs, large buttons (700), menu-list names (600) |
 | ui-m | Barlow 500 | 15 / 1.4 | 15 / 1.4 | 0 | Nav (600), chips, table body, board small print |
 | ui-s | Barlow 500 | 13 / 1.35 | 13 / 1.35 | 0.005em | Secondary table lines, captions, legend rows |
@@ -196,11 +196,11 @@ Every rule of the data desk stands. The costume comes off inside the figure.
 - **Axes:** No y-axis line. 3–5 clean y ticks with solid 1px `--grid` gridlines and a solid 1px `--axis` baseline. X ticks every $5 (`$15`). Tick labels are num-s in `--ink-muted`. Never dashed (the rope rule is not a chart rule).
 - **Median annotation:** A 2px `--ink` vertical line through the plot. Its label sits in the label band above the plot: a 14px anchor icon, then "NYC median $21.95" (ui-s 600, `--ink`). The anchor is text decoration in the label band; it never marks a data position and never enters the plot. At most two more annotations per chart, in ui-s `--ink-muted` with a 1px `--axis` leader. Text never uses a data color.
 - **Borough bars:** Bars start at $0, sorted high → low, 20px thick in 36px rows, filled with `--bar` (driftwood), square at the baseline and 4px-rounded at the tip. The hovered or current borough gets `--ink`. The value goes at the bar tip (num-m, `--ink`). The citywide median is a 1px `--ink` reference line labeled "NYC". The borough key dot sits beside the name. Chain-only rows carry "Chain prices only".
-- **Neighborhood plot:** A 10px `--ink` dot marks the median, with a 2px `--axis` line from `index_min` to `index_max`. Rows are 28px and sorted by median. Only areas with **5 or more distinct priced menus** are ranked (`MIN_RANKED`; a chain counts once per area, so five 7th Street Burgers are one menu); the rest are listed under "Too few to rank". A chain-only area carries "Chain prices only" beside its name.
+- **Neighborhood plot:** A 10px `--ink` dot marks the median, with a 2px `--axis` line from `index_min` to `index_max`. Rows are 28px and sorted by median. Only areas with **5 or more distinct priced menus** are ranked (`MIN_RANKED`; a chain counts once per area, so five 7th Street Burgers are one menu); the rest are listed under "Other neighborhoods" (the threshold is never stated on the site). A chain-only area carries "Chain prices only" beside its name.
 - **Minimums:** Don't draw a histogram with fewer than **20 distinct priced menus** in the slice (`MIN_HISTOGRAM`). Show the empty state instead.
 - **Counting unit:** Histograms, typical ranges, rankings, cheapest/priciest lists and every threshold count distinct menus (menu key = chain, else restaurant). Map pins, restaurant pages and table rows count locations, and any location count in copy says "locations" (or "pins").
-- **Tooltips ("order tickets"):** `--surface`, 1.5px `--line` border, radius 10px, `--shadow-pop`, padding 8×12. The value comes first ("142 menus", ui-m 700), then context ("$15.00–$15.99 · Going rate", ui-s `--ink-muted`), with a 12×3px line key in the mark's color. The same content appears on keyboard focus: a chart is one tab stop, and ←/→ move between marks. Hit targets are at least 24px, larger than the mark. Insert labels with `textContent`. Non-chart tooltips (the delivery badge) use the same box.
-- **Text alternative:** Every chart is a `<figure>`. The `<figcaption>` holds a title plus a one-sentence takeaway ("Most menus start between $9 and $30; the median is $21.95."). The SVG gets `role="img"` and `aria-labelledby` pointing at them. A "View as table" button swaps in a real `<table>` of the same numbers (its label flips to "View as chart", so it takes no `aria-pressed`). The chart's area names are pointer-only links inside the image; the table's row headers are the keyboard-reachable links to each borough and neighborhood page.
+- **Tooltips ("order tickets"):** `--surface`, 1.5px `--line` border, radius 10px, `--shadow-pop`, padding 8×12. The value comes first ("142 menus", ui-m 700), then context ("$15.00–$15.99 · Going rate", ui-s `--ink-muted`), with a 12×3px line key in the mark's color. The same content appears on keyboard focus: a chart is one tab stop, and ←/→ move between marks. Hit targets are at least 24px, larger than the mark. Insert labels with `textContent`.
+- **Text alternative:** Every chart is a `<figure>`. The `<figcaption>` holds a title plus a one-sentence takeaway ("Most of these 565 index prices fall between $12 and $28; the median is $19.95."). The takeaway states what the data shows, never how it was counted or computed. The SVG gets `role="img"` and `aria-labelledby` pointing at them. A "View as table" button swaps in a real `<table>` of the same numbers (its label flips to "View as chart", so it takes no `aria-pressed`). The chart's area names are pointer-only links inside the image; the table's row headers are the keyboard-reachable links to each borough and neighborhood page.
 - **Filter changes:** Charts keep their previous frame at 50% opacity until the new data renders. No skeletons, no layout jump.
 - **Empty state:** see Components → Empty states, at the chart's height.
 
@@ -254,7 +254,7 @@ Every rule of the data desk stands. The costume comes off inside the figure.
   - **Content, top to bottom** (unchanged from the Letterboard):
     - A `label` overline in `--sign-ink`: "THE BURGER INDEX · NYC MEDIAN".
     - The price in display-xl `--sign-price` with `text-shadow: .022em .03em 0 var(--sign-shade)`, and price-card cents (underline in `--sign-price`).
-    - A ui-m `--sign-ink` line: "Cheapest beef burger on 57 menus · Updated Sep 23, 2026". **While part of the restaurant list is not yet looked up, the line gets a middle part, "80 of 658 restaurants looked up so far"**, and each part wraps as a unit; the middle part disappears once nothing is pending.
+    - A ui-m `--sign-ink` line: "565 menus · Updated Sep 24, 2026". Each part wraps as a unit. It carries no index-price rule and no coverage part (both removed 2026-09-25 with the other methodology copy).
   - **Behavior:** Yellow in both themes; at night it glows. Glyph spans are `aria-hidden`, with one sr-only "$21.95", and the `<figure>` has `aria-label` "The Burger Index, NYC median: $21.95". The board holds no focusable element.
   - **Placement:** Exactly one per page where the Letterboard appeared before. On home it spans columns 6–12 at `lg` and sits under the lede on mobile.
   - **Chain-only rule:** a chain-only area never gets a board.
@@ -264,17 +264,17 @@ Every rule of the data desk stands. The costume comes off inside the figure.
   - A 42px porthole badge sits over the top-left rim (top −21px, left 14px), holding an 18px icon: Typical range → anchor; Menus priced → spatula; Looked up so far → spyglass; Every burger, pooled → lobster trap; borough and neighborhood tiles → ship's wheel.
   - Content: the `label` in `--ink-muted`, then the value in `stat` (price-card cents for money; a range like "$9.15–$29.40" wraps as a unit, never between the dash and a price), then a ui-s `--ink-muted` sub-line.
   - Grid: two per row on mobile (row gap 36px so the badges clear), four at `md`, on the trap-net counter band. Each tile is a three-row subgrid (label, value, sub-line), so the values in a row line up even when one label wraps. Money values take their baseline from the whole dollars, so "$16.50" sits level with a plain "80".
-  - **Partial coverage:** while part of the list is not yet looked up, the home "Burgers priced" tile becomes "Looked up so far" (N, "of M restaurants on our list"); it reverts once nothing is pending.
+  - **Partial coverage:** while part of the list is not yet looked up, the home "Burgers priced" tile becomes "Looked up so far" (N, sub-line "Restaurants": a plain count, no "of M" and no list wording); it reverts once nothing is pending.
 - **Price chip ("price tag"):**
   - Inline-flex, 28px tall, padding 0 10px 0 8px, `--surface`, 1.5px `--line` border, radius 8px.
-  - A **6px full-height `--price-n` stripe** on the left edge (`border-left: 6px solid var(--price-n)` plus `box-shadow: inset 1px 0 0 var(--swatch-ring)`), then the price (num-m `--ink`, with "†" for delivery prices), then the delta (num-s `--ink-muted`: "+78% vs NYC", or "at median" when |Δ| < 0.5%). `title` gives the bin name.
+  - A **6px full-height `--price-n` stripe** on the left edge (`border-left: 6px solid var(--price-n)` plus `box-shadow: inset 1px 0 0 var(--swatch-ring)`), then the price (num-m `--ink`, no suffix), then the delta (num-s `--ink-muted`: "+78% vs NYC", or "at median" when |Δ| < 0.5%). `title` gives the bin name.
   - The stripe (not a round dot) keeps round marks for map pins and borough dots only. Deltas are never red, green or sea-colored. Under 360px the delta may wrap inside the chip.
 - **Index tag ("order flag"):** "INDEX PRICE", Barlow 700 11px at 0.08em, `--accent-ink` on `--accent`, 20px tall, shaped as a pennant with `clip-path: polygon(7px 0,100% 0,100% 100%,7px 100%,0 50%)` and a 4px radius on the right end. Never rotated. On restaurant pages the index row also gets `--highlight-tint`.
 - **Data table ("the ticket rail"):**
   - The shell has a 2px `--line` border, radius 16px, `--surface` and `--shadow-block`. It uses `overflow: clip`, not `hidden`, so the sticky header still works.
   - **Header:** sticky at `top: var(--nav-h)`, 42px, `--surface-2` with the plank grain at 6% alpha, `label` type in `--ink-muted`, and a 2px `--line-strong` bottom rule. Sortable headers are buttons with `aria-sort` and an arrow icon. Below `sm` the header labels wrap (the clipped shell can't scroll sideways, and a nowrap header pushed the last column out of it at 320px); below 360px cell padding drops to 8px. Links and buttons in the body get `scroll-margin-top: 54px`, so Shift+Tab never parks focus under the sticky header.
   - **Rows:** at least 48px, 1.5px `--line` dividers, `--surface-2` on hover, 16px cell padding-x.
-  - **Columns:** numeric columns (Price, vs median, counts) are right-aligned tnum; Price is the price chip. The index-setting burger gets the index tag. Delivery-app prices get a "†" suffix, explained in a footnote under the table.
+  - **Columns:** numeric columns (Price, vs median, counts) are right-aligned tnum; Price is the price chip. The index-setting burger gets the index tag. Delivery-app prices carry no dagger and no footnote; the source badge says "Delivery app".
   - **Explorer rows lead with the restaurant:** the first column is the restaurant name (ui-m 600, the row's title, linking to its page), then "neighborhood · borough" (ui-s muted) and the source badge; the Burger column holds the burger name (linking to that row on the restaurant page), the index tag and the protein.
   - **Below `sm`:** two columns. The left cell holds the restaurant name (ui-m 600), the burger name with its index tag under it, "neighborhood · borough" (ui-s muted) and the source badge. The right cell holds the price chip.
   - **Paging:** "Haul in 100 more" with "Showing 100 of 4,812". Never infinite scroll.
@@ -295,9 +295,9 @@ Every rule of the data desk stands. The costume comes off inside the figure.
   | official_pdf | Menu PDF | FileText |
   | online_ordering | Online ordering | ShoppingBag |
   | menu_aggregator | Menu aggregator | BookOpen |
-  | delivery_app | Delivery app † | Bike |
+  | delivery_app | Delivery app | Bike |
 
-  The **delivery_app** badge uses a `--highlight-tint` background, a `--highlight-edge` border and `--ink` text. Its tooltip, also written out on restaurant pages, reads exactly: "Delivery-app prices usually run higher than ordering in person."
+  The **delivery_app** badge uses a `--highlight-tint` background, a `--highlight-edge` border and `--ink` text. No badge has a tooltip, and no delivery-price note goes with it anywhere on the site.
 - **Status badges:** the same shape, with `--ink` text at weight 600, a transparent border and a colored icon. The color is never the only signal.
 
   | Status | Label | Background | Icon |
@@ -308,14 +308,13 @@ Every rule of the data desk stands. The costume comes off inside the figure.
   | no_menu_found | No menu found | `--surface-2` | FileX (`--ink-muted`) |
   | error | Scrape failed | `--err-bg` | TriangleAlert (`--err-icon`) |
 
-- **"Chain prices only" badge:** the source-badge shape on `--surface-2`, `--ink` text at weight 600, with the original **anchor-chain** icon (two stud-link ovals), in exactly the words "Chain prices only". An area (borough or neighborhood) with priced chain menus but no priced independent restaurant shows it as a badge on its page and as a label on every chart row, table row and list row. Its median is never set beside another area's as a like-for-like comparison, gets no Order Board and no "vs NYC" delta. The copy is computed from the data, never a hard-coded borough name.
-- **Hand-check note ("the cook's correction slip"):** the pipeline's hand check (`pipeline/corrections.py`, parsed by `lib/hand-checks.ts`) is shown as its own card, never buried in the status line, because it changes or withholds the price the page shows.
+- **"Chain prices only" badge:** the source-badge shape on `--surface-2`, `--ink` text at weight 600, with the original **anchor-chain** icon (two stud-link ovals), in exactly the words "Chain prices only". An area (borough or neighborhood) with priced chain menus but no priced independent restaurant shows it as a badge on its page and as a label on every chart row, table row and list row. Its median is never set beside another area's as a like-for-like comparison, gets no Order Board and no "vs NYC" delta (the tile sub-line reads "Chain prices only"). The badge has no tooltip, and no sentence explaining what the label means goes with it. The copy is computed from the data, never a hard-coded borough name.
+- **Hand-check note ("the cook's correction slip"):** the pipeline's hand check (`pipeline/corrections.py`, parsed by `lib/hand-checks.ts`) is shown as its own card, never buried in the status line, because it changes or withholds the price the page shows. It is a label only: it says that a hand check happened and when, never what was changed or why.
   - Shape: a guest-check slip at prose width (max 680px), radius 0 0 12px 12px (torn top), padding 14px 16px 14px 40px (the margin line sits at 24px), `--shadow-block`.
-  - Heading (`h2`, `label` in `--ink-muted`, 16px icon: ClipboardCheck when corrected, EyeOff when withheld): "Prices corrected by hand · Sep 23, 2026" or "Prices withheld after a hand check · Sep 23, 2026". The date never wraps.
-  - Body (body-s, `--ink`, line-height 28px on the ruling): "We re-read this menu ourselves and corrected what the scrape got wrong: <reason>" or "We re-read this menu ourselves and left its prices out: <reason>". The reason is verbatim.
-  - For a chain with more than one location, a ui-s `--ink-muted` line: "This applies to all 6 7th Street Burger locations: they share one menu."
-  - When a check **withheld** a price, the status line uses the withheld copy ("We found a price online but couldn't confirm it against a current menu, so we left it out.") instead of "no price online". The scrape's own note, if any, reads "Before the hand check, the scrape noted: …".
-  - The methodology page keeps its "Checked by hand." section listing every hand-checked menu (a chain once, "all N locations").
+  - One label line, its only content (a `p`, not a heading, since nothing sits under it; `label` in `--ink-muted`, 16px icon: ClipboardCheck when corrected, EyeOff when withheld): "Prices corrected by hand · Sep 23, 2026" or "Prices withheld after a hand check · Sep 23, 2026". The date never wraps.
+  - No body, no reason and no chain line (the correction reasons and "they share one menu" were removed 2026-09-25).
+  - When a check **withheld** a price, the status line uses the withheld copy ("Prices withheld.") instead of "no price online". The scrape's own note (`status_detail`) is never shown.
+  - The slip is the only place the check appears: the Source section's Status row shows the status badge alone (the "(see above)" repeat was removed 2026-09-25).
 - **Map pin and legend:**
   - **Pins ("buoys"):** a circle filled with `--price-n` and a 1.5px `--pin-ring`. Diameter 8px below zoom 12 and 12px at zoom 12 and above. Hover or select grows it to 16px with a 2px `--ink` ring on top. Hit target 24px, no clustering.
   - **Draw order:** sorted by a hash of the id, so neither end of the ramp buries the other.
@@ -325,8 +324,8 @@ Every rule of the data desk stands. The costume comes off inside the figure.
   - **List fallback:** a list-view toggle sits beside the map, because a map is never the only way to reach a restaurant.
 - **Nav ("the facade"):**
   - 64px sticky: planks on `--wood-face` plus the 8px rope trim. The wordmark is the life-ring emblem (30px; 26px below `sm`; `aria-hidden`) followed by "THE BURGER INDEX" in the `wordmark` type, `--wood-ink`. The small "THE" keeps a real space after it (the text reads "The Burger Index"). The home link's `aria-label` is "The Burger Index, home". In the header the wordmark may wrap to two lines rather than run under the search button, and below 360px it steps down to 17px.
-  - **Links:** Index · Burgers · Map · Neighborhoods · Boroughs · Methodology (the `NAV` list in `lib/site.ts`), Barlow 600 15px, padding 0 12px (0 10px at `lg`). The active link is a **red plank tab**: `--accent` fill, `--accent-ink` text, radius 9px, a 3px `--accent-deep` press shadow, plus `aria-current="page"`. Hover gets a `--wood-hover` fill.
-  - **Right side:** the search icon button (magnifier, 40px with a 44px hit area) and the theme toggle. The toggle's text label shows at `xl` only (measured: with all six links and the label the bar needs 965px, 5px more than `lg` offers). Both labels share one grid cell and the inactive one is `visibility: hidden`, so the toggle keeps one width and the links don't shift on a theme change.
+  - **Links:** Index · Burgers · Map · Neighborhoods · Boroughs (the `NAV` list in `lib/site.ts`), Barlow 600 15px, padding 0 12px (0 10px at `lg`). The active link is a **red plank tab**: `--accent` fill, `--accent-ink` text, radius 9px, a 3px `--accent-deep` press shadow, plus `aria-current="page"`. Hover gets a `--wood-hover` fill.
+  - **Right side:** the search icon button (magnifier, 40px with a 44px hit area) and the theme toggle. The toggle's text label shows at `xl` only (measured with the former six-link nav: with the label the bar needed 965px, 5px more than `lg` offers). Both labels share one grid cell and the inactive one is `visibility: hidden`, so the toggle keeps one width and the links don't shift on a theme change.
   - **Below `lg`:** wordmark, search, theme toggle (from `sm` up) and a "Menu" button: a ship's-wheel icon with the visible word "Menu" (a wheel alone is not a recognizable menu icon), padding 0 10px. The wheel turns 45° on hover. It opens a full-height sheet on `--bg` with a rope top edge: links as 56px rows in display-s with a dotted menu leader and a nautical icon at the end of each row, the theme toggle, and a close ×. The current page's label is the same red plank tab as the desktop nav (a filled shape, not a color change alone).
   - **Below `sm`:** the header holds the wordmark, search and Menu; the theme toggle moves into the sheet (measured: 330px of 343px at 375px).
 - **Awning:** under the nav on every page (see Textures), `aria-hidden`, not sticky.
@@ -335,7 +334,7 @@ Every rule of the data desk stands. The costume comes off inside the figure.
 - **Footer ("the deck"):** the rope rail, then deck planks, padding 44px, three columns (one on mobile):
   - Data: the wordmark in `--deck-ink`, the data line "Updated Sep 23, 2026 · 57 menus at 59 locations priced", and "Prices in US dollars, before tax and tip." (ui-s `--deck-muted`).
   - Links: the nav links, "Download the data (JSON)" and "Use system setting", in `--deck-ink`, underlined.
-  - Disclaimer (body-s `--deck-muted`): "We index prices, not quality. An original seaside-diner homage: not affiliated with any restaurant, TV show or network." Then the sign-off "Fry-cook approved: every price comes from a menu online, and the methodology says which.", the list credit, and "Map data © OpenStreetMap contributors, tiles by OpenFreeMap."
+  - Disclaimer (body-s `--deck-muted`): "We index prices, not quality. An original seaside-diner homage: not affiliated with any restaurant, TV show or network." Then "Map data © OpenStreetMap contributors, tiles by OpenFreeMap." (the tile and OSM license attribution). No sign-off and no source credit for the restaurant list.
 - **Buttons (chunky):** sizes sm 32 / md 40 / lg 48px tall, padding-x 12/16/20, Barlow 700 at 14/14/16px, radius 12px, a 2px border, and a 44×44 minimum hit area.
   - **Primary:** `--accent` fill, `--accent-deep` border and press shadow, `--accent-ink` text, `--accent-hover` on hover.
   - **Secondary:** `--surface` fill, a 2px `--ink` border, `--ink` text, a 4px `--ink` press shadow, `--surface-2` on hover.
@@ -353,7 +352,7 @@ Every rule of the data desk stands. The costume comes off inside the figure.
 - **Sample-data banner (fixture builds):** a `--warn-bg` strip, ui-s: "**Sample data.** These restaurants and prices are made up for development. Run the pipeline to publish the real index." No jokes in it.
 - **Breadcrumbs:** ui-s `--ink-muted` with "/" separators.
 - **404:** the shallows band with a porthole and a message-in-a-bottle spot illustration on the trap net. H1 "This page sank." Lede "We couldn't find that page. The index, the map and every burger are still here." Buttons "Back to the counter" (primary, to `/`) and "Search every burger" (secondary).
-- **Open Graph image (1200×630, `app/og.png/route.tsx`):** a `--sea-top` → `--sea-bot` gradient, the awning across the top (an inline SVG of stripes and scallops), the Order Board centered with the plaque and life ring (the price at about 260px), and the wordmark on a `--wood-face` strip along the bottom. Built from flat fills, `linear-gradient` and inline SVG only (Satori does not do masks or repeating gradients). It carries the same numbers and, while coverage is partial, the "N of M restaurants looked up so far" part. The life ring sits fully above the wood strip, and the small-print parts are spaced like words (a 7px gap after each "·"). Its alt text describes what is drawn: "The Burger Index: the NYC median burger price on a yellow order board hanging over the water". Fonts come from `@fontsource/lilita-one` (400) and `@fontsource/barlow` (500, 600) `.woff` files, replacing `@fontsource/big-shoulders` and `@fontsource/libre-franklin`.
+- **Open Graph image (1200×630, `app/og.png/route.tsx`):** a `--sea-top` → `--sea-bot` gradient, the awning across the top (an inline SVG of stripes and scallops), the Order Board centered with the plaque and life ring (the price at about 260px), and the wordmark on a `--wood-face` strip along the bottom. Built from flat fills, `linear-gradient` and inline SVG only (Satori does not do masks or repeating gradients). It carries the same numbers and the same board line as the home page. The life ring sits fully above the wood strip, and the small-print parts are spaced like words (a 7px gap after each "·"). Its alt text describes what is drawn: "The Burger Index: the NYC median burger price on a yellow order board hanging over the water". Fonts come from `@fontsource/lilita-one` (400) and `@fontsource/barlow` (500, 600) `.woff` files, replacing `@fontsource/big-shoulders` and `@fontsource/libre-franklin`.
 - **Favicon (`app/icon.svg`):** the life ring on a `--sign` yellow rounded square.
 
 ## Motion
@@ -376,7 +375,7 @@ Every rule of the data desk stands. The costume comes off inside the figure.
   |---|---|---|
   | life-ring | Two concentric circles; four `--ring-a` segments on `--ring-b` via `stroke-dasharray` (circumference ÷ 8); `--ring-line` outlines; four rope-wrap ticks | Wordmark emblem, board corner, favicon, OG |
   | ship-wheel | Rim r 7, hub r 2, eight spokes running past the rim to r 10.5 with round handles | Menu button, "Filters (n)", borough/neighborhood stat tiles |
-  | anchor | Ring, shank, stock, curved arms with flukes | Median label in the histogram label band, "Typical range" tile, footer |
+  | anchor | Ring, shank, stock, curved arms with flukes | Median label in the histogram label band, "Typical range" tile, restaurant "vs NYC" tile |
   | spatula | A slotted blade at 45° on a straight handle | "Menus priced" tile, "Fresh off the grill" kicker |
   | spyglass | Three telescoping segments at −38° | "Looked up so far" tile, "Cast a line" kicker |
   | lobster-trap | A flat-topped wire box trap in 3/4 view: diamond mesh on the front, the entrance funnel as a ring on the end face, a rope bridle to a small float. Fishing gear, never a building: no arch or dome, no ground line, no door, window, sign or chimney, and no opening centered on a facade (the first half-barrel draft read as a domed hut with a round door and was dropped) | "Every burger, pooled" tile, no-data spot art |
@@ -387,48 +386,48 @@ Every rule of the data desk stands. The costume comes off inside the figure.
   | anchor-chain | Two overlapping stud-link ovals | "Chain prices only" badge |
   | net | A landing net: an oval hoop on a handle with a sagging mesh bag (a trapezoid read as a shopping basket) | Empty search spot art, "Catch of the day" kicker |
   | message-bottle | A corked bottle with a rolled note, tilted −35° | 404 art |
-  | compass-rose, buoy, lighthouse | Plain outline objects. The buoy is a short, wide banded ball with a ring top mark riding a waterline, so it never reads as a second tapered tower next to the lighthouse | Mobile menu-sheet row icons: Index → life-ring, Burgers → spyglass, Map → compass-rose, Neighborhoods → buoy, Boroughs → ship-wheel, Methodology → lighthouse |
+  | compass-rose, buoy | Plain outline objects. The buoy is a short, wide banded ball with a ring top mark riding a waterline, never a tapered tower | Mobile menu-sheet row icons: Index → life-ring, Burgers → spyglass, Map → compass-rose, Neighborhoods → buoy, Boroughs → ship-wheel (the lighthouse went with the Methodology link) |
 
 - **Imagery:** no photos, no stock, no AI illustrations, no food pictures or burger clipart, no characters or creatures of any kind. The building (planks, awning, water, board) and three small spot illustrations are the only drawn imagery. The numbers, the board and the map remain the visuals. Social images are generated from the Order Board layout.
 
 ## Voice & Copy
 **The fry cook who's a stickler for the receipt.** Lead with the number. Use "we" and sentence case. Jokes go in the labels; the numbers stay literal.
 - **Where puns are allowed:** kickers, the plaque, the hero ticket, button nudges, empty states, error states, the theme toggle, the legend note, the footer, the 404. One gag per screen region.
-- **Where they aren't:** H1s and H2s (the computed data sentences stay as they are), numbers, bin names, badge labels, status labels, table headers, tooltips, alt text, the partial-coverage line, and methodology rules.
+- **Where they aren't:** H1s and H2s (the computed data sentences stay as they are), numbers, bin names, badge labels, status labels, table headers, tooltips, alt text and the partial-coverage tile.
 - **Exclamation marks:** at most one per page, and it belongs to the "ORDER UP!" plaque (the 404 has none).
 - **Functional labels stay functional:** a control's visible text says what it does ("Clear all", "Filters (n)", "Show 142 burgers"); nautical words may wrap a plain verb and number ("Haul in 100 more") but never replace them.
-- **Strings kept verbatim (user decisions and data honesty):** "Chain prices only"; "N of M restaurants looked up so far"; "Looked up so far"; "Menu found, but no beef burger on the page we read."; every "a chain counts once" sentence; "Delivery-app prices usually run higher than ordering in person."; the withheld copy; the hand-check headings; "There's a burger on the menu, but no price online. Market price, apparently."
+- **Strings kept verbatim (user decisions):** "Chain prices only"; "Looked up so far"; "Menu found, but no beef burger on the page we read."; the withheld copy ("Prices withheld."); the hand-check headings; "There's a burger on the menu, but no price online. Market price, apparently." The former verbatim strings "N of M restaurants looked up so far", every "a chain counts once" sentence and "Delivery-app prices usually run higher than ordering in person." were removed on 2026-09-25 (no methodology copy).
 - **Names:** never name the show, its characters, its restaurant, its sandwich or its town anywhere on the site, its metadata, alt text or file names. Generic nods only ("order up", "fry-cook approved", "galley", "catch of the day").
 
 | Context | String |
 |---|---|
 | Hero kicker ticket | "Now serving · NYC" |
 | H1 (unchanged) | "What a burger costs in New York." |
-| Hero lede (unchanged, computed) | "So far we have looked up 80 of the 658 restaurants on our list (57 of the 80 in West Village) and recorded the cheapest beef burger on every menu we could price: 57 menus. We leave out national chains, and each local chain counts once, however many locations it has. Half of those menus charge more than $21.95. Half charge less." |
+| Hero lede (computed, plain counts only) | "565 menus priced: 559 independent restaurants and 6 chains." (nothing priced: "No prices yet.") |
 | Board plaque / overline | "ORDER UP!" / "THE BURGER INDEX · NYC MEDIAN" |
-| Board line (unchanged, computed) | "Cheapest beef burger on 57 menus · 80 of 658 restaurants looked up so far · Updated Sep 23, 2026" |
+| Board line (computed) | "565 menus · Updated Sep 24, 2026" |
 | Stat labels (unchanged) | "Typical range" · "Menus priced" · "Looked up so far" · "Every burger, pooled" |
-| Section kickers | "Fresh off the grill" (price spread) · "Five boroughs, one counter" (borough bars) · "Catch of the day" (cheapest/priciest) · "Neighborhood specials" (rankings) · "Cast a line" (explorer) · "Chart a course" (map page) · "The recipe" (methodology) · "Checked by the cook" (above the methodology H2 "Checked by hand.") |
+| Section kickers | "Fresh off the grill" (price spread) · "Five boroughs, one counter" (borough bars) · "Catch of the day" (cheapest/priciest) · "Neighborhood specials" (rankings) · "Cast a line" (explorer) · "Chart a course" (map page) |
 | Callout kickers | "Cheapest on the counter" / "Top shelf" |
-| Section H2s | Computed data sentences, unchanged: "Most menus so far start between $9 and $30." / "The priciest borough is still Manhattan." |
+| Section H2s | Computed data sentences: "Most index prices fall between $12 and $28." / "The priciest borough is Manhattan." No "so far" and no threshold wording ("Only X is ranked.", not "has enough menus to rank") |
 | Price-bin names (unchanged) | "Steal · Deal · Going rate · Pricey · Splurge" |
 | Legend | Title "Depth chart · index price"; note "Colors vs NYC median $21.95. The deeper the water, the pricier the burger." |
 | Buttons | "Browse all 280 burgers" · "Open the map" · paging "Haul in 100 more" with "Showing 100 of 4,812" · "Clear all" |
 | Search | Label "Search every burger"; placeholder "Search burgers, restaurants, neighborhoods" ("Search burgers, restaurants" below `sm`) |
 | Empty search | "No burgers match “truffle smash” in Staten Island. Nothing in the net; try fewer filters." |
-| Chart minimum not met | "Only 12 priced menus in these waters. We draw the chart at 20." |
-| Too few to rank | "Only 3 priced menus here. Too few to chart a course, so we don't rank it yet." (a chain-only area ends with the same sentence) |
+| Chart minimum not met | "Only 12 priced menus in these waters." |
+| Unranked area | Lede as plain counts: "3 priced menus here: 3 independent restaurants." / chain-only "2 priced menus here: 2 chains (7th Street Burger and Jimbo's Hamburger Palace)." / nothing priced "4 restaurants here, none priced." The Median tile sub-line stays "Index price" (or "Chain prices only"); the list heading is "Other neighborhoods". |
 | No borough priced | "No borough has a priced restaurant yet. The grill's still warming up." |
 | Map, no pins for the filters | "No pins in these waters. Try fewer filters." |
 | Map failed to load | "The sea chart didn't load. The list below has every restaurant." |
-| Status copy | no_burgers (verbatim): "Menu found, but no beef burger on the page we read." · no_prices (verbatim): "There's a burger on the menu, but no price online. Market price, apparently." · no_menu_found: "We couldn't find a menu online for this place. Lost at sea, for now." · error: "Our scraper ran aground on this menu. It sets sail again next update." (labels unchanged: "No burgers", "No prices online", "No menu found", "Scrape failed"). These are restaurant-page lines. The methodology list stays joke-free and uses plain versions of the last two: "We couldn't find a menu online for this place." and "Our scraper failed on this menu. It tries again next update." |
+| Status copy | no_burgers (verbatim): "Menu found, but no beef burger on the page we read." · no_prices (verbatim): "There's a burger on the menu, but no price online. Market price, apparently." · no_menu_found: "We couldn't find a menu online for this place. Lost at sea, for now." · error: "This menu ran aground. No prices for now." (labels unchanged: "No burgers", "No prices online", "No menu found", "Scrape failed"). These are restaurant-page body lines; the page's meta description uses the badge label instead ("Moonlight Pub (Bellerose, Queens): No burgers."), and a priced page's is "3 Sheets Saloon (West Village, Manhattan): Fatso's Burger, $15.99." |
 | Mobile filter sheet | Kicker "Your order", heading "Filters", button "Show 142 burgers", ghost "Clear all" |
 | Theme toggle | "Night shift" / "Day shift" |
 | 404 | "This page sank." / "We couldn't find that page. The index, the map and every burger are still here." / "Back to the counter" · "Search every burger" |
-| Footer | "We index prices, not quality. An original seaside-diner homage: not affiliated with any restaurant, TV show or network." · "Fry-cook approved: every price comes from a menu online, and the methodology says which." |
+| Footer | "We index prices, not quality. An original seaside-diner homage: not affiliated with any restaurant, TV show or network." · "Map data © OpenStreetMap contributors, tiles by OpenFreeMap." |
 
 - **Chain prices only:** an area with priced chain menus but no priced independent restaurant says so in exactly these words (see the badge). The copy is computed from the data, never a hard-coded borough name.
-- **Methodology tone:** plain, specific and auditable, and joke-free below the kicker. Open with the rule itself: "A restaurant's index price is its cheapest beef burger." Then explain why (it's the price of admission, and it isn't skewed by $40 wagyu specials), then list sources, exclusions, known biases (delivery markups, stale PDFs), hand checks and dates. No hedging adjectives and no marketing.
+- **No methodology copy (user decision, 2026-09-25):** the site has no Methodology page and no nav, footer, sitemap or in-page link to one. No sentence, paragraph, section description, footnote, tooltip, caption, chart takeaway, empty state or meta description explains how the data was gathered, computed, counted, filtered, corrected or limited: no "a chain counts once", no index-price rule, no "half charge more, half charge less", no coverage notes ("looked up N of M so far", "of 62 looked up", "on our list", "we have looked up"; the home "Looked up so far" stat tile, a plain count shown only while part of the list is unread, stays), no national-chain exclusions, no delivery-price caveats or "†" markers, no ranking or chart thresholds ("at least 5 menus", "Too few to rank", "enough menus to rank", "we draw the chart at 20"), no like-for-like explanations ("chain prices only so far: every priced menu here belongs to a chain"; the bare "Chain prices only" label stays), no hand-correction reasons, no scrape notes (`status_detail`), no source or credit lines about the restaurant list or scraping. Copy keeps the data and short labels: prices, names, counts, headings, badges ("Index price", source and status badges, "Chain prices only"), chart titles, axes and legends, and empty states that say there is no data without saying why.
 
 ## Don'ts
 **Intellectual property (hard rules):**
@@ -451,7 +450,8 @@ Every rule of the data desk stands. The costume comes off inside the figure.
 - No emoji, food photos or burger clipart, including OG images and empty states.
 - No blurry card shadows (block shadows only), glassmorphism, neon or grain overlays. The board's night glow is the one soft halo.
 - No rotated text except the plaque's −2°; data, labels and anything focusable never rotate.
-- No puns in headings, bin names, badges, status labels, table headers or methodology rules. No ALL-CAPS body text.
+- No puns in headings, bin names, badges, status labels or table headers. No ALL-CAPS body text.
+- No methodology explanations anywhere, and no Methodology page (see Voice & Copy, "No methodology copy").
 - No "best", "top-rated" or other quality language. We index price.
 - No horizontal page scroll at 375px.
 
@@ -464,7 +464,7 @@ Every rule of the data desk stands. The costume comes off inside the figure.
 - **Block shadows, not blurry ones.** Flat 4px offsets read as cel-shaded cartoon objects without muddying data.
 - **Focus gets a halo in atmosphere zones.** Blue on a wood grain line measured 2.84; the halo makes the ring 7.22 \| 8.60 everywhere.
 - **Motion happens once.** A swing, a ding and a rise on first load, then stillness: joyful, WCAG 2.2.2-safe, and complete at t=0 under reduced motion.
-- **Grafted from the runner-up directions:** the Two-Zone Rule, the "ORDER UP!" plaque that lets the board keep the brand overline, the inner-page shallows band, and the six-link nav (Direction C); the halo focus ring, the guest-check slip for hand checks, the chip stripe, the order bell, the dotted-leader menu sheet, the "Your order" filter sheet and the explicit TV-show non-affiliation line (Direction B).
+- **Grafted from the runner-up directions:** the Two-Zone Rule, the "ORDER UP!" plaque that lets the board keep the brand overline, the inner-page shallows band, and the six-link nav (Direction C; five links since the Methodology page was removed on 2026-09-25); the halo focus ring, the guest-check slip for hand checks, the chip stripe, the order bell, the dotted-leader menu sheet, the "Your order" filter sheet and the explicit TV-show non-affiliation line (Direction B).
 
 ## Decisions Log
 | Date | Decision | Rationale |
@@ -478,3 +478,5 @@ Every rule of the data desk stands. The costume comes off inside the figure.
 | 2026-09-23 | Krusty Krab-style redesign (original homage, no Nickelodeon assets) | User request |
 | 2026-09-24 | Redesign QA pass: the lobster trap is redrawn as a wire box trap (the half-barrel read as a domed building with a round door); the net becomes a landing net and the buoy a banded ball; detail pages share one overline form; the methodology status list stays joke-free | IP hard rule (no building silhouettes), legibility of the spot art, and the joke-free methodology rule |
 | 2026-09-24 | Burger explorer rows lead with the restaurant name; the burger name is secondary | User request: people scan the list by place, and many burgers share generic names ("Cheeseburger", "Classic Burger") |
+| 2026-09-25 | Removed all methodology explanations and the Methodology page from the site | User request |
+| 2026-09-25 | Follow-up pass on the same request: the board line and OG image drop "Cheapest beef burger on" ("565 menus · Updated …"); restaurant meta descriptions are name, burger and price (unpriced: the badge label); histogram takeaways and the home spread H2 state index prices without the rule; "looked up", "on our list", "so far" and "Too few to rank" wording removed (the unranked list is "Other neighborhoods"); the hand-check slip is a label paragraph and its "(see above)" repeat is gone; the restaurant Source section is "Source and location." | User request ("remove all methodology explanations from the entire site"). The verbatim no_burgers / no_prices status lines and "Prices withheld." stay until the user decides whether the new request overrides those earlier decisions |

@@ -11,7 +11,6 @@ export const NAV: readonly NavItem[] = [
   { href: "/map", label: "Map" },
   { href: "/neighborhoods", label: "Neighborhoods" },
   { href: "/boroughs", label: "Boroughs" },
-  { href: "/methodology", label: "Methodology" },
 ];
 
 /** Minimum distinct priced menus (a chain counts once) for an area to be ranked (DESIGN.md "Neighborhood plot"). */

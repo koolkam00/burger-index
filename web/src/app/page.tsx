@@ -10,36 +10,20 @@ import { MenuEnds } from "@/components/RestaurantBits";
 import { Anchor, Buoy, LobsterTrap, Net, OrderBell, ShipWheel, Spatula, Spyglass } from "@/components/icons/nautical";
 import { Bubbles, Caustics, ChartEmpty, KickerTicket, Money, MoneyRange, SectionHeading, StatGrid, StatTile, WaveEdge } from "@/components/ui";
 import { boroughInProse } from "@/lib/boroughs";
-import { allBurgers, getBoroughs, getBurger, getGeneratedAt, getMenuCounts, getNeighborhoods, getRestaurants, getScope, getStats, rankedNeighborhoods } from "@/lib/data";
+import { allBurgers, getBoroughs, getBurger, getGeneratedAt, getMenuCounts, getRestaurants, getScope, getStats, rankedNeighborhoods } from "@/lib/data";
 import { capitalize, ends, formatCount, formatDate, formatPrice, pluralize } from "@/lib/format";
-import {
-  isChainOnly,
-  joinList,
-  listedMenus,
-  menuBreakdown,
-  menuBreakdownShort,
-  menuIndexPrices,
-  menusByIndexPrice,
-  menusByIndexPriceDesc,
-  pooledBurgerPrices,
-  splitByCoverage,
-} from "@/lib/menus";
+import { isChainOnly, joinList, menuBreakdown, menuBreakdownShort, menuIndexPrices, menusByIndexPrice, menusByIndexPriceDesc, splitByCoverage } from "@/lib/menus";
 import { pageMetadata } from "@/lib/metadata";
-import { chainLocationsWhere, coverageSentence, lookedUpSoFar, mostlyIn, scopeRestaurants, scopeWhere } from "@/lib/scope";
-import { MIN_RANKED } from "@/lib/site";
 
 const homeMedian = getStats().index_median;
-const homeScope = getScope();
 
 export const metadata = {
   ...pageMetadata({
     title: "What a burger costs in New York",
     description:
       homeMedian !== null
-        ? `The NYC Burger Index is ${formatPrice(homeMedian, { cents: "always" })}${homeScope.pending ? " so far" : ""}: the median price of the cheapest beef burger across ${pluralize(getMenuCounts().menus, "New York menu")}, each chain counted once.${
-            homeScope.pending ? ` ${coverageSentence(homeScope)}` : ""
-          } By borough, neighborhood and restaurant.`
-        : `The NYC Burger Index: the median price of the cheapest beef burger across the New York menus we price.${homeScope.pending ? ` ${coverageSentence(homeScope)}` : ""}`,
+        ? `The NYC Burger Index is ${formatPrice(homeMedian, { cents: "always" })}. Burger prices by borough, neighborhood and restaurant.`
+        : "The NYC Burger Index: burger prices by borough, neighborhood and restaurant.",
     path: "/",
   }),
   title: { absolute: "The Burger Index: what a burger costs in New York" },
@@ -51,25 +35,9 @@ export default function HomePage() {
   const median = stats.index_median;
   const generated = getGeneratedAt();
   const restaurants = getRestaurants();
-  // Which restaurants are in scope, where the list comes from, and how many are looked up so far.
+  // Whether part of the restaurant list is still unread (the "Looked up so far" tile).
   const scope = getScope();
-  // Everything we looked up, a chain counted once (its locations share one lookup).
-  const listed = listedMenus(restaurants);
-  // Where the restaurants looked up so far are, when one neighborhood holds most of them. Counted
-  // over what we looked up, so the numbers say so: after "our list" a bare "mostly in" would read as
-  // describing the whole list.
-  const lookedUpHood = mostlyIn(getNeighborhoods(), (n) => n.restaurants, scope.lookedUp);
-  const mostlyOf = lookedUpHood ? ` (${formatCount(lookedUpHood.n)} of the ${formatCount(scope.lookedUp)} in ${lookedUpHood.area.name})` : "";
-  const lookedUp = scope.pending
-    ? `So far we have looked up ${formatCount(scope.lookedUp)} of the ${scopeRestaurants(scope)}${mostlyOf}`
-    : scope.kind !== "unknown"
-      ? `We looked up ${scope.inScope === 1 ? "the" : "all"} ${scopeRestaurants(scope)}${mostlyOf}`
-      : `We looked up ${listed.chains ? `${pluralize(listed.independents, "New York restaurant")} and ${pluralize(listed.chains, "chain")} (${pluralize(listed.locations, "location")} in all)` : pluralize(listed.independents, "New York restaurant")}${
-          lookedUpHood ? `, mostly in ${lookedUpHood.area.name},` : ""
-        }`;
   const burgerRows = allBurgers().length;
-  // The items behind stats.all_burgers_median: every priced burger, any protein, on each distinct menu.
-  const pooledItems = pooledBurgerPrices(restaurants).length;
   // Every chart, range and list below counts distinct menus: a chain once, however many locations.
   const prices = menuIndexPrices(restaurants);
   const cheapest = menusByIndexPrice(restaurants);
@@ -78,14 +46,6 @@ export default function HomePage() {
   const ranked = rankedNeighborhoods();
   const cheapestBurger = getBurger(stats.cheapest_burger_id);
   const priciestBurger = getBurger(stats.priciest_burger_id);
-  // The chains here are NYC's own when the pipeline left national chains out (it says so in coverage_note).
-  const chainRule = scope.excludesNationalChains
-    ? counts.chains
-      ? " We leave out national chains, and each local chain counts once, however many locations it has."
-      : " We leave out national chains."
-    : counts.chains
-      ? " A chain counts once, however many locations it has."
-      : "";
 
   // Boroughs are compared like for like: only those with independent menus. Chain-only ones are
   // still drawn, labelled, and named in the copy.
@@ -95,22 +55,18 @@ export default function HomePage() {
   const { comparable, chainOnly } = splitByCoverage(pricedBoroughs, (b) => b.menuCounts, (b) => b.summary?.index_median ?? null);
   const boroughEnds = ends(comparable, (b) => b.summary!.index_median);
   const chainOnlyNames = joinList(chainOnly.map((b) => boroughInProse(b.name)));
-  const comparableNames = joinList(comparable.map((b) => boroughInProse(b.name)));
   const boroughTitle =
     pricedBoroughs.length === 0
       ? "Boroughs, once we have prices."
       : boroughEnds.kind === "none"
-        ? "Only chain menus are priced so far."
+        ? "Only chain menus are priced."
         : boroughEnds.kind === "one"
           ? chainOnly.length
-            ? `Only ${boroughEnds.top.name} has independent restaurants priced so far.`
-            : `Only ${boroughEnds.top.name} has priced restaurants so far.`
+            ? `Only ${boroughEnds.top.name} has independent restaurants priced.`
+            : `Only ${boroughEnds.top.name} has priced restaurants.`
           : boroughEnds.kind === "tied"
-            ? `${comparable.length === boroughs.length ? "Every borough" : chainOnly.length ? "Every borough with independent menus" : "Every borough we have priced"} lands on ${formatPrice(boroughEnds.top.summary!.index_median)}.`
+            ? `${comparable.length === boroughs.length ? "Every borough" : chainOnly.length ? "Every borough with independent menus" : "Every priced borough"} lands on ${formatPrice(boroughEnds.top.summary!.index_median)}.`
             : `The priciest borough is ${boroughEnds.top.name}.`;
-  const chainOnlyLine = chainOnly.length
-    ? `Chain prices only so far in ${chainOnlyNames}: no independent restaurant there is priced yet, so ${chainOnly.length === 1 ? "its bar is a chain median" : "their bars are chain medians"}, not a like-for-like comparison${comparable.length ? ` with ${comparableNames}` : ""}.`
-    : null;
   const boroughTakeaway = [
     boroughEnds.kind === "spread"
       ? `${boroughEnds.top.name} ${formatPrice(boroughEnds.top.summary!.index_median, { cents: "always" })}, ${boroughEnds.bottom.name} ${formatPrice(boroughEnds.bottom.summary!.index_median, { cents: "always" })}.`
@@ -130,7 +86,6 @@ export default function HomePage() {
     (n) => n.index_median,
   );
   const neighborhoodRows = ranked.length > 16 ? [...ranked.slice(0, 8), ...ranked.slice(-8)] : ranked;
-  const rankRule = `We rank a neighborhood once it has at least ${MIN_RANKED} priced menus, counting a chain once.`;
 
   return (
     <>
@@ -147,24 +102,14 @@ export default function HomePage() {
                 What a burger costs in New York.
               </h1>
               <p className="t-lede mt-5">
-                {median !== null ? (
-                  <>
-                    {lookedUp} and recorded the cheapest beef burger on every menu we could price: {pluralize(counts.menus, "menu")}, from {menuBreakdown(counts)}.
-                    {chainRule} Half of those menus charge more than {formatPrice(median)}. Half charge less.
-                  </>
-                ) : (
-                  <>
-                    We are still reading {scope.pending ? `the menus of the ${scopeRestaurants(scope)}` : "menus"}. The index appears here once the first
-                    restaurants are priced.
-                  </>
-                )}
+                {median !== null ? `${pluralize(counts.menus, "menu")} priced: ${menuBreakdown(counts)}.` : "No prices yet."}
               </p>
             </div>
             <div className="min-w-0 lg:col-span-7">
               <Letterboard
                 overline="The Burger Index · NYC median"
                 price={median}
-                line={[`Cheapest beef burger on ${pluralize(counts.menus, "menu")}`, lookedUpSoFar(scope), `Updated ${formatDate(generated)}`].filter((x): x is string => !!x)}
+                line={[pluralize(counts.menus, "menu"), `Updated ${formatDate(generated)}`]}
               />
             </div>
           </div>
@@ -188,7 +133,7 @@ export default function HomePage() {
                   "—"
                 )
               }
-              sub="Middle 80% of the menus"
+              sub={`Across ${pluralize(counts.menus, "menu")}`}
             />
             <StatTile
               label="Menus priced"
@@ -198,16 +143,15 @@ export default function HomePage() {
             />
             {/* While part of the list is still unread, how much of it is read beats a burger count. */}
             {scope.pending ? (
-              <StatTile label="Looked up so far" icon={Spyglass} value={formatCount(scope.lookedUp)} sub={`of ${formatCount(scope.inScope)} restaurants ${scopeWhere(scope)}`} />
+              <StatTile label="Looked up so far" icon={Spyglass} value={formatCount(scope.lookedUp)} sub="Restaurants" />
             ) : (
-              <StatTile label="Burgers priced" icon={OrderBell} value={formatCount(stats.burgers)} sub={`${formatCount(stats.beef_burgers)} beef · a row per location`} />
+              <StatTile label="Burgers priced" icon={OrderBell} value={formatCount(stats.burgers)} sub={`${formatCount(stats.beef_burgers)} beef`} />
             )}
-            {/* Pooled over every item, so long menus weigh more: it sits below the index, which is one cheapest beef burger per menu. */}
             <StatTile
               label="Every burger, pooled"
               icon={LobsterTrap}
               value={stats.all_burgers_median !== null ? <Money value={stats.all_burgers_median} /> : "—"}
-              sub={pooledItems ? `Median of all ${formatCount(pooledItems)} priced items, any protein` : "Every priced item on those menus"}
+              sub="Median price, any protein"
             />
           </StatGrid>
         </div>
@@ -220,23 +164,19 @@ export default function HomePage() {
           kicker="Fresh off the grill"
           icon={Spatula}
           title={
-            // p10–p90 of index prices: what most menus' cheapest beef burger costs, not most burgers.
+            // p10–p90 of index prices (one per menu), not of every burger.
             stats.index_p10 !== null && stats.index_p90 !== null && Math.floor(stats.index_p10) !== Math.ceil(stats.index_p90)
-              ? `Most menus${scope.pending ? " so far" : ""} start between ${formatPrice(Math.floor(stats.index_p10))} and ${formatPrice(Math.ceil(stats.index_p90))}.`
+              ? `Most index prices fall between ${formatPrice(Math.floor(stats.index_p10))} and ${formatPrice(Math.ceil(stats.index_p90))}.`
               : "How the prices spread."
           }
-        >
-          Each bar counts menus by their index price, the cheapest beef burger on the menu. A chain is one menu, not one bar entry per location.
-        </SectionHeading>
+        />
         <div className="mt-8">
           <PriceDistribution id="hist-city" prices={prices} cityMedian={median} sliceMedian={median} />
         </div>
       </section>
 
       <section className="section" aria-labelledby="boroughs">
-        <SectionHeading id="boroughs" kicker="Five boroughs, one counter" icon={ShipWheel} title={boroughTitle}>
-          {chainOnlyLine}
-        </SectionHeading>
+        <SectionHeading id="boroughs" kicker="Five boroughs, one counter" icon={ShipWheel} title={boroughTitle} />
         <div className="mt-8">
           {pricedBoroughs.length ? (
             <ChartFigure
@@ -254,17 +194,15 @@ export default function HomePage() {
 
       {cheapest.length ? (
         <section className="section" aria-labelledby="cheap">
-          <SectionHeading id="cheap" kicker="Catch of the day" icon={Net} title={`Where ${formatPrice(cheapest[0].indexPrice)} still gets you lunch.`}>
-            One card per menu: a chain appears once, with the number of its locations{chainLocationsWhere(scope)} that share its price.
-          </SectionHeading>
-          <MenuEnds cheapest={cheapest} priciest={priciest} median={median} chainCount={{ where: chainLocationsWhere(scope) }} />
+          <SectionHeading id="cheap" kicker="Catch of the day" icon={Net} title={`Where ${formatPrice(cheapest[0].indexPrice)} still gets you lunch.`} />
+          <MenuEnds cheapest={cheapest} priciest={priciest} median={median} />
           {cheapestBurger && priciestBurger ? (
             <p className="t-body muted prose-width mt-6">
-              Counting every burger on every menu, any protein: the cheapest is the {cheapestBurger.burger.name} at{" "}
+              Cheapest burger of any kind: the {cheapestBurger.burger.name} at{" "}
               <Link className="link" href={`/restaurants/${cheapestBurger.restaurant.id}`}>
                 {cheapestBurger.restaurant.name}
               </Link>{" "}
-              ({formatPrice(cheapestBurger.burger.price, { cents: "always" })}). The priciest is the {priciestBurger.burger.name} at{" "}
+              ({formatPrice(cheapestBurger.burger.price, { cents: "always" })}). Priciest: the {priciestBurger.burger.name} at{" "}
               <Link className="link" href={`/restaurants/${priciestBurger.restaurant.id}`}>
                 {priciestBurger.restaurant.name}
               </Link>{" "}
@@ -282,20 +220,18 @@ export default function HomePage() {
           title={
             hoodEnds.kind === "none"
               ? ranked.length
-                ? "Only chain menus rank so far."
-                : "Neighborhoods need more menus."
+                ? "Only chain menus are ranked."
+                : "Neighborhoods, once they're ranked."
               : hoodEnds.kind === "one"
                 ? ranked.length === 1
-                  ? `Only ${hoodEnds.top.name} has enough priced menus to rank so far.`
+                  ? `Only ${hoodEnds.top.name} is ranked.`
                   : `${hoodEnds.top.name} is the only ranked neighborhood with independent menus.`
                 : hoodEnds.kind === "tied"
                   ? `Every ranked neighborhood lands on ${formatPrice(hoodEnds.top.index_median)}.`
                   : `The priciest neighborhood is ${hoodEnds.top.name}.`
           }
         >
-          {ranked.length
-            ? `${rankRule} ${pluralize(ranked.length, "neighborhood")} ${ranked.length === 1 ? "qualifies" : "qualify"} so far.`
-            : `${rankRule} None qualify yet.`}
+          {ranked.length ? `${pluralize(ranked.length, "neighborhood")} ranked.` : null}
         </SectionHeading>
         <div className="mt-8">
           {ranked.length === 1 ? (
@@ -311,13 +247,13 @@ export default function HomePage() {
                     ? `All ranked neighborhoods with independent menus sit at ${formatPrice(hoodEnds.top.index_median, { cents: "always" })}.`
                     : hoodEnds.kind === "one"
                       ? `${hoodEnds.top.name}: ${formatPrice(hoodEnds.top.index_median, { cents: "always" })}.`
-                      : "Every ranked neighborhood is priced from chain menus only so far."
-              }${hoodEnds.kind !== "none" && ranked.some((n) => isChainOnly(n.menuCounts)) ? " Rows marked “Chain prices only” have no independent restaurant priced yet." : ""}`}
+                      : "Every ranked neighborhood has chain prices only."
+              }`}
               chart={<RangePlot areas={neighborhoodRows} cityMedian={median} labelledBy="hood-range-title hood-range-desc" />}
               table={<AreaTable areas={neighborhoodRows} />}
             />
           ) : (
-            <ChartEmpty height={200}>No neighborhood has {MIN_RANKED} priced menus yet.</ChartEmpty>
+            <ChartEmpty height={200}>No neighborhood is ranked yet.</ChartEmpty>
           )}
           <p className="mt-6">
             <Link href="/neighborhoods" className="btn btn-secondary">
@@ -331,7 +267,7 @@ export default function HomePage() {
       <section className="section" aria-labelledby="explore">
         <SectionHeading id="explore" kicker="Cast a line" icon={Spyglass} title="Look up any burger." />
         <p className="t-body muted prose-width mt-3">
-          Search every burger we found by name, restaurant or neighborhood, or see the index prices on a map.
+          Search every burger by name, restaurant or neighborhood, or see the index prices on a map.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link href="/burgers" className="btn btn-primary btn-lg">

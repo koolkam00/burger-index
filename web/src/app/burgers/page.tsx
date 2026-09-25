@@ -3,7 +3,6 @@ import { BurgerExplorer } from "@/components/burgers/BurgerExplorer";
 import { BurgerTable, type TableRow } from "@/components/burgers/BurgerTable";
 import { Spyglass } from "@/components/icons/nautical";
 import { PageHeader } from "@/components/ui";
-import { getScope } from "@/lib/data";
 import { buildExplorerData } from "@/lib/explorer-data";
 import { formatCount } from "@/lib/format";
 import { pageMetadata } from "@/lib/metadata";
@@ -31,7 +30,7 @@ export default function BurgersPage() {
         ticket="Cast a line"
         ticketIcon={Spyglass}
         title="Every burger."
-        lede={`All ${formatCount(data.burgers.length)} burgers we ${getScope().pending ? "have found on New York menus so far" : "found on New York menus"}, ${formatCount(priced)} of them with a price, one row per location: a chain's menu repeats at each of its locations. Search by name, restaurant or neighborhood; the index price is the cheapest beef burger at each place.`}
+        lede={`All ${formatCount(data.burgers.length)} burgers, ${formatCount(priced)} of them with a price. Search by name, restaurant or neighborhood.`}
       />
       <div className="wrap mt-2">
         <Suspense

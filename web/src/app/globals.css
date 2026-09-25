@@ -669,40 +669,7 @@
     flex: none;
   }
 
-  /* ---- Prose ---------------------------------------------------------------------------- */
-  .prose {
-    font-family: var(--font-body);
-    font-size: 17px;
-    line-height: 1.6;
-    max-width: 68ch;
-  }
-  @media (min-width: 768px) {
-    .prose {
-      font-size: 18px;
-    }
-  }
-  .prose p + p,
-  .prose p + ul,
-  .prose ul + p,
-  .prose ol + p,
-  .prose p + ol {
-    margin-top: 1em;
-  }
-  .prose ul {
-    list-style: disc;
-    padding-left: 1.25em;
-  }
-  .prose ol {
-    list-style: decimal;
-    padding-left: 1.25em;
-  }
-  .prose li + li {
-    margin-top: 0.4em;
-  }
-  .prose strong {
-    font-weight: 800;
-  }
-  .prose a,
+  /* ---- Links ---------------------------------------------------------------------------- */
   .link {
     color: var(--accent);
     text-decoration: underline;
@@ -710,7 +677,6 @@
     text-underline-offset: 0.18em;
     overflow-wrap: anywhere;
   }
-  .prose a:hover,
   .link:hover {
     color: var(--accent-hover);
     text-decoration-thickness: 2px;

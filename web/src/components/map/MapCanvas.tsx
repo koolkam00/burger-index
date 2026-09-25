@@ -43,9 +43,9 @@ function popupContent(p: PinProps, median: number, color: string, go: (href: str
   root.append(link, el("p", "t-ui-s muted break-anywhere", p.where));
   const chip = el("span", "price-chip mt-1 w-fit");
   chip.style.setProperty("--chip", color);
-  chip.append(el("span", "t-num-m", `${formatPrice(p.price, { cents: "always" })}${p.delivery ? "†" : ""}`), el("span", "t-num-s muted", formatDelta(p.price, median, { suffix: "vs NYC" })));
+  chip.append(el("span", "t-num-m", formatPrice(p.price, { cents: "always" })), el("span", "t-num-s muted", formatDelta(p.price, median, { suffix: "vs NYC" })));
   root.append(chip, el("p", "t-ui-s break-anywhere", `${p.burger} · ${binFor(p.price, median).name}`));
-  if (p.delivery) root.append(el("p", "t-ui-s muted", "† Delivery-app price"));
+  if (p.delivery) root.append(el("p", "t-ui-s muted", "Delivery-app price"));
   return root;
 }
 

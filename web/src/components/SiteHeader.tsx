@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type ComponentType } from "react";
 import { NAV } from "@/lib/site";
-import { Buoy, CompassRose, LifeRing, Lighthouse, ShipWheel, Spyglass, type IconProps } from "./icons/nautical";
+import { Buoy, CompassRose, LifeRing, ShipWheel, Spyglass, type IconProps } from "./icons/nautical";
 import { ThemeToggle } from "./theme";
 import { Wordmark } from "./Wordmark";
 
@@ -21,7 +21,6 @@ const SHEET_ICON: Record<string, ComponentType<IconProps>> = {
   "/map": CompassRose,
   "/neighborhoods": Buoy,
   "/boroughs": ShipWheel,
-  "/methodology": Lighthouse,
 };
 
 export function SiteHeader() {

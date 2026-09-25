@@ -16,7 +16,7 @@ import Link from "next/link";
 import type { ComponentType, CSSProperties, ReactNode } from "react";
 import { boroughMeta } from "@/lib/boroughs";
 import { formatDelta, formatPrice, priceParts } from "@/lib/format";
-import { DELIVERY_NOTE, PRICE_SOURCE_LABEL, STATUS_LABEL } from "@/lib/labels";
+import { PRICE_SOURCE_LABEL, STATUS_LABEL } from "@/lib/labels";
 import { binFor } from "@/lib/price-bins";
 import type { Borough, PriceSource, Status } from "@/lib/schema";
 import { AnchorChain, LobsterTrap, MessageBottle, Net, OrderBell, ShipWheel, type IconProps } from "./icons/nautical";
@@ -83,16 +83,6 @@ export function Swatch({ price, median }: { price: number; median: number }) {
   return <span className="swatch" style={{ background: bin.color }} aria-hidden="true" />;
 }
 
-/** "†" after a delivery-app price. The glyph is hidden from screen readers, which hear the words. */
-export function Dagger() {
-  return (
-    <>
-      <span aria-hidden="true">†</span>
-      <span className="sr-only"> (delivery-app price)</span>
-    </>
-  );
-}
-
 /**
  * Price chip ("price tag"): a full-height ramp stripe on the left, the price, the delta vs the
  * citywide median. Deltas are never colored. `narrowWrap` lets the delta drop to a second line inside
@@ -104,14 +94,12 @@ export function PriceChip({
   median,
   delta = true,
   suffix = "vs NYC",
-  dagger = false,
   narrowWrap = false,
 }: {
   price: number | null;
   median: number | null;
   delta?: boolean;
   suffix?: string;
-  dagger?: boolean;
   narrowWrap?: boolean;
 }) {
   if (price === null) {
@@ -129,10 +117,7 @@ export function PriceChip({
       style={bin ? ({ ["--chip" as string]: bin.color } as CSSProperties) : undefined}
     >
       <span className="price-chip-main">
-        <span className="t-num-m">
-          {formatPrice(price, { cents: "always" })}
-          {dagger ? <Dagger /> : null}
-        </span>
+        <span className="t-num-m">{formatPrice(price, { cents: "always" })}</span>
       </span>
       {delta && median !== null ? <span className="t-num-s muted">{formatDelta(price, median, { suffix })}</span> : null}
     </span>
@@ -155,9 +140,8 @@ const SOURCE_ICON: Record<PriceSource, LucideIcon> = {
 export function SourceBadge({ source }: { source: PriceSource | null }) {
   if (!source) return null;
   const Icon = SOURCE_ICON[source];
-  const delivery = source === "delivery_app";
   return (
-    <span className={`badge ${delivery ? "badge-delivery" : ""}`} title={delivery ? DELIVERY_NOTE : undefined}>
+    <span className={`badge ${source === "delivery_app" ? "badge-delivery" : ""}`}>
       <Icon {...ICON} />
       {PRICE_SOURCE_LABEL[source]}
     </span>
@@ -188,7 +172,7 @@ export function StatusBadge({ status }: { status: Status }) {
  */
 export function ChainOnlyBadge() {
   return (
-    <span className="badge badge-chain" title="No independent restaurant is priced here yet: every price comes from a chain's menu.">
+    <span className="badge badge-chain">
       <AnchorChain size={14} />
       Chain prices only
     </span>

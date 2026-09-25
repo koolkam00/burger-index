@@ -53,20 +53,19 @@ export function RestaurantCard({
         {burgerName ?? b?.name ?? "No priced burger"} · {where ?? r.neighborhood ?? r.borough}
       </p>
       <div className="mt-auto flex flex-wrap items-center gap-2 pt-3">
-        <PriceChip price={shownPrice} median={median} dagger={r.price_source === "delivery_app"} />
+        <PriceChip price={shownPrice} median={median} />
         <SourceBadge source={r.price_source} />
       </div>
     </article>
   );
 }
 
-/** How a menu card counts a chain's locations: the noun ("Manhattan location") and where they are counted (" on our list"). */
-export type ChainCount = { noun?: string; where?: string };
+/** How a menu card counts a chain's locations: the noun ("Manhattan location"). */
+export type ChainCount = { noun?: string };
 
 /**
  * One distinct menu as a card: an independent restaurant shows its neighborhood; a chain shows how
- * many priced locations in the slice share the menu (the link goes to one of them), with where they
- * are counted ("chain, 3 locations on our list"), so the count doesn't read as the whole chain's size.
+ * many priced locations in the slice share the menu ("chain, 3 locations"; the link goes to one of them).
  */
 export function MenuCard({
   menu,
@@ -81,7 +80,7 @@ export function MenuCard({
   kicker?: string;
   headingLevel?: 3 | 4;
 }) {
-  const where = menu.chain ? `chain, ${pluralize(menu.locations, chainCount.noun ?? "location")}${chainCount.where ?? ""}` : undefined;
+  const where = menu.chain ? `chain, ${pluralize(menu.locations, chainCount.noun ?? "location")}` : undefined;
   return <RestaurantCard restaurant={menu.restaurant} median={median} where={where} kicker={kicker} headingLevel={headingLevel} />;
 }
 
@@ -147,7 +146,6 @@ export function RestaurantTable({ restaurants, median, showNeighborhood = true, 
     .filter((r) => r.index_price !== null)
     .sort((a, b) => (a.index_price as number) - (b.index_price as number) || a.name.localeCompare(b.name));
   const unpriced = restaurants.filter((r) => r.index_price === null).sort((a, b) => a.name.localeCompare(b.name));
-  const hasDelivery = priced.some((r) => r.price_source === "delivery_app");
   const repeated = repeatedNames(restaurants);
   const address = (r: Restaurant) => (repeated.has(r.name) && r.address ? r.address : null);
   return (
@@ -190,7 +188,7 @@ export function RestaurantTable({ restaurants, median, showNeighborhood = true, 
                   <SourceBadge source={r.price_source} />
                 </td>
                 <td className="num">
-                  <PriceChip price={r.index_price} median={median} delta={false} dagger={r.price_source === "delivery_app"} />
+                  <PriceChip price={r.index_price} median={median} delta={false} />
                 </td>
               </tr>
             );
@@ -215,7 +213,6 @@ export function RestaurantTable({ restaurants, median, showNeighborhood = true, 
       </div>
       <p className="t-ui-s muted mt-3">
         {formatCount(priced.length)} priced{unpriced.length ? `, ${formatCount(unpriced.length)} without a price` : ""}.
-        {hasDelivery ? " † Delivery-app price; these usually run higher than ordering in person." : ""}
       </p>
     </div>
   );

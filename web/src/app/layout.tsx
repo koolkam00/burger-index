@@ -2,10 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { Barlow, Lilita_One, Nunito } from "next/font/google";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { getDataSource, getGeneratedAt, getIndexMedian, getMenuCounts, getScope, getStats } from "@/lib/data";
-import { formatPrice, pluralize } from "@/lib/format";
+import { getDataSource, getGeneratedAt, getIndexMedian, getMenuCounts, getStats } from "@/lib/data";
+import { formatPrice } from "@/lib/format";
 import { OG_IMAGE, SITE_URL } from "@/lib/metadata";
-import { coverageSentence, scopeCredit } from "@/lib/scope";
 import { SITE_NAME } from "@/lib/site";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme-script";
 import "./globals.css";
@@ -17,13 +16,10 @@ const body = Nunito({ subsets: ["latin"], display: "swap", style: ["normal", "it
 const ui = Barlow({ subsets: ["latin"], weight: ["400", "500", "600", "700"], display: "swap", variable: "--ba" });
 
 const median = getIndexMedian();
-const scope = getScope();
-// While part of the restaurant list is unread, the description says how much is read so far.
-const soFar = scope.pending ? ` ${coverageSentence(scope)}` : "";
 const description =
   median !== null
-    ? `The NYC Burger Index${scope.pending ? " so far" : ""}: ${formatPrice(median)} is the median price of the cheapest beef burger across ${pluralize(getMenuCounts().menus, "New York menu")}, each chain counted once.${soFar} Every burger we priced, by borough, neighborhood and restaurant.`
-    : `What a burger costs in New York: every burger we priced, by borough, neighborhood and restaurant.${soFar}`;
+    ? `The NYC Burger Index: ${formatPrice(median)}. Every burger we priced, by borough, neighborhood and restaurant.`
+    : "What a burger costs in New York: every burger we priced, by borough, neighborhood and restaurant.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -82,7 +78,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main id="main" tabIndex={-1} className="outline-none">
           {children}
         </main>
-        <SiteFooter generatedAt={getGeneratedAt()} menus={getMenuCounts().menus} locations={getStats().restaurants_priced} listCredit={scopeCredit(scope)} />
+        <SiteFooter generatedAt={getGeneratedAt()} menus={getMenuCounts().menus} locations={getStats().restaurants_priced} />
       </body>
     </html>
   );

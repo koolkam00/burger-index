@@ -1,9 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
-import { getGeneratedAt, getMenuCounts, getScope, getStats } from "@/lib/data";
+import { getGeneratedAt, getMenuCounts, getStats } from "@/lib/data";
 import { formatDate, pluralize, priceParts } from "@/lib/format";
-import { lookedUpSoFar } from "@/lib/scope";
 
 // The Open Graph image is the Order Board at 1200×630 (DESIGN.md "Open Graph image"): sea water, the
 // awning across the top, the yellow board with its plaque and life ring, and the wordmark on a wood
@@ -100,11 +99,8 @@ export async function GET() {
     font("barlow", "barlow-latin-600-normal.woff"),
   ]);
 
-  // The board's small print, as on the home page: while part of the restaurant list is unread, the
-  // image says how much is read, so a shared card never reads as a finished citywide census.
-  const line = [`Cheapest beef burger on ${pluralize(getMenuCounts().menus, "menu")}`, lookedUpSoFar(getScope()), `Updated ${formatDate(getGeneratedAt())}`].filter(
-    (x): x is string => !!x,
-  );
+  // The board's small print, as on the home page.
+  const line = [pluralize(getMenuCounts().menus, "menu"), `Updated ${formatDate(getGeneratedAt())}`];
   const W = 900; // board width
   const shade = `${Math.round(260 * 0.022)}px ${Math.round(260 * 0.03)}px 0 ${C.signShade}`;
 
