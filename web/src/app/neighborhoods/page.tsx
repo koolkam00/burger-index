@@ -1,18 +1,26 @@
 import { AreaListItem } from "@/components/AreaList";
+import { JsonLd } from "@/components/JsonLd";
 import { NeighborhoodRanking } from "@/components/NeighborhoodRanking";
 import { Buoy } from "@/components/icons/nautical";
 import { BoroughDot, PageHeader, SectionHeading } from "@/components/ui";
 import { BOROUGH_META } from "@/lib/boroughs";
-import { getNeighborhoods, getStats, rankedNeighborhoods, unrankedNeighborhoods } from "@/lib/data";
+import { getGeneratedAt, getNeighborhoodPages, getNeighborhoods, getStats, rankedNeighborhoods, unrankedNeighborhoods } from "@/lib/data";
 import { formatCount, formatPrice, spreadEnds } from "@/lib/format";
-import { pageMetadata } from "@/lib/metadata";
+import { breadcrumbNode, itemListNode } from "@/lib/jsonld";
+import { pageMetadata, SITE_URL } from "@/lib/metadata";
+import { neighborhoodsSeo } from "@/lib/seo";
+import { SITE_NAME } from "@/lib/site";
+
+const rankedEnds = spreadEnds(rankedNeighborhoods(), (n) => n.index_median);
 
 export const metadata = pageMetadata({
-  title: "Neighborhoods",
-  description:
-    rankedNeighborhoods().length > 1
-      ? "New York neighborhoods ranked by the median price of a burger, with the cheapest and priciest index price in each."
-      : "New York neighborhoods and the price of a burger in each: the median, cheapest and priciest index price.",
+  ...neighborhoodsSeo({
+    pages: getNeighborhoodPages().length,
+    ranked: rankedNeighborhoods().length,
+    top: rankedEnds ? { name: rankedEnds.top.name, price: rankedEnds.top.index_median as number } : null,
+    bottom: rankedEnds ? { name: rankedEnds.bottom.name, price: rankedEnds.bottom.index_median as number } : null,
+    generatedAt: getGeneratedAt(),
+  }),
   path: "/neighborhoods",
 });
 
@@ -31,6 +39,15 @@ export default function NeighborhoodsPage() {
 
   return (
     <>
+      <JsonLd
+        nodes={[
+          breadcrumbNode(SITE_URL, [{ href: "/", label: SITE_NAME }, { label: "Neighborhoods" }], "/neighborhoods"),
+          // The ranking's default order (priciest median first), as the table first renders.
+          ranked.length > 1
+            ? itemListNode(SITE_URL, { name: "Neighborhoods, ranked", order: "descending", entries: ranked.map((n) => ({ name: n.name, path: `/neighborhoods/${n.slug}` })) })
+            : null,
+        ]}
+      />
       <PageHeader ticket="Neighborhood specials" ticketIcon={Buoy} title={ranked.length > 1 ? "Neighborhoods, ranked." : "Neighborhoods."} lede={lede} />
       <div className="wrap">
 

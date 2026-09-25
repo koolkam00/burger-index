@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AreaListItem, SoleRanked } from "@/components/AreaList";
 import { AreaStats } from "@/components/AreaStats";
+import { JsonLd } from "@/components/JsonLd";
 import { ChartFigure } from "@/components/charts/ChartFigure";
 import { PriceDistribution } from "@/components/charts/PriceDistribution";
 import { AreaTable, RangePlot } from "@/components/charts/RangePlot";
@@ -23,8 +24,10 @@ import {
   unrankedNeighborhoods,
 } from "@/lib/data";
 import { formatDate, formatPrice, pluralize, spreadEnds } from "@/lib/format";
-import { isRankable, menuBreakdown, menuIndexPrices, menusByIndexPrice, menusByIndexPriceDesc } from "@/lib/menus";
-import { pageMetadata } from "@/lib/metadata";
+import { breadcrumbNode } from "@/lib/jsonld";
+import { isRankable, menuBreakdown, menuIndexPrices, menusByIndexPrice, menusByIndexPriceDesc, type Menu } from "@/lib/menus";
+import { pageMetadata, SITE_URL } from "@/lib/metadata";
+import { boroughSeo, type NamedPrice } from "@/lib/seo";
 import { BOROUGHS_HREF } from "@/lib/site";
 
 export const dynamicParams = false;
@@ -37,13 +40,18 @@ export async function generateMetadata({ params }: PageProps<"/boroughs/[slug]">
   const { slug } = await params;
   const b = getBorough(slug);
   if (!b) return {};
-  const c = b.menuCounts;
-  const where = boroughInProse(b.name);
-  const description =
-    b.summary?.index_median != null
-      ? `What a burger costs in ${where}: median index price ${formatPrice(b.summary.index_median, { cents: "always" })} across ${pluralize(c.menus, "menu")} (${menuBreakdown(c)}), by neighborhood.`
-      : `Burger prices in ${where}. No priced restaurants there yet.`;
-  return pageMetadata({ title: `${b.name} burger prices`, description, path: `/boroughs/${b.slug}` });
+  const restaurants = getPricedRestaurantsInBorough(b.name);
+  const named = (m: Menu | undefined): NamedPrice | null => (m ? { name: m.restaurant.name, price: m.indexPrice } : null);
+  const seo = boroughSeo({
+    borough: b.name,
+    median: b.summary?.index_median ?? null,
+    menus: b.menuCounts.menus,
+    cityMedian: getStats().index_median,
+    cheapest: named(menusByIndexPrice(restaurants)[0]),
+    priciest: named(menusByIndexPriceDesc(restaurants)[0]),
+    generatedAt: getGeneratedAt(),
+  });
+  return pageMetadata({ ...seo, path: `/boroughs/${b.slug}` });
 }
 
 export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug]">) {
@@ -69,11 +77,13 @@ export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug
   const priced = s !== null && s.index_median !== null && c.menus > 0;
   // Ranked: the board carries the median and the menu count; otherwise the lede and a Median tile do.
   const showBoard = priced && isRankable(c, s.index_median);
+  const crumbs = [{ href: BOROUGHS_HREF, label: "Boroughs" }, { label: b.name }];
 
   return (
     <>
+      <JsonLd nodes={[breadcrumbNode(SITE_URL, crumbs, `/boroughs/${b.slug}`)]} />
       <PageHeader
-        crumbs={[{ href: BOROUGHS_HREF, label: "Boroughs" }, { label: b.name }]}
+        crumbs={crumbs}
         overline={<DetailOverline label="Borough" />}
         title={
           <>

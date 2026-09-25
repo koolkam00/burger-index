@@ -2,14 +2,27 @@ import { Suspense } from "react";
 import { BurgerExplorer } from "@/components/burgers/BurgerExplorer";
 import { BurgerTable } from "@/components/burgers/BurgerTable";
 import { Spyglass } from "@/components/icons/nautical";
+import { JsonLd } from "@/components/JsonLd";
 import { PageHeader } from "@/components/ui";
+import { getGeneratedAt, getPricedRestaurants } from "@/lib/data";
 import { buildExplorerData } from "@/lib/explorer-data";
-import { formatCount } from "@/lib/format";
-import { pageMetadata } from "@/lib/metadata";
+import { formatCount, formatPrice } from "@/lib/format";
+import { breadcrumbNode } from "@/lib/jsonld";
+import { menusByIndexPrice, menusByIndexPriceDesc } from "@/lib/menus";
+import { pageMetadata, SITE_URL } from "@/lib/metadata";
+import { burgersSeo } from "@/lib/seo";
+import { SITE_NAME } from "@/lib/site";
+
+const cheapest = menusByIndexPrice(getPricedRestaurants())[0];
+const priciest = menusByIndexPriceDesc(getPricedRestaurants())[0];
 
 export const metadata = pageMetadata({
-  title: "Every burger",
-  description: "Search and filter every burger on every New York menu we priced, by borough, neighborhood and price.",
+  ...burgersSeo({
+    count: getPricedRestaurants().length,
+    generatedAt: getGeneratedAt(),
+    cheapest: cheapest ? { name: cheapest.restaurant.name, price: cheapest.indexPrice } : null,
+    priciest: priciest ? { name: priciest.restaurant.name, price: priciest.indexPrice } : null,
+  }),
   path: "/burgers",
 });
 
@@ -19,10 +32,13 @@ export default function BurgersPage() {
   // Static first paint (and the no-JS view): the 50 cheapest burgers. The filterable explorer
   // reads the URL, so it renders on the client inside <Suspense>.
   const preview = [...data.rows].sort((a, b) => a.price - b.price || a.burger.localeCompare(b.burger)).slice(0, 50);
+  // "548 burgers, from $6 to $75.": the count, then the cheapest and priciest prices on the list.
+  const ends = cheapest && priciest ? `, from ${formatPrice(cheapest.indexPrice)} to ${formatPrice(priciest.indexPrice)}` : "";
 
   return (
     <>
-      <PageHeader ticket="Cast a line" ticketIcon={Spyglass} title="Every burger." lede={`All ${total} burgers. Search by name, restaurant or neighborhood.`} />
+      <JsonLd nodes={[breadcrumbNode(SITE_URL, [{ href: "/", label: SITE_NAME }, { label: "Every burger" }], "/burgers")]} />
+      <PageHeader ticket="Cast a line" ticketIcon={Spyglass} title="Every burger." lede={`${total} burgers${ends}. Search by name, restaurant or neighborhood.`} />
       <div className="wrap mt-2">
         <Suspense
           fallback={

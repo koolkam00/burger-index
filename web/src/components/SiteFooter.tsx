@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { CSV_PATH } from "@/lib/csv";
 import { formatDate } from "@/lib/format";
 import { NAV } from "@/lib/site";
 import { UseSystemTheme } from "./theme";
 import { Wordmark } from "./Wordmark";
 
-/** The deck: a rope rail, then dark stained deck planks. The non-affiliation line ships on every page. */
+/** The deck: a rope rail, then dark stained deck planks. The non-affiliation line and the CSV link ship on every page. */
 export function SiteFooter({ generatedAt }: { generatedAt: string }) {
   return (
     <footer className="site-footer atmo">
@@ -27,6 +28,12 @@ export function SiteFooter({ generatedAt }: { generatedAt: string }) {
                   </Link>
                 </li>
               ))}
+              {/* The public price list (user decision 2026-09-25), where the old JSON download sat. */}
+              <li className="col-span-2">
+                <a className="deck-link" href={CSV_PATH} download>
+                  Download the prices (CSV)
+                </a>
+              </li>
               <li className="col-span-2">
                 <UseSystemTheme />
               </li>

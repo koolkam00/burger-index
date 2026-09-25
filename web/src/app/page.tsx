@@ -4,28 +4,30 @@ import { BoroughBars, BoroughTable } from "@/components/charts/BoroughBars";
 import { ChartFigure } from "@/components/charts/ChartFigure";
 import { PriceDistribution } from "@/components/charts/PriceDistribution";
 import { AreaTable, RangePlot } from "@/components/charts/RangePlot";
+import { JsonLd } from "@/components/JsonLd";
 import { Letterboard } from "@/components/Letterboard";
-import { MenuEnds } from "@/components/RestaurantBits";
+import { MenuEnds, menuEndsLists } from "@/components/RestaurantBits";
 import { Buoy, Net, Scales, ShipWheel, Spatula, Spyglass } from "@/components/icons/nautical";
 import { BoroughDot, Bubbles, Caustics, ChartEmpty, KickerTicket, SectionHeading, WaveEdge } from "@/components/ui";
 import { getBoroughs, getGeneratedAt, getMenuCounts, getPricedRestaurants, getStats, rankedNeighborhoods } from "@/lib/data";
-import { formatCount, formatDate, formatPrice, pluralize, spreadEnds } from "@/lib/format";
-import { menuIndexPrices, menusByIndexPrice, menusByIndexPriceDesc } from "@/lib/menus";
-import { pageMetadata } from "@/lib/metadata";
+import { CSV_PATH } from "@/lib/csv";
+import { formatCount, formatDate, formatIsoDay, formatMonthYear, formatPrice, pluralize, spreadEnds } from "@/lib/format";
+import { datasetNode, itemListNode, organizationNode, websiteNode } from "@/lib/jsonld";
+import { menuIndexPrices, menusByIndexPrice, menusByIndexPriceDesc, type Menu } from "@/lib/menus";
+import { pageMetadata, SITE_URL } from "@/lib/metadata";
+import { homeSeo, type NamedPrice } from "@/lib/seo";
 
-const homeMedian = getStats().index_median;
+const named = (m: Menu | undefined): NamedPrice | null => (m ? { name: m.restaurant.name, price: m.indexPrice } : null);
 
-export const metadata = {
-  ...pageMetadata({
-    title: "What a burger costs in New York",
-    description:
-      homeMedian !== null
-        ? `The NYC Burger Index is ${formatPrice(homeMedian, { cents: "always" })}. Burger prices by borough, neighborhood and restaurant.`
-        : "The NYC Burger Index: burger prices by borough, neighborhood and restaurant.",
-    path: "/",
-  }),
-  title: { absolute: "The Burger Index: what a burger costs in New York" },
-};
+const seo = homeSeo({
+  median: getStats().index_median,
+  menus: getMenuCounts().menus,
+  generatedAt: getGeneratedAt(),
+  cheapest: named(menusByIndexPrice(getPricedRestaurants())[0]),
+  priciest: named(menusByIndexPriceDesc(getPricedRestaurants())[0]),
+});
+
+export const metadata = pageMetadata({ ...seo, path: "/" });
 
 export default function HomePage() {
   const stats = getStats();
@@ -52,8 +54,28 @@ export default function HomePage() {
   const hoodEnds = spreadEnds(ranked, (n) => n.index_median);
   const neighborhoodRows = ranked.length > 16 ? [...ranked.slice(0, 8), ...ranked.slice(-8)] : ranked;
 
+  const jsonLd = [
+    organizationNode(SITE_URL),
+    websiteNode(SITE_URL, seo.description),
+    datasetNode(SITE_URL, {
+      name: "NYC burger prices",
+      description: `Burger prices at ${pluralize(stats.restaurants_priced, "New York City restaurant")}: each restaurant's burger, its price in US dollars, the neighborhood, borough and price source, and a link to the restaurant's page. Updated ${formatMonthYear(generated)}.`,
+      csvPath: CSV_PATH,
+      generatedAt: generated,
+      month: formatIsoDay(generated).slice(0, 7),
+      keywords: ["burger prices", "New York City", "restaurant menu prices", "NYC neighborhoods"],
+    }),
+    // The cheapest and priciest cards below, list for list.
+    ...(cheapest.length
+      ? menuEndsLists(cheapest, priciest).map((list) =>
+          itemListNode(SITE_URL, { name: list.title, order: list.order, entries: list.menus.map((m) => ({ name: m.restaurant.name, path: `/restaurants/${m.restaurant.id}` })) }),
+        )
+      : []),
+  ];
+
   return (
     <>
+      <JsonLd nodes={jsonLd} />
       {/* The view through the front window: sea water, surface ripples, bubbles in the gutters. The
           kicker ticket and H1 sit here (a lede only when nothing is priced), and the Order Board hangs in
           columns 6–12 at lg. */}

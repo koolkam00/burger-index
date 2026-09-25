@@ -42,9 +42,30 @@ const DATE_ONLY_STAMP = /^(\d{4}-\d{2}-\d{2})(?:T00:00(?::00(?:\.0+)?)?(?:Z|[+-]
  */
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
+  const d = stampDate(iso);
+  return d ? dateFmt.format(d) : "—";
+}
+
+const monthYearFmt = new Intl.DateTimeFormat("en-US", { timeZone: TZ, month: "long", year: "numeric" });
+const monthYearShortFmt = new Intl.DateTimeFormat("en-US", { timeZone: TZ, month: "short", year: "numeric" });
+const isoDayFmt = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
+
+function stampDate(iso: string): Date | null {
   const day = DATE_ONLY_STAMP.exec(iso);
   const d = new Date(day ? `${day[1]}T12:00:00Z` : iso);
-  return Number.isNaN(d.getTime()) ? "—" : dateFmt.format(d);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** "September 2026" (`short`: "Sep 2026") in New York time, for "Updated …" copy, titles and descriptions. */
+export function formatMonthYear(iso: string, opts: { short?: boolean } = {}): string {
+  const d = stampDate(iso);
+  return d ? (opts.short ? monthYearShortFmt : monthYearFmt).format(d) : "—";
+}
+
+/** "2026-09-25": the New York calendar day of a stamp (the CSV's `checked` column, JSON-LD dates). */
+export function formatIsoDay(iso: string): string {
+  const d = stampDate(iso);
+  return d ? isoDayFmt.format(d) : "";
 }
 
 /** Percent difference of `value` from `base` (e.g. 12.3 for +12.3%). */

@@ -2,19 +2,22 @@ import Link from "next/link";
 import type { MapPin } from "@/components/map/MapCanvas";
 import { MapLegend } from "@/components/map/MapLegend";
 import { MapShell } from "@/components/map/MapShell";
+import { JsonLd } from "@/components/JsonLd";
 import { RestaurantTable } from "@/components/RestaurantBits";
 import { CompassRose } from "@/components/icons/nautical";
 import { PageHeader, PriceChip, SectionHeading } from "@/components/ui";
-import { getPricedRestaurants, getStats } from "@/lib/data";
+import { getGeneratedAt, getPricedRestaurants, getStats } from "@/lib/data";
 import { formatCount, pluralize } from "@/lib/format";
-import { pageMetadata } from "@/lib/metadata";
+import { breadcrumbNode } from "@/lib/jsonld";
+import { pageMetadata, SITE_URL } from "@/lib/metadata";
 import { binFor } from "@/lib/price-bins";
+import { mapSeo } from "@/lib/seo";
+import { SITE_NAME } from "@/lib/site";
 
 const hasCoords = (r: { lat: number | null; lng: number | null }) => r.lat !== null && r.lng !== null;
 
 export const metadata = pageMetadata({
-  title: "Burger price map",
-  description: "The New York burger restaurants we have priced, on a map.",
+  ...mapSeo({ pins: getPricedRestaurants().filter(hasCoords).length, median: getStats().index_median, generatedAt: getGeneratedAt() }),
   path: "/map",
 });
 
@@ -41,6 +44,7 @@ export default function MapPage() {
 
   return (
     <div>
+      <JsonLd nodes={[breadcrumbNode(SITE_URL, [{ href: "/", label: SITE_NAME }, { label: "Map" }], "/map")]} />
       <PageHeader
           ticket="Chart a course"
           ticketIcon={CompassRose}

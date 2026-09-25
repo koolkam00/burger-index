@@ -1,13 +1,16 @@
 import { Scales } from "@/components/icons/nautical";
+import { JsonLd } from "@/components/JsonLd";
 import { PageHeader } from "@/components/ui";
 import { PeoplesPriceBoard } from "@/components/worth/PeoplesPriceBoard";
 import { getMenuCounts, getPricedRestaurants, getStats } from "@/lib/data";
-import { pageMetadata } from "@/lib/metadata";
+import { breadcrumbNode } from "@/lib/jsonld";
+import { pageMetadata, SITE_URL } from "@/lib/metadata";
+import { peoplesPriceSeo } from "@/lib/seo";
+import { SITE_NAME } from "@/lib/site";
 import { worthMenus } from "@/lib/worth";
 
 export const metadata = pageMetadata({
-  title: "The People's Price",
-  description: "What visitors would pay for New York's burgers, next to what the menus charge: the biggest bargains, the most overpriced and the most answered.",
+  ...peoplesPriceSeo({ menus: getMenuCounts().menus, median: getStats().index_median }),
   path: "/peoples-price",
 });
 
@@ -18,8 +21,10 @@ export const metadata = pageMetadata({
  */
 export default function PeoplesPricePage() {
   const menus = worthMenus(getPricedRestaurants());
+  // No Review, Rating or AggregateRating markup: the People's Price is visitors' opinion (user decision 2026-09-25).
   return (
     <>
+      <JsonLd nodes={[breadcrumbNode(SITE_URL, [{ href: "/", label: SITE_NAME }, { label: "The People's Price" }], "/peoples-price")]} />
       <PageHeader
         ticket="What's it worth?"
         ticketIcon={Scales}

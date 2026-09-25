@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AreaListItem } from "@/components/AreaList";
 import { AreaStats } from "@/components/AreaStats";
+import { JsonLd } from "@/components/JsonLd";
 import { Letterboard } from "@/components/Letterboard";
-import { RestaurantTable } from "@/components/RestaurantBits";
+import { byIndexPrice, RestaurantTable } from "@/components/RestaurantBits";
 import { Buoy, Spyglass } from "@/components/icons/nautical";
 import { BoroughName, DetailOverline, PageHeader, SectionHeading } from "@/components/ui";
 import { boroughInProse, boroughSlug } from "@/lib/boroughs";
@@ -20,9 +21,11 @@ import {
   neighborhoodMenuCounts,
   withMenuCounts,
 } from "@/lib/data";
-import { formatDate, formatPrice, pluralize } from "@/lib/format";
-import { isRankable, menuBreakdown } from "@/lib/menus";
-import { pageMetadata } from "@/lib/metadata";
+import { formatDate, pluralize } from "@/lib/format";
+import { breadcrumbNode, itemListNode } from "@/lib/jsonld";
+import { isRankable, menuBreakdown, menusByIndexPrice, menusByIndexPriceDesc } from "@/lib/menus";
+import { pageMetadata, SITE_URL } from "@/lib/metadata";
+import { neighborhoodSeo } from "@/lib/seo";
 import { atLeastOneParam, PLACEHOLDER_PARAM } from "@/lib/site";
 
 export const dynamicParams = false;
@@ -43,8 +46,22 @@ export async function generateMetadata({ params }: PageProps<"/neighborhoods/[sl
   const n = neighborhoodPage(slug);
   if (!n) return {};
   const c = neighborhoodMenuCounts(slug);
-  const description = `What a burger costs in ${n.name}, ${n.borough}: median index price ${formatPrice(n.index_median, { cents: "always" })} across ${pluralize(c.menus, "priced menu")}.`;
-  return pageMetadata({ title: `${n.name} burger prices`, description, path: `/neighborhoods/${n.slug}` });
+  const restaurants = getRestaurantsInNeighborhood(slug);
+  const cheapest = menusByIndexPrice(restaurants);
+  const priciest = menusByIndexPriceDesc(restaurants);
+  const seo = neighborhoodSeo({
+    name: n.name,
+    ambiguous: getNeighborhoodPages().some((x) => x.slug !== n.slug && x.name === n.name),
+    borough: n.borough,
+    median: n.index_median,
+    menus: c.menus,
+    cityMedian: getStats().index_median,
+    cheapest: cheapest[0] ? { name: cheapest[0].restaurant.name, price: cheapest[0].indexPrice } : null,
+    priciest: priciest[0] ? { name: priciest[0].restaurant.name, price: priciest[0].indexPrice } : null,
+    only: c.menus === 1 && cheapest[0] ? { restaurant: cheapest[0].restaurant.name, burger: cheapest[0].restaurant.burger.name } : null,
+    generatedAt: getGeneratedAt(),
+  });
+  return pageMetadata({ ...seo, path: `/neighborhoods/${n.slug}` });
 }
 
 export default async function NeighborhoodPage({ params }: PageProps<"/neighborhoods/[slug]">) {
@@ -59,15 +76,29 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
   // Ranked on distinct menus (menus.ts isRankable): the board carries the median and the menu count;
   // an unranked neighborhood says them in the lede and the Median tile instead.
   const ranked = isRankable(c, n.index_median);
+  const crumbs = [
+    { href: "/neighborhoods", label: "Neighborhoods" },
+    { href: `/boroughs/${boroughSlug(n.borough)}`, label: n.borough },
+    { label: n.name },
+  ];
+  const path = `/neighborhoods/${n.slug}`;
+  const table = `Restaurants in ${n.name}`;
 
   return (
     <>
-      <PageHeader
-        crumbs={[
-          { href: "/neighborhoods", label: "Neighborhoods" },
-          { href: `/boroughs/${boroughSlug(n.borough)}`, label: n.borough },
-          { label: n.name },
+      <JsonLd
+        nodes={[
+          breadcrumbNode(SITE_URL, crumbs, path),
+          // The restaurant table below, row for row (every priced location, cheapest first).
+          itemListNode(SITE_URL, {
+            name: table,
+            order: "ascending",
+            entries: byIndexPrice(restaurants.filter(isPriced)).map((r) => ({ name: r.name, path: `/restaurants/${r.id}` })),
+          }),
         ]}
+      />
+      <PageHeader
+        crumbs={crumbs}
         overline={
           <DetailOverline
             label={
@@ -102,7 +133,7 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
               unpriced={restaurants.filter(isUnpriced)}
               median={median}
               showNeighborhood={false}
-              caption={`Restaurants in ${n.name}`}
+              caption={table}
             />
           </div>
         </section>

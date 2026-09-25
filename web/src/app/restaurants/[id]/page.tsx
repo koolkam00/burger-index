@@ -2,6 +2,7 @@ import { ClipboardCheck } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { JsonLd } from "@/components/JsonLd";
 import { WorthPicker } from "@/components/worth/WorthPicker";
 import { repeatedNames } from "@/components/RestaurantBits";
 import { OutboundLink, SeeOnMapLink } from "@/components/RestaurantLinks";
@@ -10,6 +11,7 @@ import { DetailOverline, Money, PageHeader, PriceChip, SectionHeading, SourceBad
 import { boroughSlug } from "@/lib/boroughs";
 import {
   getChainLocations,
+  getGeneratedAt,
   getNeighborhood,
   getPricedRestaurant,
   getPricedRestaurants,
@@ -18,8 +20,12 @@ import {
   neighborhoodMenuCounts,
 } from "@/lib/data";
 import { formatDate, formatDelta, formatPrice, hostname, safeHttpUrl } from "@/lib/format";
+import { breadcrumbNode, restaurantNode } from "@/lib/jsonld";
+import { PRICE_SOURCE_LABEL } from "@/lib/labels";
 import { hasOtherMenus, menuKey, menusByIndexPrice } from "@/lib/menus";
-import { pageMetadata } from "@/lib/metadata";
+import { pageMetadata, SITE_URL } from "@/lib/metadata";
+import type { PricedRestaurant } from "@/lib/schema";
+import { restaurantSeo, sharedTitleIds } from "@/lib/seo";
 import { atLeastOneParam, BOROUGHS_HREF, PLACEHOLDER_PARAM } from "@/lib/site";
 import { WORTH_ANCHOR } from "@/lib/worth";
 
@@ -30,13 +36,34 @@ export function generateStaticParams() {
   return atLeastOneParam(getPricedRestaurants().map((r) => ({ id: r.id })), { id: PLACEHOLDER_PARAM });
 }
 
+/** The neighborhood median the page compares with: only when the neighborhood has another priced menu. */
+function hoodComparison(r: PricedRestaurant) {
+  const hood = r.neighborhood_slug ? getNeighborhood(r.neighborhood_slug) : undefined;
+  const counts = r.neighborhood_slug ? neighborhoodMenuCounts(r.neighborhood_slug) : null;
+  return { hood, median: hood && counts && hood.index_median !== null && hasOtherMenus(counts) ? hood.index_median : null };
+}
+
+/** Restaurants whose title another page would share: their titles name the street address (seo.ts). */
+const SHARED_TITLES = sharedTitleIds(getPricedRestaurants().map((x) => ({ ...x, price: x.index_price })));
+
 export async function generateMetadata({ params }: PageProps<"/restaurants/[id]">): Promise<Metadata> {
   const { id } = await params;
   const r = getPricedRestaurant(id);
   if (!r) return {};
-  const where = r.neighborhood ? `${r.neighborhood}, ${r.borough}` : r.borough;
-  const description = `${r.name} (${where}): ${r.burger.name}, ${formatPrice(r.index_price, { cents: "always" })}.`;
-  return pageMetadata({ title: `${r.name}, ${r.neighborhood ?? r.borough}`, description, path: `/restaurants/${r.id}` });
+  const seo = restaurantSeo({
+    name: r.name,
+    address: r.address,
+    neighborhood: r.neighborhood,
+    borough: r.borough,
+    burger: r.burger.name,
+    price: r.index_price,
+    cityMedian: getStats().index_median,
+    hoodMedian: hoodComparison(r).median,
+    source: PRICE_SOURCE_LABEL[r.price_source],
+    generatedAt: getGeneratedAt(),
+    ambiguous: SHARED_TITLES.has(r.id),
+  });
+  return pageMetadata({ ...seo, path: `/restaurants/${r.id}` });
 }
 
 /**
@@ -80,7 +107,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
   const { burger, index_price: price } = r;
 
   const median = getStats().index_median;
-  const hood = r.neighborhood_slug ? getNeighborhood(r.neighborhood_slug) : undefined;
+  const { hood, median: hoodMedian } = hoodComparison(r);
   const website = safeHttpUrl(r.website);
   const menuUrl = safeHttpUrl(r.menu_url);
   const onMap = r.lat !== null && r.lng !== null;
@@ -88,9 +115,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
   // several locations here shows once.
   const hoodMenus = r.neighborhood_slug ? menusByIndexPrice(getRestaurantsInNeighborhood(r.neighborhood_slug)) : [];
   const neighbors = hoodMenus.filter((m) => m.key !== menuKey(r)).slice(0, 6);
-  const hoodCounts = r.neighborhood_slug ? neighborhoodMenuCounts(r.neighborhood_slug) : null;
   // "vs neighborhood" needs another priced menu there (five locations of one chain are one menu).
-  const hoodMedian = hood && hoodCounts && hood.index_median !== null && hasOtherMenus(hoodCounts) ? hood.index_median : null;
   const versus = [
     hood && hoodMedian !== null ? { label: `vs ${hood.name}`, value: formatDelta(price, hoodMedian), sub: `Neighborhood median ${formatPrice(hoodMedian, { cents: "always" })}` } : null,
     median !== null ? { label: "vs NYC", value: formatDelta(price, median), sub: `NYC median ${formatPrice(median, { cents: "always" })}` } : null,
@@ -108,9 +133,28 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
     ...(r.neighborhood && r.neighborhood_slug ? [{ href: `/neighborhoods/${r.neighborhood_slug}`, label: r.neighborhood }] : []),
     { label: r.name },
   ];
+  const path = `/restaurants/${r.id}`;
 
   return (
     <>
+      <JsonLd
+        nodes={[
+          restaurantNode(SITE_URL, {
+            path,
+            name: r.name,
+            address: r.address,
+            neighborhood: r.neighborhood,
+            borough: r.borough,
+            lat: r.lat,
+            lng: r.lng,
+            website,
+            menuUrl,
+            burger,
+            price,
+          }),
+          breadcrumbNode(SITE_URL, crumbs, path),
+        ]}
+      />
       <PageHeader
         crumbs={crumbs}
         overline={<DetailOverline label="Restaurant" />}

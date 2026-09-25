@@ -83,40 +83,48 @@ const PRICIEST_KICKER = "Top shelf";
 /** Menus needed before MenuEnds splits into cheapest and priciest (two lists of four that can't overlap). */
 export const MENU_ENDS_SPLIT = 8;
 
+/**
+ * The lists MenuEnds shows, with their headings: the four cheapest and the four priciest menus when
+ * there are enough that they can't overlap, else every menu once, cheapest first. The home page's
+ * ItemList JSON-LD is built from the same lists.
+ */
+export function menuEndsLists(cheapest: readonly Menu[], priciest: readonly Menu[]): Array<{ title: string; order: "ascending" | "descending"; menus: Menu[] }> {
+  if (cheapest.length >= MENU_ENDS_SPLIT) {
+    return [
+      { title: "Cheapest index prices", order: "ascending", menus: cheapest.slice(0, 4) },
+      { title: "Priciest index prices", order: "descending", menus: priciest.slice(0, 4) },
+    ];
+  }
+  return [{ title: "Index prices, cheapest first", order: "ascending", menus: [...cheapest] }];
+}
+
 /** Cheapest and priciest distinct menus side by side, or one list when there are too few to split. */
 export function MenuEnds({ cheapest, priciest, median, chainCount }: { cheapest: Menu[]; priciest: Menu[]; median: number | null; chainCount?: ChainCount }) {
+  const lists = menuEndsLists(cheapest, priciest);
   // Two lists of four only when they can't overlap; otherwise every menu once, cheapest first.
-  if (cheapest.length >= MENU_ENDS_SPLIT) {
+  if (lists.length === 2) {
     return (
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
-        <div className="min-w-0">
-          <h3 className="t-label muted">Cheapest index prices</h3>
-          <ul className="mt-3 grid gap-3 sm:grid-cols-2">
-            {cheapest.slice(0, 4).map((m, i) => (
-              <li key={m.key}>
-                <MenuCard menu={m} median={median} chainCount={chainCount} headingLevel={4} kicker={i === 0 ? CHEAPEST_KICKER : undefined} />
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="min-w-0">
-          <h3 className="t-label muted">Priciest index prices</h3>
-          <ul className="mt-3 grid gap-3 sm:grid-cols-2">
-            {priciest.slice(0, 4).map((m, i) => (
-              <li key={m.key}>
-                <MenuCard menu={m} median={median} chainCount={chainCount} headingLevel={4} kicker={i === 0 ? PRICIEST_KICKER : undefined} />
-              </li>
-            ))}
-          </ul>
-        </div>
+        {lists.map((list, l) => (
+          <div key={list.title} className="min-w-0">
+            <h3 className="t-label muted">{list.title}</h3>
+            <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+              {list.menus.map((m, i) => (
+                <li key={m.key}>
+                  <MenuCard menu={m} median={median} chainCount={chainCount} headingLevel={4} kicker={i === 0 ? (l === 0 ? CHEAPEST_KICKER : PRICIEST_KICKER) : undefined} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
     );
   }
   return (
     <div className="mt-8">
-      <h3 className="t-label muted">Index prices, cheapest first</h3>
+      <h3 className="t-label muted">{lists[0].title}</h3>
       <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {cheapest.map((m, i) => (
+        {lists[0].menus.map((m, i) => (
           <li key={m.key}>
             <MenuCard
               menu={m}
@@ -130,6 +138,11 @@ export function MenuEnds({ cheapest, priciest, median, chainCount }: { cheapest:
       </ul>
     </div>
   );
+}
+
+/** RestaurantTable's row order: cheapest index price first, then by name (also its ItemList JSON-LD). */
+export function byIndexPrice(list: readonly PricedRestaurant[]): PricedRestaurant[] {
+  return [...list].sort((a, b) => a.index_price - b.index_price || a.name.localeCompare(b.name));
 }
 
 /**
@@ -149,7 +162,7 @@ export function RestaurantTable({
   showNeighborhood?: boolean;
   caption?: string;
 }) {
-  const priced = [...restaurants].sort((a, b) => a.index_price - b.index_price || a.name.localeCompare(b.name));
+  const priced = byIndexPrice(restaurants);
   const names = [...unpriced].sort((a, b) => a.name.localeCompare(b.name));
   const repeated = repeatedNames([...priced, ...names]);
   const address = (r: PricedRestaurant | UnpricedRestaurant) => (repeated.has(r.name) && r.address ? r.address : null);
