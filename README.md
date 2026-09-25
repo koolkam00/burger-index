@@ -80,10 +80,14 @@ Design rules are in [`DESIGN.md`](DESIGN.md). More in [`web/README.md`](web/READ
 
 ## Deploy
 
-Vercel project settings: **Root Directory** `web`, **Build Command** `npm run build`, **Output Directory** `out`,
-"Include files outside the root directory" on. Either import the Git repo on Vercel, or deploy from the **repo
-root** with the CLI (`npx vercel link` once, then `npx vercel --prod`). The root `.vercelignore` limits the upload to
-what the build needs, so `.env` never leaves your machine. The site launches on its `*.vercel.app` address, which the
+The Vercel project "burger-index" (team koolkam00s-projects) is linked to GitHub `koolkam00/burger-index`; pushes to
+`main` deploy production and previews are protected. Project settings: Framework Preset **Next.js**, **Root Directory**
+`web`, **Build Command** `npm run build`, **Output Directory left empty** (Vercel handles `output: "export"`; `out` there
+fails with `NEXT_NO_ROUTES_MANIFEST`), Node.js 22.x, "Include files outside the root directory" on. Environment variables:
+`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` on Production and Preview, `NEXT_PUBLIC_POSTHOG_KEY` on
+Production only. Deploy by pushing, or from the **repo root** with the CLI (`npx vercel link` once, then
+`npx vercel --prod`). The root `.vercelignore` limits the upload to what the build needs, so `.env` never leaves your
+machine. The site launches on its `*.vercel.app` address, which the
 build picks up from Vercel; set `NEXT_PUBLIC_SITE_URL` only once there is a custom domain.
 
 To publish new prices: `pipeline run`, then `pipeline build`, commit `data/burger_index.json`, deploy, then tell the

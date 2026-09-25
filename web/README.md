@@ -183,13 +183,22 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   `app/cheapest-burgers/page.tsx`, `app/cheapest-burgers/[borough]/page.tsx` (`generateStaticParams` over the boroughs with
   a priced restaurant), the same for `most-expensive-burgers`, and `app/burgers-under-15|20/page.tsx`. They are linked from the
   home and borough card lists ("See all"), `/burgers`, every ranking page and the footer's "Rankings" group, never the nav.
+  **Honest wording (user decision 2026-09-25):** each restaurant publishes only its priciest burger, so the cheapest and
+  under-$N lists rank burger spots by it and say so: "Cheapest burger spots in NYC.", "Burger spots in NYC where the priciest
+  burger is under $15.", "The priciest burger at Johnny's Reef is $6.00, the lowest top-burger price of any spot in NYC
+  (September 2026).", counts in "burger spots", and the Q&A "Where are burgers cheapest in NYC?". Nothing says "the cheapest
+  burger in …", "cheapest burgers in …" or "burgers under $15" (`check:seo` fails on those phrases anywhere in the build). The
+  most expensive lists keep "Most expensive burgers" (each row is the priciest burger at its spot). Sentences place things "on
+  the Upper East Side / Upper West Side / Lower East Side" and "in" everywhere else (`inNeighborhood`, `inNeighborhoodPlace` in
+  `src/lib/boroughs.ts`).
 - **Q&A blocks:** `src/lib/answers.ts` builds plain answer-first sentences from the dataset (`cityFaq`, `boroughFaq`,
   `neighborhoodFaq`; `endSentence` and `underSentence` also make the ranking pages' one-line answers). Each answer is a list of
   text and link segments; `components/QandA.tsx` renders them as a `<dl>` and emits FAQPage JSON-LD from the same segments
   (`segmentsText`), so the markup is the visible text word for word.
 - **JSON-LD:** pure builders in `src/lib/jsonld.ts`, rendered by `components/JsonLd.tsx` as a native
   `<script type="application/ld+json">` (Next 16 guide "JSON-LD"); `serializeJsonLd` escapes `<`, `>` and `&` so data can
-  never close the tag. Home: WebSite, Organization, Dataset (the CSV as a `DataDownload`; no license until one is chosen) and
+  never close the tag. Home: WebSite, Organization, Dataset (the CSV as a `DataDownload`, `license` CC BY 4.0: `CSV_LICENSE`
+  in `src/lib/csv.ts`, which llms.txt names next to the CSV link and the footer links after it) and
   an ItemList per cheapest/priciest card list (`menuEndsLists`, the same lists `MenuEnds` draws). Restaurant pages:
   Restaurant (PostalAddress, GeoCoordinates, `sameAs` the restaurant's site) → Menu → MenuItem → Offer (price, USD).
   Every page below home: BreadcrumbList (the visible breadcrumbs where the page shows them). `/neighborhoods`: an ItemList of
@@ -211,17 +220,32 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   self-referencing canonical and one `<h1>` per page, no skipped heading levels, JSON-LD that parses, has the expected types
   and matches the page (names, prices, breadcrumbs, list order), each ranking table (ranks, restaurants, prices, count line
   and ItemList) against a ranking it recomputes from the dataset, every Q&A block against its FAQPage word for word (and
-  one on home, every borough and every neighborhood page), the footer's source line and ranking links on every page, unique
-  titles and descriptions (with a length summary), the sitemap equal to the pages, robots.txt, every llms.txt link, the CSV
-  against the dataset, and no broken or orphaned internal links. `-- --site https://…` also asserts the origin. Tests:
+  one on home, every borough and every neighborhood page), the footer's source line, CSV link with its CC BY 4.0 license
+  link and ranking links on every page, the Dataset's license, no overclaiming "cheapest" or "under $N" phrase in any page,
+  title, description, JSON-LD, llms.txt or the CSV, unique titles and descriptions (with a length summary), the sitemap equal
+  to the pages, robots.txt, every llms.txt link (and the license named next to the CSV), the CSV against the dataset, and no
+  broken or orphaned internal links. `-- --site https://…` also asserts the origin. Tests:
   `test/seo.test.ts`, `test/jsonld.test.ts`, `test/rankings.test.ts` (ranking rows, answers, FAQ, ranking titles),
   `test/csv.test.ts`, `test/site.test.ts` (origin, titles, robots) and `test/indexnow.test.ts`.
 
 ## Deploy to Vercel
 
-The Vercel project uses **Root Directory** `web`, **Build Command** `npm run build`, **Output Directory** `out`. Either:
+The Vercel project "burger-index" (team koolkam00s-projects) is linked to GitHub `koolkam00/burger-index`: the production
+branch is `main` (every push deploys production), other branches get preview deployments, and previews are protected
+(Vercel Authentication). Project settings:
 
-- Import the repo on Vercel with those settings (every push to the production branch deploys), or
+| Setting | Value |
+|---|---|
+| Framework Preset | **Next.js** |
+| Root Directory | `web` |
+| Build Command | `npm run build` |
+| Output Directory | **leave empty**: Vercel handles `output: "export"` itself. Setting it to `out` makes the deploy fail with `NEXT_NO_ROUTES_MANIFEST` |
+| Node.js Version | 22.x |
+| Include files outside the root directory in the Build Step | on |
+
+To deploy:
+
+- Push to GitHub (the Git integration builds every push with those settings), or
 - From the CLI, **run it from the repo root, not from `web/`** (Vercel's monorepo rule; `sync-data` also needs `../data` and
   `../contract` in the upload): `npx vercel link` once (set Root Directory to `web`), then `npx vercel --prod`.
 
@@ -231,8 +255,9 @@ Notes:
   keep Vercel's "Include files outside the root directory in the Build Step" setting on (the default for new projects).
 - The repo-root `.vercelignore` is an allowlist (`web/`, `contract/`, `data/burger_index.json`). Vercel does not read
   `.gitignore`, so without it a CLI deploy from the root would upload `.env` (the Context.dev key), `.venv/` and the scrape cache.
-- Environment variables (Project → Settings → Environment Variables, for Production and Preview unless the row says otherwise). All are public, inlined into the
-  JavaScript at build time, so a change needs a redeploy:
+- Environment variables (Project → Settings → Environment Variables): `NEXT_PUBLIC_SUPABASE_URL` and
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY` on Production and Preview, `NEXT_PUBLIC_POSTHOG_KEY` on Production only. All are public,
+  inlined into the JavaScript at build time, so a change needs a redeploy:
 
   | Variable | Value | Without it |
   |---|---|---|
@@ -272,7 +297,7 @@ Notes:
 | `/map` | MapLibre GL map of the priced restaurants, pins colored by price level, legend, list view, priced restaurants without coordinates |
 | `/og.png`, `/sitemap.xml`, `/robots.txt` | Open Graph image (the Order Board), sitemap (every page), robots (every crawler welcome, AI bots named, only `/ingest/` disallowed) |
 | `/llms.txt` | Plain summary for AI assistants: the headline numbers and date, links to the main pages, the ranking pages and the CSV |
-| `/data/burger-prices.csv` | The public price list, one row per priced restaurant location (linked from the footer) |
+| `/data/burger-prices.csv` | The public price list, one row per priced restaurant location, licensed CC BY 4.0 (linked from the footer, the license link after it) |
 | `/<key>.txt` | The IndexNow key file (`public/`, public by design) |
 
 ## Notes for maintainers
