@@ -1,6 +1,6 @@
 // The ranking pages (user decision 2026-09-25): a small, fixed set of static lists, each an H1 in plain
 // words, a one-line answer and a ranked table. Cheapest and most expensive in NYC and in each borough
-// (the top RANKING_LIMIT), and every burger under $15 and under $20 in NYC.
+// (the top rankingCap, with any menus tied at the cut), and every burger under $15 and under $20 in NYC.
 //
 // Rows are distinct menus (menus.ts): an independent restaurant once, a chain once per list, with how
 // many of its locations the list covers. The order is menusByIndexPrice / menusByIndexPriceDesc, the
@@ -20,8 +20,16 @@ export type RankingSpec = {
   under: number | null;
 };
 
-/** The cheapest and most expensive lists show this many rows; the under-$N lists show every row. */
+/** The cheapest and most expensive lists show at most this many rows (plus ties at the cut); the under-$N lists show every row. */
 export const RANKING_LIMIT = 25;
+
+/**
+ * How many rows a cheapest or most expensive list of `total` menus shows before ties: RANKING_LIMIT,
+ * but at most half the place's menus, so its two lists never overlap (at least one row).
+ */
+export function rankingCap(total: number): number {
+  return Math.max(1, Math.min(RANKING_LIMIT, Math.floor(total / 2)));
+}
 /** The under-$N lists (NYC only). */
 export const UNDER_PRICES = [15, 20] as const;
 
@@ -81,7 +89,7 @@ export type RankedMenu = Menu & {
 };
 
 export type Ranking = {
-  /** The rows the page shows: at most RANKING_LIMIT for cheapest and priciest, every row under $N. */
+  /** The rows the page shows: the top rankingCap for cheapest and priciest plus every menu tied with the last of them; every row under $N. */
   rows: RankedMenu[];
   /** Distinct menus the list covers before the cap (every priced menu in the place, or every one under $N). */
   total: number;
@@ -104,7 +112,11 @@ export function rankMenus(restaurants: readonly PricedRestaurant[], spec: Rankin
   const ordered = spec.kind === "priciest" ? menusByIndexPriceDesc(scope) : menusByIndexPrice(scope);
   const matching = spec.kind === "under" ? ordered.filter((m) => cents(m.indexPrice) < (spec.under as number) * 100) : ordered;
   const ranked = withRanks(matching);
-  return { rows: spec.kind === "under" ? ranked : ranked.slice(0, RANKING_LIMIT), total: matching.length };
+  if (spec.kind === "under") return { rows: ranked, total: matching.length };
+  // A cut never splits equal prices: menus tied with the last row shown stay (they share its rank).
+  const cap = rankingCap(matching.length);
+  const cut = ranked.length > cap ? ranked[cap - 1].rank : Infinity;
+  return { rows: ranked.filter((m) => m.rank <= cut), total: matching.length };
 }
 
 /** The rows that share first place (the cheapest or the most expensive, to the cent). */

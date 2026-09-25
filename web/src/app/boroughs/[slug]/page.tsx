@@ -14,7 +14,7 @@ import { MENU_ENDS_SPLIT, MenuEnds } from "@/components/RestaurantBits";
 import { Buoy, Net, Spatula } from "@/components/icons/nautical";
 import { BoroughDot, DetailOverline, PageHeader, SectionHeading } from "@/components/ui";
 import { boroughFaq } from "@/lib/answers";
-import { BOROUGH_META, boroughInProse } from "@/lib/boroughs";
+import { BOROUGH_META, boroughInProse, neighborhoodInProse } from "@/lib/boroughs";
 import {
   getBorough,
   getGeneratedAt,
@@ -92,7 +92,7 @@ export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug
         menus: c.menus,
         cheapest: topTied(rankMenus(restaurants, cheapestList).rows),
         priciest: topTied(rankMenus(restaurants, priciestList).rows),
-        neighborhoods: ranked.map((n) => ({ name: n.name, href: `/neighborhoods/${n.slug}`, median: n.index_median as number })),
+        neighborhoods: ranked.map((n) => ({ name: neighborhoodInProse(n.name), href: `/neighborhoods/${n.slug}`, median: n.index_median as number })),
         ranking: { cheapest: cheapestList, priciest: priciestList },
       })
     : [];

@@ -14,6 +14,7 @@ import {
   explorerHref,
   priciestSpec,
   RANKING_LIMIT,
+  rankingCap,
   rankingName,
   rankingPath,
   rankingSpecs,
@@ -54,7 +55,7 @@ test("rankingSpecs: a borough with nothing priced has no lists", () => {
   assert.equal(rankingSpecs(loadDataset().restaurants.filter((r) => r.index_price !== null) as PricedRestaurant[]).length, 14);
 });
 
-test("rankMenus: one row per menu (a chain once, with its locations), capped at 25, ties share a rank", () => {
+test("rankMenus: one row per menu (a chain once, with its locations), capped at half the menus, ties share a rank", () => {
   const chain = (hood: string, borough: "Brooklyn" | "Queens" = "Brooklyn") => place({ chain: "seventh", name: "7th Street Burger", price: 10, hood, borough });
   const list = priced([
     chain("a"),
@@ -66,7 +67,7 @@ test("rankMenus: one row per menu (a chain once, with its locations), capped at 
   ]);
   const city = rankMenus(list, cheapestSpec());
   assert.equal(city.total, 33, "30 + Alpha + Beta + the chain once");
-  assert.equal(city.rows.length, RANKING_LIMIT);
+  assert.equal(city.rows.length, 16, "at most half of 33 menus");
   assert.deepEqual(
     city.rows.slice(0, 3).map((m) => [m.rank, m.restaurant.name, m.locations]),
     [
@@ -77,18 +78,43 @@ test("rankMenus: one row per menu (a chain once, with its locations), capped at 
   );
   assert.equal(city.rows[3].rank, 4, "competition ranking: 1, 2, 2, 4");
   const bk = rankMenus(list, cheapestSpec(brooklyn));
+  assert.equal(bk.total, 3);
   assert.deepEqual(
-    bk.rows.map((m) => [m.restaurant.name, m.locations]),
+    bk.rows.map((m) => m.restaurant.name),
+    ["Alpha"],
+    "3 menus: one row, so the cheapest and most expensive lists never overlap",
+  );
+  assert.deepEqual(
+    rankMenus(list, priciestSpec(brooklyn)).rows.map((m) => [m.rank, m.restaurant.name, m.locations]),
     [
-      ["Alpha", 1],
-      ["7th Street Burger", 2],
-      ["Beta", 1],
+      [1, "7th Street Burger", 2],
+      [1, "Beta", 1],
     ],
-    "a borough list counts only that borough's locations",
+    "a borough list counts only that borough's locations, and a menu tied at the cut stays",
   );
   const top = rankMenus(list, priciestSpec());
   assert.equal(top.rows[0].restaurant.name, "P29");
   assert.equal(top.rows[0].rank, 1);
+});
+
+test("rankingCap: 25, at most half the menus, at least one", () => {
+  assert.equal(RANKING_LIMIT, 25);
+  assert.deepEqual(
+    [1, 2, 3, 32, 35, 50, 51, 73, 532].map(rankingCap),
+    [1, 1, 1, 16, 17, 25, 25, 25, 25],
+  );
+});
+
+test("rankMenus: a cut never splits equal prices", () => {
+  // 60 menus at $10, $11, … except four sharing $33 where the 25th row falls (rows 24–27).
+  const prices = Array.from({ length: 60 }, (_, i) => (i >= 23 && i <= 26 ? 33 : 10 + i));
+  const list = priced(prices.map((price, i) => place({ name: `R${String(i).padStart(2, "0")}`, price })));
+  const r = rankMenus(list, cheapestSpec());
+  assert.equal(r.total, 60);
+  assert.equal(r.rows.length, 27, "rows 24–27 share rank 24, so all four stay");
+  assert.deepEqual([...new Set(r.rows.slice(23).map((m) => m.rank))], [24]);
+  const top = rankMenus(priced(Array.from({ length: 60 }, (_, i) => place({ price: 10 + i }))), priciestSpec());
+  assert.equal(top.rows.length, 25, "no tie at the cut: exactly 25");
 });
 
 test("rankMenus under $N: strictly below, every row, cheapest first", () => {
@@ -160,11 +186,14 @@ test("a chain in a sentence is placed by its location count", () => {
   const [m] = menusByIndexPrice(list);
   assert.equal(segmentsText(endSentence("cheapest", "NYC", [m], MONTH, whereInCity)), "The cheapest burger in NYC is the Cheeseburger at Jackson Hole (2 locations), $18.00 (September 2026).");
   assert.equal(whereInBorough("Manhattan")(m), " (2 Manhattan locations)");
+  const [ev] = menusByIndexPrice(priced([place({ name: "Joe's", price: 9, hood: "East Village", borough: "Manhattan" })]));
+  assert.equal(whereInCity(ev), " in the East Village, Manhattan");
+  assert.equal(whereInBorough("Manhattan")(ev), " in the East Village");
 });
 
 test("underSentence: how many, and the two ends", () => {
   const rows = menusByIndexPrice(priced([place({ id: "x", name: "X", price: 6 }), place({ id: "y", name: "Y", price: 14.99 })]));
-  assert.equal(segmentsText(underSentence(15, "NYC", rows, MONTH)), "2 burgers in NYC cost under $15 (September 2026), from $6.00 at X to $14.99 at Y.");
+  assert.equal(segmentsText(underSentence(15, "NYC", rows, MONTH)), "2 different burgers in NYC cost under $15 (September 2026), from $6.00 at X to $14.99 at Y.");
   assert.equal(segmentsText(underSentence(15, "NYC", rows.slice(0, 1), MONTH)), "One burger in NYC costs under $15 (September 2026): the Cheeseburger at X, $6.00.");
   assert.equal(segmentsText(underSentence(15, "NYC", [], MONTH)), "No burger in NYC costs under $15 (September 2026).");
 });
@@ -221,10 +250,24 @@ test("boroughFaq and neighborhoodFaq: vs NYC in words, one priced burger, ranked
   assert.equal(faq[3].q, "Which Bronx neighborhood has the cheapest burgers?");
   assert.equal(segmentsText(faq[3].a), "Mott Haven: its median burger costs $10.00 (September 2026), the lowest of the 2 ranked Bronx neighborhoods. Riverdale is the priciest at $30.00.");
 
-  const solo = neighborhoodFaq({ generatedAt: GEN, name: "Astoria", median: 18, cityMedian: 20, menus: 1, cheapest: [list[0]], priciest: [list[0]] });
+  const solo = neighborhoodFaq({ generatedAt: GEN, name: "Astoria", borough: "Queens", median: 18, cityMedian: 20, menus: 1, cheapest: [list[0]], priciest: [list[0]] });
   assert.equal(solo.length, 1);
-  assert.equal(segmentsText(solo[0].a), "Astoria has one priced burger: the Cheeseburger at A, $10.00 (September 2026), 10% below the $20.00 NYC median.");
-  assert.deepEqual(neighborhoodFaq({ generatedAt: GEN, name: "Nowhere", median: null, cityMedian: 20, menus: 0, cheapest: [], priciest: [] }), []);
+  assert.equal(solo[0].q, "How much does a burger cost in Astoria, Queens?");
+  assert.equal(segmentsText(solo[0].a), "Astoria, Queens, has one priced burger: the Cheeseburger at A, $10.00 (September 2026), 10% below the $20.00 NYC median.");
+  assert.deepEqual(neighborhoodFaq({ generatedAt: GEN, name: "Nowhere", borough: "Queens", median: null, cityMedian: 20, menus: 0, cheapest: [], priciest: [] }), []);
+
+  // Every item names the borough; "the" where the neighborhood takes it; a name with its borough in it stands alone.
+  const ev = neighborhoodFaq({ generatedAt: GEN, name: "East Village", borough: "Manhattan", median: 20, cityMedian: 20, menus: 2, cheapest: [list[0]], priciest: [list[1]] });
+  assert.deepEqual(
+    ev.map((i) => i.q),
+    ["How much does a burger cost in the East Village, Manhattan?", "Where is the cheapest burger in the East Village, Manhattan?", "What is the most expensive burger in the East Village, Manhattan?"],
+  );
+  assert.equal(segmentsText(ev[0].a), "The median burger in the East Village, Manhattan, costs $20.00 (September 2026), right at the $20.00 NYC median.");
+  assert.equal(segmentsText(ev[1].a), "The cheapest burger in the East Village, Manhattan, is the Cheeseburger at A, $10.00 (September 2026).");
+  const hood = neighborhoodFaq({ generatedAt: GEN, name: "Mott Haven", borough: "Bronx", median: 20, cityMedian: 20, menus: 1, cheapest: [list[0]], priciest: [list[0]] });
+  assert.equal(hood[0].q, "How much does a burger cost in Mott Haven, the Bronx?");
+  const parks = neighborhoodFaq({ generatedAt: GEN, name: "Bronx parks", borough: "Bronx", median: 20, cityMedian: 20, menus: 1, cheapest: [list[0]], priciest: [list[0]] });
+  assert.equal(parks[0].q, "How much does a burger cost in Bronx parks?");
 });
 
 test("faqPageNode: Question → Answer, the text as given", () => {

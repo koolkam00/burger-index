@@ -34,3 +34,21 @@ export function boroughBySlug(slug: string): BoroughMeta | undefined {
 export function boroughInProse(name: Borough): string {
   return name === "Bronx" ? "the Bronx" : name;
 }
+
+/** Neighborhoods that take "the" in a sentence ("in the East Village", "the Upper West Side"). */
+const TAKES_THE = /^(East Village|West Village|Upper (East|West) Side|Lower East Side)\b/;
+
+/** A neighborhood name inside a sentence: "the East Village", "Astoria". Capitalize it yourself at a sentence start. */
+export function neighborhoodInProse(name: string): string {
+  return TAKES_THE.test(name) ? `the ${name}` : name;
+}
+
+/**
+ * A neighborhood with its borough, for a sentence that is read on its own (a Q&A item, a meta
+ * description): "Astoria, Queens", "the East Village, Manhattan", "Mott Haven, the Bronx"; a name that
+ * already says its borough ("Bronx parks", "Queens Village") stands alone.
+ */
+export function neighborhoodPlace(name: string, borough: Borough): string {
+  const prose = neighborhoodInProse(name);
+  return name.includes(borough) ? prose : `${prose}, ${boroughInProse(borough)}`;
+}

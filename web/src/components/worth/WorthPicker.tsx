@@ -124,8 +124,9 @@ export function WorthPicker({ menuKey, restaurantId, burger, price }: { menuKey:
       ? worthAnnouncement(summarize(hists.hists.get(menuKey), price))
       : "";
 
+  // data-nosnippet: the slider's $40 start and its $5/$75 ends are not prices, so search snippets skip the card.
   return (
-    <div ref={ref} className="worth-card panel">
+    <div ref={ref} className="worth-card panel" data-nosnippet="">
       <form className="worth-form" onSubmit={onSubmit}>
         <label htmlFor={sliderId} className="t-ui-m worth-label">
           Your price for <span className="break-anywhere font-semibold">{burger}</span>

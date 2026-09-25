@@ -57,8 +57,8 @@ export function RankingPage({ spec }: { spec: RankingSpec }) {
   const answer = segmentsText(spec.kind === "under" ? underSentence(spec.under as number, place, rows, month) : endSentence(spec.kind, place, topTied(rows), month));
   const count =
     spec.kind === "under"
-      ? `All ${formatCount(rows.length)} burgers under ${formatPrice(spec.under)} in ${place}, cheapest first.`
-      : `The ${formatCount(rows.length)} ${spec.kind === "cheapest" ? "cheapest" : "most expensive"} of ${formatCount(total)} burgers in ${place}.`;
+      ? `All ${formatCount(rows.length)} different burgers under ${formatPrice(spec.under)} in ${place}, cheapest first.`
+      : `The ${formatCount(rows.length)} ${spec.kind === "cheapest" ? "cheapest" : "most expensive"} of ${formatCount(total)} different burgers in ${place}.`;
   const ticket = TICKET[spec.kind];
 
   return (

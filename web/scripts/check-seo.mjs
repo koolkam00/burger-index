@@ -127,12 +127,15 @@ function expectedRanking(path) {
   let menus = distinctMenus(scope).sort((a, b) => (desc ? b.price - a.price : a.price - b.price) || a.r.name.localeCompare(b.r.name) || byKeyOrder(a, b));
   if (under) menus = menus.filter((x) => cents(x.price) < +under * 100);
   const total = menus.length;
-  const rows = under ? menus : menus.slice(0, 25);
   let rank = 0;
-  rows.forEach((x, i) => {
-    if (i === 0 || cents(x.price) !== cents(rows[i - 1].price)) rank = i + 1;
+  menus.forEach((x, i) => {
+    if (i === 0 || cents(x.price) !== cents(menus[i - 1].price)) rank = i + 1;
     x.rank = rank;
   });
+  // Cheapest / most expensive: the first 25, at most half the place's menus (at least one), plus
+  // every menu tied with the last of them; under $N: every row.
+  const cap = Math.max(1, Math.min(25, Math.floor(total / 2)));
+  const rows = under || menus.length <= cap ? menus : menus.filter((x) => x.rank <= menus[cap - 1].rank);
   return { rows, total, desc };
 }
 
@@ -356,10 +359,12 @@ for (const p of pages) {
     const lede = text(/<p class="t-lede[^"]*">(.*?)<\/p>/s.exec(html)?.[1] ?? "");
     const top = ranking.rows[0];
     if (top && !(lede.includes(top.r.name) && lede.includes(money(top.price)) && lede.includes(`(${month})`))) err(`${path}: lede "${lede}" does not name ${top.r.name}, ${money(top.price)} and ${month}`);
-    // How many there are, under the table ("The 25 cheapest of 532 burgers in NYC.", "All 90 burgers under $15 …").
+    // How many there are, under the table ("The 25 cheapest of 532 different burgers in NYC.", "All 90 different burgers under $15 …").
     const n = (v) => v.toLocaleString("en-US");
     const countLine = text(/<\/table>\s*<\/div>\s*<p class="t-ui-s muted mt-3">(.*?)<\/p>/s.exec(html)?.[1] ?? "");
-    const wantCount = /under/.test(path) ? `All ${n(ranking.rows.length)} burgers under` : `The ${n(ranking.rows.length)} ${ranking.desc ? "most expensive" : "cheapest"} of ${n(ranking.total)} burgers`;
+    const wantCount = /under/.test(path)
+      ? `All ${n(ranking.rows.length)} different burgers under`
+      : `The ${n(ranking.rows.length)} ${ranking.desc ? "most expensive" : "cheapest"} of ${n(ranking.total)} different burgers`;
     if (ranking.rows.length > 1 && !countLine.startsWith(wantCount)) err(`${path}: count line "${countLine}", expected "${wantCount} …"`);
     p.rankingRows = trs.length;
   }

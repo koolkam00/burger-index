@@ -33,6 +33,11 @@ test("resolveSite: --site, then SITE_URL, NEXT_PUBLIC_SITE_URL, Vercel's product
   assert.equal(resolveSite({ VERCEL_PROJECT_PRODUCTION_URL: "burger-index.vercel.app" }, undefined), "https://burger-index.vercel.app");
   assert.equal(resolveSite({}, "burger-index.vercel.app"), "https://burger-index.vercel.app");
   assert.throws(() => resolveSite({}, undefined), /no site/);
+  // A blank variable falls through, like site-url.ts.
+  assert.equal(resolveSite({ SITE_URL: "", NEXT_PUBLIC_SITE_URL: "https://a.example/" }, undefined), "https://a.example");
+  assert.equal(resolveSite({ SITE_URL: "  ", VERCEL_PROJECT_PRODUCTION_URL: "burger-index.vercel.app" }, undefined), "https://burger-index.vercel.app");
+  assert.equal(resolveSite({ SITE_URL: "https://a.example" }, " "), "https://a.example");
+  assert.throws(() => resolveSite({ SITE_URL: " ", VERCEL_PROJECT_PRODUCTION_URL: " " }, undefined), /no site/);
 });
 
 test("isLocalSite: IndexNow can't reach http, localhost or private addresses", () => {

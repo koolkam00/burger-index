@@ -41,10 +41,11 @@ export function Letterboard({ overline, price, line }: { overline: string; price
             {parts ? (
               <p className="board-price t-display-xl">
                 <span className="sr-only">{formatPrice(price, { cents: "always" })}</span>
+                {/* Drawn from data-text (see Money), so the price is in the page once, as the sr-only text. */}
                 <span className="money" aria-hidden="true">
-                  <span className="money-dollar">$</span>
-                  <span className="money-whole">{parts.dollars}</span>
-                  <span className="money-cents">{parts.cents}</span>
+                  <span className="money-dollar" data-text="$" />
+                  <span className="money-whole" data-text={parts.dollars} />
+                  <span className="money-cents" data-text={parts.cents} />
                 </span>
               </p>
             ) : (

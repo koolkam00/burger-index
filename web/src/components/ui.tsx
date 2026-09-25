@@ -13,32 +13,31 @@ const ICON = { strokeWidth: 2, "aria-hidden": true } as const;
 
 export type NauticalIcon = ComponentType<IconProps>;
 
-/** Display price with deli price-card cents ($ at 0.5em, cents at 0.45em, underlined). */
+/**
+ * Display price with deli price-card cents ($ at 0.5em, cents at 0.45em, underlined). The page holds
+ * the price once, as text ("$20.00", sr-only); the visible "$", dollars and cents are drawn from
+ * `data-text` by CSS (globals.css, `[data-text]::before`), so a reader without CSS or scripts gets
+ * "$20.00", never "$20.00$2000".
+ */
 export function Money({ value, className = "" }: { value: number; className?: string }) {
   const { dollars, cents } = priceParts(value);
   return (
     <span className={`money ${className}`}>
       <span className="sr-only">{formatPrice(value, { cents: "always" })}</span>
-      <span aria-hidden="true" className="money-dollar">
-        $
-      </span>
-      <span aria-hidden="true" className="money-whole">
-        {dollars}
-      </span>
-      <span aria-hidden="true" className="money-cents">
-        {cents}
-      </span>
+      <span aria-hidden="true" className="money-dollar" data-text="$" />
+      <span aria-hidden="true" className="money-whole" data-text={dollars} />
+      <span aria-hidden="true" className="money-cents" data-text={cents} />
     </span>
   );
 }
 
-/** Two display prices as one unit: "$9.15–$29.40" never breaks between the dash and a price. */
+/** Two display prices as one unit: "$9.15–$29.40" never breaks between the dash and a price (as text: "$9.15 to $29.40"). */
 export function MoneyRange({ lo, hi }: { lo: number; hi: number }) {
   return (
     <span className="stat-range">
       <Money value={lo} />
-      <span aria-hidden="true">–</span>
-      <span className="sr-only">to</span>
+      <span aria-hidden="true" data-text="–" />
+      <span className="sr-only">{" to "}</span>
       <Money value={hi} />
     </span>
   );

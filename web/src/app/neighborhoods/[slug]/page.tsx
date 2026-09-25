@@ -89,6 +89,7 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
   const faq = neighborhoodFaq({
     generatedAt: getGeneratedAt(),
     name: n.name,
+    borough: n.borough,
     median: n.index_median,
     cityMedian: median,
     menus: c.menus,

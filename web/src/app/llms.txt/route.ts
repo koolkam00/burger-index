@@ -16,15 +16,15 @@ function end(m: Menu | undefined) {
   return { restaurant: r.name, burger: r.burger.name, price: m.indexPrice, where: [r.neighborhood, r.borough].filter(Boolean).join(", "), path: `/restaurants/${r.id}` };
 }
 
-/** "the 25 cheapest of 532, from $6.00 at Johnny's Reef", "90 burgers, $6.00 to $14.99". */
+/** "the 25 cheapest of 532 different burgers, from $6.00 at Johnny's Reef", "90 different burgers, $6.00 to $14.99". */
 function rankingNote(spec: RankingSpec, restaurants: Parameters<typeof rankMenus>[0]): string | undefined {
   const { rows, total } = rankMenus(restaurants, spec);
   if (!rows.length) return undefined;
   const money = (v: number) => formatPrice(v, { cents: "always" });
   const first = rows[0];
-  if (spec.kind === "under") return `${formatCount(total)} burgers, ${money(first.indexPrice)} to ${money(rows[rows.length - 1].indexPrice)}`;
+  if (spec.kind === "under") return `${formatCount(total)} different burgers, ${money(first.indexPrice)} to ${money(rows[rows.length - 1].indexPrice)}`;
   const which = spec.kind === "cheapest" ? "cheapest" : "most expensive";
-  return `the ${rows.length} ${which} of ${formatCount(total)}, ${spec.kind === "cheapest" ? "from" : "up to"} ${money(first.indexPrice)} at ${first.restaurant.name}`;
+  return `the ${rows.length} ${which} of ${formatCount(total)} different burgers, ${spec.kind === "cheapest" ? "from" : "up to"} ${money(first.indexPrice)} at ${first.restaurant.name}`;
 }
 
 export function GET() {
@@ -39,6 +39,7 @@ export function GET() {
     median: stats.index_median,
     menus: getMenuCounts().menus,
     locations: stats.restaurants_priced,
+    pins: restaurants.filter((r) => r.lat !== null && r.lng !== null).length,
     p10: stats.index_p10,
     p90: stats.index_p90,
     boroughs: getBoroughs().map((b) => ({ name: b.name, slug: b.slug, median: b.summary?.index_median ?? null, menus: b.menuCounts.menus })),

@@ -11,7 +11,7 @@ import { MenuEnds, menuEndsLists } from "@/components/RestaurantBits";
 import { Buoy, Net, Scales, ShipWheel, Spatula, Spyglass } from "@/components/icons/nautical";
 import { BoroughDot, Bubbles, Caustics, ChartEmpty, KickerTicket, SectionHeading, WaveEdge } from "@/components/ui";
 import { cityFaq } from "@/lib/answers";
-import { boroughInProse } from "@/lib/boroughs";
+import { boroughInProse, neighborhoodInProse } from "@/lib/boroughs";
 import { getBoroughs, getGeneratedAt, getMenuCounts, getPricedRestaurants, getStats, rankedNeighborhoods } from "@/lib/data";
 import { CSV_PATH } from "@/lib/csv";
 import { formatCount, formatDate, formatIsoDay, formatMonthYear, formatPrice, pluralize, spreadEnds } from "@/lib/format";
@@ -64,7 +64,7 @@ export default function HomePage() {
     cheapest: topTied(rankMenus(restaurants, cheapestSpec()).rows),
     priciest: topTied(rankMenus(restaurants, priciestSpec()).rows),
     boroughs: pricedBoroughs.map((b) => ({ name: boroughInProse(b.name), href: `/boroughs/${b.slug}`, median: b.summary!.index_median as number })),
-    neighborhoods: ranked.map((n) => ({ name: n.name, href: `/neighborhoods/${n.slug}`, median: n.index_median as number })),
+    neighborhoods: ranked.map((n) => ({ name: neighborhoodInProse(n.name), href: `/neighborhoods/${n.slug}`, median: n.index_median as number })),
   });
   const neighborhoodRows = ranked.length > 16 ? [...ranked.slice(0, 8), ...ranked.slice(-8)] : ranked;
 

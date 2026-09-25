@@ -5,7 +5,7 @@
 //
 // Copy rules (DESIGN.md "Voice & Copy"): numbers, names and plain words; no method, no quality words.
 // Every number is computed from the dataset at build time; pages pass the lists in. Pure, client-safe.
-import { boroughInProse } from "./boroughs";
+import { boroughInProse, neighborhoodInProse, neighborhoodPlace } from "./boroughs";
 import { formatMonthYear, formatPrice, pluralize, theBurger } from "./format";
 import type { Menu } from "./menus";
 import { cheapestSpec, priciestSpec, rankingNameInSentence, rankingPath, type RankingSpec } from "./rankings";
@@ -24,7 +24,7 @@ const money = (v: number) => formatPrice(v, { cents: "always" });
 const cents = (v: number) => Math.round(v * 100);
 const capFirst = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
-/** How a menu is placed after its restaurant's name: " in West Village, Manhattan", " (5 locations)" or "". */
+/** How a menu is placed after its restaurant's name: " in the West Village, Manhattan", " (5 locations)" or "". */
 export type Where = (m: Menu) => string;
 
 export const nowhere: Where = () => "";
@@ -33,13 +33,13 @@ export const nowhere: Where = () => "";
 export const whereInCity: Where = (m) =>
   m.chain && m.locations > 1
     ? ` (${pluralize(m.locations, "location")})`
-    : ` in ${[m.restaurant.neighborhood, boroughInProse(m.restaurant.borough)].filter(Boolean).join(", ")}`;
+    : ` in ${[m.restaurant.neighborhood && neighborhoodInProse(m.restaurant.neighborhood), boroughInProse(m.restaurant.borough)].filter(Boolean).join(", ")}`;
 
 /** In a borough: the neighborhood, or "(3 Brooklyn locations)". */
 export const whereInBorough =
   (borough: Borough): Where =>
   (m) =>
-    m.chain && m.locations > 1 ? ` (${pluralize(m.locations, `${borough} location`)})` : m.restaurant.neighborhood ? ` in ${m.restaurant.neighborhood}` : "";
+    m.chain && m.locations > 1 ? ` (${pluralize(m.locations, `${borough} location`)})` : m.restaurant.neighborhood ? ` in ${neighborhoodInProse(m.restaurant.neighborhood)}` : "";
 
 /** In a neighborhood: nothing, or "(2 locations here)". */
 export const whereInNeighborhood: Where = (m) => (m.chain && m.locations > 1 ? ` (${pluralize(m.locations, "location")} here)` : "");
@@ -61,7 +61,7 @@ export function endSentence(kind: "cheapest" | "priciest", place: string, tied: 
   return [`${tied.length} burgers tie for the ${what} in ${place} at ${price} (${month}), among them `, ...one(tied[0]), "."];
 }
 
-/** "90 burgers in NYC cost under $15 (September 2026), from $6.00 at Johnny's Reef to $14.99 at …" */
+/** "90 different burgers in NYC cost under $15 (September 2026), from $6.00 at Johnny's Reef to $14.99 at …" */
 export function underSentence(under: number, place: string, rows: readonly Menu[], month: string): Segment[] {
   const limit = formatPrice(under);
   if (!rows.length) return [`No burger in ${place} costs under ${limit} (${month}).`];
@@ -69,7 +69,7 @@ export function underSentence(under: number, place: string, rows: readonly Menu[
   if (rows.length === 1) return [`One burger in ${place} costs under ${limit} (${month}): `, theBurger(first.restaurant.burger.name), " at ", restaurantLink(first), `, ${money(first.indexPrice)}.`];
   const last = rows[rows.length - 1];
   return [
-    `${pluralize(rows.length, "burger")} in ${place} cost under ${limit} (${month}), from ${money(first.indexPrice)} at `,
+    `${pluralize(rows.length, "different burger")} in ${place} cost under ${limit} (${month}), from ${money(first.indexPrice)} at `,
     restaurantLink(first),
     ` to ${money(last.indexPrice)} at `,
     restaurantLink(last),
@@ -117,9 +117,9 @@ export type CityFaqInput = {
   /** Every menu on the lowest / highest price citywide (topTied of the NYC rankings). */
   cheapest: readonly Menu[];
   priciest: readonly Menu[];
-  /** Boroughs with a median. */
+  /** Boroughs with a median, names in prose (boroughInProse). */
   boroughs: readonly Area[];
-  /** Ranked neighborhoods (any order). */
+  /** Ranked neighborhoods (any order), names in prose (neighborhoodInProse). */
   neighborhoods: readonly Area[];
 };
 
@@ -176,7 +176,7 @@ export function cityFaq(d: CityFaqInput): FaqItem[] {
 
 type AreaFaqInput = {
   generatedAt: string;
-  /** The place in a sentence: "Brooklyn", "the Bronx", "Astoria". */
+  /** The place in a sentence: "Brooklyn", "the Bronx", "Astoria, Queens" (neighborhoodPlace). */
   place: string;
   median: number | null;
   cityMedian: number | null;
@@ -193,13 +193,15 @@ function areaFaq(d: AreaFaqInput, ranking?: { cheapest: RankingSpec; priciest: R
   if (d.median === null || !d.menus || !d.cheapest.length) return items;
   const vs = d.cityMedian !== null ? versus(d.median, d.cityMedian) : null;
   const only = d.cheapest[0];
+  // Mid-sentence, "Astoria, Queens" closes with a comma of its own: "in Astoria, Queens, costs".
+  const mid = d.place.includes(",") ? `${d.place},` : d.place;
   items.push({
     q: `How much does a burger cost in ${d.place}?`,
     a:
       d.menus > 1
-        ? [`The median burger in ${d.place} costs ${money(d.median)} (${month})${vs ? `, ${vs}` : ""}.`]
+        ? [`The median burger in ${mid} costs ${money(d.median)} (${month})${vs ? `, ${vs}` : ""}.`]
         : [
-            `${capFirst(d.place)} has one priced burger: `,
+            `${capFirst(mid)} has one priced burger: `,
             theBurger(only.restaurant.burger.name),
             " at ",
             restaurantLink(only),
@@ -210,11 +212,11 @@ function areaFaq(d: AreaFaqInput, ranking?: { cheapest: RankingSpec; priciest: R
   if (d.menus > 1 && hasSpread(d.cheapest, d.priciest)) {
     items.push({
       q: `Where is the cheapest burger in ${d.place}?`,
-      a: [...endSentence("cheapest", d.place, d.cheapest, month, d.where), ...(ranking ? seeRanking(ranking.cheapest) : [])],
+      a: [...endSentence("cheapest", mid, d.cheapest, month, d.where), ...(ranking ? seeRanking(ranking.cheapest) : [])],
     });
     items.push({
       q: `What is the most expensive burger in ${d.place}?`,
-      a: [...endSentence("priciest", d.place, d.priciest, month, d.where), ...(ranking ? seeRanking(ranking.priciest) : [])],
+      a: [...endSentence("priciest", mid, d.priciest, month, d.where), ...(ranking ? seeRanking(ranking.priciest) : [])],
     });
   }
   return items;
@@ -222,7 +224,7 @@ function areaFaq(d: AreaFaqInput, ranking?: { cheapest: RankingSpec; priciest: R
 
 export type BoroughFaqInput = Omit<AreaFaqInput, "place" | "where"> & {
   borough: { name: Borough; slug: string };
-  /** The borough's ranked neighborhoods. */
+  /** The borough's ranked neighborhoods, names in prose (neighborhoodInProse). */
   neighborhoods: readonly Area[];
   /** The borough's two ranking pages (rankings.ts boroughRankings). */
   ranking: { cheapest: RankingSpec; priciest: RankingSpec };
@@ -248,8 +250,9 @@ export function boroughFaq(d: BoroughFaqInput): FaqItem[] {
   return items;
 }
 
-export type NeighborhoodFaqInput = Omit<AreaFaqInput, "place" | "where"> & { name: string };
+export type NeighborhoodFaqInput = Omit<AreaFaqInput, "place" | "where"> & { name: string; borough: Borough };
 
+/** Each item names the borough too ("How much does a burger cost in Astoria, Queens?"), since it may be read on its own. */
 export function neighborhoodFaq(d: NeighborhoodFaqInput): FaqItem[] {
-  return areaFaq({ ...d, place: d.name, where: whereInNeighborhood });
+  return areaFaq({ ...d, place: neighborhoodPlace(d.name, d.borough), where: whereInNeighborhood });
 }

@@ -1,7 +1,7 @@
 // /llms.txt (llmstxt.org): a plain Markdown summary for AI assistants with the headline numbers, the
 // date and links to the main pages and the CSV. Numbers and labels only, like the site (DESIGN.md
 // "No methodology copy"). Pure: app/llms.txt/route.ts gathers the inputs from data.ts.
-import { formatDate, formatPrice, pluralize } from "./format";
+import { formatCount, formatDate, formatPrice, pluralize } from "./format";
 
 export type LlmsLink = { title: string; path: string; note?: string };
 export type LlmsSection = { title: string; links: readonly LlmsLink[] };
@@ -14,6 +14,8 @@ export type LlmsInput = {
   median: number | null;
   menus: number;
   locations: number;
+  /** Priced restaurants with a pin on the map (the rest have no coordinates). */
+  pins: number;
   p10: number | null;
   p90: number | null;
   boroughs: ReadonlyArray<{ name: string; slug: string; median: number | null; menus: number }>;
@@ -56,8 +58,8 @@ export function llmsTxt(d: LlmsInput): string {
     }
     const n = d.neighborhoods;
     if (n.top && n.bottom) {
-      lines.push(`- Priciest neighborhood: [${n.top.name}](${url(n.top.path)}), ${money(n.top.price)} median`);
-      lines.push(`- Cheapest neighborhood: [${n.bottom.name}](${url(n.bottom.path)}), ${money(n.bottom.price)} median`);
+      lines.push(`- Priciest of the ${n.ranked} ranked neighborhoods: [${n.top.name}](${url(n.top.path)}), ${money(n.top.price)} median`);
+      lines.push(`- Cheapest of the ${n.ranked} ranked neighborhoods: [${n.bottom.name}](${url(n.bottom.path)}), ${money(n.bottom.price)} median`);
     }
     lines.push("");
   }
@@ -66,7 +68,14 @@ export function llmsTxt(d: LlmsInput): string {
   const pages: LlmsLink[] = [
     { title: "The Burger Index", path: "/", note: "the NYC median, prices by borough and neighborhood, the cheapest and priciest burgers" },
     { title: "Every burger", path: "/burgers", note: `search and filter ${pluralize(d.locations, "priced burger")} by name, restaurant, neighborhood, borough and price` },
-    { title: "Map", path: "/map", note: "every priced restaurant on a map, colored by price" },
+    {
+      title: "Map",
+      path: "/map",
+      note:
+        d.pins === d.locations
+          ? `${pluralize(d.pins, "priced restaurant")} on a map, colored by price`
+          : `${formatCount(d.pins)} of the ${pluralize(d.locations, "priced restaurant")} on a map, colored by price (the rest are listed below it)`,
+    },
     { title: "Neighborhoods", path: "/neighborhoods", note: `${pluralize(d.neighborhoods.pages, "neighborhood")} with prices, ${d.neighborhoods.ranked} ranked by median` },
     { title: "The People's Price", path: "/peoples-price", note: "what visitors would pay for each burger, next to the menu price" },
     ...d.boroughs.map((b) => ({ title: `${b.name} burger prices`, path: `/boroughs/${b.slug}` })),

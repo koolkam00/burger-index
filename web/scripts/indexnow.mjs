@@ -36,11 +36,13 @@ export function findKey(dir = PUBLIC_DIR) {
   return found[0];
 }
 
-/** The site origin: --site, else SITE_URL, NEXT_PUBLIC_SITE_URL, or https://$VERCEL_PROJECT_PRODUCTION_URL. */
+/**
+ * The site origin: --site, else SITE_URL, NEXT_PUBLIC_SITE_URL, or https://$VERCEL_PROJECT_PRODUCTION_URL.
+ * A blank value falls through to the next, as in src/lib/site-url.ts.
+ */
 export function resolveSite(env, flag) {
-  const raw = (flag ?? env.SITE_URL ?? env.NEXT_PUBLIC_SITE_URL ?? (env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}` : ""))
-    .trim()
-    .replace(/\/+$/, "");
+  const vercel = env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  const raw = ([flag, env.SITE_URL, env.NEXT_PUBLIC_SITE_URL].map((v) => v?.trim()).find(Boolean) ?? (vercel ? `https://${vercel}` : "")).replace(/\/+$/, "");
   if (!raw) throw new Error("no site: pass --site https://… or set SITE_URL (or NEXT_PUBLIC_SITE_URL / VERCEL_PROJECT_PRODUCTION_URL)");
   const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
   return url.origin;

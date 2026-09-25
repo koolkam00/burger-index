@@ -177,8 +177,8 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   source/date line ("Prices from restaurant menus and ordering pages, checked September 2026."), shown under the home H1 and
   in the footer.
 - **Ranking pages:** `src/lib/rankings.ts` defines the 14 lists and their rows (`rankMenus`: distinct menus in the site's
-  usual cheapest/priciest order, a chain once with its location count, ties sharing a rank; the first 25, or every row under
-  $N), `components/RankingPage.tsx` draws them (breadcrumbs, a ticket, the H1, a one-line answer, the table, a link to the
+  usual cheapest/priciest order, a chain once with its location count, ties sharing a rank; the first 25 or half the place's
+  menus, whichever is fewer (`rankingCap`), plus every menu tied at the cut, or every row under $N), `components/RankingPage.tsx` draws them (breadcrumbs, a ticket, the H1, a one-line answer, the table, a link to the
   same list on `/burgers`, "More burger rankings.") and `rankingSeo()` titles them. Each route is a thin static page:
   `app/cheapest-burgers/page.tsx`, `app/cheapest-burgers/[borough]/page.tsx` (`generateStaticParams` over the boroughs with
   a priced restaurant), the same for `most-expensive-burgers`, and `app/burgers-under-15|20/page.tsx`. They are linked from the
@@ -231,14 +231,14 @@ Notes:
   keep Vercel's "Include files outside the root directory in the Build Step" setting on (the default for new projects).
 - The repo-root `.vercelignore` is an allowlist (`web/`, `contract/`, `data/burger_index.json`). Vercel does not read
   `.gitignore`, so without it a CLI deploy from the root would upload `.env` (the Context.dev key), `.venv/` and the scrape cache.
-- Environment variables (Project → Settings → Environment Variables, for Production and Preview). All are public, inlined into the
+- Environment variables (Project → Settings → Environment Variables, for Production and Preview unless the row says otherwise). All are public, inlined into the
   JavaScript at build time, so a change needs a redeploy:
 
   | Variable | Value | Without it |
   |---|---|---|
   | `NEXT_PUBLIC_SUPABASE_URL` | `https://<project-ref>.supabase.co` (also in `web/.env.local`) | answers stay closed ("Answers open soon.") |
   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the Supabase **publishable** key, `sb_publishable_…` (also in `web/.env.local`) | answers stay closed |
-  | `NEXT_PUBLIC_POSTHOG_KEY` | `phc_soMqVLQsk4hmuZYyWwGDrjjPQwRng7a6bK4i9E9vpBQ9` (the PostHog project's public token; **Vercel only**, never in `web/.env.local`) | no analytics |
+  | `NEXT_PUBLIC_POSTHOG_KEY` | `phc_soMqVLQsk4hmuZYyWwGDrjjPQwRng7a6bK4i9E9vpBQ9` (the PostHog project's public token; **Vercel, Production environment only**, never in `web/.env.local`: a Preview deployment with the key would count as real traffic on the dashboard, whose filters only drop localhost) | no analytics |
   | `NEXT_PUBLIC_POSTHOG_HOST` | optional; leave unset for the `/ingest` proxy in `web/vercel.json` | `/ingest` |
   | `NEXT_PUBLIC_SITE_URL` | only for a custom domain, once there is one (`https://…`) | Vercel's production URL (`https://$VERCEL_PROJECT_PRODUCTION_URL`, the `*.vercel.app` address), else `http://localhost:4173` with a build warning |
 
@@ -264,7 +264,7 @@ Notes:
 |---|---|
 | `/` | The headline index on the Order Board with the source line, price histogram, borough bars with links to the five borough pages (`#boroughs`, which replaced `/boroughs`), cheapest and priciest (each with "See all"), neighborhood ranking, Q&A |
 | `/burgers` | Every priced restaurant's burger, one row each: search, filters (borough, neighborhood, price), sort, all synced to the URL; then links to every ranking page |
-| `/cheapest-burgers`, `/most-expensive-burgers` (and `/[borough]` under each), `/burgers-under-15`, `/burgers-under-20` | Ranking pages: a one-line answer and a ranked table, one row per distinct menu (top 25; every row under $N) |
+| `/cheapest-burgers`, `/most-expensive-burgers` (and `/[borough]` under each), `/burgers-under-15`, `/burgers-under-20` | Ranking pages: a one-line answer and a ranked table, one row per distinct menu (top 25 or half the place's menus, ties at the cut kept; every row under $N) |
 | `/peoples-price` | The People's Price: the People's Burger Index beside the Burger Index, live boards (biggest bargains, most overpriced, most answered), burgers that need a few more answers, and a search that links to any burger's slider (all loaded in the browser) |
 | `/restaurants/[id]` | Priced restaurants only: "The burger" (name, price, description, vs neighborhood and NYC, price source), menu page and website links, "See it on the map" (`/map?r=<id>`), hand-check label, "What would you pay?" (the slider, then the People's Price), more in the neighborhood, other chain locations |
 | `/neighborhoods`, `/neighborhoods/[slug]` | Sortable ranking (areas with at least 5 distinct priced menus; a chain counts once) and a page for every neighborhood with a priced restaurant (its unpriced restaurants listed as plain names, then a Q&A); neighborhoods with nothing priced are plain names on `/neighborhoods` |

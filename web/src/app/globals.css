@@ -1190,6 +1190,12 @@
     padding-bottom: 0.08em;
     border-bottom: 0.07em solid currentColor;
   }
+  /* The visible "$", dollars, cents and range dash are drawn from data-text, so the price is in the
+     page once, as its sr-only text: a reader without CSS gets "$20.00", not "$20.00$2000". */
+  .money [data-text]::before,
+  .stat-range > [data-text]::before {
+    content: attr(data-text);
+  }
 
   /* ---- Page bands: the home hero window and the inner-page shallows ------------------------ */
   .hero,

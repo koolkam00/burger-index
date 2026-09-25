@@ -1,9 +1,11 @@
 import { ArrowRight } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { MessageBottle } from "@/components/icons/nautical";
 import { Caustics, WaveEdge } from "@/components/ui";
 
-export const metadata = { title: "Page not found", robots: { index: false } };
+// No canonical (the layout's "/" would point a 404 at home); Next adds the one noindex a 404 needs.
+export const metadata: Metadata = { title: "Page not found", alternates: { canonical: null } };
 
 /** The 404: the shallows band, a porthole with a message in a bottle on the trap net. No exclamation marks. */
 export default function NotFound() {
