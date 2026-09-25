@@ -160,8 +160,8 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
 ## Data files
 
 - `data/burger_index.json` — THE dataset (contract v2 above). `build` validates before writing and fails loudly.
-- `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,101 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, and the 2026-09-25 deletions, see `data/list_changes_2026-09-23.md`: `name, neighborhood,
-  borough, website, menu_url, notes, source` where `source` is `pilot-100|uptown|downtown|outer|dohmh-diner-pub|dohmh-hamburgers`). It's the user's data:
+- `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,108 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, the 2026-09-25 deletions and the 2026-09-25 best-burger-list additions, see `data/list_changes_2026-09-23.md`: `name, neighborhood,
+  borough, website, menu_url, notes, source` where `source` is `pilot-100|uptown|downtown|outer|dohmh-diner-pub|dohmh-hamburgers|best-lists-2026-09`). It's the user's data:
   don't edit it without their approval; report duplicates (`report.csv_duplicate_matches`), unmatched rows (`report.csv_unmatched`),
   ambiguous rows (`report.csv_ambiguous`) and closed places (`report.csv_address_now_other_business`,
   `report.csv_stale_matches`; e.g. "Guy Fieri's American Kitchen & Bar", Times Square, closed 2017) for the user to fix.

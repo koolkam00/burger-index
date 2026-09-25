@@ -1,7 +1,7 @@
 # The Burger Index
 
 What a burger costs in New York City. For each restaurant on our curated list of NYC burger places
-([`burger-list-master.csv`](burger-list-master.csv), 1,101 rows), we find its menu online and publish one burger:
+([`burger-list-master.csv`](burger-list-master.csv), 1,108 rows), we find its menu online and publish one burger:
 its **highest-priced eligible beef burger**, one burger for one person at its dinner or all-day price where the menu
 has one (never a happy-hour price; no combos, group platters, kids' items or bunless diet plates). That price is the
 restaurant's **index price**, and the Burger Index is the median of them, with a chain's menu counted once. National
