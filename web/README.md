@@ -1,7 +1,7 @@
 # The Burger Index: website
 
 The public site for the NYC Burger Index: the median index price across the New York menus we have priced, from
-the restaurants in the pipeline's scope (by default our curated list of burger restaurants; see "Restaurant scope" below).
+the restaurants in the pipeline's scope (by default our curated list of burger restaurants).
 It is a fully static Next.js site (App Router, TypeScript strict, Tailwind v4, zod). There is no server code and no secret key: the Python
 pipeline writes one JSON file, and `next build` turns it into plain HTML in `out/`. The one live part, "What's it worth?", talks to
 Supabase straight from the browser with a public key (see "What's it worth? (Supabase)" below).
@@ -20,8 +20,9 @@ pipeline (Python) ──> ../data/burger_index.json ──> npm run sync-data �
    (`.venv/bin/python -m pipeline build` from the repo root rewrites it from the scrape cache).
 2. The same script validates the file against the JSON Schema contract (ajv, draft 2020-12 with formats). Invalid data stops the build.
 3. `src/lib/data.ts` (server-only) parses it again with the zod mirror in `src/lib/schema.ts` and checks the invariants (unique ids,
-   exactly one index burger per priced restaurant, every published burger priced and its restaurant's price source set). All pages read data through its typed selectors: `getStats()`,
-   `getRestaurant(id)`, `getNeighborhood(slug)`, `getBorough(slug)`, `allBurgers()`, and others.
+   exactly one index burger per priced restaurant at the restaurant's index price, every published burger priced and its
+   restaurant's price source set). All pages read data through its typed selectors: `getStats()`, `getPricedRestaurants()`,
+   `getPricedRestaurant(id)`, `getNeighborhoodPages()`, `getNeighborhood(slug)`, `getBorough(slug)`, and others.
 
 `src/data/` and `public/vendor/` are generated; both are gitignored.
 
@@ -133,34 +134,34 @@ Notes:
 
 | Route | Page |
 |---|---|
-| `/` | The headline index on the Order Board, typical range, counts, price histogram, borough bars, cheapest and priciest, neighborhood ranking |
-| `/burgers` | Every burger: search, filters (borough, neighborhood, price, protein, price source, index-only), sort, all synced to the URL |
+| `/` | The headline index on the Order Board, price histogram, borough bars with links to the five borough pages (`#boroughs`, which replaced `/boroughs`), cheapest and priciest, neighborhood ranking |
+| `/burgers` | Every priced restaurant's burger, one row each: search, filters (borough, neighborhood, price), sort, all synced to the URL |
 | `/peoples-price` | The People's Price: the People's Burger Index beside the Burger Index, live boards (biggest bargains, most overpriced, most answered), burgers that need a few more answers, and a search that links to any burger's slider (all loaded in the browser) |
-| `/restaurants/[id]` | Menu board, index price vs neighborhood and NYC, "What would you pay?" (the slider, then the People's Price), price source, menu link, menu date, hand-check label, other chain locations, locator map |
-| `/neighborhoods`, `/neighborhoods/[slug]` | Sortable ranking (areas with at least 5 distinct priced menus; a chain counts once) and area pages |
-| `/boroughs`, `/boroughs/[slug]` | Borough comparison and borough pages |
-| `/map` | MapLibre GL map, pins colored by price level, legend, list view, restaurants without coordinates |
-| `/data/burger_index.json` | The validated dataset, for download |
+| `/restaurants/[id]` | Priced restaurants only: "The burger" (name, price, description, vs neighborhood and NYC, price source), menu page and website links, "See it on the map" (`/map?r=<id>`), hand-check label, "What would you pay?" (the slider, then the People's Price), more in the neighborhood, other chain locations |
+| `/neighborhoods`, `/neighborhoods/[slug]` | Sortable ranking (areas with at least 5 distinct priced menus; a chain counts once) and a page for every neighborhood with a priced restaurant (its unpriced restaurants listed as plain names); neighborhoods with nothing priced are plain names on `/neighborhoods` |
+| `/boroughs/[slug]` | The five borough pages (there is no `/boroughs` index) |
+| `/map` | MapLibre GL map of the priced restaurants, pins colored by price level, legend, list view, priced restaurants without coordinates |
 | `/og.png`, `/sitemap.xml`, `/robots.txt` | Open Graph image (the Order Board), sitemap, robots |
 
 ## Notes for maintainers
 
 - **Types:** the contract is the source of truth. If it changes, update `src/lib/schema.ts` (zod) to match; `npm run typecheck` then shows
   every page that needs attention.
+- **Pages only for priced places (user decision 2026-09-25):** a restaurant without a price has no page, no sitemap URL and no
+  row in the explorer, the map lists or a chain list; it shows up only as a plain name on its neighborhood's page. A neighborhood
+  gets a page only when something there is priced; the others are plain names on `/neighborhoods`. Their old URLs are 404s.
+  Restaurant ids are still assigned over every restaurant in scope, so a priced restaurant's id (and its People's Price key)
+  never changes.
 - **Menus, not locations:** the index counts each distinct menu once (every independent restaurant, each chain once citywide
-  and at most once per area). Anything the site derives itself (histograms, typical range, rankings, cheapest/priciest lists,
-  the `MIN_RANKED` / `MIN_HISTOGRAM` thresholds, "N menus" copy) goes through `src/lib/menus.ts` (`menuKey`, `pricedMenus`,
-  `menuIndexPrices`, `menuCounts`, `isChainOnly`, `isRankable`). Location counts (`restaurants_priced`, map pins, table rows)
-  stay per location. An area priced only from chain menus is labelled "Chain prices only" and never compared like for like.
-  Hand corrections (`status_detail` "Prices corrected by hand / withheld after re-checking…") are parsed by `src/lib/hand-checks.ts`.
-- **Restaurant scope:** where the restaurant list comes from and how much of it is read so far are never hard-coded. The contract has no
-  field for them, so `src/lib/scope.ts` (`restaurantScope`, exposed as `getScope()` in `data.ts`) parses `methodology.coverage_note`
-  as `pipeline/build.py` `coverage_note` writes it: list only ("our curated list of NYC burger restaurants, matched to NYC DOHMH
-  inspection records...") or list plus DOHMH cuisines ("our curated restaurant list plus every restaurant NYC DOHMH lists under
-  'Hamburgers'..."), the in-scope and not-yet-scraped counts, and whether national fast-food chains are left out. The only thing
-  that reads it is the home "Looked up so far" tile (a plain count, shown while some of the list is unread); no copy names the list
-  or says how much of it is read. `test/scope.test.ts` pins both phrasings; if the pipeline rewords the note, update both together.
-  An unrecognised note gives kind "unknown" and no pending count.
+  and at most once per area). Anything the site derives itself (histograms, rankings, cheapest/priciest lists, the
+  `MIN_RANKED` / `MIN_HISTOGRAM` thresholds, "N menus" copy) goes through `src/lib/menus.ts` (`menuKey`, `pricedMenus`,
+  `menuIndexPrices`, `menuCounts`, `isRankable`). Location counts (`restaurants_priced`, map pins, table rows) stay per
+  location. An area priced only from chain menus is treated like any other area (the "Chain prices only" label was removed
+  on 2026-09-25). Hand corrections (`status_detail` "Prices corrected by hand after re-checking…") are parsed by
+  `src/lib/hand-checks.ts`.
+- **Explorer payload:** `src/lib/explorer-data.ts` sends one row per priced restaurant (`{id, name, burger, price, nb, nbSlug,
+  borough, source}`, `ExRow` in `src/lib/explorer.ts`); `filterRows()` there does the filtering and sorting, tested in
+  `test/explorer.test.ts`. Old `protein`, `source`, `hide` and `index` URL parameters are ignored.
 - **No methodology copy:** the site has no Methodology page and explains nowhere how the data is gathered, computed, counted,
   filtered, corrected or limited (user decision 2026-09-25; DESIGN.md "No methodology copy"). Keep new copy to numbers and
   short labels.
