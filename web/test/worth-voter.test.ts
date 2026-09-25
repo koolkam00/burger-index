@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { beforeEach, test } from "node:test";
-import { getVoterId, isVoterId, randomVoterId, readVoterId, resetVoterIdForTests, VOTER_KEY, type VoterStorage } from "../src/lib/voter";
+import { getVoterId, isVoterId, randomVoterId, readVoterId, resetVoterIdForTests, VOTER_KEY, type VoterStorage } from "../src/lib/worth-voter";
 
 /** An in-memory localStorage stand-in; `fail` makes reads and/or writes throw like a blocked store. */
 function memoryStorage(fail: { get?: boolean; set?: boolean } = {}): VoterStorage & { data: Map<string, string> } {

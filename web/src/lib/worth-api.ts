@@ -3,7 +3,7 @@
 // lazily, on the first call, so it lands in its own chunk and only pages that mount a worth component
 // (a restaurant page's picker, the People's Price board) load it.
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
-import { SUPABASE_KEY, SUPABASE_URL, VOTING_ENABLED } from "./vote-config";
+import { SUPABASE_KEY, SUPABASE_URL, WORTH_ENABLED } from "./worth-config";
 import { classifyWorthError, isMenuKey, isValidAnswer, parseHistRow, type HistRow, type WorthErrorKind } from "./worth";
 
 export class WorthError extends Error {
@@ -18,7 +18,7 @@ export class WorthError extends Error {
 let clientPromise: Promise<SupabaseClient> | null = null;
 
 function getClient(): Promise<SupabaseClient> {
-  if (!VOTING_ENABLED || typeof window === "undefined") return Promise.reject(new WorthError("disabled"));
+  if (!WORTH_ENABLED || typeof window === "undefined") return Promise.reject(new WorthError("disabled"));
   if (!clientPromise) {
     clientPromise = import("@supabase/supabase-js").then(({ createClient }) =>
       // No sign-in: nothing to persist, refresh or read from the URL (and no auth keys in storage).

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { Anchor, Net, OrderBell, Scales, Spatula, Spyglass } from "@/components/icons/nautical";
 import { EmptyState, Money, SectionHeading, StatGrid, StatTile } from "@/components/ui";
 import { formatCount, formatPrice, pluralize } from "@/lib/format";
-import { VOTING_ENABLED } from "@/lib/vote-config";
+import { WORTH_ENABLED } from "@/lib/worth-config";
 import { buildWorthBoards, formatDollars, peoplesPrice, searchWorthMenus, summarize, worthHref, type Hist, type WorthMenu, type WorthRow } from "@/lib/worth";
 import { watchHist } from "@/lib/worth-api";
 import { worthStore } from "@/lib/worth-store";
@@ -39,7 +39,7 @@ export function PeoplesPriceBoard({ menus, burgerIndex, menuCount }: { menus: Wo
   const loadAll = useCallback(() => void worthStore.loadHist(keys, { all: true }), [keys]);
 
   useEffect(() => {
-    if (!VOTING_ENABLED) return;
+    if (!WORTH_ENABLED) return;
     const known = new Set(keys);
     const refresh = loadAll;
     refresh();
@@ -74,9 +74,9 @@ export function PeoplesPriceBoard({ menus, burgerIndex, menuCount }: { menus: Wo
 
   const boards = useMemo(() => buildWorthBoards(menus, hists.hists), [menus, hists.hists]);
   // Only a load of every menu makes the boards complete (a restaurant page may have loaded one menu).
-  const loading = VOTING_ENABLED && !hists.all && !hists.allFailed;
-  const failedFirst = VOTING_ENABLED && !hists.all && hists.allFailed;
-  const complete = VOTING_ENABLED && hists.all;
+  const loading = WORTH_ENABLED && !hists.all && !hists.allFailed;
+  const failedFirst = WORTH_ENABLED && !hists.all && hists.allFailed;
+  const complete = WORTH_ENABLED && hists.all;
   const people = peoplesPrice(boards.index);
 
   const findBurger = () => {
@@ -123,7 +123,7 @@ export function PeoplesPriceBoard({ menus, burgerIndex, menuCount }: { menus: Wo
         ) : null}
       </section>
 
-      {!VOTING_ENABLED ? (
+      {!WORTH_ENABLED ? (
         <section className="section" aria-label="The boards">
           <EmptyState art="trap" height={220}>
             Answers open soon.

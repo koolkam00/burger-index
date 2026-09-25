@@ -89,9 +89,9 @@ are disabled and say "Answers open soon.", and `/peoples-price` shows the same.
 
 Code map:
 
-- `src/lib/vote-config.ts`: the two variables (`VOTING_ENABLED`).
-- `src/lib/voter.ts`: the anonymous voter id, a `crypto.randomUUID()` in `localStorage` under `burger-index-voter` (in memory when
-  storage is blocked). Tested in `test/voter.test.ts`.
+- `src/lib/worth-config.ts`: the two variables (`WORTH_ENABLED`).
+- `src/lib/worth-voter.ts`: the anonymous voter id, a `crypto.randomUUID()` in `localStorage` under `burger-index-voter` (in memory
+  when storage is blocked; the key keeps that name so returning visitors keep their answers). Tested in `test/worth-voter.test.ts`.
 - `src/lib/worth-api.ts`: the only module that talks to Supabase. `@supabase/supabase-js` is imported lazily on the first call, so
   it is its own chunk and loads only on pages that mount the slider or the boards (restaurant pages, `/peoples-price`), and there
   only once the slider is near the viewport. Histograms are fetched by menu key (100 keys per request), never the whole table:

@@ -6,7 +6,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { OrderBell } from "@/components/icons/nautical";
 import { Money } from "@/components/ui";
 import { pluralize } from "@/lib/format";
-import { VOTING_ENABLED } from "@/lib/vote-config";
+import { WORTH_ENABLED } from "@/lib/worth-config";
 import { ANSWER_MAX, ANSWER_MIN, ANSWER_START, formatDollars, summarize, WORTH_ERROR_COPY, worthAnnouncement } from "@/lib/worth";
 import { canOrderUp, histKnown, worthStore } from "@/lib/worth-store";
 import { AnswerSpread } from "./AnswerSpread";
@@ -38,10 +38,10 @@ export function WorthPicker({ menuKey, burger, price }: { menuKey: string; burge
   const uid = useId();
   const sliderId = `${uid}-slider`;
   const statusId = `${uid}-status`;
-  const enabled = VOTING_ENABLED;
+  const enabled = WORTH_ENABLED;
 
   useEffect(() => {
-    if (!VOTING_ENABLED) return;
+    if (!WORTH_ENABLED) return;
     const start = () => {
       void worthStore.loadMine();
       void worthStore.loadHist([menuKey]);

@@ -5,4 +5,4 @@
 export const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim().replace(/\/+$/, "");
 export const SUPABASE_KEY = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "").trim();
 
-export const VOTING_ENABLED = /^https?:\/\/\S+$/.test(SUPABASE_URL) && SUPABASE_KEY.length > 0;
+export const WORTH_ENABLED = /^https?:\/\/\S+$/.test(SUPABASE_URL) && SUPABASE_KEY.length > 0;

@@ -19,8 +19,8 @@
 // that arrived after it was sent are replayed on top. So the visitor's own answer is never counted
 // twice, and nothing another visitor did in the meantime is lost.
 import { castWorth, fetchHist, fetchMyWorth, type CastReply } from "./worth-api";
-import { VOTING_ENABLED } from "./vote-config";
-import { getVoterId, readVoterId } from "./voter";
+import { WORTH_ENABLED } from "./worth-config";
+import { getVoterId, readVoterId } from "./worth-voter";
 import { classifyWorthError, isMenuKey, isValidAnswer, type Hist, type HistRow, type WorthErrorKind } from "./worth";
 
 export type WorthApi = {
@@ -458,5 +458,5 @@ export function createWorthStore({ api, voter, enabled }: { api: WorthApi; voter
 export const worthStore: WorthStore = createWorthStore({
   api: { castWorth, fetchMyWorth, fetchHist },
   voter: { read: () => readVoterId(), get: () => getVoterId() },
-  enabled: VOTING_ENABLED,
+  enabled: WORTH_ENABLED,
 });

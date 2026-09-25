@@ -1,6 +1,7 @@
 // The anonymous voter id: one random UUID per browser, made the first time it answers "What's it
 // worth?" (no sign-in); the backend keeps one answer per voter id per menu. It lives in localStorage
-// under "burger-index-voter". Storage can be missing or throw (private windows, blocked site data,
+// under "burger-index-voter" (the key keeps its old name for good: renaming it would lose every returning
+// visitor's answers). Storage can be missing or throw (private windows, blocked site data,
 // previews), so every access is wrapped: when it fails, the id lives in memory for this page view
 // instead, and answering still works.
 export const VOTER_KEY = "burger-index-voter";
