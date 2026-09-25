@@ -1,23 +1,21 @@
 "use client";
 
-import { ArrowRight, TriangleAlert } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import { OrderBell } from "@/components/icons/nautical";
+import { useEffect, useId, useRef, useState } from "react";
 import { Money } from "@/components/ui";
 import { track, worthAnsweredProps } from "@/lib/analytics";
 import { pluralize } from "@/lib/format";
 import { WORTH_ENABLED } from "@/lib/worth-config";
-import { ANSWER_MAX, ANSWER_MIN, ANSWER_START, formatDollars, summarize, WORTH_ERROR_COPY, worthAnnouncement } from "@/lib/worth";
+import { ANSWER_START, summarize, worthAnnouncement, worthStatusText } from "@/lib/worth";
 import { canOrderUp, histKnown, worthStore } from "@/lib/worth-store";
 import { AnswerSpread } from "./AnswerSpread";
 import { Dollars } from "./Dollars";
 import { useHists, useMyWorth } from "./hooks";
+import { WorthForm } from "./WorthForm";
 
 /** How often the People's Price refreshes while it is on screen and the tab is visible. */
 const REFRESH_MS = 30_000;
-/** When this browser's saved answers couldn't be loaded (the slider can't start at the saved one). */
-const MINE_FAILED_COPY = "Couldn't load your saved answer.";
 
 /**
  * "What would you pay?" (DESIGN.md "WorthPicker"): a native range slider, $5 to $75 in whole
@@ -37,9 +35,6 @@ export function WorthPicker({ menuKey, restaurantId, burger, price }: { menuKey:
   const mine = useMyWorth();
   const hists = useHists();
   const [draft, setDraft] = useState<number | null>(null);
-  const uid = useId();
-  const sliderId = `${uid}-slider`;
-  const statusId = `${uid}-status`;
   const enabled = WORTH_ENABLED;
 
   useEffect(() => {
@@ -70,7 +65,7 @@ export function WorthPicker({ menuKey, restaurantId, burger, price }: { menuKey:
   useEffect(
     () =>
       worthStore.onSaved(({ menuKey: key, dollars, previous }) => {
-        if (key === menuKey) track("worth_answered", worthAnsweredProps({ menuKey, restaurantId, dollars, menuPrice: price, previous }));
+        if (key === menuKey) track("worth_answered", worthAnsweredProps({ menuKey, restaurantId, dollars, menuPrice: price, previous, surface: "restaurant", priceHidden: false }));
       }),
     [menuKey, restaurantId, price],
   );
@@ -88,9 +83,7 @@ export function WorthPicker({ menuKey, restaurantId, burger, price }: { menuKey:
   const mineFailed = enabled && mine.status === "error" && answer === null;
   const offerRetry = mineFailed && !error && !saving;
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!canOrder) return;
+  function order() {
     worthStore.answer(menuKey, value);
     setDraft(value);
   }
@@ -101,21 +94,7 @@ export function WorthPicker({ menuKey, restaurantId, burger, price }: { menuKey:
     void worthStore.loadMine();
   }
 
-  const status = !enabled
-    ? WORTH_ERROR_COPY.disabled
-    : error
-      ? WORTH_ERROR_COPY[error]
-      : saving
-        ? "Sending your answer…"
-        : mineFailed
-          ? MINE_FAILED_COPY
-          : answer !== null
-            ? dirty
-              ? `Your answer: ${formatDollars(answer)}. Order up to change it.`
-              : justSaved
-                ? `Saved: ${formatDollars(answer)}.`
-                : `Your answer: ${formatDollars(answer)}.`
-            : "Slide to your price, then order up.";
+  const status = worthStatusText({ enabled, error, saving, mineFailed, answer, dirty, justSaved });
 
   // For screen readers: once an answer is saved, what the crowd says (the results below aren't a live
   // region). Empty while an answer is on its way, so a second answer is announced again.
@@ -127,47 +106,22 @@ export function WorthPicker({ menuKey, restaurantId, burger, price }: { menuKey:
   // data-nosnippet: the slider's $40 start and its $5/$75 ends are not prices, so search snippets skip the card.
   return (
     <div ref={ref} className="worth-card panel" data-nosnippet="">
-      <form className="worth-form" onSubmit={onSubmit}>
-        <label htmlFor={sliderId} className="t-ui-m worth-label">
-          Your price for <span className="break-anywhere font-semibold">{burger}</span>
-        </label>
-        <p className="worth-readout" aria-hidden="true">
-          <Dollars value={value} />
-        </p>
-        <input
-          ref={sliderRef}
-          id={sliderId}
-          type="range"
-          className="worth-range"
-          min={ANSWER_MIN}
-          max={ANSWER_MAX}
-          step={1}
-          value={value}
-          aria-valuetext={formatDollars(value)}
-          aria-describedby={statusId}
-          disabled={!enabled}
-          onChange={(e) => setDraft(Number(e.currentTarget.value))}
-        />
-        <div className="worth-scale t-num-s muted" aria-hidden="true">
-          <span>{formatDollars(ANSWER_MIN)}</span>
-          <span>{formatDollars(ANSWER_MAX)}</span>
-        </div>
-        <div className="worth-actions">
-          <button type="submit" className="btn btn-primary btn-lg worth-order" disabled={!canOrder}>
-            <OrderBell dings={false} />
-            Order up!
-          </button>
-          <p id={statusId} className={`worth-status t-ui-s muted ${offerRetry ? "is-retry" : ""}`} aria-live="polite">
-            {error || mineFailed ? <TriangleAlert className="worth-status-icon" strokeWidth={2} aria-hidden="true" /> : null}
-            <span>{status}</span>
-          </p>
-          {offerRetry ? (
-            <button type="button" className="btn btn-secondary btn-sm" onClick={retryMine}>
-              Try again
-            </button>
-          ) : null}
-        </div>
-      </form>
+      <WorthForm
+        label={
+          <>
+            Your price for <span className="break-anywhere font-semibold">{burger}</span>
+          </>
+        }
+        value={value}
+        onValue={setDraft}
+        onOrder={order}
+        enabled={enabled}
+        canOrder={canOrder}
+        status={status}
+        alert={Boolean(error) || mineFailed}
+        onRetry={offerRetry ? retryMine : null}
+        sliderRef={sliderRef}
+      />
 
       {enabled && answer !== null ? <Results menuKey={menuKey} price={price} answer={answer} /> : null}
       <p className="sr-only" aria-live="polite" aria-atomic="true">

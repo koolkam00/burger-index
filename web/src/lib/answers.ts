@@ -143,6 +143,15 @@ export type CityFaqInput = {
   neighborhoods: readonly Area[];
 };
 
+/**
+ * "The median NYC burger costs $21.95 (September 2026)": the home page's plain answer, under its H1
+ * (the board with the same number hangs below the pricer, so the sentence keeps the answer at the top
+ * of the page's static HTML) and opening the first home Q&A answer.
+ */
+export function medianClause(median: number, generatedAt: string): string {
+  return `The median NYC burger costs ${money(median)} (${formatMonthYear(generatedAt)})`;
+}
+
 export function cityFaq(d: CityFaqInput): FaqItem[] {
   const month = formatMonthYear(d.generatedAt);
   const items: FaqItem[] = [];
@@ -152,7 +161,7 @@ export function cityFaq(d: CityFaqInput): FaqItem[] {
     q: "How much does a burger cost in NYC?",
     a: [
       // The menu count stays on the board line (DESIGN.md: a page states it once).
-      `The median NYC burger costs ${money(d.median)} (${month}): that is the Burger Index.`,
+      `${medianClause(d.median, d.generatedAt)}: that is the Burger Index.`,
       spread ? ` Most cost between ${formatPrice(Math.floor(d.p10 as number))} and ${formatPrice(Math.ceil(d.p90 as number))}.` : "",
     ],
   });

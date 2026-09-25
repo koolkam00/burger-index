@@ -6,6 +6,7 @@ import {
   createAnalytics,
   debounce,
   filterValue,
+  fromPath,
   linkHost,
   maskUrl,
   MAX_QUERY_CHARS,
@@ -153,38 +154,93 @@ test("filter values name what each /burgers control is set to", () => {
   assert.equal(filterValue("clear_all", { ...f, boroughs: ["bronx"] }), null);
 });
 
-test("worth_answered: first answers and changed answers", () => {
-  assert.deepEqual(worthAnsweredProps({ menuKey: "chain:7th-street-burger", restaurantId: "7th-street-burger-east-village", dollars: 14, menuPrice: 11.99, previous: null }), {
+test("worth_answered: first answers and changed answers, with where it was given", () => {
+  const restaurant = { surface: "restaurant", priceHidden: false } as const;
+  assert.deepEqual(worthAnsweredProps({ menuKey: "chain:7th-street-burger", restaurantId: "7th-street-burger-east-village", dollars: 14, menuPrice: 11.99, previous: null, ...restaurant }), {
     menu_key: "chain:7th-street-burger",
     restaurant_id: "7th-street-burger-east-village",
     dollars: 14,
     menu_price: 11.99,
     first_answer: true,
+    surface: "restaurant",
+    price_hidden: false,
   });
-  assert.deepEqual(worthAnsweredProps({ menuKey: "due-west", restaurantId: "due-west", dollars: 30, menuPrice: 24, previous: 20 }), {
+  assert.deepEqual(worthAnsweredProps({ menuKey: "due-west", restaurantId: "due-west", dollars: 30, menuPrice: 24, previous: 20, ...restaurant }), {
     menu_key: "due-west",
     restaurant_id: "due-west",
     dollars: 30,
     menu_price: 24,
     first_answer: false,
     previous_dollars: 20,
+    surface: "restaurant",
+    price_hidden: false,
   });
   // The same answer again replaced one, and changed nothing.
-  assert.deepEqual(worthAnsweredProps({ menuKey: "due-west", restaurantId: "due-west", dollars: 30, menuPrice: 24, previous: 30 }), {
+  assert.deepEqual(worthAnsweredProps({ menuKey: "due-west", restaurantId: "due-west", dollars: 30, menuPrice: 24, previous: 30, ...restaurant }), {
     menu_key: "due-west",
     restaurant_id: "due-west",
     dollars: 30,
     menu_price: 24,
     first_answer: false,
+    surface: "restaurant",
+    price_hidden: false,
   });
   // The browser's saved answers hadn't loaded (or failed): unknown, not a first answer.
-  assert.deepEqual(worthAnsweredProps({ menuKey: "due-west", restaurantId: "due-west", dollars: 42, menuPrice: 24, previous: undefined }), {
+  assert.deepEqual(worthAnsweredProps({ menuKey: "due-west", restaurantId: "due-west", dollars: 42, menuPrice: 24, previous: undefined, ...restaurant }), {
     menu_key: "due-west",
     restaurant_id: "due-west",
     dollars: 42,
     menu_price: 24,
     first_answer: null,
+    surface: "restaurant",
+    price_hidden: false,
   });
+  // The home pricer: the menu price was hidden, and the location shown labels the answer.
+  assert.deepEqual(
+    worthAnsweredProps({ menuKey: "chain:jackson-hole", restaurantId: "jackson-hole-bayside", dollars: 18, menuPrice: 16.95, previous: null, surface: "home_pricer", priceHidden: true }),
+    {
+      menu_key: "chain:jackson-hole",
+      restaurant_id: "jackson-hole-bayside",
+      dollars: 18,
+      menu_price: 16.95,
+      first_answer: true,
+      surface: "home_pricer",
+      price_hidden: true,
+    },
+  );
+});
+
+test("the pricer's events carry areas, keys and counts only, never a voter id or free text", async () => {
+  const ph = fakePosthog();
+  const a = createAnalytics({ key: "phc_test", apiHost: "/ingest", load: async () => ph.client as never });
+  await inBrowser(async () => {
+    a.init();
+    await tick();
+  });
+  a.track("pricer_area_selected", { area_type: "anywhere", area: "nyc" });
+  a.track("pricer_area_selected", { area_type: "neighborhood", area: "astoria" });
+  a.track("pricer_skipped", { menu_key: "due-west" });
+  a.track("pricer_next_clicked", { count_this_session: 3 });
+  a.track("pricer_exhausted", { area: "staten-island" });
+  a.track("price_a_burger_clicked", { from_path: fromPath("/restaurants/due-west") });
+  assert.deepEqual(ph.captured, [
+    ["pricer_area_selected", { area_type: "anywhere", area: "nyc" }],
+    ["pricer_area_selected", { area_type: "neighborhood", area: "astoria" }],
+    ["pricer_skipped", { menu_key: "due-west" }],
+    ["pricer_next_clicked", { count_this_session: 3 }],
+    ["pricer_exhausted", { area: "staten-island" }],
+    ["price_a_burger_clicked", { from_path: "/restaurants/due-west" }],
+  ]);
+  for (const [, props] of ph.captured) assert.equal(JSON.stringify(props).includes("voter"), false);
+});
+
+test("a Price a burger click reports the path only: no search text, no hash", () => {
+  assert.equal(fromPath("/burgers?q=my%20secret&borough=bronx"), "/burgers");
+  assert.equal(fromPath("/#price"), "/");
+  assert.equal(fromPath("/neighborhoods/astoria"), "/neighborhoods/astoria");
+  assert.equal(fromPath(""), "/");
+  assert.equal(fromPath(null), "/");
+  assert.equal(fromPath("https://example.com/x"), "/", "never a full URL");
 });
 
 test("link hosts drop www. and never throw", () => {

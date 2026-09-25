@@ -2542,6 +2542,188 @@
     background: var(--ink);
   }
 
+  /* ---- The pricer hero: the home page's first screen (DESIGN.md "The pricer hero") ----------- */
+  /* The band is shorter on top than an inner page's, so a 375x667 phone sees the picker's first
+     choices under the H1, the median sentence and the source line. */
+  .hero-home {
+    padding-top: calc(var(--awning-h) + 20px);
+    /* No scroll anchoring in the hero: when the pricer grows (its skeleton becomes a burger, a burger
+       is swapped as my_worth arrives, the reveal), a browser anchored on the board below would scroll
+       the pricer up under the sticky nav right after "Price a burger" brought it into view. */
+    overflow-anchor: none;
+  }
+  @media (min-width: 768px) {
+    .hero-home {
+      padding-top: calc(var(--awning-h) + 48px);
+    }
+  }
+  /* The Order Board hangs below the pricer, centered in the water. */
+  .hero-board {
+    max-width: 760px;
+    margin: 48px auto 0;
+  }
+  @media (min-width: 768px) {
+    .hero-board {
+      margin-top: 64px;
+    }
+  }
+  /* The card: menu-card paper on the water (text never sits on the water itself). */
+  .pricer {
+    position: relative;
+    min-width: 0;
+    padding: 16px;
+    color: var(--ink);
+  }
+  @media (min-width: 768px) {
+    .pricer {
+      padding: 24px;
+    }
+  }
+  .pricer:focus {
+    outline: none;
+  }
+  .pricer:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 4px;
+  }
+  .pricer-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 16px;
+    min-height: 32px;
+  }
+  .pricer-bar .kicker {
+    margin: 0;
+  }
+  .pricer-area {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    min-width: 0;
+    margin: 0;
+  }
+  .pricer-area-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .pricer-title {
+    margin-top: 10px;
+  }
+  .pricer-title:focus {
+    outline: none;
+  }
+  .pricer-title:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  .pricer-anywhere {
+    width: 100%;
+  }
+  @media (min-width: 640px) {
+    .pricer-anywhere {
+      width: auto;
+    }
+  }
+  .pricer-boroughs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 8px;
+  }
+  .pricer-hood {
+    display: flex;
+    gap: 8px;
+    max-width: 480px;
+  }
+  .pricer-hood .input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 48px;
+    text-overflow: ellipsis;
+  }
+  .pricer-form,
+  .pricer-reveal {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1.5px solid var(--line);
+    min-width: 0;
+  }
+  /* The reveal (a data zone: flat): four facts, two per row on a phone, four from 640px. */
+  .pricer-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 20px;
+    margin: 0;
+  }
+  @media (min-width: 640px) {
+    .pricer-facts {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  .pricer-fact {
+    min-width: 0;
+  }
+  .pricer-fact dd {
+    margin: 0;
+  }
+  .pricer-next {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 20px;
+    margin-top: 20px;
+  }
+  .pricer-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .pricer-alert .worth-status-icon {
+    margin-top: 3px;
+  }
+  .pricer-skeleton {
+    margin-top: 16px;
+  }
+  /* A returning visitor's saved area (html.pricer-saved, set in <head>) takes them straight to a
+     burger once the pricer mounts: until then the picker gives way to a skeleton, so it never flashes. */
+  .pricer-boot {
+    display: none;
+  }
+  html.pricer-saved .pricer[data-boot] .pricer-choose {
+    display: none;
+  }
+  html.pricer-saved .pricer[data-boot] .pricer-boot {
+    display: block;
+  }
+
+  /* ---- "Price a burger": the header's call to action, a primary button on the planks -------- */
+  .price-cta {
+    height: 40px;
+    padding: 0 14px;
+    font-size: 15px;
+  }
+  .sheet-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .sheet-cta {
+    flex: 1 1 auto;
+  }
+  /* Below 360px (under the 375px design base) the header keeps the life ring and drops the words, so
+     "Price a burger" and "Menu" never run over them; the home link keeps its accessible name. */
+  @media (max-width: 359px) {
+    .home-link .t-wordmark {
+      display: none;
+    }
+  }
+
   /* ---- The People's Price boards (a data zone) ------------------------------------------------ */
   .worth-meta {
     display: flex;
