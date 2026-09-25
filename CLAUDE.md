@@ -208,7 +208,19 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   out of the browser bundle.
 - **Next 16** has breaking changes versus older docs: read `web/AGENTS.md` and `web/node_modules/next/dist/docs/`
   before writing Next code. `output: "export"`: every route is static (`generateStaticParams`); the only route
-  handlers are force-static files (`/og.png`, `/llms.txt`, `/data/burger-prices.csv`, sitemap, robots).
+  handlers are force-static files (`/og.png`, `/llms.txt`, `/data/burger-prices.csv`, `/data/pricer.json`, sitemap, robots).
+- **The burger pricer (user decision 2026-09-25)** is the home page's first screen (`#price`; DESIGN.md "The pricer hero"):
+  pick an area (anywhere, a borough, a neighborhood with a priced menu; remembered in `localStorage` `bi-pricer-area`), then
+  one burger at a time with its menu price hidden (the WorthPicker's slider, "Order up!", "Skip"), then the reveal (menu
+  price, answer, difference, People's Price) and "Next burger". `components/worth/Pricer.tsx` (UI; shares `WorthForm` with
+  `WorthPicker`), `src/lib/pricer-store.ts` (state as an external store; served menus in `sessionStorage`) and
+  `src/lib/pricer.ts` (pure: data shape, areas, queue, difference), tested in `test/pricer.test.ts`. It serves distinct
+  menus (a chain once, at its location in the area) in random order, never one this browser answered (`my_worth`, filtered
+  as it arrives) or already served this session. The burgers come from the force-static `/data/pricer.json`, fetched when
+  the pricer mounts, so the home HTML holds no menus or prices beyond the H1 band's median sentence and source line (the
+  card is `data-nosnippet`); answers go through the worth store (`cast_worth`, same pool, 150 per hour per IP). The header's
+  "Price a burger" (and the menu sheet's) links to `/#price` from every page; on home it scrolls to the pricer and
+  focuses it. Menu keys and restaurant ids must never change (answers are keyed on them).
 - **SEO / AEO / GEO (user decisions 2026-09-25):** the origin comes from `src/lib/site-url.ts`: `NEXT_PUBLIC_SITE_URL`,
   else `https://$VERCEL_PROJECT_PRODUCTION_URL` (the free `*.vercel.app` address), else `http://localhost:4173` with a
   build warning (never a domain the user doesn't own). Titles and meta descriptions for every page type are built in
@@ -249,7 +261,9 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   when `NEXT_PUBLIC_POSTHOG_KEY` was set at build time. That key lives **only in the Vercel project settings, never in
   `web/.env.local`**, so dev and local builds send nothing. Components call `track()` in event handlers; nothing in server
   components (the restaurant page's links are the client `components/RestaurantLinks.tsx`). `worth_answered` comes from
-  `worthStore.onSaved` (after Supabase saved the answer). No personal data: never the voter id, and no free text in events
+  `worthStore.onSaved` (after Supabase saved the answer) with `surface` (`restaurant` / `home_pricer`) and `price_hidden`;
+  the pricer also sends `pricer_area_selected`, `pricer_skipped`, `pricer_next_clicked` and `pricer_exhausted`, and the
+  header `price_a_burger_clicked` (`from_path`: the path only). No personal data: never the voter id, and no free text in events
   but the search query (trimmed, lowercased, 60 characters); replays mask inputs and the query echoed in the "No burgers
   match" messages (`ph-mask`). Events and properties are listed in `web/README.md` "Analytics
   (PostHog)"; tests in `test/analytics.test.ts`. posthog-js drops headless/webdriver browsers, so browser checks see no
