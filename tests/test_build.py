@@ -45,18 +45,20 @@ def test_percentile_and_stats_math():
     }
     d = dataset(ts, results)
     s = d["stats"]
+    # one burger per restaurant, its highest-priced beef burger: A -> Double 14, B -> 20, C -> 30
     assert s["restaurants_scanned"] == 4 and s["restaurants_priced"] == 3
-    assert s["burgers"] == 6 and s["beef_burgers"] == 5
-    assert s["index_median"] == 20 and s["index_mean"] == 20
-    assert s["index_p10"] == 12 and s["index_p90"] == 28
-    assert s["all_burgers_median"] == 17  # median of 8,10,14,20,30,30
-    assert s["cheapest_burger_id"].endswith("--veggie")
+    assert s["burgers"] == 3 and s["beef_burgers"] == 3
+    assert s["index_median"] == 20 and s["index_mean"] == 21.33
+    assert s["index_p10"] == 15.2 and s["index_p90"] == 28
+    assert s["all_burgers_median"] == 20  # the published burgers: one per menu, so the index median
+    assert s["cheapest_burger_id"].endswith("--double")
     assert s["priciest_burger_id"].endswith("--big")
     a = next(r for r in d["restaurants"] if r["name"] == "A")
-    assert a["index_price"] == 10
-    assert [x["is_index_item"] for x in a["burgers"]] == [True, False, False]
+    assert a["index_price"] == 14
+    assert [(x["name"], x["price"], x["is_index_item"]) for x in a["burgers"]] == [("Double", 14, True)]
     c = next(r for r in d["restaurants"] if r["name"] == "C")
-    assert [x["id"].split("--")[1] for x in c["burgers"]] == ["big", "big-2"]
+    assert [x["id"].split("--")[1] for x in c["burgers"]] == ["big"]
+    assert next(r for r in d["restaurants"] if r["name"] == "D")["burgers"] == []  # no price: nothing published
     build.validate(d)
 
 
@@ -120,14 +122,15 @@ def test_chain_counts_once_in_index_and_once_per_area():
                solo["Emmett's"].key: result(burgers=[b("Tavern", 20)])}
     d = dataset(ts, results)
     s = d["stats"]
-    # per location the median would be $4 (5 of 7 rows are McDonald's); per menu it is median(4, 15, 20)
-    assert s["index_median"] == 15 and s["index_mean"] == 13
-    assert s["restaurants_priced"] == 7 and s["burgers"] == 12  # locations and table rows still count each one
-    assert s["all_burgers_median"] == 11  # median(4, 7, 15, 20): the chain's menu once
+    # the chain's one burger is its priciest, the $7 Big Mac; per location the median would be $7 (5 of 7
+    # rows are McDonald's), per menu it is median(7, 15, 20)
+    assert s["index_median"] == 15 and s["index_mean"] == 14
+    assert s["restaurants_priced"] == 7 and s["burgers"] == 7  # locations and table rows still count each one
+    assert s["all_burgers_median"] == 15  # median(7, 15, 20): the chain's menu once
     nb = {a["slug"]: a for a in d["neighborhoods"]}
-    assert nb["west-village"]["restaurants_priced"] == 6
-    assert (nb["west-village"]["index_median"], nb["west-village"]["index_min"]) == (15, 4)
-    assert nb["brooklyn-heights-cobble-hill"]["index_median"] == 4
+    assert nb["west-village"]["restaurants_priced"] == 6 and nb["west-village"]["burgers"] == 6
+    assert (nb["west-village"]["index_median"], nb["west-village"]["index_min"]) == (15, 7)
+    assert nb["brooklyn-heights-cobble-hill"]["index_median"] == 7
     build.validate(d)
 
 
@@ -175,9 +178,9 @@ def test_airport_chain_locations_do_not_copy_the_street_price():
     by_camis = {r["camis"]: r for r in d["restaurants"]}
     assert by_camis["2"]["index_price"] is None and by_camis["2"]["status"] == "no_menu_found"
     assert by_camis["2"]["burgers"] == [] and "Airport" in by_camis["2"]["status_detail"]
-    assert by_camis["1"]["index_price"] == by_camis["3"]["index_price"] == 4.19
+    assert by_camis["1"]["index_price"] == by_camis["3"]["index_price"] == 8.39  # the chain's priciest burger
     # the cheapest burger points at the location the chain menu was scraped from
-    assert d["stats"]["cheapest_burger_id"] == f"{by_camis['1']['id']}--cheeseburger"
+    assert d["stats"]["cheapest_burger_id"] == f"{by_camis['1']['id']}--big-mac"
     assert "1 airport chain location is listed" in d["methodology"]["coverage_note"]
 
 
@@ -286,19 +289,75 @@ def test_sources_say_what_dohmh_supplies_for_the_scope():
     assert build.sources({}) == listed  # no scope saved: the default, the list only
 
 
-def test_items_that_are_not_burgers_are_not_published_and_slider_plates_stay_listed():
+def test_items_that_are_not_burgers_and_slider_plates_are_not_the_published_burger():
     ts = build_targets([rec("Smacking Burger", camis="1"), rec("Torst", camis="2")])
+    # Sin City's $9.99 'The Frank' (a hot dog) would be Smacking Burger's priciest item
     smack = [b("The Classic", 7.49), b("The Pup Patty (Patty for Puppy)", 4.0), b("The Frank", 9.99)]
-    torst = [b("Burger Sliders", 9.5), b("Smash Burger", 18.9)]
+    torst = [b("Burger Sliders", 24), b("Smash Burger", 18.9)]  # a pricier slider plate
     d = dataset(ts, {ts[0].key: result(burgers=smack), ts[1].key: result(burgers=torst)})
     by = {r["name"]: r for r in d["restaurants"]}
     assert [x["name"] for x in by["Smacking Burger"]["burgers"]] == ["The Classic"]
     assert by["Smacking Burger"]["index_price"] == 7.49
-    # the slider plate is listed at its price, but the Smash Burger is the index item
+    # a slider plate is not one burger: the Smash Burger is Tørst's one published burger
     assert [(x["name"], x["price"], x["is_index_item"]) for x in by["Torst"]["burgers"]] == [
-        ("Burger Sliders", 9.5, False), ("Smash Burger", 18.9, True)]
+        ("Smash Burger", 18.9, True)]
     assert d["stats"]["cheapest_burger_id"].endswith("--the-classic")  # not the $4 dog patty
     build.validate(d)
+
+
+def test_one_burger_per_restaurant_its_highest_priced_eligible_beef_burger():
+    ts = build_targets([rec("Tavern", camis="1"), rec("Diner", camis="2"), rec("Veg Spot", camis="3"),
+                        rec("Unpriced", camis="4")])
+    tavern = [b("Classic", 12) | {"menu_period": "dinner"}, b("Double Wagyu Burger", 26) | {"menu_period": "dinner"},
+              b("Brunch Burger", 30) | {"menu_period": "brunch"},  # a dinner price exists: brunch doesn't count
+              b("Bar Burger", 40) | {"menu_period": "happy_hour"},  # never
+              b("Burger Platter for 4", 60), b("Bx Cheeseburger Meal", 28),  # a group item, a combo
+              b("Impossible Burger", 32, "veggie")]
+    diner = [b("Burger Platter", 16) | {"description": "served with french fries, lettuce and tomato"},
+             b("Twin Burger", 25) | {"description": "Two Burgers on Two Toasted Buns with French Fries"},
+             b("Family Burger Box", 45)]
+    d = dataset(ts, {ts[0].key: result(burgers=tavern), ts[1].key: result(burgers=diner),
+                     ts[2].key: result("no_burgers", burgers=[b("Veggie Burger", 15, "veggie")]),
+                     ts[3].key: result("no_prices", burgers=[b("Burger", None)])})
+    build.validate(d)
+    by = {r["name"]: r for r in d["restaurants"]}
+    assert [(x["name"], x["price"], x["is_index_item"]) for x in by["Tavern"]["burgers"]] == [
+        ("Double Wagyu Burger", 26, True)]
+    assert by["Tavern"]["index_price"] == 26
+    assert [x["name"] for x in by["Diner"]["burgers"]] == ["Burger Platter"] and by["Diner"]["index_price"] == 16
+    # no eligible beef burger priced: nothing is published (a veggie-only menu, a menu without prices)
+    assert by["Veg Spot"]["burgers"] == [] and by["Unpriced"]["burgers"] == []
+    s = d["stats"]
+    assert s["burgers"] == s["beef_burgers"] == s["restaurants_priced"] == 2
+    assert (s["cheapest_burger_id"], s["priciest_burger_id"]) == (by["Diner"]["burgers"][0]["id"],
+                                                                  by["Tavern"]["burgers"][0]["id"])
+    assert "highest-priced beef burger" in d["methodology"]["index_price_rule"]
+
+
+def test_a_page_priced_only_through_group_platters_or_combos_has_no_index_price():
+    ts = build_targets([rec("Cubby's", camis="1")])
+    platter = b("Cub's Pub Platter", 120) | {"description": "10 double patty swiss cheeseburgers, caramelized onions"}
+    d = dataset(ts, {ts[0].key: result(burgers=[platter, b("Bx Cheeseburger Meal", 23.07)], detail="read it")})
+    build.validate(d)
+    r = d["restaurants"][0]
+    assert (r["status"], r["index_price"], r["burgers"]) == ("no_prices", None, [])
+    assert r["status_detail"] == f"read it {build.NO_SINGLE_BURGER_NOTE}"
+    assert d["stats"]["restaurants_priced"] == 0 and d["stats"]["index_median"] is None
+
+
+def test_corrections_apply_before_the_one_burger_is_chosen():
+    ts = build_targets([rec("A", camis="1"), rec("B", camis="2")])
+    menu = [b("Classic", 12), b("Big Burger", 40)]
+    fixes = [{"target": ts[0].key, "checked_at": "2026-09-24", "source_url": "https://example.com/a",
+              "reason": "the $40 row is a catering tray", "drop": ["Big Burger"]},
+             {"target": ts[1].key, "checked_at": "2026-09-24", "source_url": "https://example.com/b",
+              "reason": "dinner price", "set": {"Classic": 45}}]
+    d = build.assemble(ts, {t.key: result(burgers=menu) for t in ts}, corrections=fixes,
+                       generated_at="2026-09-23T12:00:00Z")
+    build.validate(d)
+    by = {r["name"]: r for r in d["restaurants"]}
+    assert [(x["name"], x["price"]) for x in by["A"]["burgers"]] == [("Classic", 12)]
+    assert [(x["name"], x["price"]) for x in by["B"]["burgers"]] == [("Classic", 45)]
 
 
 WIX = "This is an item on your menu. Give your item a brief description"

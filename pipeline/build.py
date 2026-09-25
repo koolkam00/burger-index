@@ -22,12 +22,16 @@ from .names import slugify
 from .sources import NTA_DISPLAY_OVERRIDES
 
 INDEX_PRICE_RULE = (
-    "A restaurant's index price is its cheapest beef burger: the burger by itself (no combo or meal upgrade, "
-    "no add-ons), single/standard size, at its dinner or all-day menu price. Lunch, brunch or late-night prices "
-    "count only when no beef burger on the menu has a dinner or all-day price; happy-hour prices are left out. "
-    "The Burger Index is the median index price across distinct menus: every independent restaurant counts once "
-    "and each chain counts once, however many locations it has (they share one scraped menu). Borough and "
-    "neighborhood figures count a chain at most once per area."
+    "Each restaurant is represented by one burger: its highest-priced beef burger, and that burger's price is "
+    "the restaurant's index price. It is one burger for one person, by itself (no combo or meal deal, no drink, "
+    "no add-ons), at its listed dinner or all-day menu price; doubles, triples and specialty burgers count. "
+    "Lunch, brunch or late-night prices count only when no beef burger on the menu has a dinner or all-day "
+    "price; happy-hour prices are left out. Group platters and items for several people, combos (a drink or beer "
+    "included), eating challenges, kids' items and hot dogs never count; a Deluxe or with-fries version counts at "
+    "the plain burger's price when the menu lists both; plates of sliders or twin burgers count only when the "
+    "menu has no other beef burger. The Burger Index is the median index price across distinct menus: every independent "
+    "restaurant counts once and each chain counts once, however many locations it has (they share one scraped "
+    "menu). Borough and neighborhood figures count a chain at most once per area."
 )
 # methodology.sources: our list first, then what each dataset supplies (sources() words DOHMH's part
 # from the scope: with the list only, DOHMH adds no restaurants).
@@ -42,6 +46,8 @@ MENU_SOURCE = (
     "Menu prices from each restaurant's own site or menu PDF, online-ordering pages, menu aggregators and "
     "delivery apps, read with Context.dev web scraping."
 )
+NO_SINGLE_BURGER_NOTE = ("Its priced beef burgers are all group platters or combo meals, so it has no single-burger "
+                         "price for the index.")
 # How many excluded national chains coverage_note names (most locations on the list first).
 NATIONAL_EXAMPLES = 4
 
@@ -99,33 +105,23 @@ def assign_restaurant_ids(rows: list[tuple[dict, str]]) -> list[str]:
 
 
 def make_burgers(restaurant_id: str, burgers: list[dict], priced: bool) -> tuple[list[Burger], float | None]:
-    idx = extract.index_item(burgers) if priced else None
-    out: list[Burger] = []
-    used: Counter = Counter()
-    for i, b in enumerate(burgers):
-        base = f"{restaurant_id}--{slugify(b['name']) or 'burger'}"
-        used[base] += 1
-        bid = base if used[base] == 1 else f"{base}-{used[base]}"
-        while bid in {x["id"] for x in out}:
-            used[base] += 1
-            bid = f"{base}-{used[base]}"
-        out.append({
-            "id": bid,
-            "name": b["name"],
-            "price": money(b["price"]),
-            "description": b.get("description"),
-            "protein": b["protein"],
-            "is_index_item": i == idx,
-        })
-    return out, (money(burgers[idx]["price"]) if idx is not None else None)
-
-
-def published_burgers(burgers: list[dict]) -> list[dict]:
-    """The rows a restaurant page lists: happy-hour rows are left out (they never set the index, and
-    the contract has no field to label them, so a $12 happy-hour burger is not published next to the
-    restaurant's $18 regular one), and so are items that are not burgers (extract.is_not_a_burger:
-    a hot dog, a pet patty), which would otherwise show up as the city's cheapest burger."""
-    return [b for b in burgers if b.get("menu_period") != "happy_hour" and not extract.is_not_a_burger(b)]
+    """One burger per restaurant (user decision, 2026-09-24): the restaurant's highest-priced eligible
+    beef burger (extract.top_item), which is also its index item and sets its index price. Nothing else
+    on the menu is published, and a restaurant without a priced eligible beef burger publishes none.
+    Happy-hour rows and items that are not burgers (a hot dog, a pet patty) are never picked."""
+    idx = extract.top_item(burgers) if priced else None
+    if idx is None:
+        return [], None
+    b = burgers[idx]
+    price = money(b["price"])
+    return [{
+        "id": f"{restaurant_id}--{slugify(b['name']) or 'burger'}",
+        "name": b["name"],
+        "price": price,
+        "description": b.get("description"),
+        "protein": b["protein"],
+        "is_index_item": True,
+    }], price
 
 
 def drop_template_placeholders(res: dict) -> dict:
@@ -163,7 +159,9 @@ def menu_index_prices(restaurants: Iterable[Restaurant]) -> list[float]:
 def compute_stats(restaurants: list[Restaurant], menu_sources: set[str] | None = None) -> Stats:
     """menu_sources: ids of the rows whose burgers stand for a distinct scraped menu (a chain's
     source location, every other restaurant). The cheapest / priciest burger and the all-burgers
-    median are taken over them, so a chain's copied menu is counted once."""
+    median are taken over them, so a chain's copied menu is counted once. Every restaurant publishes
+    at most one burger (make_burgers), so burgers == beef_burgers == restaurants_priced and the
+    all-burgers median equals the index median."""
     idx_prices = menu_index_prices(restaurants)
     priced_burgers = [(b["price"], b["id"]) for r in restaurants for b in r["burgers"] if b["price"] is not None]
     beef = [p for r in restaurants for b in r["burgers"] if b["price"] is not None and b["protein"] == "beef"
@@ -333,10 +331,12 @@ def assemble(
             n_airport += 1
         elif not t.chain or is_source:
             menu_sources.add(rid)
-        status = res["status"]
-        burgers, index_price = make_burgers(rid, published_burgers(res["burgers"]), priced=status == "priced")
-        if status == "priced" and index_price is None:  # defensive: priced requires a priced beef burger
+        status, detail = res["status"], res.get("status_detail")
+        burgers, index_price = make_burgers(rid, res["burgers"], priced=status == "priced")
+        if status == "priced" and index_price is None:
+            # the page prices a beef burger (process.py), but only as a group platter or a combo
             status = "no_prices"
+            detail = " ".join(x for x in (detail, NO_SINGLE_BURGER_NOTE) if x)
         nb = m.get("neighborhood")
         restaurants.append({
             "id": rid,
@@ -355,7 +355,7 @@ def assemble(
             "menu_url": res.get("menu_url"),
             "price_source": res.get("price_source"),
             "status": status,
-            "status_detail": res.get("status_detail"),
+            "status_detail": detail,
             "scraped_at": res.get("scraped_at"),
             "index_price": index_price,
             "burgers": burgers,

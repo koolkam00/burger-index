@@ -1,5 +1,5 @@
 {
-  "about": "Hand-checked corrections applied by `pipeline build` (see pipeline/corrections.py). The 2026-09-23 entries were found by re-reading the live menu during that day's price check; all but Tavern on Jane and Jimbo's Hamburger Palace were confirmed by two independent checks. Every 2026-09-24 entry was confirmed by two independent checks; where the restaurant's own current menu page can be scraped, the fix is a menu-URL override in pipeline/data/menu_urls.json instead (re-scraped on the next run).",
+  "about": "Hand-checked corrections applied by `pipeline build` (see pipeline/corrections.py). The 2026-09-23 entries were found by re-reading the live menu during that day's price check; all but Tavern on Jane and Jimbo's Hamburger Palace were confirmed by two independent checks. Every 2026-09-24 entry was confirmed by two independent checks; where the restaurant's own current menu page can be scraped, the fix is a menu-URL override in pipeline/data/menu_urls.json instead (re-scraped on the next run). The 2026-09-25 entries come from the review of each restaurant's one published burger (its highest-priced beef burger): Boeuf & Bun and the two Carnegie Diners were re-read on their own current menu pages; the Grillify-NYC delivery prices could not be confirmed; and the Grubhub/Seamless entries withhold pages whose cached scrape shows only the Best Sellers / recently ordered items (the burger section never loaded). Remove one of those once a full menu for the restaurant has been scraped.",
   "corrections": [
     {
       "target": "camis:50054294",
@@ -765,6 +765,263 @@
       "checked_at": "2026-09-24",
       "source_url": "http://places.singleplatform.com/mercer-kitchen/menu",
       "reason": "Jean-Georges' Mercer Kitchen (99 Prince St) closed at the end of 2022 and another restaurant opened in the space in 2023; this SinglePlatform page ($27 Mercer Burger) is a leftover copy.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50018753",
+      "checked_at": "2026-09-25",
+      "source_url": "https://boeufbun.orders2me.com/order-now",
+      "price_source": "online_ordering",
+      "reason": "the Uber Eats prices scraped are the restaurant's own prices grossed up by about 79% (every one is the in-store price divided by 0.56). Boeuf & Bun's own ordering page lists the Double Trouble Burger (two patties, 1 lb total) at $32, not $57.14, and the other burgers at $13 to $28.",
+      "set": {
+        "Boeuf Classic Smash": 13.0,
+        "Sweet Onion Smash": 15.0,
+        "\"Bacon\" Jalapeno Smash": 18.0,
+        "Smash 'Cheeseburger'": 18.0,
+        "Smash XL": 20.0,
+        "Classic Boeuf": 20.0,
+        "Morning Scramble": 26.0,
+        "Chilin Burger": 24.0,
+        "Green Monster": 24.0,
+        "Double Trouble Burger": 32.0,
+        "Bondi Burger (an Australian Classic)": 23.0,
+        "The Bite": 23.0,
+        "Upstream Burger": 21.0,
+        "Bahh Bahh Burger": 28.0,
+        "Veg Out": 19.0
+      }
+    },
+    {
+      "target": "csv:grillify-nyc-manhattan",
+      "checked_at": "2026-09-25",
+      "source_url": "https://postmates.com/store/grillify-nyc-e-5th-st/-_8Qs-wSRFSUxVI1RTqiRg",
+      "reason": "the Postmates and Uber Eats prices are marked up for delivery (each one is a .99 menu price divided by 0.775: $33.53 for a $25.99 burger), and the restaurant's own sites have lapsed, so no in-store price could be confirmed.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50138084",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.carnegiediner.com/times-square-ny/",
+      "price_source": "official_site",
+      "reason": "the page scraped was the Vienna, Virginia location's menu. The Times Square menu lists the same burgers at $18.95 to $24.95 and no Pastrami Burger.",
+      "set": {
+        "Carnegie Classic": 18.95,
+        "The Corner Burger": 19.95,
+        "Central Park": 22.95,
+        "Columbus Circle": 22.95,
+        "Morning Sunshine": 22.95,
+        "Times Square": 24.95,
+        "Five Hills": 24.95,
+        "Chili Burger": 23.95,
+        "Smashed Double Stack": 24.95,
+        "The Late Night": 23.95,
+        "Impossible Vegan Burger": 25.95
+      },
+      "drop": [
+        "Pastrami Burger"
+      ]
+    },
+    {
+      "target": "camis:50164574",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.carnegiediner.com/central-park-ny/",
+      "price_source": "official_site",
+      "reason": "the page scraped was the Vienna, Virginia location's menu. The Central Park (205 W 57th St) menu lists the same burgers at $18.95 to $24.95 and the Pastrami Burger at $26.95.",
+      "set": {
+        "Carnegie Classic": 18.95,
+        "The Corner Burger": 19.95,
+        "Central Park": 22.95,
+        "Columbus Circle": 22.95,
+        "Morning Sunshine": 22.95,
+        "Times Square": 24.95,
+        "Five Hills": 24.95,
+        "Chili Burger": 23.95,
+        "Smashed Double Stack": 24.95,
+        "The Late Night": 23.95,
+        "Impossible Vegan Burger": 25.95,
+        "Pastrami Burger": 26.95
+      }
+    },
+    {
+      "target": "camis:50009539",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/blackstone-bar--grill-3713-riverdale-ave-the-bronx/313711",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Classic Burger, $18.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50145506",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/bridies-grill-room-64-54-dry-harbor-rd-queens/9195216",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (The New Yorker, $18.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:41577394",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/bronx-burger-house-5816-mosholu-ave-the-bronx/1784191",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Thomas Monster Burger, $19.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50084404",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.grubhub.com/restaurant/buccaneer-diner-93-01-astoria-blvd-queens/78104/reviews",
+      "reason": "the Grubhub page read showed only its Best Sellers and recently ordered items (BBQ Burger Deluxe, $18.65); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:41117739",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/cosmic-diner--52-888-8th-ave-new-york/65700",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Beef Burger Deluxe, $19.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:41137340",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/dillingers-pub--grill-46-19-30th-ave-new-york/2044266",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (The Burger, $15.95); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50064635",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/dumont-burger-314-bedford-ave-brooklyn/392718",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (DuMac & Cheese Burger, $21.73); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:40399986",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.grubhub.com/restaurant/5th-ave-diner-432-5th-ave-brooklyn/949946",
+      "reason": "the Grubhub page read showed only its Best Sellers and recently ordered items (7 oz. Cheeseburger Deluxe, $17.25); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50090491",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/fort-washington-public-house-3938-broadway-new-york/1247680",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (The F.W. Burger, $20.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:41151163",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/galaxy-diner-665-9th-ave-new-york/65634",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (8 oz. Country Beef Burger - Plain, $13.95); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50116518",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/handcraft-burgers--brew-110-w-40th-st-new-york/3040499",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (The 6.6, $18.50); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:41581905",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/le-cheile-839-w-181st-st-new-york/822953",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Le Cheile Burger - Build your own, $17.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:41537807",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/liberty-diner-2059-williamsbridge-rd-the-bronx/5460360",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Cheeseburger Deluxe, $14.95); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50074809",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/moonstruck-eatery-250-e-58th-st-new-york/708078",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Classic Burger, $13.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50109069",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/national-burger-house-470-e-tremont-ave-bronx/2674643",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (8 oz. Cheeseburger Platter, $13.50); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50146373",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/sherdor-burgers-and-sausages-inc-1123-quentin-rd-brooklyn/7418056",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Sherdor Burger, $22.09); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50017248",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/shore-haven-diner-622-castle-hill-ave-the-bronx/321615",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Beef Burger Deluxe, $13.50); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:40395310",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/sunrise-diner-45-04-parsons-blvd-flushing/264317",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (American Cheeseburger Deluxe, $14.95); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50076652",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/sunset-diner-593-meeker-ave-brooklyn/590559",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Cheese Burger Deluxe, $19.60); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50165990",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.grubhub.com/restaurant/the-borough-bar--grill-137-schenectady-ave-brooklyn/6819720",
+      "reason": "the Grubhub page read showed only its Best Sellers and recently ordered items (Classic Burger, $15.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50000851",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/the-classic-diner-117-33-myrtle-ave-richmond-hill/280552",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (9 oz. Cheeseburger Deluxe, $18.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:40394030",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/tibbett-diner-3033-tibbett-ave-bronx/2539986",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Cheeseburger Deluxe, $16.75); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:40645039",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/townhouse-diner-696-2nd-ave-new-york/65472",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Deluxe Cheeseburger, $18.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50057374",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/tria-diner--bakery-22-chatham-sq-new-york/346887",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Cheeseburger Deluxe, $15.45); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:50117955",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/vip-grille-272--86-grand-central-pkwy-floral-park/5439464",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (8 oz. USDA Prime Burger, $10.00); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
+      "withhold": true
+    },
+    {
+      "target": "camis:40977209",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/waverly-restaurant-385-6th-ave-new-york/64940",
+      "reason": "the Seamless page read showed only its Best Sellers and recently ordered items (Cheeseburger Deluxe, $20.45); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
       "withhold": true
     }
   ]

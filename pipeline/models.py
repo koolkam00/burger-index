@@ -15,7 +15,9 @@ PriceSource = Literal["official_site", "official_pdf", "online_ordering", "deliv
 
 
 class Burger(TypedDict):
-    id: str  # '<restaurant id>--<item slug>' (-2, -3 on collisions)
+    """A restaurant's one published burger: its highest-priced eligible beef burger (extract.top_item)."""
+
+    id: str  # '<restaurant id>--<item slug>'
     name: str
     price: Optional[float]
     description: Optional[str]
@@ -43,7 +45,7 @@ class Restaurant(TypedDict):
     status_detail: Optional[str]
     scraped_at: Optional[str]
     index_price: Optional[float]
-    burgers: list[Burger]
+    burgers: list[Burger]  # at most one: the index item (empty unless priced)
 
 
 class AreaSummary(TypedDict):

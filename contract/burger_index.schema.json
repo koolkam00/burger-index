@@ -15,7 +15,7 @@
       "additionalProperties": false,
       "required": ["index_price_rule", "sources", "coverage_note"],
       "properties": {
-        "index_price_rule": { "type": "string", "description": "Human sentence, e.g. 'A restaurant's index price is its cheapest beef burger.'" },
+        "index_price_rule": { "type": "string", "description": "Human sentence, e.g. 'Each restaurant is represented by one burger: its highest-priced beef burger, and that burger's price is the restaurant's index price.'" },
         "sources": { "type": "array", "items": { "type": "string" } },
         "coverage_note": { "type": "string" }
       }
@@ -34,15 +34,15 @@
       "properties": {
         "restaurants_scanned": { "type": "integer", "minimum": 0 },
         "restaurants_priced": { "type": "integer", "minimum": 0, "description": "Restaurant locations with a non-null index_price (each chain location counts here)." },
-        "burgers": { "type": "integer", "minimum": 0, "description": "All burger items with a price, any protein." },
-        "beef_burgers": { "type": "integer", "minimum": 0 },
+        "burgers": { "type": "integer", "minimum": 0, "description": "Published burgers: one per priced restaurant location (its highest-priced eligible beef burger), so it equals restaurants_priced." },
+        "beef_burgers": { "type": "integer", "minimum": 0, "description": "Published beef burgers; every published burger is beef, so it equals burgers." },
         "index_median": { "$ref": "#/$defs/Money", "description": "THE Burger Index: median index_price across distinct menus — each independent restaurant once, each chain once however many locations it has." },
         "index_mean": { "$ref": "#/$defs/Money", "description": "Over distinct menus, like index_median." },
         "index_p10": { "$ref": "#/$defs/Money", "description": "Over distinct menus, like index_median." },
         "index_p90": { "$ref": "#/$defs/Money", "description": "Over distinct menus, like index_median." },
-        "all_burgers_median": { "$ref": "#/$defs/Money", "description": "Median over every priced burger item on distinct menus (all proteins; a chain's menu once)." },
-        "cheapest_burger_id": { "type": ["string", "null"] },
-        "priciest_burger_id": { "type": ["string", "null"] }
+        "all_burgers_median": { "$ref": "#/$defs/Money", "description": "Median price of the published burgers on distinct menus (a chain's menu once). With one burger per restaurant it equals index_median." },
+        "cheapest_burger_id": { "type": ["string", "null"], "description": "The lowest-priced published burger on a distinct menu (each restaurant's one burger is its highest-priced beef burger)." },
+        "priciest_burger_id": { "type": ["string", "null"], "description": "The highest-priced published burger on a distinct menu." }
       }
     },
     "AreaSummary": {
@@ -55,13 +55,14 @@
         "borough": { "type": "string", "enum": ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"] },
         "restaurants": { "type": "integer", "minimum": 0 },
         "restaurants_priced": { "type": "integer", "minimum": 0 },
-        "burgers": { "type": "integer", "minimum": 0 },
+        "burgers": { "type": "integer", "minimum": 0, "description": "Published burgers in the area: one per priced restaurant location." },
         "index_median": { "$ref": "#/$defs/Money", "description": "Median index_price over distinct menus in the area: a chain counts at most once per area." },
         "index_min": { "$ref": "#/$defs/Money" },
         "index_max": { "$ref": "#/$defs/Money" }
       }
     },
     "Burger": {
+      "description": "A restaurant's one published burger: its highest-priced eligible beef burger (one burger for one person; no group platter, combo, eating challenge or kids' item; a Deluxe or with-fries version gives way to the cheaper plain burger on the same menu; dinner or all-day price first; never happy hour). Restaurants without an index_price publish none.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "name", "price", "description", "protein", "is_index_item"],
@@ -71,7 +72,7 @@
         "price": { "$ref": "#/$defs/Money" },
         "description": { "type": ["string", "null"] },
         "protein": { "type": "string", "enum": ["beef", "chicken", "turkey", "fish", "veggie", "lamb", "pork", "other"] },
-        "is_index_item": { "type": "boolean", "description": "True for exactly one burger per priced restaurant: the one whose price is the index_price." }
+        "is_index_item": { "type": "boolean", "description": "True for exactly one burger per priced restaurant: its one published burger, whose price is the index_price." }
       }
     },
     "Restaurant": {
@@ -97,8 +98,8 @@
         "status": { "type": "string", "enum": ["priced", "no_burgers", "no_prices", "no_menu_found", "error"] },
         "status_detail": { "type": ["string", "null"] },
         "scraped_at": { "type": ["string", "null"], "format": "date-time" },
-        "index_price": { "$ref": "#/$defs/Money", "description": "Cheapest priced beef burger; null unless status == 'priced'." },
-        "burgers": { "type": "array", "items": { "$ref": "#/$defs/Burger" } }
+        "index_price": { "$ref": "#/$defs/Money", "description": "Price of the restaurant's highest-priced eligible beef burger (its one published burger); null unless status == 'priced'." },
+        "burgers": { "type": "array", "items": { "$ref": "#/$defs/Burger" }, "description": "At most one burger: the one whose price is index_price. Empty unless status == 'priced'." }
       }
     }
   }

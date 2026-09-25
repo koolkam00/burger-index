@@ -79,24 +79,50 @@ sliders only when sold as a burger; kids' items dropped; prices < $2 or > $150 d
 names cleaned (trailing prices, emoji, ®); duplicates collapsed. **Lunch vs dinner:** a burger on several menus
 keeps its dinner/all-day price; late-night, lunch, brunch, then happy-hour prices are used only when it is not on
 the dinner menu. Status: `priced` (≥1 index-eligible beef burger) | `no_prices` | `no_burgers` (incl. only non-beef) |
-`no_menu_found` | `error`. `index_price` = cheapest beef burger with a dinner/all-day price; only if none has one,
-the cheapest from the next period (late-night, lunch, brunch, other); **never a happy-hour price**. Exactly that
-burger has `is_index_item: true` (ties → first on the menu). Restaurant ids are assigned over every restaurant in
-scope (scraped or not), so they stay stable as more targets are scraped. `cheapest_burger_id`/`priciest_burger_id`
-are picked among distinct menus (a chain's source location, not its copies).
+`no_menu_found` | `error`. Restaurant ids are assigned over every restaurant in scope (scraped or not), so they stay
+stable as more targets are scraped.
+
+**One burger per restaurant: its highest-priced burger (user decision, 2026-09-24).** Every restaurant publishes
+exactly one burger, `extract.top_item` (build only): its highest-priced eligible beef burger with a dinner/all-day
+price; only if none has one, the highest from the next period (late-night, lunch, brunch, other); **never a
+happy-hour price**; ties → first on the menu. That burger is the whole `burgers` list, has `is_index_item: true`,
+and its price is `index_price`. Eligible = one burger for one person at its listed price: doubles, triples,
+specialty/wagyu burgers and a burger plated with fries (`Burger Platter`, `Burger & Fries`) count; **never** a
+group item (`extract.top_item_exclusion`: `for 4`, family/party/catering/tray/dozen/bucket/tower/flight/sampler/kit/
+box/bundle, a count of 6+ like `(6)`/`x6`/`12 pc`, `serves 3`, a description opening with "10 … cheeseburgers"
+such as Cubby's catering platters), a combo/meal deal (`Meal`, `Combo`, `Deal`, a drink in the price: "+ fries &
+Can Soda", or a beer: "Served with a 16oz Gigawatt beer", `HH Burger & Beer`; beer as an ingredient such as `IPA
+caramelized onions`, `beer battered`, `beer cheese` or `Beer Fed Wagyu` is fine), an eating challenge (Clinton
+Hall's $50 `The CH Challenge`: "challenge", "it's free", "time limit"), a kids' item or a hot dog/pet item; **a burger
+with sides next to its plain twin** (`extract.is_sides_twin`: `BBQ Burger Deluxe` $20.25 beside `BBQ Burger` $15.25,
+`Deluxe Bacon Cheeseburger`, `Burger with Fries`, `X - Deluxe` beside `X - Plain`) gives way to the cheaper plain
+burger, since the extra is the sides (a menu that lists only the Deluxe/Platter form keeps it); **plates of several
+burgers** (`extract.is_multi_burger_plate`: slider plates, "Three sliders per order", a `Twin Burger` of two burgers
+on two buns, a count of 2–5 like `Smash Burger (2)`) only when the menu has no other eligible beef burger. A page `process` found priced only through
+group platters or combos builds as `no_prices` (`build.NO_SINGLE_BURGER_NOTE`). Unpriced restaurants publish no
+burgers, so `stats.burgers` = `beef_burgers` = `restaurants_priced` and `all_burgers_median` = `index_median`;
+`cheapest_burger_id`/`priciest_burger_id` are the cheapest/priciest of these picks among distinct menus (a chain's
+source location, not its copies). `extract.index_item` (the cheapest beef burger) is unchanged: `process.py` uses it,
+through `classify_menu`, to decide whether a page is priced and whether to keep searching, so the cache replays
+exactly; don't switch process to `top_item` without planning a re-scrape. Corrections apply to the full scraped
+menu before the pick. The 2026-09-25 corrections come from a review of these picks: delivery prices grossed up by a
+commission (Boeuf & Bun: Uber Eats = own price / 0.56; Grillify-NYC withheld), another city's menu (Carnegie Diner's
+Vienna, VA page for both Midtown locations), and **Grubhub/Seamless pages whose burger section never loaded** (the
+cached scrape's `metadata.headings` show only Best Sellers / recently ordered items, so the highest-priced burger is
+unknown: 26 such pages are withheld; drop the entry once a full menu is scraped).
 
 Post-processing index rules (`extract.py`/`build.py`; free on the next `build`, no re-scrape; `normalize_menu` never
 removes these rows, because `corrections.json` names them and `process` counts them):
-- **Slider plates** (`extract.is_slider_plate`: `Cheeseburger Sliders (3)`, a single `Beef Slider`, `Mini Burgers`, `2 Mini Slammers`, `Baby Burgers (3)`, `Trio of Sliders`) are never the index item while a standard beef burger is eligible. They stay listed at their price, and a page with only slider plates keeps its slider price. These do not match: `Slider Burger`, `Bistro Mini`, a single `Mini Burger`, and `Little`/`Junior`/`Jr.` burgers.
-- **Not burgers** (`extract.is_not_a_burger`: a hot dog or sausage whose name lacks `burger`, such as `The Frank`, and pet items such as `The Pup Patty (Patty for Puppy)`) never set the index and never make a page `priced`. `build.published_burgers` leaves them out of the list.
+- **Slider plates** (`extract.is_slider_plate`: `Cheeseburger Sliders (3)`, a single `Beef Slider`, `Mini Burgers`, `2 Mini Slammers`, `Baby Burgers (3)`, `Trio of Sliders`) are never the index item while a standard beef burger is eligible; a page with only slider plates keeps its slider price. These do not match: `Slider Burger`, `Bistro Mini`, a single `Mini Burger`, and `Little`/`Junior`/`Jr.` burgers.
+- **Not burgers** (`extract.is_not_a_burger`: a hot dog or sausage whose name lacks `burger`, such as `The Frank`, and pet items such as `The Pup Patty (Patty for Puppy)`) never set the index, never make a page `priced` and are never published.
 - **Site-builder template placeholders** (`extract.is_template_placeholder`: "This is an item on your menu…", every item $9) are dropped by `build.drop_template_placeholders` after corrections. A page with nothing else becomes `no_menu_found`.
 
 **Chains count once (product decision, 2026-09-23).** The Burger Index (`index_median`/mean/p10/p90), the
 `all_burgers_median` and every borough/neighborhood median/min/max are computed over **distinct menus**
 (`build.menu_index_prices`): each independent restaurant once, each chain once citywide and at most once per area
 — otherwise one 7th Street Burger menu would count 22 times, once per location. Location counts
-(`restaurants_priced`, `burgers`, area `restaurants`) still count every location, since each has its own page and
-table rows.
+(`restaurants_priced`, `burgers` (one per priced location), area `restaurants`) still count every location, since
+each has its own page and table rows.
 
 **National chains are out (product decision, 2026-09-23).** McDonald's, Burger King, Wendy's, White Castle,
 Checkers, Sonic, Five Guys, Smashburger and Shake Shack (the user chose to remove Shake Shack too), plus the other

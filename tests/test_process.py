@@ -126,10 +126,12 @@ def test_chain_scraped_once_and_replayed_offline(tmp_path, fake):
     d = build.assemble(targets, results, generated_at="2026-09-23T12:00:00Z")
     build.validate(d)
     mc = [r for r in d["restaurants"] if r["chain"] == "mcdonalds"]
-    assert len(mc) == 4 and {r["index_price"] for r in mc} == {3.29}
+    # the scrape looked for the cheapest burger (index_item); build publishes the priciest one (top_item)
+    assert len(mc) == 4 and {r["index_price"] for r in mc} == {7.49}
+    assert all([b["name"] for b in r["burgers"]] == ["Big Mac"] for r in mc)
     assert all(r["price_source"] == "delivery_app" and "may vary by location" in r["status_detail"] for r in mc)
-    # McDonald's counts once, not four times: median(3.29, 11)
-    assert d["stats"]["index_median"] == 7.15 and d["stats"]["restaurants_priced"] == 5
+    # McDonald's counts once, not four times: median(7.49, 11)
+    assert d["stats"]["index_median"] == 9.25 and d["stats"]["restaurants_priced"] == 5
 
 
 def test_max_credits_stop_keeps_finished_targets(tmp_path, fake):
