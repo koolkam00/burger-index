@@ -25,7 +25,7 @@ import {
   type PricerArea,
   type PricerHood,
 } from "../src/lib/pricer";
-import { createPricerStore, type PricerStore } from "../src/lib/pricer-store";
+import { createPricerStore, SERVE_GUARD_MS, type PricerStore } from "../src/lib/pricer-store";
 import { THEME_BOOT_SCRIPT } from "../src/lib/theme-script";
 import type { Restaurant } from "../src/lib/schema";
 import { place } from "./places";
@@ -74,8 +74,16 @@ const throwing: KeyValueStorage = {
   },
 };
 
+/** A clock that moves on a second at every reading: every click comes well after its burger was served. */
+function slowClock(): () => number {
+  let t = 0;
+  return () => (t += 1000);
+}
+
 /** A store over the small city; `random` 0 always swaps with the first item (a fixed, known order). */
-function store(opts: { local?: KeyValueStorage | null; session?: KeyValueStorage | null; load?: () => Promise<unknown>; random?: () => number } = {}): PricerStore {
+function store(
+  opts: { local?: KeyValueStorage | null; session?: KeyValueStorage | null; load?: () => Promise<unknown>; random?: () => number; now?: () => number } = {},
+): PricerStore {
   const local = opts.local === undefined ? memoryStorage() : opts.local;
   const session = opts.session === undefined ? memoryStorage() : opts.session;
   return createPricerStore({
@@ -83,6 +91,7 @@ function store(opts: { local?: KeyValueStorage | null; session?: KeyValueStorage
     local: () => local,
     session: () => session,
     random: opts.random ?? (() => 0),
+    now: opts.now ?? slowClock(),
   });
 }
 
@@ -304,6 +313,38 @@ test("an answer sent from the pricer keeps its burger on the counter (the reveal
   assert.equal(s.getSnapshot().answered, 1);
   s.next();
   assert.equal(s.getSnapshot().sent, false, "a new burger starts unsent");
+});
+
+test("a click just after a burger comes out (a double-click's second) neither answers nor skips it", async () => {
+  let t = 0;
+  const s = store({ now: () => t });
+  s.start(HOODS);
+  await s.load();
+  s.choose(BRONX);
+  const first = s.getSnapshot();
+  // The second click of a double-click on the area, 120 ms later, lands on "Order up!" or "Skip".
+  t += 120;
+  assert.equal(s.send(), false, "no $40 for a burger the visitor never saw");
+  assert.equal(s.getSnapshot().sent, false);
+  assert.equal(s.next(), false, "no skip either");
+  assert.equal(s.getSnapshot(), first, "nothing changed");
+
+  // Once the burger has been up for SERVE_GUARD_MS, both work.
+  t += SERVE_GUARD_MS;
+  assert.equal(s.send(), true);
+  assert.equal(s.getSnapshot().sent, true);
+  // "Next burger" after the reveal (and a resend after a failure) is never held back.
+  assert.equal(s.send(), true, "sending again after a failure");
+  assert.equal(s.next(), true);
+  const second = s.getSnapshot();
+  assert.notEqual(second.current?.menu.key, first.current?.menu.key);
+
+  // A double-click on "Next burger": its second click lands on the next burger's "Order up!".
+  t += 120;
+  assert.equal(s.send(), false);
+  assert.equal(s.getSnapshot().sent, false);
+  t += SERVE_GUARD_MS;
+  assert.equal(s.next(), true, "a skip once the burger has been up a moment");
 });
 
 test("a returning visitor starts in their last area; a reload never repeats this session's burgers", async () => {

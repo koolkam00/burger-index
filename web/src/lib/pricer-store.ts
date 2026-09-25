@@ -11,6 +11,10 @@
 // order drawn each time the area is picked, never one this browser has already priced (setAnswered,
 // fed from my_worth as it arrives) and never one served earlier this session (answered or skipped).
 // When none is left the area is exhausted.
+//
+// A burger just served can't be answered or skipped for SERVE_GUARD_MS: the second click of a
+// double-click on "Next burger" (or on an area) lands on the new burger's "Order up!" or "Skip",
+// which would send the untouched $40 for a burger the visitor never saw.
 import {
   areaId,
   areaPicks,
@@ -29,6 +33,9 @@ import {
   type PricerMenu,
   type PricerPick,
 } from "./pricer";
+
+/** How long a burger just served ignores "Order up!" and "Skip" (a double-click's second click). */
+export const SERVE_GUARD_MS = 500;
 
 export type PricerView = "choose" | "play";
 export type PricerDataStatus = "idle" | "loading" | "ready" | "error";
@@ -61,6 +68,8 @@ export type PricerDeps = {
   session(): KeyValueStorage | null;
   /** [0, 1), like Math.random (the tests pass a fixed one). */
   random?: () => number;
+  /** A clock in milliseconds, like performance.now (the tests pass their own). */
+  now?: () => number;
 };
 
 export type PricerStore = {
@@ -76,12 +85,18 @@ export type PricerStore = {
   choose(area: PricerArea): void;
   /** Show the picker again (the area and the burger on the counter stay until another area is picked). */
   changeArea(): void;
-  /** Serve the next burger in the area (after the reveal, or to skip this one). */
-  next(): void;
+  /**
+   * Serve the next burger in the area (after the reveal, or to skip this one). A skip within
+   * SERVE_GUARD_MS of the burger being served does nothing and returns false.
+   */
+  next(): boolean;
   /** The visitor moved the slider: a late "already priced" no longer swaps this burger out. */
   hold(): void;
-  /** "Order up!" was pressed for the burger on the counter. */
-  send(): void;
+  /**
+   * "Order up!" was pressed for the burger on the counter. Within SERVE_GUARD_MS of the burger being
+   * served it does nothing and returns false: don't send the answer.
+   */
+  send(): boolean;
   /** An answer saved through the pricer (counted for the session). */
   countAnswer(): void;
   /**
@@ -93,6 +108,7 @@ export type PricerStore = {
 
 export function createPricerStore(deps: PricerDeps): PricerStore {
   const random = deps.random ?? Math.random;
+  const now = deps.now ?? (() => (typeof performance !== "undefined" ? performance.now() : Date.now()));
   const listeners = new Set<() => void>();
 
   let started = false;
@@ -106,6 +122,8 @@ export function createPricerStore(deps: PricerDeps): PricerStore {
   let sent = false;
   let held = false;
   let pickSeq = 0;
+  /** When the burger on the counter was served (now()). */
+  let servedAt = -Infinity;
   let answeredCount = 0;
   let answeredKeys = new Set<string>();
   const seen = new Set<string>();
@@ -155,6 +173,9 @@ export function createPricerStore(deps: PricerDeps): PricerStore {
     return order;
   }
 
+  /** The burger on the counter came out less than SERVE_GUARD_MS ago. */
+  const justServed = () => now() - servedAt < SERVE_GUARD_MS;
+
   /** Serve the area's next burger (or none): what was on the counter counts as served. */
   function pick() {
     pickSeq += 1;
@@ -165,6 +186,7 @@ export function createPricerStore(deps: PricerDeps): PricerStore {
     const key = nextKey(orderFor(area), (k) => seen.has(k) || answeredKeys.has(k));
     if (key === null) return;
     current = areaPicks(menus, area).get(key) ?? null;
+    servedAt = now();
     seen.add(key);
     persistSession();
   }
@@ -233,9 +255,11 @@ export function createPricerStore(deps: PricerDeps): PricerStore {
     },
 
     next() {
-      if (view !== "play") return;
+      if (view !== "play") return false;
+      if (current && !sent && justServed()) return false;
       pick();
       emit();
+      return true;
     },
 
     hold() {
@@ -244,12 +268,14 @@ export function createPricerStore(deps: PricerDeps): PricerStore {
     },
 
     send() {
-      if (!current) return;
+      if (!current) return false;
+      if (!sent && justServed()) return false;
       held = true;
       if (!sent) {
         sent = true;
         emit();
       }
+      return true;
     },
 
     countAnswer() {

@@ -1,7 +1,7 @@
 // Browser-only calls to the "What's it worth?" backend (supabase/README.md): cast_worth, my_worth,
 // the public burger_worth_hist histograms and their realtime feed. @supabase/supabase-js is imported
 // lazily, on the first call, so it lands in its own chunk and only pages that mount a worth component
-// (a restaurant page's picker, the People's Price board) load it.
+// (a restaurant page's picker, the People's Price board, the home pricer once it serves a burger) load it.
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { SUPABASE_KEY, SUPABASE_URL, WORTH_ENABLED } from "./worth-config";
 import { classifyWorthError, isMenuKey, isValidAnswer, parseHistRow, type HistRow, type WorthErrorKind } from "./worth";

@@ -128,10 +128,8 @@ export function Pricer({ hoods, boroughs }: { hoods: readonly PricerHood[]; boro
   // (from another page) focuses it too, once the router or the browser has scrolled.
   useEffect(() => {
     const focusPricer = (scroll: boolean) => {
-      const root = rootRef.current;
-      if (!root) return;
       if (scroll) document.getElementById(PRICER_ANCHOR)?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
-      root.focus({ preventScroll: true });
+      rootRef.current?.focus({ preventScroll: true });
     };
     const onCta = () => focusPricer(true);
     window.addEventListener(PRICER_FOCUS_EVENT, onCta);
@@ -140,8 +138,9 @@ export function Pricer({ hoods, boroughs }: { hoods: readonly PricerHood[]; boro
   }, []);
 
   if (!WORTH_ENABLED) {
+    // Still the focus target of "Price a burger" (tabindex −1), like the live card.
     return (
-      <div className="pricer panel" data-nosnippet="">
+      <div ref={rootRef} className="pricer panel" tabIndex={-1} data-nosnippet="">
         <PricerBar />
         <h3 className="t-display-m pricer-title">What would you pay for a burger?</h3>
         <p className="t-ui-m muted mt-2">{WORTH_ERROR_COPY.disabled}</p>
@@ -159,10 +158,15 @@ export function Pricer({ hoods, boroughs }: { hoods: readonly PricerHood[]; boro
     pendingFocus.current = "heading";
     pricerStore.changeArea();
   };
+  // A skip or an order right after a burger came out is a double-click's second click: nothing happens.
   const skip = () => {
-    if (key) track("pricer_skipped", { menu_key: key });
+    const skipped = key;
     pendingFocus.current = "heading";
-    pricerStore.next();
+    if (!pricerStore.next()) {
+      pendingFocus.current = null;
+      return;
+    }
+    if (skipped) track("pricer_skipped", { menu_key: skipped });
   };
   const next = () => {
     track("pricer_next_clicked", { count_this_session: pricerStore.getSnapshot().answered });
@@ -170,9 +174,9 @@ export function Pricer({ hoods, boroughs }: { hoods: readonly PricerHood[]; boro
     pricerStore.next();
   };
   const order = (pick: PricerPick, dollars: number) => {
+    if (!pricerStore.send()) return;
     sent.current.set(pick.menu.key, { restaurantId: pick.spot.id, price: pick.menu.price });
     pendingFocus.current = "next";
-    pricerStore.send();
     worthStore.answer(pick.menu.key, dollars);
   };
   const retryLoad = () => {
@@ -200,11 +204,12 @@ export function Pricer({ hoods, boroughs }: { hoods: readonly PricerHood[]; boro
     body = (
       <>
         <PricerBar area={area} hoods={hoodMap} onChangeArea={changeArea} />
-        <p className="t-ui-m pricer-alert mt-4">
+        <p className="t-ui-m pricer-alert mt-4" role="alert">
           <TriangleAlert className="worth-status-icon" strokeWidth={2} aria-hidden="true" />
           <span>Couldn&apos;t reach the counter. Check your connection and try again.</span>
         </p>
-        <button type="button" className="btn btn-secondary mt-4" onClick={retryLoad}>
+        {/* The state's one control takes the focus a step asks for (there is no H3 here). */}
+        <button type="button" className="btn btn-secondary mt-4" data-pricer-heading="" onClick={retryLoad}>
           Try again
         </button>
       </>
@@ -279,7 +284,8 @@ function PricerBar({ area, hoods, onChangeArea }: { area?: PricerArea; hoods?: H
 /**
  * Step 1: "Where are you eating?": anywhere, a borough (one tap each) or a neighborhood (a select and
  * "Go"). The neighborhood options wait for the pricer to mount (the select only works then), so the
- * prerendered page doesn't carry 120 neighborhood names above the board.
+ * prerendered page doesn't show 120 neighborhood names in its text above the board (the list rides
+ * only in the page's script data, as this component's props).
  */
 function AreaPicker({
   hoods,
@@ -384,8 +390,8 @@ function BurgerHead({ pick, hoods }: { pick: PricerPick; hoods: Hoods }) {
 
 /**
  * Step 2: the slider (the restaurant page's, from $40), "Order up!" and "Skip". While the answer is on
- * its way the button is held (aria-disabled); a failure shows in the status line and can be sent again.
- * Keyed by the pick, so each burger starts at $40.
+ * its way both buttons are held (aria-disabled: a skip then would drop a failure unseen); a failure
+ * shows in the status line and can be sent again. Keyed by the pick, so each burger starts at $40.
  */
 function BurgerForm({ pick, sent, onOrder, onSkip }: { pick: PricerPick; sent: boolean; onOrder: (pick: PricerPick, dollars: number) => void; onSkip: () => void }) {
   const mine = useMyWorth();
@@ -415,7 +421,14 @@ function BurgerForm({ pick, sent, onOrder, onSkip }: { pick: PricerPick; sent: b
         alert={Boolean(error) || mineFailed}
         onRetry={mineFailed && !error && !saving ? () => void worthStore.loadMine() : null}
         actions={
-          <button type="button" className="btn btn-secondary btn-lg" onClick={onSkip}>
+          <button
+            type="button"
+            className="btn btn-secondary btn-lg"
+            aria-disabled={saving || undefined}
+            onClick={() => {
+              if (!saving) onSkip();
+            }}
+          >
             Skip
           </button>
         }
