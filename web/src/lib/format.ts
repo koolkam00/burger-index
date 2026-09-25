@@ -62,11 +62,6 @@ export function formatDelta(value: number | null, base: number | null, opts: { s
   return opts.suffix ? `${text} ${opts.suffix}` : text;
 }
 
-/** Upper-cases the first letter, for a list or name that opens a sentence ("the Bronx" -> "The Bronx"). */
-export function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
 export function pluralize(n: number, one: string, many = `${one}s`): string {
   return `${formatCount(n)} ${n === 1 ? one : many}`;
 }

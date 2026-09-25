@@ -10,8 +10,10 @@ export const NAV: readonly NavItem[] = [
   { href: "/peoples-price", label: "People's Price" },
   { href: "/map", label: "Map" },
   { href: "/neighborhoods", label: "Neighborhoods" },
-  { href: "/boroughs", label: "Boroughs" },
 ];
+
+/** Where the borough comparison lives since /boroughs was folded into the home page (breadcrumbs). */
+export const BOROUGHS_HREF = "/#boroughs";
 
 /** Minimum distinct priced menus (a chain counts once) for an area to be ranked (DESIGN.md "Neighborhood plot"). */
 export const MIN_RANKED = 5;

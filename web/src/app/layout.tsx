@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Barlow, Lilita_One, Nunito } from "next/font/google";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { getGeneratedAt, getIndexMedian, getMenuCounts, getStats } from "@/lib/data";
+import { getGeneratedAt, getIndexMedian } from "@/lib/data";
 import { formatPrice } from "@/lib/format";
 import { OG_IMAGE, SITE_URL } from "@/lib/metadata";
 import { SITE_NAME } from "@/lib/site";
@@ -69,7 +69,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main id="main" tabIndex={-1} className="outline-none">
           {children}
         </main>
-        <SiteFooter generatedAt={getGeneratedAt()} menus={getMenuCounts().menus} locations={getStats().restaurants_priced} />
+        <SiteFooter generatedAt={getGeneratedAt()} />
       </body>
     </html>
   );

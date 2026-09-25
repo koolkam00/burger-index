@@ -3,12 +3,9 @@
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import type { ExBurger, ExRestaurant, SortKey } from "@/lib/explorer";
+import type { ExRow, SortKey } from "@/lib/explorer";
 import { formatDelta } from "@/lib/format";
-import { PROTEIN_LABEL } from "@/lib/labels";
-import { IndexTag, PriceChip, SourceBadge } from "../ui";
-
-export type TableRow = { b: ExBurger; r: ExRestaurant };
+import { PriceChip, SourceBadge } from "../ui";
 
 function escapeRe(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -70,7 +67,7 @@ export function BurgerTable({
   sort,
   onSort,
 }: {
-  rows: TableRow[];
+  rows: readonly ExRow[];
   median: number | null;
   tokens?: string[];
   sort: SortKey;
@@ -79,7 +76,7 @@ export function BurgerTable({
   return (
     <div className="table-shell">
     <table className="data-table">
-      <caption className="sr-only">Restaurants with their burgers, price source and price</caption>
+      <caption className="sr-only">Restaurants with their burger, price source and price</caption>
       <thead>
         <tr>
           <SortHeader label="Restaurant" keyAsc="restaurant" sort={sort} onSort={onSort} />
@@ -91,21 +88,17 @@ export function BurgerTable({
         </tr>
       </thead>
       <tbody>
-        {rows.map(({ b, r }) => {
-          const href = `/restaurants/${r.id}#${b.id}`;
+        {rows.map((r) => {
           const where = r.nb ?? r.borough;
           return (
-            <tr key={b.id}>
+            <tr key={r.id}>
               <td className="min-w-0">
                 <Link href={`/restaurants/${r.id}`} className="ui-link break-anywhere font-semibold">
                   <Highlight text={r.name} tokens={tokens} />
                 </Link>
                 {/* Below sm the burger shares this cell, under its restaurant. */}
-                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 sm:hidden">
-                  <Link href={href} className="ui-link break-anywhere font-normal">
-                    <Highlight text={b.name} tokens={tokens} />
-                  </Link>
-                  {b.idx ? <IndexTag /> : null}
+                <div className="mt-0.5 break-anywhere sm:hidden">
+                  <Highlight text={r.burger} tokens={tokens} />
                 </div>
                 <div className="t-ui-s muted break-anywhere">
                   <Highlight text={where} tokens={tokens} />
@@ -115,24 +108,18 @@ export function BurgerTable({
                   <SourceBadge source={r.source} />
                 </div>
               </td>
-              <td className="hidden min-w-0 sm:table-cell">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <Link href={href} className="ui-link break-anywhere font-normal">
-                    <Highlight text={b.name} tokens={tokens} />
-                  </Link>
-                  {b.idx ? <IndexTag /> : null}
-                </div>
-                <div className="t-ui-s muted">{PROTEIN_LABEL[b.protein]}</div>
+              <td className="hidden min-w-0 break-anywhere sm:table-cell">
+                <Highlight text={r.burger} tokens={tokens} />
               </td>
               <td className="num">
                 <span className="sm:hidden">
-                  <PriceChip price={b.price} median={median} suffix="" narrowWrap />
+                  <PriceChip price={r.price} median={median} suffix="" narrowWrap />
                 </span>
                 <span className="hidden sm:inline">
-                  <PriceChip price={b.price} median={median} delta={false} />
+                  <PriceChip price={r.price} median={median} delta={false} />
                 </span>
               </td>
-              <td className="num t-num-s muted hidden whitespace-nowrap sm:table-cell">{formatDelta(b.price, median)}</td>
+              <td className="num t-num-s muted hidden whitespace-nowrap sm:table-cell">{formatDelta(r.price, median)}</td>
             </tr>
           );
         })}

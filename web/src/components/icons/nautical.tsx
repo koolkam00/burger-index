@@ -160,20 +160,6 @@ export function Sun(props: IconProps) {
   );
 }
 
-/** Two overlapping stud-link ovals (the "Chain prices only" badge). */
-export function AnchorChain(props: IconProps) {
-  return (
-    <Svg {...props}>
-      <g transform="rotate(-32 12 12)">
-        <ellipse cx="7.8" cy="12" rx="5.2" ry="3.3" />
-        <path d="M7.8 9.8v4.4" />
-        <ellipse cx="16.2" cy="12" rx="5.2" ry="3.3" />
-        <path d="M16.2 9.8v4.4" />
-      </g>
-    </Svg>
-  );
-}
-
 /** A landing net: an oval hoop on a handle, with a sagging mesh bag below it. */
 export function Net(props: IconProps) {
   return (

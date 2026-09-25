@@ -1,25 +1,13 @@
 // Server-safe presentational components from DESIGN.md "Components".
-import {
-  Bike,
-  BookOpen,
-  CircleCheck,
-  CircleHelp,
-  CircleSlash,
-  FileText,
-  FileX,
-  Globe,
-  ShoppingBag,
-  TriangleAlert,
-  type LucideIcon,
-} from "lucide-react";
+import { Bike, BookOpen, FileText, Globe, ShoppingBag, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import type { ComponentType, CSSProperties, ReactNode } from "react";
 import { boroughMeta } from "@/lib/boroughs";
 import { formatDelta, formatPrice, priceParts } from "@/lib/format";
-import { PRICE_SOURCE_LABEL, STATUS_LABEL } from "@/lib/labels";
+import { PRICE_SOURCE_LABEL } from "@/lib/labels";
 import { binFor } from "@/lib/price-bins";
-import type { Borough, PriceSource, Status } from "@/lib/schema";
-import { AnchorChain, LobsterTrap, MessageBottle, Net, OrderBell, ShipWheel, type IconProps } from "./icons/nautical";
+import type { Borough, PriceSource } from "@/lib/schema";
+import { LobsterTrap, MessageBottle, Net, OrderBell, ShipWheel, type IconProps } from "./icons/nautical";
 
 const ICON = { strokeWidth: 2, "aria-hidden": true } as const;
 
@@ -119,11 +107,6 @@ export function PriceChip({
   );
 }
 
-/** "Order flag": the index-setting burger. */
-export function IndexTag() {
-  return <span className="index-tag">Index price</span>;
-}
-
 const SOURCE_ICON: Record<PriceSource, LucideIcon> = {
   official_site: Globe,
   official_pdf: FileText,
@@ -139,37 +122,6 @@ export function SourceBadge({ source }: { source: PriceSource | null }) {
     <span className={`badge ${source === "delivery_app" ? "badge-delivery" : ""}`}>
       <Icon {...ICON} />
       {PRICE_SOURCE_LABEL[source]}
-    </span>
-  );
-}
-
-const STATUS_STYLE: Record<Status, { Icon: LucideIcon; bg: string; icon: string }> = {
-  priced: { Icon: CircleCheck, bg: "var(--ok-bg)", icon: "var(--ok-icon)" },
-  no_prices: { Icon: CircleHelp, bg: "var(--warn-bg)", icon: "var(--warn-icon)" },
-  no_burgers: { Icon: CircleSlash, bg: "var(--surface-2)", icon: "var(--ink-muted)" },
-  no_menu_found: { Icon: FileX, bg: "var(--surface-2)", icon: "var(--ink-muted)" },
-  error: { Icon: TriangleAlert, bg: "var(--err-bg)", icon: "var(--err-icon)" },
-};
-
-export function StatusBadge({ status }: { status: Status }) {
-  const { Icon, bg, icon } = STATUS_STYLE[status];
-  return (
-    <span className="badge badge-status" style={{ background: bg }}>
-      <Icon {...ICON} style={{ color: icon }} />
-      {STATUS_LABEL[status]}
-    </span>
-  );
-}
-
-/**
- * Coverage badge for an area priced only from chain menus (no independent restaurant priced there
- * yet). Same shape as the source badges; the words carry the meaning, the anchor chain only repeats it.
- */
-export function ChainOnlyBadge() {
-  return (
-    <span className="badge badge-chain">
-      <AnchorChain size={14} />
-      Chain prices only
     </span>
   );
 }
@@ -215,15 +167,10 @@ export function Kicker({ children, icon: Icon, as: Tag = "p", className = "" }: 
 
 /**
  * The overline on a detail page's shallows band (borough, neighborhood, restaurant): what kind of
- * page this is, in `label` type, then any coverage badge. Top-level pages use the kicker ticket.
+ * page this is, in `label` type. Top-level pages use the kicker ticket.
  */
-export function DetailOverline({ label, children }: { label: ReactNode; children?: ReactNode }) {
-  return (
-    <span className="flex flex-wrap items-center gap-x-3 gap-y-2">
-      <span className="t-label muted inline-flex flex-wrap items-center gap-x-2 gap-y-1">{label}</span>
-      {children}
-    </span>
-  );
+export function DetailOverline({ label }: { label: ReactNode }) {
+  return <span className="t-label muted inline-flex flex-wrap items-center gap-x-2 gap-y-1">{label}</span>;
 }
 
 /** The kicker ticket: the only kicker form allowed on a sea band. */

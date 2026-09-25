@@ -7,10 +7,11 @@ import { BOROUGH_META, boroughBySlug, boroughInProse, type BoroughSlug } from "@
 import {
   activeFilterCount,
   EMPTY_FILTERS,
+  filterRows,
   MAX_QUERY,
-  normalize,
   parseFilters,
   queryTokens,
+  searchable,
   serializeFilters,
   SORTS,
   type ExplorerData,
@@ -18,19 +19,16 @@ import {
   type SortKey,
 } from "@/lib/explorer";
 import { formatCount, formatPrice, pluralize } from "@/lib/format";
-import { PRICE_SOURCE_LABEL, PROTEIN_LABEL } from "@/lib/labels";
 import { binRanges } from "@/lib/price-bins";
-import type { Borough, PriceSource, Protein } from "@/lib/schema";
+import type { Borough } from "@/lib/schema";
 import { useMediaQuery } from "../charts/hooks";
 import { ShipWheel } from "../icons/nautical";
 import { BoroughDot, EmptyState } from "../ui";
-import { BurgerTable, type TableRow } from "./BurgerTable";
+import { BurgerTable } from "./BurgerTable";
 import { CheckList, FilterPopover, PriceInput } from "./controls";
 
 const PAGE = 100;
 const collator = new Intl.Collator("en", { sensitivity: "base", numeric: true });
-
-type Row = TableRow & { hay: string };
 
 function priceLabel(min: number | null, max: number | null) {
   if (min !== null && max !== null) return `${formatPrice(min, { cents: "always" })}–${formatPrice(max, { cents: "always" })}`;
@@ -97,56 +95,18 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
     inputRef.current?.focus();
   };
 
-  const rows: Row[] = useMemo(
-    () =>
-      data.burgers.map((b) => {
-        const r = data.restaurants[b.r];
-        return { b, r, hay: normalize(`${b.name} ${r.name} ${r.nb ?? ""} ${r.borough}`) };
-      }),
-    [data],
-  );
+  const rows = useMemo(() => data.rows.map(searchable), [data]);
 
   // Boroughs with at least one burger row: a borough with none gets "none yet" in the filter and its
   // own empty message, since no change of filters would bring rows back.
-  const boroughsWithRows = useMemo(() => new Set<string>(rows.map(({ r }) => r.borough)), [rows]);
+  const boroughsWithRows = useMemo(() => new Set<string>(data.rows.map((r) => r.borough)), [data]);
 
   const deferredQuery = useDeferredValue(query);
   const tokens = useMemo(() => queryTokens(deferredQuery), [deferredQuery]);
 
-  const results = useMemo(() => {
-    const bset = new Set<string>(urlFilters.boroughs);
-    const pset = new Set<string>(urlFilters.proteins);
-    const sset = new Set<string>(urlFilters.sources);
-    const { min, max, neighborhood, indexOnly, sort, hideDelivery } = urlFilters;
-    const out = rows.filter(({ b, r, hay }) => {
-      if (bset.size && !bset.has(BOROUGH_META.find((m) => m.name === r.borough)!.slug)) return false;
-      if (neighborhood && r.nbSlug !== neighborhood) return false;
-      if (pset.size && !pset.has(b.protein)) return false;
-      if (sset.size && !sset.has(r.source)) return false;
-      if (hideDelivery && r.source === "delivery_app") return false;
-      if (indexOnly && !b.idx) return false;
-      if (min !== null && b.price < min) return false;
-      if (max !== null && b.price > max) return false;
-      for (const t of tokens) if (!hay.includes(t)) return false;
-      return true;
-    });
-    const byPrice = (a: Row, z: Row, dir: 1 | -1) => (a.b.price - z.b.price) * dir;
-    out.sort((a, z) => {
-      switch (sort) {
-        case "-price":
-          return byPrice(a, z, -1) || collator.compare(a.b.name, z.b.name);
-        case "name":
-          return collator.compare(a.b.name, z.b.name) || byPrice(a, z, 1);
-        case "restaurant":
-          return collator.compare(a.r.name, z.r.name) || byPrice(a, z, 1);
-        default:
-          return byPrice(a, z, 1) || collator.compare(a.b.name, z.b.name);
-      }
-    });
-    return out;
-  }, [rows, tokens, urlFilters]);
+  const results = useMemo(() => filterRows(rows, urlFilters, tokens), [rows, tokens, urlFilters]);
 
-  const shown = results.slice(0, limit);
+  const shown = results.slice(0, limit).map(({ row }) => row);
   const nActive = activeFilterCount(filters);
   const bins = data.median !== null ? binRanges(data.median) : [];
   const neighborhoods = useMemo(() => {
@@ -157,12 +117,6 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
   }, [data.neighborhoods, filters.boroughs]);
   const selectedNeighborhood = data.neighborhoods.find((n) => n.slug === filters.neighborhood);
 
-  // Hiding delivery-app prices is its own exclusion, not a rewrite of the Source list. Choosing it
-  // drops "Delivery app" from that list, and ticking "Delivery app" there un-hides, so the two never
-  // contradict each other.
-  const setHideDelivery = (on: boolean) => update({ hideDelivery: on, sources: on ? filters.sources.filter((s) => s !== "delivery_app") : filters.sources });
-  const setSources = (next: PriceSource[]) =>
-    update({ sources: next.length >= data.sources.length ? [] : next, hideDelivery: filters.hideDelivery && !next.includes("delivery_app") });
   const clearAll = () => {
     setQuery("");
     commit({ ...EMPTY_FILTERS, sort: filters.sort });
@@ -191,26 +145,6 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
         const keepNb = selectedNeighborhood && (!next.length || next.some((s) => boroughBySlug(s)!.name === selectedNeighborhood.borough));
         update({ boroughs: next, neighborhood: keepNb ? filters.neighborhood : "" });
       }}
-    />
-  );
-  const proteinGroup = (inSheet: boolean) => (
-    <CheckList<Protein>
-      legend="Protein"
-      hideLegend={!inSheet}
-      variant={inSheet ? "chips" : "list"}
-      options={data.proteins.map((p) => ({ value: p, label: PROTEIN_LABEL[p] }))}
-      selected={filters.proteins}
-      onChange={(next) => update({ proteins: next })}
-    />
-  );
-  const sourceGroup = (inSheet: boolean) => (
-    <CheckList<PriceSource>
-      legend="Price source"
-      hideLegend={!inSheet}
-      variant={inSheet ? "chips" : "list"}
-      options={data.sources.map((s) => ({ value: s, label: PRICE_SOURCE_LABEL[s] }))}
-      selected={filters.sources}
-      onChange={setSources}
     />
   );
   const priceGroup = (prefix: string) => (
@@ -281,21 +215,6 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
       </select>
     </div>
   );
-  const toggles = (prefix: string) => (
-    <div className="flex flex-wrap gap-x-6 gap-y-1">
-      <label className="t-ui-m flex min-h-11 cursor-pointer items-center gap-2">
-        <input id={`${uid}-${prefix}-idx`} type="checkbox" className="checkbox" checked={filters.indexOnly} onChange={(e) => update({ indexOnly: e.target.checked })} />
-        Index burgers only
-      </label>
-      {data.sources.includes("delivery_app") ? (
-        <label className="t-ui-m flex min-h-11 cursor-pointer items-center gap-2">
-          <input type="checkbox" className="checkbox" checked={filters.hideDelivery} onChange={(e) => setHideDelivery(e.target.checked)} />
-          Hide delivery-app prices
-        </label>
-      ) : null}
-    </div>
-  );
-
   // ---- active filter chips ------------------------------------------------------------------
   const chips: Array<{ key: string; label: string; borough?: Borough; clear: () => void }> = [
     ...filters.boroughs.map((s) => ({
@@ -306,10 +225,6 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
     })),
     ...(selectedNeighborhood ? [{ key: "nb", label: selectedNeighborhood.name, clear: () => update({ neighborhood: "" }) }] : []),
     ...(filters.min !== null || filters.max !== null ? [{ key: "price", label: priceLabel(filters.min, filters.max), clear: () => update({ min: null, max: null }) }] : []),
-    ...filters.proteins.map((p) => ({ key: `p-${p}`, label: PROTEIN_LABEL[p], clear: () => update({ proteins: filters.proteins.filter((x) => x !== p) }) })),
-    ...filters.sources.map((s) => ({ key: `s-${s}`, label: PRICE_SOURCE_LABEL[s], clear: () => update({ sources: filters.sources.filter((x) => x !== s) }) })),
-    ...(filters.hideDelivery ? [{ key: "no-delivery", label: "Delivery-app prices hidden", clear: () => update({ hideDelivery: false }) }] : []),
-    ...(filters.indexOnly ? [{ key: "idx", label: "Index burgers only", clear: () => update({ indexOnly: false }) }] : []),
   ];
 
   const scope = [
@@ -389,13 +304,6 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
           <FilterPopover label="Price" count={filters.min !== null || filters.max !== null ? 1 : 0}>
             <div className="w-72">{priceGroup("d")}</div>
           </FilterPopover>
-          <FilterPopover label="Protein" count={filters.proteins.length}>
-            {proteinGroup(false)}
-          </FilterPopover>
-          <FilterPopover label="Source" count={filters.sources.length}>
-            {sourceGroup(false)}
-          </FilterPopover>
-          <div className="ml-2">{toggles("d")}</div>
         </div>
 
         {/* mobile: filters sheet + sort */}
@@ -457,9 +365,6 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
               <legend className="t-label muted mb-2">Price</legend>
               {priceGroup("m")}
             </fieldset>
-            {proteinGroup(true)}
-            {sourceGroup(true)}
-            {toggles("m")}
           </div>
           <div className="flex items-center justify-between gap-3 border-t-2 border-line px-4 pt-3 pb-4">
             <button type="button" className="btn btn-ghost" onClick={clearAll}>

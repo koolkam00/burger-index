@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { formatCount, pluralize } from "@/lib/format";
 import type { Menu } from "@/lib/menus";
 import type { Restaurant } from "@/lib/schema";
-import { Kicker, PriceChip, SourceBadge, StatusBadge } from "./ui";
+import { Kicker, PriceChip, SourceBadge } from "./ui";
 
 function indexBurger(r: Restaurant) {
   return r.burgers.find((b) => b.is_index_item);
@@ -140,13 +140,28 @@ export function MenuEnds({ cheapest, priciest, median, chainCount }: { cheapest:
   );
 }
 
-/** Compact ranking of restaurants by index price; unpriced ones follow with their status. */
-export function RestaurantTable({ restaurants, median, showNeighborhood = true, caption }: { restaurants: Restaurant[]; median: number | null; showNeighborhood?: boolean; caption?: string }) {
+/**
+ * Compact ranking of priced restaurants by index price, each linked to its page. `unpriced` (a
+ * neighborhood page) follows as plain names: those restaurants have no page.
+ */
+export function RestaurantTable({
+  restaurants,
+  unpriced = [],
+  median,
+  showNeighborhood = true,
+  caption,
+}: {
+  restaurants: Restaurant[];
+  unpriced?: Restaurant[];
+  median: number | null;
+  showNeighborhood?: boolean;
+  caption?: string;
+}) {
   const priced = restaurants
     .filter((r) => r.index_price !== null)
     .sort((a, b) => (a.index_price as number) - (b.index_price as number) || a.name.localeCompare(b.name));
-  const unpriced = restaurants.filter((r) => r.index_price === null).sort((a, b) => a.name.localeCompare(b.name));
-  const repeated = repeatedNames(restaurants);
+  const names = [...unpriced].sort((a, b) => a.name.localeCompare(b.name));
+  const repeated = repeatedNames([...priced, ...names]);
   const address = (r: Restaurant) => (repeated.has(r.name) && r.address ? r.address : null);
   return (
     <div>
@@ -193,28 +208,23 @@ export function RestaurantTable({ restaurants, median, showNeighborhood = true, 
               </tr>
             );
           })}
-          {unpriced.map((r) => (
-            <tr key={r.id}>
-              <th scope="row">
-                <Link href={`/restaurants/${r.id}`} className="ui-link break-anywhere font-semibold">
-                  {r.name}
-                </Link>
-                {address(r) ? <span className="t-ui-s muted block break-anywhere">{address(r)}</span> : null}
-              </th>
-              {showNeighborhood ? <td className="t-ui-s hidden break-anywhere md:table-cell">{r.neighborhood ?? r.borough}</td> : null}
-              <td className="hidden sm:table-cell" />
-              <td className="num">
-                <StatusBadge status={r.status} />
-              </td>
-            </tr>
-          ))}
         </tbody>
       </table>
       </div>
-      <p className="t-ui-s muted mt-3">
-        {formatCount(priced.length)} priced{unpriced.length ? `, ${formatCount(unpriced.length)} without a price` : ""}.
-      </p>
+      <p className="t-ui-s muted mt-3">{formatCount(priced.length)} priced.</p>
+      {names.length ? (
+        <div className="mt-8">
+          <h3 className="t-label muted">Not priced</h3>
+          <ul className="mt-2 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
+            {names.map((r) => (
+              <li key={r.id} className="t-ui-m flex min-h-11 flex-col justify-center border-b border-line py-1.5 break-anywhere">
+                {r.name}
+                {address(r) ? <span className="t-ui-s muted">{address(r)}</span> : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }
-

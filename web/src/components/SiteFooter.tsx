@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { formatDate, pluralize } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import { NAV } from "@/lib/site";
 import { UseSystemTheme } from "./theme";
 import { Wordmark } from "./Wordmark";
 
 /** The deck: a rope rail, then dark stained deck planks. The non-affiliation line ships on every page. */
-export function SiteFooter({ generatedAt, menus, locations }: { generatedAt: string; menus: number; locations: number }) {
+export function SiteFooter({ generatedAt }: { generatedAt: string }) {
   return (
     <footer className="site-footer atmo">
       <span className="rope rope-flat" aria-hidden="true" />
@@ -15,9 +15,7 @@ export function SiteFooter({ generatedAt, menus, locations }: { generatedAt: str
             <p>
               <Wordmark />
             </p>
-            <p className="t-ui-m mt-4">
-              Updated {formatDate(generatedAt)} · {pluralize(menus, "menu")} at {pluralize(locations, "location")} priced
-            </p>
+            <p className="t-ui-m mt-4">Updated {formatDate(generatedAt)}</p>
             <p className="t-ui-s deck-muted mt-2">Prices in US dollars, before tax and tip.</p>
           </div>
           <nav aria-label="Footer" className="min-w-0">
@@ -29,11 +27,6 @@ export function SiteFooter({ generatedAt, menus, locations }: { generatedAt: str
                   </Link>
                 </li>
               ))}
-              <li className="col-span-2">
-                <a className="deck-link" href="/data/burger_index.json" download>
-                  Download the data (JSON)
-                </a>
-              </li>
               <li className="col-span-2">
                 <UseSystemTheme />
               </li>

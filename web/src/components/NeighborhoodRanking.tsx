@@ -5,18 +5,15 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { BOROUGH_META } from "@/lib/boroughs";
 import { formatCount, formatDelta, formatPrice, formatSpan } from "@/lib/format";
-import { isChainOnly, menuBreakdownShort, type AreaWithMenus } from "@/lib/menus";
+import { menuBreakdownShort, type AreaWithMenus } from "@/lib/menus";
 import type { Borough } from "@/lib/schema";
-import { BoroughDot, ChainOnlyBadge } from "./ui";
+import { BoroughDot } from "./ui";
 
 type Key = "median" | "name" | "menus" | "range";
 type Dir = "asc" | "desc";
 const collator = new Intl.Collator("en", { sensitivity: "base", numeric: true });
 
-/**
- * Sortable ranking of neighborhoods with enough distinct priced menus. Keyboard-operable headers.
- * A neighborhood priced only from chain menus carries the "Chain prices only" badge.
- */
+/** Sortable ranking of neighborhoods with enough distinct priced menus. Keyboard-operable headers. */
 export function NeighborhoodRanking({ areas, cityMedian }: { areas: AreaWithMenus[]; cityMedian: number | null }) {
   const [key, setKey] = useState<Key>("median");
   const [dir, setDir] = useState<Dir>("desc");
@@ -121,11 +118,6 @@ export function NeighborhoodRanking({ areas, cityMedian }: { areas: AreaWithMenu
                   {a.borough}
                   <span className="sm:hidden">· {formatCount(a.menuCounts.menus)} menus</span>
                 </span>
-                {isChainOnly(a.menuCounts) ? (
-                  <span className="mt-1 block">
-                    <ChainOnlyBadge />
-                  </span>
-                ) : null}
               </th>
               <td className="num t-num-m">{formatPrice(a.index_median, { cents: "always" })}</td>
               <td className="hidden md:table-cell">
@@ -146,7 +138,7 @@ export function NeighborhoodRanking({ areas, cityMedian }: { areas: AreaWithMenu
                 {formatCount(a.menuCounts.menus)}
                 <span className="t-ui-s muted block whitespace-nowrap">{menuBreakdownShort(a.menuCounts)}</span>
               </td>
-              <td className="num t-num-s muted hidden lg:table-cell">{isChainOnly(a.menuCounts) ? "—" : formatDelta(a.index_median, cityMedian)}</td>
+              <td className="num t-num-s muted hidden lg:table-cell">{formatDelta(a.index_median, cityMedian)}</td>
             </tr>
           ))}
         </tbody>

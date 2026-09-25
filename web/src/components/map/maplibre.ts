@@ -42,8 +42,6 @@ export type MapTokens = {
   label: string;
   ink: string;
   pinRing: string;
-  /** Pin fill for a restaurant without an index price (mini map only): neutral, off the ramp. */
-  unpriced: string;
   price: [string, string, string, string, string];
 };
 
@@ -58,7 +56,6 @@ export function readTokens(): MapTokens {
     label: v("--map-label"),
     ink: v("--ink"),
     pinRing: v("--pin-ring"),
-    unpriced: v("--bar"),
     price: [v("--price-1"), v("--price-2"), v("--price-3"), v("--price-4"), v("--price-5")],
   };
 }
@@ -140,8 +137,8 @@ export function addPins(map: MlMap, features: GeoJSON.Feature<GeoJSON.Point, Pin
     source: PIN_SOURCE,
     layout: { "circle-sort-key": ["get", "order"] },
     paint: {
-      // step 0 = no index price (neutral); 1–5 = the price ramp
-      "circle-color": ["match", ["get", "step"], 0, t.unpriced, 1, t.price[0], 2, t.price[1], 3, t.price[2], 4, t.price[3], t.price[4]],
+      // steps 1–5: the price ramp
+      "circle-color": ["match", ["get", "step"], 1, t.price[0], 2, t.price[1], 3, t.price[2], 4, t.price[3], t.price[4]],
       // 8px below z12, 12px at z12+, 16px when hovered or selected ("zoom" must be the top-level input)
       "circle-radius": ["step", ["zoom"], ["case", active, 8, 4], 12, ["case", active, 8, 6]],
       "circle-stroke-width": ["case", active, 2, 1.5],
@@ -151,7 +148,7 @@ export function addPins(map: MlMap, features: GeoJSON.Feature<GeoJSON.Point, Pin
   map.addLayer(layer);
 }
 
-export function createMap(container: HTMLElement, opts: { theme: Theme; interactive?: boolean; center?: [number, number]; zoom?: number }): MlMap {
+export function createMap(container: HTMLElement, opts: { theme: Theme; center?: [number, number]; zoom?: number }): MlMap {
   ensureWorker();
   return new maplibregl.Map({
     container,
@@ -165,24 +162,12 @@ export function createMap(container: HTMLElement, opts: { theme: Theme; interact
       [-74.6, 40.3],
       [-73.3, 41.1],
     ],
-    interactive: opts.interactive ?? true,
     attributionControl: { compact: true },
     cooperativeGestures: false,
     dragRotate: false,
     pitchWithRotate: false,
     touchPitch: false,
   });
-}
-
-/**
- * Fold the compact attribution down to its (i) button. MapLibre opens it on load and folds it only on
- * the first drag, which a non-interactive map never gets; on a small map it covers the pin.
- */
-export function collapseAttribution(container: HTMLElement) {
-  const attrib = container.querySelector(".maplibregl-ctrl-attrib.maplibregl-compact");
-  if (!attrib) return;
-  attrib.classList.remove("maplibregl-compact-show");
-  attrib.removeAttribute("open");
 }
 
 export { maplibregl };

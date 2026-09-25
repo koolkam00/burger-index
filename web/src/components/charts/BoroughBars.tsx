@@ -1,16 +1,15 @@
 // Horizontal bars for the five boroughs (DESIGN.md "Borough bars"): start at $0, sorted high → low,
-// 20px bars in 36px rows, neutral --bar fill (current borough in --ink), value at the tip, and a
-// 1px --ink reference line for the citywide median labeled "NYC". A borough priced only from chain
-// menus says "Chain prices only" under its name: its bar is a chain median, not a like-for-like one.
+// 20px bars in 36px rows, neutral --bar fill (the hovered borough in --ink), value at the tip, and a
+// 1px --ink reference line for the citywide median labeled "NYC".
 import Link from "next/link";
 import type { BoroughEntry } from "@/lib/data";
 import { boroughInProse } from "@/lib/boroughs";
 import { formatCount, formatPrice } from "@/lib/format";
-import { isChainOnly, joinList, menuBreakdownShort } from "@/lib/menus";
+import { joinList, menuBreakdownShort } from "@/lib/menus";
 import { BoroughDot } from "../ui";
 import { GrowOnView } from "./GrowOnView";
 
-export function BoroughBars({ boroughs, cityMedian, current, labelledBy }: { boroughs: BoroughEntry[]; cityMedian: number | null; current?: string; labelledBy: string }) {
+export function BoroughBars({ boroughs, cityMedian, labelledBy }: { boroughs: BoroughEntry[]; cityMedian: number | null; labelledBy: string }) {
   const priced = boroughs.filter((b) => b.summary?.index_median !== null && b.summary?.index_median !== undefined);
   const unpriced = boroughs.filter((b) => !priced.includes(b));
   const sorted = [...priced].sort((a, b) => (b.summary!.index_median as number) - (a.summary!.index_median as number));
@@ -34,9 +33,8 @@ export function BoroughBars({ boroughs, cityMedian, current, labelledBy }: { bor
           </div>
           {sorted.map((b, i) => {
             const v = b.summary!.index_median as number;
-            const chainOnly = isChainOnly(b.menuCounts);
             return (
-              <div key={b.slug} className={`borough-row contents ${current === b.slug ? "is-current" : ""}`}>
+              <div key={b.slug} className="borough-row contents">
                 <div className="flex min-h-9 min-w-0 flex-col justify-center py-0.5 pr-3">
                   <div className="t-ui-m flex min-w-0 items-center gap-2">
                     <BoroughDot borough={b.name} />
@@ -44,7 +42,6 @@ export function BoroughBars({ boroughs, cityMedian, current, labelledBy }: { bor
                       {b.name}
                     </Link>
                   </div>
-                  {chainOnly ? <span className="t-ui-s muted pl-[18px] leading-tight">Chain prices only</span> : null}
                 </div>
                 <div className="relative min-h-9">
                   <div
@@ -103,7 +100,7 @@ export function BoroughTable({ boroughs }: { boroughs: BoroughEntry[] }) {
                   {b.name}
                 </Link>
               </span>
-              {b.menuCounts.menus ? <span className="t-ui-s muted block">{isChainOnly(b.menuCounts) ? "Chain prices only" : menuBreakdownShort(b.menuCounts)}</span> : null}
+              {b.menuCounts.menus ? <span className="t-ui-s muted block">{menuBreakdownShort(b.menuCounts)}</span> : null}
             </th>
             <td className="num">{formatPrice(b.summary?.index_median ?? null, { cents: "always" })}</td>
             <td className="num hidden sm:table-cell">

@@ -7,7 +7,6 @@ import { join } from "node:path";
 import { z } from "zod";
 import { BOROUGH_META, boroughBySlug, type BoroughMeta } from "./boroughs";
 import { isRankable, menuCounts, NO_MENUS, type AreaWithMenus, type MenuCounts } from "./menus";
-import { restaurantScope, type RestaurantScope } from "./scope";
 import {
   BurgerIndexSchema,
   type AreaSummary,
@@ -46,8 +45,10 @@ function load(): BurgerIndex {
       if (burgerIds.has(b.id)) problems.push(`duplicate burger id ${b.id}`);
       burgerIds.add(b.id);
       if (b.is_index_item) nIndex += 1;
-      // The explorer and every burger table assume a published burger has a price...
+      // The explorer and every burger table assume a published burger has a price, and show the
+      // restaurant's index price as the burger's...
       if (b.price === null) problems.push(`${b.id}: published burger without a price`);
+      else if (b.is_index_item && b.price !== r.index_price) problems.push(`${b.id}: index burger price differs from index_price`);
     }
     if ((r.index_price !== null) !== (nIndex === 1) || nIndex > 1) problems.push(`${r.id}: index_price/is_index_item mismatch`);
     // ...and its restaurant a price source.
@@ -59,11 +60,23 @@ function load(): BurgerIndex {
 
 const DATA = load();
 
-const RESTAURANTS_BY_ID = new Map(DATA.restaurants.map((r) => [r.id, r]));
+/**
+ * Only priced restaurants get a page, a sitemap URL and a row in the explorer, the map and the chain
+ * lists (user decision 2026-09-25). The rest stay in the dataset, and in the menu counts' input, only
+ * as unlinked names on their neighborhood's page. Ids are still assigned over every restaurant.
+ */
+export function isPriced(r: Restaurant): r is Restaurant & { index_price: number } {
+  return r.index_price !== null;
+}
+/** A neighborhood gets a page only when at least one restaurant there is priced. */
+export function hasNeighborhoodPage(n: Pick<AreaSummary, "restaurants_priced">): boolean {
+  return n.restaurants_priced > 0;
+}
+
+const PRICED = DATA.restaurants.filter(isPriced);
+const PRICED_BY_ID = new Map(PRICED.map((r) => [r.id, r]));
 const NEIGHBORHOODS_BY_SLUG = new Map(DATA.neighborhoods.map((n) => [n.slug, n]));
 const BOROUGHS_BY_SLUG = new Map(DATA.boroughs.map((b) => [b.slug, b]));
-const BURGERS_BY_ID = new Map<string, BurgerRow>();
-for (const r of DATA.restaurants) for (const b of r.burgers) BURGERS_BY_ID.set(b.id, { burger: b, restaurant: r });
 
 // Distinct priced menus per area: a chain counts once citywide and at most once per area.
 function groupBy<K>(key: (r: Restaurant) => K | null): Map<K, Restaurant[]> {
@@ -80,15 +93,9 @@ function groupBy<K>(key: (r: Restaurant) => K | null): Map<K, Restaurant[]> {
 const CITY_MENUS = menuCounts(DATA.restaurants);
 const BOROUGH_MENUS = new Map([...groupBy((r) => r.borough)].map(([k, list]) => [k, menuCounts(list)]));
 const NEIGHBORHOOD_MENUS = new Map([...groupBy((r) => r.neighborhood_slug)].map(([k, list]) => [k, menuCounts(list)]));
-const SCOPE = restaurantScope(DATA.methodology, DATA.restaurants.length);
-
-export type BurgerRow = { burger: Burger; restaurant: Restaurant };
 
 // ---- dataset-level ---------------------------------------------------------------------------
 
-export function getDataset(): BurgerIndex {
-  return DATA;
-}
 export function getStats(): Stats {
   return DATA.stats;
 }
@@ -103,46 +110,44 @@ export function getIndexMedian(): number | null {
 export function getMenuCounts(): MenuCounts {
   return CITY_MENUS;
 }
-/**
- * Which restaurants the index covers and where the list comes from (read from
- * methodology.coverage_note), and how many of them are in the dataset so far.
- */
-export function getScope(): RestaurantScope {
-  return SCOPE;
-}
 
 // ---- restaurants -------------------------------------------------------------------------------
 
+/** Every restaurant in the dataset, priced or not: the input of every menu count. */
 export function getRestaurants(): readonly Restaurant[] {
   return DATA.restaurants;
 }
-export function getRestaurant(id: string): Restaurant | undefined {
-  return RESTAURANTS_BY_ID.get(id);
+/** The restaurants that get a page: the priced ones. */
+export function getPricedRestaurants(): readonly Restaurant[] {
+  return PRICED;
 }
+/** A priced restaurant by id; undefined for an unknown or unpriced one (it has no page). */
+export function getPricedRestaurant(id: string): Restaurant | undefined {
+  return PRICED_BY_ID.get(id);
+}
+/** The restaurant's one published burger (its index burger). */
 export function getIndexBurger(r: Restaurant): Burger | undefined {
   return r.burgers.find((b) => b.is_index_item);
 }
+/** A chain's other priced locations (an unpriced one has no page to link to). */
 export function getChainLocations(r: Restaurant): Restaurant[] {
   if (!r.chain) return [];
-  return DATA.restaurants.filter((x) => x.chain === r.chain && x.id !== r.id);
-}
-
-// ---- burgers -----------------------------------------------------------------------------------
-
-export function allBurgers(): BurgerRow[] {
-  return DATA.restaurants.flatMap((restaurant) => restaurant.burgers.map((burger) => ({ burger, restaurant })));
-}
-export function getBurger(id: string | null): BurgerRow | undefined {
-  return id ? BURGERS_BY_ID.get(id) : undefined;
+  return PRICED.filter((x) => x.chain === r.chain && x.id !== r.id);
 }
 
 // ---- neighborhoods -------------------------------------------------------------------------------
 
 export type { AreaWithMenus };
 
+/** Every neighborhood in the dataset, priced or not. */
 export function getNeighborhoods(): readonly AreaSummary[] {
   return DATA.neighborhoods;
 }
+/** The neighborhoods that get a page: those with at least one priced restaurant. */
+export function getNeighborhoodPages(): AreaSummary[] {
+  return DATA.neighborhoods.filter(hasNeighborhoodPage);
+}
+/** A neighborhood by slug, whether or not it has a page. */
 export function getNeighborhood(slug: string): AreaSummary | undefined {
   return NEIGHBORHOODS_BY_SLUG.get(slug);
 }
@@ -158,13 +163,14 @@ export function getRestaurantsInNeighborhood(slug: string): Restaurant[] {
 }
 /**
  * Neighborhoods with at least MIN_RANKED distinct priced menus (a chain counts once per area),
- * priciest median first. Chain-only ones can qualify; every ranking labels them.
+ * priciest median first.
  */
 export function rankedNeighborhoods(list: readonly AreaSummary[] = DATA.neighborhoods): AreaWithMenus[] {
   return withMenuCounts(list)
     .filter((n) => isRankable(n.menuCounts, n.index_median, MIN_RANKED))
     .sort((a, b) => (b.index_median ?? 0) - (a.index_median ?? 0) || a.name.localeCompare(b.name));
 }
+/** The rest, by name: priced ones below the threshold and (they have no page) those with nothing priced. */
 export function unrankedNeighborhoods(list: readonly AreaSummary[] = DATA.neighborhoods): AreaWithMenus[] {
   return withMenuCounts(list)
     .filter((n) => !isRankable(n.menuCounts, n.index_median, MIN_RANKED))

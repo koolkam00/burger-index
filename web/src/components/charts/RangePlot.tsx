@@ -1,9 +1,8 @@
 // Dot-and-range plot for neighborhoods (DESIGN.md "Neighborhood plot"): a 10px --ink dot at the
-// median, a 2px --axis line from index_min to index_max, 28px rows sorted by median. Areas priced only
-// from chain menus are marked "Chain prices only" beside their name.
+// median, a 2px --axis line from index_min to index_max, 28px rows sorted by median.
 import Link from "next/link";
 import { formatCount, formatPrice, formatSpan } from "@/lib/format";
-import { isChainOnly, type AreaWithMenus } from "@/lib/menus";
+import type { AreaWithMenus } from "@/lib/menus";
 import { BoroughDot } from "../ui";
 
 export function RangePlot({ areas, cityMedian, labelledBy }: { areas: AreaWithMenus[]; cityMedian: number | null; labelledBy: string }) {
@@ -44,7 +43,6 @@ export function RangePlot({ areas, cityMedian, labelledBy }: { areas: AreaWithMe
                 <Link href={`/neighborhoods/${a.slug}`} tabIndex={-1} className="ui-link">
                   {a.name}
                 </Link>
-                {isChainOnly(a.menuCounts) ? <span className="muted whitespace-nowrap"> · Chain prices only</span> : null}
               </span>
             </div>
             <div className="relative h-7 self-stretch">
@@ -100,10 +98,7 @@ export function AreaTable({ areas }: { areas: AreaWithMenus[] }) {
               <Link href={`/neighborhoods/${a.slug}`} className="ui-link">
                 {a.name}
               </Link>
-              <span className="t-ui-s muted block">
-                {a.borough}
-                {isChainOnly(a.menuCounts) ? " · Chain prices only" : ""}
-              </span>
+              <span className="t-ui-s muted block">{a.borough}</span>
             </th>
             <td className="num">{formatPrice(a.index_median, { cents: "always" })}</td>
             <td className="num hidden sm:table-cell">

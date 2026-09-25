@@ -13,7 +13,6 @@ export function PriceDistribution({
   cityMedian,
   sliceMedian,
   sliceName = "NYC",
-  chainOnly = false,
 }: {
   id: string;
   /** Index prices in the slice, one per distinct menu (menuIndexPrices), ascending. */
@@ -21,8 +20,6 @@ export function PriceDistribution({
   cityMedian: number | null;
   sliceMedian: number | null;
   sliceName?: string;
-  /** The slice is priced from chain menus only: its takeaway says so first. */
-  chainOnly?: boolean;
 }) {
   if (prices.length < MIN_HISTOGRAM || cityMedian === null || sliceMedian === null) {
     return (
@@ -45,7 +42,7 @@ export function PriceDistribution({
     <ChartFigure
       id={id}
       title={`Index prices on ${formatCount(prices.length)} menus`}
-      takeaway={`${chainOnly ? "Chain prices only. " : ""}${spread}; the median is ${formatPrice(sliceMedian, { cents: "always" })}.`}
+      takeaway={`${spread}; the median is ${formatPrice(sliceMedian, { cents: "always" })}.`}
       chart={<Histogram prices={prices} median={cityMedian} mark={{ value: sliceMedian, label: `${sliceName} median` }} labelledBy={`${id}-title ${id}-desc`} />}
       table={
         <table className="data-table">

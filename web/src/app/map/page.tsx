@@ -4,8 +4,8 @@ import { MapLegend } from "@/components/map/MapLegend";
 import { MapShell } from "@/components/map/MapShell";
 import { RestaurantTable } from "@/components/RestaurantBits";
 import { CompassRose } from "@/components/icons/nautical";
-import { PageHeader, PriceChip, SectionHeading, StatusBadge } from "@/components/ui";
-import { getIndexBurger, getRestaurants, getStats } from "@/lib/data";
+import { PageHeader, PriceChip, SectionHeading } from "@/components/ui";
+import { getIndexBurger, getPricedRestaurants, getStats } from "@/lib/data";
 import { formatCount, pluralize } from "@/lib/format";
 import { pageMetadata } from "@/lib/metadata";
 import { binFor } from "@/lib/price-bins";
@@ -20,10 +20,11 @@ export const metadata = pageMetadata({
 
 export default function MapPage() {
   const median = getStats().index_median;
-  const restaurants = getRestaurants();
-  const onMap = restaurants.filter((r) => r.index_price !== null && hasCoords(r));
+  // Priced restaurants only: an unpriced one has no page to link to (user decision 2026-09-25).
+  const restaurants = getPricedRestaurants();
+  const onMap = restaurants.filter(hasCoords);
   const noCoords = restaurants.filter((r) => !hasCoords(r));
-  const pricedNoCoords = noCoords.filter((r) => r.index_price !== null).length;
+  const pricedNoCoords = noCoords.length;
   const pins: MapPin[] = onMap.map((r) => ({
     id: r.id,
     name: r.name,
@@ -76,7 +77,7 @@ export default function MapPage() {
                       {[r.address, r.neighborhood ?? r.borough].filter(Boolean).join(" · ")}
                     </span>
                   </span>
-                  {r.index_price !== null ? <PriceChip price={r.index_price} median={median} delta={false} /> : <StatusBadge status={r.status} />}
+                  <PriceChip price={r.index_price} median={median} delta={false} />
                 </li>
               ))}
             </ul>

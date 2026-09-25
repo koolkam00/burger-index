@@ -9,8 +9,9 @@ import { Buoy, CompassRose, LifeRing, Scales, ShipWheel, Spyglass, type IconProp
 import { ThemeToggle } from "./theme";
 import { Wordmark } from "./Wordmark";
 
+/** Restaurant pages belong to Burgers; borough pages to the Index, whose borough section they grew from. */
 function isActive(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/";
+  if (href === "/") return pathname === "/" || pathname.startsWith("/boroughs/");
   return pathname === href || pathname.startsWith(`${href}/`) || (href === "/burgers" && pathname.startsWith("/restaurants/"));
 }
 
@@ -21,7 +22,6 @@ const SHEET_ICON: Record<string, ComponentType<IconProps>> = {
   "/peoples-price": Scales,
   "/map": CompassRose,
   "/neighborhoods": Buoy,
-  "/boroughs": ShipWheel,
 };
 
 export function SiteHeader() {

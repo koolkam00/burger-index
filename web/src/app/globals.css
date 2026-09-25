@@ -88,9 +88,6 @@
   /* Status */
   --ok-bg: #ddf0d8;
   --ok-icon: #2b6a2e;
-  --warn-bg: #fbebc0;
-  --warn-icon: #875800;
-  --err-bg: #fadad2;
   --err-icon: #a3221a;
 
   /* Price ramp "Shallows to Trench": the deeper the water, the pricier the burger. */
@@ -220,9 +217,6 @@
     --pin-ring: #081b25;
     --ok-bg: #11332a;
     --ok-icon: #6fd08a;
-    --warn-bg: #33290f;
-    --warn-icon: #f0be4e;
-    --err-bg: #3f1d1b;
     --err-icon: #ff7b69;
     --price-1: #c4fbf9;
     --price-2: #82dfe9;
@@ -301,9 +295,6 @@
   --pin-ring: #081b25;
   --ok-bg: #11332a;
   --ok-icon: #6fd08a;
-  --warn-bg: #33290f;
-  --warn-icon: #f0be4e;
-  --err-bg: #3f1d1b;
   --err-icon: #ff7b69;
   --price-1: #c4fbf9;
   --price-2: #82dfe9;
@@ -337,8 +328,6 @@
   --color-highlight-edge: var(--highlight-edge);
   --color-focus: var(--focus);
   --color-ok-bg: var(--ok-bg);
-  --color-warn-bg: var(--warn-bg);
-  --color-err-bg: var(--err-bg);
   --color-transparent: transparent;
   --color-current: currentColor;
 
@@ -984,35 +973,6 @@
     border-color: var(--highlight-edge);
     color: var(--ink);
   }
-  .badge-status {
-    color: var(--ink);
-    font-weight: 600;
-    border-color: transparent;
-  }
-  .badge-chain {
-    background: var(--surface-2);
-    color: var(--ink);
-    font-weight: 600;
-  }
-  /* "Order flag": a pennant, never rotated. */
-  .index-tag {
-    display: inline-flex;
-    align-items: center;
-    height: 20px;
-    padding: 0 7px 0 11px;
-    border-radius: 0 var(--radius-1) var(--radius-1) 0;
-    clip-path: polygon(7px 0, 100% 0, 100% 100%, 7px 100%, 0 50%);
-    background: var(--accent);
-    color: var(--accent-ink);
-    font-family: var(--font-ui);
-    font-weight: 700;
-    font-size: 11px;
-    line-height: 1;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    vertical-align: middle;
-  }
 
   /* ---- Price chip ("price tag"): a full-height ramp stripe, then the price and the delta ----- */
   .price-chip {
@@ -1300,12 +1260,6 @@
   html:not(.board-seen) .bubbles .bubble {
     animation: bubble-rise 3.4s var(--ease-out) both;
     animation-delay: var(--delay, 0s);
-  }
-  /* The counter: a trap-net band behind the stat tiles (tiles on it are opaque). */
-  .counter {
-    background-color: var(--bg);
-    background-image: var(--net-pattern);
-    padding: 20px 0 44px;
   }
 
   /* ---- The awning (under the nav on every page; overlaps the band below by its own height) -- */
@@ -1669,9 +1623,6 @@
   .data-table thead th.num {
     text-align: right;
   }
-  .data-table tr.is-index > * {
-    background-color: var(--highlight-tint);
-  }
   .sort-btn {
     display: inline-flex;
     align-items: center;
@@ -1696,28 +1647,7 @@
     color: var(--ink);
   }
 
-  /* ---- Menu board list (a data zone) -------------------------------------------------------- */
-  /* On a phone the rows stay inside the 16px page gutter; from md up they hang 12px into the margin
-     so the names line up with the heading above. */
-  .menu-item {
-    padding: 14px 10px;
-    border-bottom: 1.5px solid var(--line);
-  }
-  @media (min-width: 768px) {
-    .menu-item {
-      padding-inline: 12px;
-      margin-inline: -12px;
-    }
-  }
-  .menu-item:first-child {
-    border-top: 1.5px solid var(--line);
-  }
-  .menu-item:target {
-    box-shadow: inset 4px 0 0 var(--accent);
-  }
-  .menu-item.is-index {
-    background: var(--highlight-tint);
-  }
+  /* ---- Menu line: a name, a dotted leader, a price (the restaurant page's burger block) ------ */
   .menu-line {
     display: flex;
     align-items: baseline;
@@ -1811,8 +1741,7 @@
       background-color var(--dur-1) var(--ease-out);
     transition-delay: var(--d, 0ms), 0ms;
   }
-  .borough-row:hover .hbar-fill,
-  .borough-row.is-current .hbar-fill {
+  .borough-row:hover .hbar-fill {
     background: var(--ink);
   }
 

@@ -5,7 +5,6 @@ import { BoroughDot, PageHeader, SectionHeading } from "@/components/ui";
 import { BOROUGH_META } from "@/lib/boroughs";
 import { getNeighborhoods, getStats, rankedNeighborhoods, unrankedNeighborhoods } from "@/lib/data";
 import { formatCount, formatPrice, spreadEnds } from "@/lib/format";
-import { isChainOnly } from "@/lib/menus";
 import { pageMetadata } from "@/lib/metadata";
 
 export const metadata = pageMetadata({
@@ -21,12 +20,10 @@ export default function NeighborhoodsPage() {
   const median = getStats().index_median;
   const all = getNeighborhoods();
   const ranked = rankedNeighborhoods();
+  // Priced ones below the ranking threshold link to their page; those with nothing priced have no
+  // page and are listed as plain names (AreaListItem).
   const unranked = unrankedNeighborhoods();
-  // The headline compares like for like: ranked neighborhoods with independent menus.
-  const e = spreadEnds(
-    ranked.filter((n) => !isChainOnly(n.menuCounts)),
-    (n) => n.index_median,
-  );
+  const e = spreadEnds(ranked, (n) => n.index_median);
   const qualify = `${formatCount(ranked.length)} of ${formatCount(all.length)} neighborhoods ${ranked.length === 1 ? "is" : "are"} ranked.`;
   const lede = e
     ? `${qualify} ${e.top.name} is the priciest at ${formatPrice(e.top.index_median)}; ${e.bottom.name} is the cheapest at ${formatPrice(e.bottom.index_median)}.`

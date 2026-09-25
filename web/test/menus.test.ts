@@ -2,14 +2,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { parseHandCheck } from "../src/lib/hand-checks";
 import {
-  chainCoverage,
-  chainNames,
   hasOtherMenus,
-  isChainOnly,
   isRankable,
   joinList,
-  joinSome,
-  listedNames,
   menuBreakdown,
   menuBreakdownShort,
   menuCounts,
@@ -19,11 +14,9 @@ import {
   menusByIndexPriceDesc,
   NO_MENUS,
   pricedMenus,
-  splitByCoverage,
 } from "../src/lib/menus";
 import { MIN_HISTOGRAM, MIN_RANKED } from "../src/lib/site";
 import { median, percentile } from "../src/lib/stats";
-import type { MenuCounts } from "../src/lib/menus";
 import type { Borough, BurgerIndex, Restaurant } from "../src/lib/schema";
 import { loadDataset } from "./dataset";
 
@@ -105,15 +98,6 @@ test("per area, a chain counts once inside each area it is in", () => {
   assert.equal(menuCounts(all).menus, 2);
 });
 
-test("chain-only detection: priced from chains alone, no independent menu", () => {
-  assert.equal(isChainOnly(menuCounts([mcd("x"), mcd("x"), place({ chain: "wendys", price: 4.01, hood: "x" })])), true);
-  assert.equal(isChainOnly(menuCounts([mcd("x"), place({ price: 12, hood: "x" })])), false);
-  assert.equal(isChainOnly(menuCounts([place({ price: 12 })])), false);
-  // An unpriced independent doesn't make an area mixed.
-  assert.equal(isChainOnly(menuCounts([mcd("x"), place({ price: null, hood: "x" })])), true);
-  assert.equal(isChainOnly(NO_MENUS), false, "nothing priced is not 'chain prices only'");
-});
-
 test("ranking and comparison thresholds count distinct menus, not locations", () => {
   const fiveMcd = Array.from({ length: MIN_RANKED }, () => mcd("midtown"));
   const c = menuCounts(fiveMcd);
@@ -133,28 +117,6 @@ test("ranking and comparison thresholds count distinct menus, not locations", ()
   assert.ok(menuIndexPrices(manyCopies).length < MIN_HISTOGRAM);
 });
 
-test("coverage split keeps chain-only areas out of like-for-like comparisons", () => {
-  type Area = { name: string; counts: MenuCounts; median: number | null };
-  const areas: Area[] = [
-    { name: "Manhattan", counts: { menus: 65, independents: 56, chains: 9, locations: 133 }, median: 18 },
-    { name: "Brooklyn", counts: { menus: 7, independents: 0, chains: 7, locations: 65 }, median: 6.5 },
-    { name: "Queens", counts: NO_MENUS, median: null },
-  ];
-  const { comparable, chainOnly } = splitByCoverage(
-    areas,
-    (a) => a.counts,
-    (a) => a.median,
-  );
-  assert.deepEqual(
-    comparable.map((a) => a.name),
-    ["Manhattan"],
-  );
-  assert.deepEqual(
-    chainOnly.map((a) => a.name),
-    ["Brooklyn"],
-  );
-});
-
 test("menu breakdown copy reads right for every mix", () => {
   assert.equal(menuBreakdown({ menus: 65, independents: 56, chains: 9, locations: 323 }), "56 independent restaurants and 9 chains");
   assert.equal(menuBreakdown({ menus: 1, independents: 1, chains: 0, locations: 1 }), "1 independent restaurant");
@@ -165,19 +127,6 @@ test("menu breakdown copy reads right for every mix", () => {
   assert.equal(joinList(["Brooklyn", "Queens", "the Bronx", "Staten Island"]), "Brooklyn, Queens, the Bronx and Staten Island");
   assert.equal(joinList(["Manhattan"]), "Manhattan");
   assert.equal(joinList([]), "");
-  assert.equal(joinSome(["A", "B", "C", "D", "E"], 3), "A, B, C and 2 more");
-});
-
-test("chain names come most-locations first", () => {
-  const list = [place({ chain: "wendys", name: "Wendy's", price: 4.01 }), mcd("a"), mcd("b"), place({ price: 12 })];
-  assert.deepEqual(chainNames(list), ["McDonald's", "Wendy's"]);
-});
-
-test("listed names say 'including' only when the list is cut", () => {
-  assert.equal(listedNames(["7th Street Burger", "Burger Joint"]), ": 7th Street Burger and Burger Joint");
-  assert.equal(listedNames(["A", "B", "C"]), ": A, B and C");
-  assert.equal(listedNames(["A", "B", "C", "D"]), ", including A, B and C");
-  assert.equal(listedNames([]), "");
 });
 
 test("hand checks: corrected and withheld notes are found after the scrape note", () => {
@@ -194,12 +143,9 @@ test("hand checks: corrected and withheld notes are found after the scrape note"
 test("unpriced chain rows never borrow a chain price", () => {
   const unpricedRow = { ...place({ chain: "mcdonalds", name: "McDonald's", price: null }), status: "no_menu_found" as const };
   const rows = [unpricedRow, mcd("a"), mcd("b")];
-  const { priced, unpriced } = chainCoverage(rows);
-  assert.equal(priced.length, 2, "'Same menu, same price' lists only priced locations");
-  assert.deepEqual(unpriced, [unpricedRow]);
+  assert.equal(pricedMenus(rows)[0].locations, 2, "the chain's menu counts only its priced locations");
   const bk = Array.from({ length: 3 }, () => ({ ...place({ chain: "burger-king", price: null }), status: "no_menu_found" as const }));
-  assert.equal(chainCoverage(bk).priced.length, 0, "an unpriced chain has no shared price to claim");
-  assert.equal(pricedMenus(bk).length, 0, "and it isn't in the index");
+  assert.equal(pricedMenus(bk).length, 0, "an unpriced chain isn't in the index");
   // Priced menus leave the unpriced chain and restaurant out.
   assert.deepEqual(menuCounts([...rows, ...bk, place({ price: 12 }), place({ price: null })]), { menus: 2, independents: 1, chains: 1, locations: 3 });
 });
@@ -211,8 +157,6 @@ test("per-area thresholds: five locations of one chain in a neighborhood are one
   assert.equal(isRankable(c, 9), false, `${c.locations} locations but only ${c.menus} menus: below MIN_RANKED`);
   assert.equal(hasOtherMenus(menuCounts(hood.slice(0, 5))), false, "a McDonald's there has no other menu to compare with");
   assert.equal(hasOtherMenus(c), true);
-  assert.equal(isChainOnly(c), false);
-  assert.equal(isChainOnly(menuCounts(hood.slice(0, 5))), true);
 });
 
 test("empty data: every helper returns an empty, zero answer", () => {
@@ -220,9 +164,7 @@ test("empty data: every helper returns an empty, zero answer", () => {
   assert.deepEqual(menuIndexPrices([]), []);
   assert.deepEqual(menuCounts([]), NO_MENUS);
   assert.deepEqual(menusByIndexPrice([]), []);
-  assert.deepEqual(chainNames([]), []);
   assert.equal(isRankable(NO_MENUS, null), false);
-  assert.deepEqual(chainCoverage([]), { priced: [], unpriced: [] });
 });
 
 // The web computes distributions and thresholds itself; the pipeline computes the medians it
