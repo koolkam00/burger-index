@@ -31,8 +31,8 @@ export const metadata = pageMetadata({
 export default function BurgersPage() {
   const data = buildExplorerData();
   const total = formatCount(data.rows.length);
-  // Static first paint (and the no-JS view): the 50 cheapest burgers. The filterable explorer
-  // reads the URL, so it renders on the client inside <Suspense>.
+  // Static first paint (and the no-JS view): the first 50 burgers by price, lowest first. The
+  // filterable explorer reads the URL, so it renders on the client inside <Suspense>.
   const preview = [...data.rows].sort((a, b) => a.price - b.price || a.burger.localeCompare(b.burger)).slice(0, 50);
   // "548 burgers, from $6 to $75.": the count, then the cheapest and priciest prices on the list.
   const ends = cheapest && priciest ? `, from ${formatPrice(cheapest.indexPrice)} to ${formatPrice(priciest.indexPrice)}` : "";
@@ -46,7 +46,7 @@ export default function BurgersPage() {
           fallback={
             <div>
               <p className="t-ui-m muted mb-3">
-                Showing the {formatCount(preview.length)} cheapest of {total} burgers
+                Showing {formatCount(preview.length)} of {total} burgers, lowest price first
               </p>
               <BurgerTable rows={preview} median={data.median} sort="price" />
             </div>

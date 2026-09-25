@@ -7,6 +7,12 @@ import type { PricedRestaurant } from "./schema";
 
 export const CSV_PATH = "/data/burger-prices.csv";
 
+/**
+ * The CSV's license (user decision 2026-09-25): CC BY 4.0. Named in the Dataset JSON-LD, next to the CSV
+ * link in llms.txt and after the footer's CSV link.
+ */
+export const CSV_LICENSE = { name: "CC BY 4.0", url: "https://creativecommons.org/licenses/by/4.0/" } as const;
+
 export const CSV_COLUMNS = ["restaurant", "neighborhood", "borough", "burger", "price_usd", "source", "page_url", "checked"] as const;
 
 /**

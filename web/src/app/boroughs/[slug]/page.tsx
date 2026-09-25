@@ -170,7 +170,7 @@ export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug
 
         {cheapest.length ? (
           <section className="section" aria-labelledby="ends">
-            <SectionHeading id="ends" kicker="Catch of the day" icon={Net} title={cheapest.length >= MENU_ENDS_SPLIT ? `The cheapest and priciest in ${where}.` : `Every priced menu in ${where}.`} />
+            <SectionHeading id="ends" kicker="Catch of the day" icon={Net} title={cheapest.length >= MENU_ENDS_SPLIT ? `The cheapest and priciest spots in ${where}.` : `Every priced menu in ${where}.`} />
             <MenuEnds
               cheapest={cheapest}
               priciest={priciest}

@@ -1,5 +1,5 @@
 import { getBoroughs, getGeneratedAt, getMenuCounts, getNeighborhoodPages, getPricedRestaurants, getStats, rankedNeighborhoods } from "@/lib/data";
-import { CSV_PATH } from "@/lib/csv";
+import { CSV_LICENSE, CSV_PATH } from "@/lib/csv";
 import { llmsTxt } from "@/lib/llms";
 import { formatCount, formatPrice, spreadEnds } from "@/lib/format";
 import { menusByIndexPrice, menusByIndexPriceDesc, type Menu } from "@/lib/menus";
@@ -16,15 +16,18 @@ function end(m: Menu | undefined) {
   return { restaurant: r.name, burger: r.burger.name, price: m.indexPrice, where: [r.neighborhood, r.borough].filter(Boolean).join(", "), path: `/restaurants/${r.id}` };
 }
 
-/** "the 25 cheapest of 532 different burgers, from $6.00 at Johnny's Reef", "90 different burgers, $6.00 to $14.99". */
+/**
+ * "the 25 cheapest of 531 burger spots by their priciest burger, from $6.00 at Johnny's Reef", "the 25
+ * most expensive of 531 burger spots, up to $75.00 at …", "90 burger spots, priciest burgers $6.00 to $14.99".
+ */
 function rankingNote(spec: RankingSpec, restaurants: Parameters<typeof rankMenus>[0]): string | undefined {
   const { rows, total } = rankMenus(restaurants, spec);
   if (!rows.length) return undefined;
   const money = (v: number) => formatPrice(v, { cents: "always" });
   const first = rows[0];
-  if (spec.kind === "under") return `${formatCount(total)} different burgers, ${money(first.indexPrice)} to ${money(rows[rows.length - 1].indexPrice)}`;
-  const which = spec.kind === "cheapest" ? "cheapest" : "most expensive";
-  return `the ${rows.length} ${which} of ${formatCount(total)} different burgers, ${spec.kind === "cheapest" ? "from" : "up to"} ${money(first.indexPrice)} at ${first.restaurant.name}`;
+  if (spec.kind === "under") return `${formatCount(total)} burger spots, priciest burgers ${money(first.indexPrice)} to ${money(rows[rows.length - 1].indexPrice)}`;
+  if (spec.kind === "cheapest") return `the ${rows.length} cheapest of ${formatCount(total)} burger spots by their priciest burger, from ${money(first.indexPrice)} at ${first.restaurant.name}`;
+  return `the ${rows.length} most expensive of ${formatCount(total)} burger spots, up to ${money(first.indexPrice)} at ${first.restaurant.name}`;
 }
 
 export function GET() {
@@ -52,6 +55,7 @@ export function GET() {
       bottom: hoodEnds ? { name: hoodEnds.bottom.name, price: hoodEnds.bottom.index_median as number, path: `/neighborhoods/${hoodEnds.bottom.slug}` } : null,
     },
     csvPath: CSV_PATH,
+    csvLicense: CSV_LICENSE,
     sections: [
       {
         title: "Rankings",

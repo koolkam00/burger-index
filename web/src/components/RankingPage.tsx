@@ -1,14 +1,15 @@
 // One ranking page (DESIGN.md "Ranking page"): the shallows header with breadcrumbs, a ticket, the H1 in
 // plain words and a one-line answer; the ranked table (distinct menus, a chain once) with how many
 // there are; a link to the same list on /burgers; then every other ranking. ItemList JSON-LD restates
-// the table row for row. Server-only: it reads the dataset.
+// the table row for row. Cheapest and under-$N lists rank burger spots by their priciest burger and say
+// so (lib/rankings.ts). Server-only: it reads the dataset.
 import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { endSentence, segmentsText, underSentence } from "@/lib/answers";
 import { BOROUGHS_HREF, SITE_NAME } from "@/lib/site";
 import { getGeneratedAt, getPricedRestaurants, getStats } from "@/lib/data";
-import { formatCount, formatMonthYear, formatPrice } from "@/lib/format";
+import { formatCount, formatMonthYear } from "@/lib/format";
 import { breadcrumbNode, itemListNode, type Crumb } from "@/lib/jsonld";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
 import { explorerHref, rankingName, rankingPath, rankingPlace, rankingShortName, rankingSpecs, rankMenus, topTied, type RankingSpec } from "@/lib/rankings";
@@ -54,11 +55,14 @@ export function RankingPage({ spec }: { spec: RankingSpec }) {
   const place = rankingPlace(spec);
   const path = rankingPath(spec);
   const crumbs = crumbsFor(spec);
-  const answer = segmentsText(spec.kind === "under" ? underSentence(spec.under as number, place, rows, month) : endSentence(spec.kind, place, topTied(rows), month));
+  const answer = segmentsText(
+    spec.kind === "under" ? underSentence(spec.under as number, `in ${place}`, rows, month) : endSentence(spec.kind, `in ${place}`, topTied(rows), month),
+  );
+  // "Burger spots" counts distinct menus (a chain once), never the locations /burgers counts.
   const count =
     spec.kind === "under"
-      ? `All ${formatCount(rows.length)} different burgers under ${formatPrice(spec.under)} in ${place}, cheapest first.`
-      : `The ${formatCount(rows.length)} ${spec.kind === "cheapest" ? "cheapest" : "most expensive"} of ${formatCount(total)} different burgers in ${place}.`;
+      ? `All ${formatCount(rows.length)} burger spots on this list, cheapest first.`
+      : `The ${formatCount(rows.length)} ${spec.kind === "cheapest" ? "cheapest" : "most expensive"} of ${formatCount(total)} burger spots in ${place}.`;
   const ticket = TICKET[spec.kind];
 
   return (
@@ -88,7 +92,7 @@ export function RankingPage({ spec }: { spec: RankingSpec }) {
           )}
           <p className="mt-6">
             <Link href={explorerHref(spec)} className="btn btn-secondary">
-              {spec.kind === "under" ? `Every burger under ${formatPrice(spec.under)}` : `Every burger in ${place}`}
+              {spec.kind === "under" ? "Every location on this list" : `Every burger in ${place}`}
               <ArrowRight strokeWidth={2} aria-hidden="true" />
             </Link>
           </p>

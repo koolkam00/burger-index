@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CSV_PATH } from "@/lib/csv";
+import { CSV_LICENSE, CSV_PATH } from "@/lib/csv";
 import { formatDate } from "@/lib/format";
 import { CITY_RANKINGS, rankingName, rankingPath } from "@/lib/rankings";
 import { sourceLine } from "@/lib/seo";
@@ -9,7 +9,7 @@ import { Wordmark } from "./Wordmark";
 
 /**
  * The deck: a rope rail, then dark stained deck planks. The source line, the non-affiliation line, the
- * CSV link and the NYC ranking pages ship on every page.
+ * CSV link with its license and the NYC ranking pages ship on every page.
  */
 export function SiteFooter({ generatedAt }: { generatedAt: string }) {
   return (
@@ -36,10 +36,18 @@ export function SiteFooter({ generatedAt }: { generatedAt: string }) {
                     </Link>
                   </li>
                 ))}
-                {/* The public price list (user decision 2026-09-25), where the old JSON download sat. */}
+                {/* The public price list (user decision 2026-09-25), where the old JSON download sat, then its
+                    license in small type (CC BY 4.0, user decision 2026-09-25). */}
                 <li className="col-span-2">
                   <a className="deck-link" href={CSV_PATH} download>
                     Download the prices (CSV)
+                  </a>
+                  <span className="t-ui-s deck-muted mx-1.5" aria-hidden="true">
+                    ·
+                  </span>
+                  <a className="deck-link t-ui-s" href={CSV_LICENSE.url} rel="license">
+                    {CSV_LICENSE.name}
+                    <span className="sr-only"> license</span>
                   </a>
                 </li>
                 <li className="col-span-2">
@@ -52,9 +60,10 @@ export function SiteFooter({ generatedAt }: { generatedAt: string }) {
               <h2 id="footer-rankings" className="t-label deck-muted">
                 Rankings
               </h2>
+              {/* Balanced lines: the long under-$N names never leave "$15" alone on a line. */}
               <ul className="t-ui-m mt-3 grid gap-y-2">
                 {CITY_RANKINGS.map((spec) => (
-                  <li key={rankingPath(spec)}>
+                  <li key={rankingPath(spec)} className="text-balance">
                     <Link className="deck-link" href={rankingPath(spec)}>
                       {rankingName(spec)}
                     </Link>

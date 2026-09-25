@@ -1,7 +1,9 @@
 // /llms.txt (llmstxt.org): a plain Markdown summary for AI assistants with the headline numbers, the
-// date and links to the main pages and the CSV. Numbers and labels only, like the site (DESIGN.md
-// "No methodology copy"). Pure: app/llms.txt/route.ts gathers the inputs from data.ts.
-import { formatCount, formatDate, formatPrice, pluralize } from "./format";
+// date and links to the main pages and the CSV (with its license). Numbers and labels only, like the
+// site (DESIGN.md "No methodology copy"); the cheap end names the burger spot and its priciest burger,
+// never "the cheapest burger" (user decision 2026-09-25). Pure: app/llms.txt/route.ts gathers the
+// inputs from data.ts.
+import { formatCount, formatDate, formatPrice, pluralize, theBurger } from "./format";
 
 export type LlmsLink = { title: string; path: string; note?: string };
 export type LlmsSection = { title: string; links: readonly LlmsLink[] };
@@ -23,6 +25,8 @@ export type LlmsInput = {
   priciest: { restaurant: string; burger: string; price: number; where: string; path: string } | null;
   neighborhoods: { pages: number; ranked: number; top: { name: string; price: number; path: string } | null; bottom: { name: string; price: number; path: string } | null };
   csvPath: string;
+  /** The CSV's license (csv.ts CSV_LICENSE), written as plain text: llms.txt links only to this site. */
+  csvLicense?: { name: string; url: string };
   /** More link groups (for example the ranking pages), after "Pages". */
   sections?: readonly LlmsSection[];
 };
@@ -51,7 +55,9 @@ export function llmsTxt(d: LlmsInput): string {
     lines.push(`## The numbers (${updated})`, "");
     lines.push(`- NYC Burger Index (median): ${money(d.median)}`);
     if (d.p10 !== null && d.p90 !== null) lines.push(`- Most prices fall between ${formatPrice(Math.floor(d.p10))} and ${formatPrice(Math.ceil(d.p90))}`);
-    if (d.cheapest) lines.push(`- Cheapest burger: ${d.cheapest.burger} at [${d.cheapest.restaurant}](${url(d.cheapest.path)}), ${d.cheapest.where}, ${money(d.cheapest.price)}`);
+    if (d.cheapest) {
+      lines.push(`- Cheapest burger spot: [${d.cheapest.restaurant}](${url(d.cheapest.path)}), ${d.cheapest.where}. Its priciest burger is ${theBurger(d.cheapest.burger)}, ${money(d.cheapest.price)}`);
+    }
     if (d.priciest) lines.push(`- Most expensive burger: ${d.priciest.burger} at [${d.priciest.restaurant}](${url(d.priciest.path)}), ${d.priciest.where}, ${money(d.priciest.price)}`);
     for (const b of d.boroughs) {
       if (b.median !== null) lines.push(`- ${b.name}: ${money(b.median)} median across ${pluralize(b.menus, "menu")} ([${b.name} burger prices](${url(`/boroughs/${b.slug}`)}))`);
@@ -66,7 +72,7 @@ export function llmsTxt(d: LlmsInput): string {
 
   lines.push("## Pages", "");
   const pages: LlmsLink[] = [
-    { title: "The Burger Index", path: "/", note: "the NYC median, prices by borough and neighborhood, the cheapest and priciest burgers" },
+    { title: "The Burger Index", path: "/", note: "the NYC median, prices by borough and neighborhood, the cheapest burger spots and the most expensive burgers" },
     { title: "Every burger", path: "/burgers", note: `search and filter ${pluralize(d.locations, "priced burger")} by name, restaurant, neighborhood, borough and price` },
     {
       title: "Map",
@@ -93,7 +99,9 @@ export function llmsTxt(d: LlmsInput): string {
     link(d.site, {
       title: "Burger prices (CSV)",
       path: d.csvPath,
-      note: "one row per priced restaurant: restaurant, neighborhood, borough, burger, price_usd, source, page_url, checked",
+      note: `one row per priced restaurant: restaurant, neighborhood, borough, burger, price_usd, source, page_url, checked${
+        d.csvLicense ? `. License: ${d.csvLicense.name} (${d.csvLicense.url})` : ""
+      }`,
     }),
     "",
     "## Optional",

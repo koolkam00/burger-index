@@ -1,6 +1,13 @@
 // The ranking pages (user decision 2026-09-25): a small, fixed set of static lists, each an H1 in plain
 // words, a one-line answer and a ranked table. Cheapest and most expensive in NYC and in each borough
-// (the top rankingCap, with any menus tied at the cut), and every burger under $15 and under $20 in NYC.
+// (the top rankingCap, with any menus tied at the cut), and every spot whose priciest burger is under $15
+// and under $20 in NYC.
+//
+// Each restaurant publishes one burger, its highest-priced (CLAUDE.md "One burger per restaurant"), so a
+// list ranks spots by their priciest burger (user decision 2026-09-25, "honest cheapest wording"): the
+// cheapest and under-$N lists name burger spots, never "the cheapest burgers" or "burgers under $15" as
+// if every burger on every menu were known. The most expensive lists name burgers: each row is the
+// priciest burger at its spot.
 //
 // Rows are distinct menus (menus.ts): an independent restaurant once, a chain once per list, with how
 // many of its locations the list covers. The order is menusByIndexPrice / menusByIndexPriceDesc, the
@@ -16,7 +23,7 @@ export type RankingSpec = {
   kind: RankingKind;
   /** The borough the list covers, or null for all of NYC. */
   borough: BoroughMeta | null;
-  /** "under" only: burgers priced below this many whole dollars. */
+  /** "under" only: spots whose priciest burger is priced below this many whole dollars. */
   under: number | null;
 };
 
@@ -66,18 +73,25 @@ export function rankingPlace(spec: RankingSpec): string {
   return spec.borough ? boroughInProse(spec.borough.name) : "NYC";
 }
 
-/** Without the place: "Cheapest burgers", "Most expensive burgers", "Burgers under $15" (breadcrumbs). */
+/**
+ * Without the place (breadcrumbs): "Cheapest burger spots", "Most expensive burgers", "Burger spots
+ * where the priciest burger is under $15".
+ */
 export function rankingShortName(spec: RankingSpec): string {
-  if (spec.kind === "under") return `Burgers under ${formatPrice(spec.under)}`;
-  return spec.kind === "cheapest" ? "Cheapest burgers" : "Most expensive burgers";
+  if (spec.kind === "under") return `Burger spots where the priciest burger is under ${formatPrice(spec.under)}`;
+  return spec.kind === "cheapest" ? "Cheapest burger spots" : "Most expensive burgers";
 }
 
-/** The page's name in plain words: "Cheapest burgers in NYC", "Burgers under $15 in NYC" (the H1, without its period). */
+/**
+ * The page's name in plain words (the H1, without its period): "Cheapest burger spots in NYC", "Most
+ * expensive burgers in the Bronx", "Burger spots in NYC where the priciest burger is under $15".
+ */
 export function rankingName(spec: RankingSpec): string {
+  if (spec.kind === "under") return `Burger spots in ${rankingPlace(spec)} where the priciest burger is under ${formatPrice(spec.under)}`;
   return `${rankingShortName(spec)} in ${rankingPlace(spec)}`;
 }
 
-/** The name inside a sentence: "cheapest burgers in NYC" ("See the …", "See all …"). */
+/** The name inside a sentence: "cheapest burger spots in NYC" ("See the …", "See all …"). */
 export function rankingNameInSentence(spec: RankingSpec): string {
   const name = rankingName(spec);
   return `${name[0].toLowerCase()}${name.slice(1)}`;
