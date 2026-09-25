@@ -1,5 +1,5 @@
 {
-  "about": "Hand-checked menu pages per restaurant key (camis:... or csv:..., as in data/restaurants.json), applied by `pipeline sources` (see pipeline/sources.py load_menu_url_overrides): the page becomes the restaurant's menu_url, is scraped first and is trusted as this restaurant's menu; burger-list-master.csv is not edited. Use one when the page the list names (or the scrape found) is stale, partial or another restaurant's, and the restaurant's own current menu page (or, when it publishes none, this location's full menu on an ordering or delivery site) was checked by hand. A changed menu_url means a new scrape on the next `run` (credits); an override the list catches up with, or whose key leaves the scope, is reported as unused. Entries from the 2026-09-24 price check and unpriced-restaurant recovery.",
+  "about": "Hand-checked menu pages per restaurant key (camis:... or csv:..., as in data/restaurants.json), applied by `pipeline sources` (see pipeline/sources.py load_menu_url_overrides): the page becomes the restaurant's menu_url, is scraped first and is trusted as this restaurant's menu; burger-list-master.csv is not edited. Use one when the page the list names (or the scrape found) is stale, partial or another restaurant's, and the restaurant's own current menu page (or, when it publishes none, this location's full menu on an ordering or delivery site) was checked by hand. A changed menu_url means a new scrape on the next `run` (credits); an override the list catches up with, or whose key leaves the scope, is reported as unused. Entries from the 2026-09-24 price check and unpriced-restaurant recovery, and from the 2026-09-25 review of each restaurant's one published burger.",
   "overrides": {
     "camis:50135016": {
       "name": "Bay Ridge House of Wings",
@@ -360,6 +360,24 @@
       "menu_url": "https://www.seamless.com/menu/waverly-restaurant-385-6th-ave-new-york/64940",
       "checked_at": "2026-09-24",
       "reason": "Waverly Restaurant, 385 6th Ave; the diner's own ordering site is the Grubhub-powered waverlyrestaurant.dine.online: Seamless page of the same Grubhub store (Context.dev scrapes of grubhub.com store pages returned no menu on 2026-09-24; seamless.com store pages do). Grubhub listed the Beef Burger at $13.45; the list's Postmates page had no burgers."
+    },
+    "camis:41225392": {
+      "name": "Bayard's Ale House",
+      "menu_url": "https://bayardsalehouse.com/new-york-west-village-bayard-s-ale-house-food-menu",
+      "checked_at": "2026-09-25",
+      "reason": "The allmenus copy is years out of date (Charcoal Grilled Burger $12.50, coffee $3.75); the restaurant's own current food menu (dinner, brunch and happy hour tabs) lists its char-grilled burgers from $17.75 to $18.95."
+    },
+    "camis:41092609": {
+      "name": "Cookshop",
+      "menu_url": "https://www.cookshopny.com/_files/ugd/8ca1c3_d1caea077fb54380a932482c81df2908.pdf",
+      "checked_at": "2026-09-25",
+      "reason": "The SinglePlatform copy is out of date (Cookshop Burger $21, grass-fed beef on a brioche roll); the restaurant's current dinner menu PDF, linked from cookshopny.com/general-7 and modified 2026-09-23, lists the Cookshop Burger at $26."
+    },
+    "camis:40846486": {
+      "name": "Sunset Park Diner & Donuts",
+      "menu_url": "https://sunsetparkdinerdonuts.com/menu",
+      "checked_at": "2026-09-25",
+      "reason": "The Grubhub-built ordering site the list names (sunsetparkdiner.com) marks every price up by about 18% (a round price divided by 0.85: $13.54 for $11.50); the diner's own current site lists round prices. The two checks read different burgers as its priciest ($12 Texas Burger, $13 Chili Cheese Burger), so the page is re-scraped rather than priced by hand."
     }
   }
 }

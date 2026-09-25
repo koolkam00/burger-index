@@ -1824,7 +1824,9 @@
    "camis:40977209",
    "camis:50153998",
    "camis:50071497",
+   "camis:41225392",
    "camis:41298603",
+   "camis:41092609",
    "camis:50143115",
    "camis:50123103",
    "camis:40388218",
@@ -1880,7 +1882,8 @@
    "csv:98k-burger-staten-island",
    "camis:50035412",
    "csv:flanagans-tavern-staten-island",
-   "camis:50079799"
+   "camis:50079799",
+   "camis:40846486"
   ],
   "menu_url_overrides_unused": [],
   "no_neighborhood": 11,
@@ -2983,7 +2986,7 @@
    "cuisine": "American",
    "last_inspection": "2026-01-07",
    "website": "https://bayardsalehouse.com/",
-   "menu_url": "https://www.allmenus.com/ny/new-york/351920-bayards-ale-house/amp/",
+   "menu_url": "https://bayardsalehouse.com/new-york-west-village-bayard-s-ale-house-food-menu",
    "csv": true,
    "csv_name": "Bayard's Ale House",
    "csv_neighborhood": "West Village",
@@ -2993,6 +2996,11 @@
     "score": 100.0,
     "method": "name+neighborhood",
     "dba": "BAYARD'S ALEHOUSE"
+   },
+   "list_menu_url": "https://www.allmenus.com/ny/new-york/351920-bayards-ale-house/amp/",
+   "menu_url_override": {
+    "checked_at": "2026-09-25",
+    "reason": "The allmenus copy is years out of date (Charcoal Grilled Burger $12.50, coffee $3.75); the restaurant's own current food menu (dinner, brunch and happy hour tabs) lists its char-grilled burgers from $17.75 to $18.95."
    }
   },
   {
@@ -3984,7 +3992,7 @@
    "cuisine": "American",
    "last_inspection": "2026-05-07",
    "website": "https://www.cookshopny.com/",
-   "menu_url": null,
+   "menu_url": "https://www.cookshopny.com/_files/ugd/8ca1c3_d1caea077fb54380a932482c81df2908.pdf",
    "csv": true,
    "csv_name": "Cookshop",
    "csv_neighborhood": "Chelsea",
@@ -3994,6 +4002,11 @@
     "score": 82.0,
     "method": "name+neighborhood",
     "dba": "10TH AVENUE COOKSHOP"
+   },
+   "list_menu_url": null,
+   "menu_url_override": {
+    "checked_at": "2026-09-25",
+    "reason": "The SinglePlatform copy is out of date (Cookshop Burger $21, grass-fed beef on a brioche roll); the restaurant's current dinner menu PDF, linked from cookshopny.com/general-7 and modified 2026-09-23, lists the Cookshop Burger at $26."
    }
   },
   {
@@ -26008,7 +26021,7 @@
    "cuisine": "American",
    "last_inspection": "2025-11-28",
    "website": "http://www.sunsetparkdiner.com/",
-   "menu_url": "http://www.sunsetparkdiner.com/menu",
+   "menu_url": "https://sunsetparkdinerdonuts.com/menu",
    "csv": true,
    "csv_name": "Sunset Park Diner & Donuts",
    "csv_neighborhood": "Sunset Park East",
@@ -26018,6 +26031,11 @@
     "score": 100.0,
     "method": "name+neighborhood+notes-address",
     "dba": "SUNSET PARK DINER & DONUTS"
+   },
+   "list_menu_url": "http://www.sunsetparkdiner.com/menu",
+   "menu_url_override": {
+    "checked_at": "2026-09-25",
+    "reason": "The Grubhub-built ordering site the list names (sunsetparkdiner.com) marks every price up by about 18% (a round price divided by 0.85: $13.54 for $11.50); the diner's own current site lists round prices. The two checks read different burgers as its priciest ($12 Texas Burger, $13 Chili Cheese Burger), so the page is re-scraped rather than priced by hand."
    }
   },
   {
