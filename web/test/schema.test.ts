@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { validateDataset } from "../scripts/validate-contract.mjs";
 import { BurgerIndexSchema } from "../src/lib/schema";
+import { loadDataset } from "./dataset";
 
-const fixture = JSON.parse(readFileSync(new URL("../fixtures/burger_index.sample.json", import.meta.url), "utf8"));
+const dataset = loadDataset();
 
-test("the sample fixture passes both the contract (ajv) and the zod mirror", () => {
-  assert.deepEqual(validateDataset(fixture), []);
-  assert.equal(BurgerIndexSchema.safeParse(fixture).success, true);
+test("the pipeline's dataset passes both the contract (ajv) and the zod mirror", () => {
+  assert.deepEqual(validateDataset(dataset), []);
+  assert.equal(BurgerIndexSchema.safeParse(dataset).success, true);
 });
 
 // sync-data validates with ajv-formats, then data.ts parses with zod at build. Whatever passes the
@@ -38,15 +38,15 @@ const DATE_TIMES = [
 
 test("zod accepts exactly the date-times the contract check accepts", () => {
   for (const value of DATE_TIMES) {
-    const dataset = { ...fixture, generated_at: value };
-    const contract = validateDataset(dataset).length === 0;
-    const zod = BurgerIndexSchema.safeParse(dataset).success;
+    const withDate = { ...dataset, generated_at: value };
+    const contract = validateDataset(withDate).length === 0;
+    const zod = BurgerIndexSchema.safeParse(withDate).success;
     assert.equal(zod, contract, `${JSON.stringify(value)}: contract ${contract ? "accepts" : "rejects"}, zod ${zod ? "accepts" : "rejects"}`);
   }
 });
 
 test("the lowercase form the Python pipeline accepts passes both", () => {
-  const dataset = { ...fixture, generated_at: "2026-09-23t14:00:00z" };
-  assert.deepEqual(validateDataset(dataset), []);
-  assert.equal(BurgerIndexSchema.safeParse(dataset).success, true);
+  const lowercase = { ...dataset, generated_at: "2026-09-23t14:00:00z" };
+  assert.deepEqual(validateDataset(lowercase), []);
+  assert.equal(BurgerIndexSchema.safeParse(lowercase).success, true);
 });

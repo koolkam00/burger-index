@@ -3,7 +3,7 @@
 // with formats) plus the invariants pipeline/build.py enforces (unique ids, one index item per
 // priced restaurant). The zod schema in src/lib/schema.ts checks the same shape again at build.
 //
-//   node scripts/validate-contract.mjs [path/to/dataset.json]   (default: the sample fixture)
+//   node scripts/validate-contract.mjs [path/to/dataset.json]   (default: ../data/burger_index.json)
 
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -40,7 +40,7 @@ export function validateDataset(dataset) {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
-  const target = resolve(process.argv[2] ?? join(here, "..", "fixtures", "burger_index.sample.json"));
+  const target = resolve(process.argv[2] ?? join(here, "..", "..", "data", "burger_index.json"));
   const dataset = JSON.parse(readFileSync(target, "utf8"));
   const problems = validateDataset(dataset);
   if (problems.length) {

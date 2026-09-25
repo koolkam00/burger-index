@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Barlow, Lilita_One, Nunito } from "next/font/google";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { getDataSource, getGeneratedAt, getIndexMedian, getMenuCounts, getStats } from "@/lib/data";
+import { getGeneratedAt, getIndexMedian, getMenuCounts, getStats } from "@/lib/data";
 import { formatPrice } from "@/lib/format";
 import { OG_IMAGE, SITE_URL } from "@/lib/metadata";
 import { SITE_NAME } from "@/lib/site";
@@ -48,7 +48,6 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
-  const source = getDataSource();
   return (
     <html lang="en" className={`${display.variable} ${body.variable} ${ui.variable}`} suppressHydrationWarning>
       <head>
@@ -61,14 +60,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Skip to content
         </a>
-        {source === "fixture" ? (
-          <div role="note" className="border-b border-line bg-warn-bg">
-            <p className="wrap t-ui-s py-2">
-              <strong className="font-bold">Sample data.</strong> These restaurants and prices are made up for development. Run the
-              pipeline to publish the real index.
-            </p>
-          </div>
-        ) : null}
         <SiteHeader />
         {/* The awning: red and cream scalloped stripes under the facade. Not sticky; it overlaps the
             band below by its own height. */}

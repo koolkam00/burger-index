@@ -3,7 +3,7 @@
 // the same words as the badge, the charts and the tables.
 import Link from "next/link";
 import { formatDelta, formatPrice, formatSpan, pluralize } from "@/lib/format";
-import { isChainOnly, shareOfCity, type AreaWithMenus, type MenuCounts } from "@/lib/menus";
+import { isChainOnly, type AreaWithMenus } from "@/lib/menus";
 import { BoroughDot } from "./ui";
 
 /** "$7.75 · 4 menus", "not priced". */
@@ -28,20 +28,17 @@ export function AreaListItem({ area }: { area: AreaWithMenus }) {
 }
 
 /**
- * The ranking when exactly one neighborhood qualifies: one row of its numbers instead of a one-row
- * dot-and-range chart or a sortable table whose only rank is 1. `cityMenus`: the citywide menu counts,
- * so a neighborhood holding all of the menus behind the NYC median shows no delta (it would compare
- * the median with itself).
+ * The ranking when exactly one neighborhood qualifies (a borough page): one row of its numbers instead
+ * of a one-row dot-and-range chart or a sortable table whose only rank is 1.
  */
-export function SoleRanked({ area, cityMedian, cityMenus }: { area: AreaWithMenus; cityMedian: number | null; cityMenus: MenuCounts }) {
+export function SoleRanked({ area, cityMedian }: { area: AreaWithMenus; cityMedian: number | null }) {
   const c = area.menuCounts;
-  const share = isChainOnly(c) ? null : shareOfCity(c, cityMenus);
   const range =
     area.index_min !== null && area.index_max !== null ? formatSpan(formatPrice(area.index_min, { cents: "always" }), formatPrice(area.index_max, { cents: "always" })) : null;
   const detail = [
     range ? `Range ${range}` : null,
     pluralize(c.menus, "menu"),
-    isChainOnly(c) ? "Chain prices only" : share === "all" ? null : formatDelta(area.index_median, cityMedian, { suffix: "vs NYC", atLabel: "at the NYC median" }),
+    isChainOnly(c) ? "Chain prices only" : formatDelta(area.index_median, cityMedian, { suffix: "vs NYC", atLabel: "at the NYC median" }),
   ].filter(Boolean);
   return (
     <div className="flex min-h-12 flex-wrap items-center justify-between gap-x-6 gap-y-1 border-y border-line py-3">

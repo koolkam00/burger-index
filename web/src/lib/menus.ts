@@ -9,9 +9,8 @@
 //
 // Client-safe and pure: types only from ./schema, so zod stays out of the browser bundle, and every
 // function takes the list it counts, so the same call gives citywide or per-area answers.
-import { STATUSES } from "./enums";
 import { formatCount, pluralize } from "./format";
-import type { AreaSummary, Restaurant, Status } from "./schema";
+import type { AreaSummary, Restaurant } from "./schema";
 import { MIN_RANKED } from "./site";
 
 type MenuFields = Pick<Restaurant, "id" | "chain">;
@@ -118,71 +117,14 @@ export function splitByCoverage<T>(areas: readonly T[], counts: (a: T) => MenuCo
   return { comparable: priced.filter((a) => !isChainOnly(counts(a))), chainOnly: priced.filter((a) => isChainOnly(counts(a))) };
 }
 
-/**
- * How much of the NYC index an area's menus are: "all" when every distinct priced menu citywide has
- * a location in the area (the area median is then the NYC median by construction, so comparing the
- * two says nothing), "most" when more than half do (the comparison is mostly the area against
- * itself), else null.
- */
-export function shareOfCity(area: MenuCounts, city: MenuCounts): "all" | "most" | null {
-  if (!area.menus || !city.menus) return null;
-  if (area.menus >= city.menus) return "all";
-  return area.menus * 2 > city.menus ? "most" : null;
-}
-
 /** A restaurant can be compared with its area's median only when the area has another priced menu. */
 export function hasOtherMenus(c: MenuCounts): boolean {
   return c.menus > 1;
 }
 
-/**
- * Every distinct menu in `list`, priced or not: each independent restaurant once, each chain once.
- * `locations` here counts every row (listed locations), not only priced ones.
- */
-export function listedMenus(list: readonly Restaurant[]): MenuCounts {
-  const independents = new Set<string>();
-  const chains = new Set<string>();
-  for (const r of list) (r.chain ? chains : independents).add(menuKey(r));
-  return { menus: independents.size + chains.size, independents: independents.size, chains: chains.size, locations: list.length };
-}
-
-/**
- * A chain's airport concession (JFK, LaGuardia): the pipeline never applies the chain's street price
- * there (pipeline/build.py `airport_result`), so the row is listed unpriced with this note.
- */
-export function isAirportLocation(r: Pick<Restaurant, "chain" | "status_detail">): boolean {
-  return r.chain !== null && /^Airport location\b/.test(r.status_detail ?? "");
-}
-
 /** A chain's rows split by whether they carry its shared menu price (input order kept). */
 export function chainCoverage(rows: readonly Restaurant[]): { priced: Restaurant[]; unpriced: Restaurant[] } {
   return { priced: rows.filter((r) => r.index_price !== null), unpriced: rows.filter((r) => r.index_price === null) };
-}
-
-/** Per status: distinct menus (independents, chains) and every listed location with that status. */
-export type StatusTally = { independents: number; chains: number; locations: number };
-
-/**
- * How many menus and locations sit in each status. A menu's status is `priced` when any of its
- * locations is priced (a chain's airport rows don't make it unpriced); otherwise the status of its
- * first location that is not an airport concession. Locations are counted by their own status.
- */
-export function statusTally(list: readonly Restaurant[]): Record<Status, StatusTally> {
-  const out = Object.fromEntries(STATUSES.map((s) => [s, { independents: 0, chains: 0, locations: 0 }])) as Record<Status, StatusTally>;
-  const byKey = new Map<string, Restaurant[]>();
-  for (const r of list) {
-    out[r.status].locations += 1;
-    const k = menuKey(r);
-    const rows = byKey.get(k);
-    if (rows) rows.push(r);
-    else byKey.set(k, [r]);
-  }
-  for (const rows of byKey.values()) {
-    const status = rows.some((r) => r.index_price !== null) ? "priced" : (rows.find((r) => !isAirportLocation(r)) ?? rows[0]).status;
-    if (rows[0].chain) out[status].chains += 1;
-    else out[status].independents += 1;
-  }
-  return out;
 }
 
 /** "56 independent restaurants and 9 chains", "12 independent restaurants", "7 chains", "no menus". */
@@ -212,18 +154,6 @@ export function chainNames(list: readonly Restaurant[]): string[] {
     .map((m) => m.restaurant.name);
 }
 
-/** Every chain listed in `list`, priced or not, most listed locations first (ties by name). */
-export function listedChainNames(list: readonly Restaurant[]): string[] {
-  const byChain = new Map<string, { name: string; n: number }>();
-  for (const r of list) {
-    if (!r.chain) continue;
-    const seen = byChain.get(r.chain);
-    if (seen) seen.n += 1;
-    else byChain.set(r.chain, { name: r.name, n: 1 });
-  }
-  return [...byChain.values()].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).map((c) => c.name);
-}
-
 /** "A", "A and B", "A, B and C" (house style: no serial comma). */
 export function joinList(items: readonly string[]): string {
   if (items.length <= 1) return items[0] ?? "";
@@ -243,59 +173,4 @@ export function joinSome(items: readonly string[], max = 3): string {
 export function listedNames(items: readonly string[], max = 3): string {
   if (!items.length) return "";
   return items.length <= max ? `: ${joinList(items)}` : `, including ${joinList(items.slice(0, max))}`;
-}
-
-// Whether national chains are left out is part of the scope: see ./scope (restaurantScope).
-
-// ---- chain source location ------------------------------------------------------------------------
-
-const CHAIN_SOURCE = /\bone NYC location \(([^)]+)\)/;
-
-/**
- * The location whose menu a chain's shared price was read from, as the pipeline writes it into every
- * chain row's status_detail (process.py: "Chain-level prices from one NYC location (91 East 7 Street,
- * Manhattan)"), or null when the note doesn't name one.
- */
-export function chainSourceLocation(statusDetail: string | null | undefined): string | null {
-  const m = CHAIN_SOURCE.exec(statusDetail ?? "");
-  return m ? m[1].trim() : null;
-}
-
-/** This chain row is the location the chain's menu was read from (same "address, borough" as the note). */
-export function isChainSourceLocation(r: Pick<Restaurant, "chain" | "address" | "borough" | "status_detail">): boolean {
-  if (!r.chain) return false;
-  const source = chainSourceLocation(r.status_detail);
-  if (!source) return false;
-  const here = [r.address, r.borough].filter(Boolean).join(", ");
-  return source.toLowerCase() === here.toLowerCase();
-}
-
-/**
- * The rows whose burgers stand for a distinct menu: every independent restaurant, and for each chain
- * the location its menu was read from (else its first priced row, else its first row). The pipeline
- * pools the priced burgers of exactly these rows for stats.all_burgers_median (pipeline/build.py
- * `compute_stats`, `menu_sources`), so a chain's copied menu counts once there too.
- */
-export function menuSourceRows(list: readonly Restaurant[]): Restaurant[] {
-  const out: Restaurant[] = [];
-  const chains = new Map<string, Restaurant[]>();
-  for (const r of list) {
-    if (!r.chain) {
-      out.push(r);
-      continue;
-    }
-    const rows = chains.get(r.chain);
-    if (rows) rows.push(r);
-    else chains.set(r.chain, [r]);
-  }
-  for (const rows of chains.values()) out.push(rows.find(isChainSourceLocation) ?? rows.find((r) => r.index_price !== null) ?? rows[0]);
-  return out;
-}
-
-/** Priced burgers (any protein) on the distinct menus of `list`: the items behind stats.all_burgers_median. */
-export function pooledBurgerPrices(list: readonly Restaurant[]): number[] {
-  return menuSourceRows(list)
-    .flatMap((r) => r.burgers.map((b) => b.price))
-    .filter((p): p is number => p !== null)
-    .sort((a, b) => a - b);
 }

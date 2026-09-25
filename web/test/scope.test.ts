@@ -1,8 +1,7 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 import { restaurantScope } from "../src/lib/scope";
-import type { BurgerIndex } from "../src/lib/schema";
+import { loadDataset } from "./dataset";
 
 // The pipeline's two phrasings of methodology.coverage_note, exactly as pipeline/build.py
 // `coverage_note` writes them (tests/test_build.py pins the same starts). If the pipeline rewords
@@ -16,8 +15,8 @@ const WITH_CUISINES_DONE =
   "129 restaurants: our curated restaurant list plus every restaurant NYC DOHMH lists under 'Hamburgers, American, Irish' with an inspection since 2023-01-01 (or not yet inspected). Chain locations share one menu price scraped from a single NYC location. Delivery-app prices usually run above in-store prices.";
 const LIST_ONLY_DONE =
   "658 restaurants: our curated list of NYC burger restaurants, matched to NYC DOHMH inspection records for address and location. Chain locations share one menu price scraped from a single NYC location. Delivery-app prices usually run above in-store prices.";
-const FIXTURE_NOTE =
-  "SAMPLE DATA: 52 fictional restaurants generated for development. Chain locations share one menu price scraped from a single NYC location. Delivery-app prices usually run above in-store prices.";
+const OTHER_NOTE =
+  "52 fictional restaurants generated for development. Chain locations share one menu price scraped from a single NYC location. Delivery-app prices usually run above in-store prices.";
 
 const note = (coverage_note: string) => ({ coverage_note });
 
@@ -72,7 +71,7 @@ test("everything scraped: no pending count, no 'so far'", () => {
 });
 
 test("an unrecognised note names no list and claims nothing", () => {
-  const scope = restaurantScope(note(FIXTURE_NOTE), 52);
+  const scope = restaurantScope(note(OTHER_NOTE), 52);
   assert.deepEqual([scope.kind, scope.inScope, scope.pending, scope.excludesNationalChains], ["unknown", 52, 0, false]);
   assert.equal(restaurantScope(note(""), 0).kind, "unknown");
 });
@@ -86,11 +85,8 @@ test("counts: thousands separators and one pending restaurant", () => {
 
 // The published dataset must be in one of the phrasings above: an "unknown" scope would silently
 // lose the not-yet-scraped count behind the "Looked up so far" tile.
-const synced = new URL("../src/data/burger_index.json", import.meta.url);
-const meta = new URL("../src/data/meta.json", import.meta.url);
-const fromPipeline = existsSync(meta) && (JSON.parse(readFileSync(meta, "utf8")) as { source?: string }).source === "pipeline";
-test("the synced pipeline dataset's coverage note is in a known phrasing", { skip: !(existsSync(synced) && fromPipeline) && "no synced pipeline dataset" }, () => {
-  const data = JSON.parse(readFileSync(synced, "utf8")) as BurgerIndex;
+test("the pipeline dataset's coverage note is in a known phrasing", () => {
+  const data = loadDataset();
   const scope = restaurantScope(data.methodology, data.restaurants.length);
   assert.notEqual(scope.kind, "unknown", data.methodology.coverage_note);
   const lead = /^([\d,]+) restaurants?\b/.exec(data.methodology.coverage_note);

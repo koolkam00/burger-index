@@ -6,7 +6,6 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";
 import { BOROUGH_META, boroughBySlug, type BoroughMeta } from "./boroughs";
-import { handCheckedMenus, type HandCheckedMenu } from "./hand-checks";
 import { isRankable, menuCounts, NO_MENUS, type AreaWithMenus, type MenuCounts } from "./menus";
 import { restaurantScope, type RestaurantScope } from "./scope";
 import {
@@ -47,24 +46,18 @@ function load(): BurgerIndex {
       if (burgerIds.has(b.id)) problems.push(`duplicate burger id ${b.id}`);
       burgerIds.add(b.id);
       if (b.is_index_item) nIndex += 1;
+      // The explorer and every burger table assume a published burger has a price...
+      if (b.price === null) problems.push(`${b.id}: published burger without a price`);
     }
     if ((r.index_price !== null) !== (nIndex === 1) || nIndex > 1) problems.push(`${r.id}: index_price/is_index_item mismatch`);
+    // ...and its restaurant a price source.
+    if (r.burgers.length && r.price_source === null) problems.push(`${r.id}: burgers without a price source`);
   }
   if (problems.length) throw new Error(`src/data/burger_index.json breaks dataset invariants:\n  ${problems.slice(0, 20).join("\n  ")}`);
   return data;
 }
 
-function loadSource(): "pipeline" | "fixture" {
-  try {
-    const meta = JSON.parse(readFileSync(join(DATA_DIR, "meta.json"), "utf8")) as { source?: string };
-    return meta.source === "pipeline" ? "pipeline" : "fixture";
-  } catch {
-    return "fixture";
-  }
-}
-
 const DATA = load();
-const SOURCE = loadSource();
 
 const RESTAURANTS_BY_ID = new Map(DATA.restaurants.map((r) => [r.id, r]));
 const NEIGHBORHOODS_BY_SLUG = new Map(DATA.neighborhoods.map((n) => [n.slug, n]));
@@ -87,7 +80,6 @@ function groupBy<K>(key: (r: Restaurant) => K | null): Map<K, Restaurant[]> {
 const CITY_MENUS = menuCounts(DATA.restaurants);
 const BOROUGH_MENUS = new Map([...groupBy((r) => r.borough)].map(([k, list]) => [k, menuCounts(list)]));
 const NEIGHBORHOOD_MENUS = new Map([...groupBy((r) => r.neighborhood_slug)].map(([k, list]) => [k, menuCounts(list)]));
-const HAND_CHECKED = handCheckedMenus(DATA.restaurants);
 const SCOPE = restaurantScope(DATA.methodology, DATA.restaurants.length);
 
 export type BurgerRow = { burger: Burger; restaurant: Restaurant };
@@ -97,14 +89,8 @@ export type BurgerRow = { burger: Burger; restaurant: Restaurant };
 export function getDataset(): BurgerIndex {
   return DATA;
 }
-export function getDataSource(): "pipeline" | "fixture" {
-  return SOURCE;
-}
 export function getStats(): Stats {
   return DATA.stats;
-}
-export function getMethodology() {
-  return DATA.methodology;
 }
 export function getGeneratedAt(): string {
   return DATA.generated_at;
@@ -124,10 +110,6 @@ export function getMenuCounts(): MenuCounts {
 export function getScope(): RestaurantScope {
   return SCOPE;
 }
-/** Menus whose prices were corrected or withheld after a manual re-check (one entry per chain). */
-export function getHandCheckedMenus(): readonly HandCheckedMenu[] {
-  return HAND_CHECKED;
-}
 
 // ---- restaurants -------------------------------------------------------------------------------
 
@@ -136,13 +118,6 @@ export function getRestaurants(): readonly Restaurant[] {
 }
 export function getRestaurant(id: string): Restaurant | undefined {
   return RESTAURANTS_BY_ID.get(id);
-}
-/**
- * Priced LOCATIONS (every chain copy included): for map pins and location tables. Anything that
- * ranks, bins or counts prices uses the per-menu helpers in ./menus instead.
- */
-export function pricedLocations(list: readonly Restaurant[] = DATA.restaurants): Restaurant[] {
-  return list.filter((r) => r.index_price !== null);
 }
 export function getIndexBurger(r: Restaurant): Burger | undefined {
   return r.burgers.find((b) => b.is_index_item);

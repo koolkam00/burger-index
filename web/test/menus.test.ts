@@ -1,44 +1,35 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
 import { test } from "node:test";
-import { handCheckedMenus, parseHandCheck } from "../src/lib/hand-checks";
+import { parseHandCheck } from "../src/lib/hand-checks";
 import {
   chainCoverage,
   chainNames,
-  chainSourceLocation,
   hasOtherMenus,
-  isAirportLocation,
   isChainOnly,
-  isChainSourceLocation,
   isRankable,
   joinList,
   joinSome,
-  listedChainNames,
-  listedMenus,
   listedNames,
   menuBreakdown,
   menuBreakdownShort,
   menuCounts,
   menuIndexPrices,
   menuKey,
-  menuSourceRows,
   menusByIndexPrice,
   menusByIndexPriceDesc,
   NO_MENUS,
-  pooledBurgerPrices,
   pricedMenus,
-  shareOfCity,
   splitByCoverage,
-  statusTally,
 } from "../src/lib/menus";
 import { MIN_HISTOGRAM, MIN_RANKED } from "../src/lib/site";
 import { median, percentile } from "../src/lib/stats";
 import type { MenuCounts } from "../src/lib/menus";
 import type { Borough, BurgerIndex, Restaurant } from "../src/lib/schema";
+import { loadDataset } from "./dataset";
 
 let seq = 0;
 /** A restaurant row with only the fields the menu helpers read filled in meaningfully. */
-function place(opts: { id?: string; name?: string; chain?: string | null; price: number | null; borough?: Borough; hood?: string | null; detail?: string | null }): Restaurant {
+function place(opts: { id?: string; name?: string; chain?: string | null; price: number | null; borough?: Borough; hood?: string | null }): Restaurant {
   seq += 1;
   const id = opts.id ?? `${opts.chain ?? "place"}-${seq}`;
   return {
@@ -58,7 +49,7 @@ function place(opts: { id?: string; name?: string; chain?: string | null; price:
     menu_url: null,
     price_source: opts.price === null ? null : "official_site",
     status: opts.price === null ? "no_prices" : "priced",
-    status_detail: opts.detail ?? null,
+    status_detail: null,
     scraped_at: null,
     index_price: opts.price,
     burgers: [],
@@ -189,154 +180,28 @@ test("listed names say 'including' only when the list is cut", () => {
   assert.equal(listedNames([]), "");
 });
 
-test("listed chain names count every listed location, priced or not", () => {
-  const list = [
-    place({ chain: "jimbos", name: "Jimbo's", price: 17.5 }),
-    place({ chain: "bareburger", name: "Bareburger", price: null }),
-    place({ chain: "bareburger", name: "Bareburger", price: null }),
-    place({ chain: "jimbos", name: "Jimbo's", price: 17.5 }),
-    place({ chain: "jimbos", name: "Jimbo's", price: 17.5 }),
-    place({ price: 12 }),
-  ];
-  assert.deepEqual(listedChainNames(list), ["Jimbo's", "Bareburger"]);
-  assert.deepEqual(listedChainNames([place({ price: 9 })]), []);
-});
-
-test("share of the city: an area holding all or most of the NYC index's menus", () => {
-  const counts = (menus: number): MenuCounts => ({ menus, independents: menus, chains: 0, locations: menus });
-  assert.equal(shareOfCity(counts(57), counts(57)), "all");
-  assert.equal(shareOfCity(counts(44), counts(57)), "most");
-  assert.equal(shareOfCity(counts(4), counts(8)), null, "exactly half is not most");
-  assert.equal(shareOfCity(counts(1), counts(57)), null);
-  assert.equal(shareOfCity(NO_MENUS, counts(57)), null);
-  assert.equal(shareOfCity(NO_MENUS, NO_MENUS), null);
-});
-
-test("menu source rows: every independent once, a chain once at the location its menu was read from", () => {
-  const detail = "Chain-level prices from one NYC location (2 Test Street, Manhattan).";
-  const a = { ...place({ chain: "jh", price: 12, detail }), address: "1 Other Street" };
-  const b = { ...place({ chain: "jh", price: 12, detail }), address: "2 Test Street" };
-  const solo = place({ price: 15 });
-  const unpricedChain = place({ chain: "bb", price: null });
-  const rows = menuSourceRows([a, b, solo, unpricedChain]);
-  assert.deepEqual(
-    rows.map((r) => r.id),
-    [solo.id, b.id, unpricedChain.id],
-  );
-  const withBurgers = (r: Restaurant, prices: (number | null)[]): Restaurant => ({
-    ...r,
-    burgers: prices.map((price, i) => ({ id: `${r.id}--b${i}`, name: `B${i}`, price, description: null, protein: "beef", is_index_item: false })),
-  });
-  // The chain's copied menu (row a) is left out, unpriced items too.
-  assert.deepEqual(pooledBurgerPrices([withBurgers(a, [12, 14]), withBurgers(b, [12, 14]), withBurgers(solo, [15, null, 9])]), [9, 12, 14, 15]);
-});
-
-test("chain source location: the row whose menu was read, by its address", () => {
-  const detail = "Prices from an online-ordering page (order.toasttab.com). Chain-level prices from one NYC location (91 East 7 Street, Manhattan); prices may vary by location.";
-  assert.equal(chainSourceLocation(detail), "91 East 7 Street, Manhattan");
-  assert.equal(chainSourceLocation("The chain's menu was looked up for one NYC location (2233 Broadway, Manhattan)."), "2233 Broadway, Manhattan");
-  assert.equal(chainSourceLocation(null), null);
-  const at = (address: string | null, borough: Borough = "Manhattan", chain: string | null = "7th-street-burger") => ({ chain, address, borough, status_detail: detail });
-  assert.equal(isChainSourceLocation(at("91 East 7 Street")), true);
-  assert.equal(isChainSourceLocation(at("35-02 30 Avenue", "Queens")), false);
-  assert.equal(isChainSourceLocation(at("91 East 7 Street", "Brooklyn")), false, "same street, other borough");
-  assert.equal(isChainSourceLocation(at("91 East 7 Street", "Manhattan", null)), false, "independents have no chain source");
-  // A hand check appends its note after the scrape's; the source is still found.
-  assert.equal(isChainSourceLocation({ ...at("91 East 7 Street"), status_detail: `${detail} Prices corrected by hand after re-checking the menu on 2026-09-23: wrong item.` }), true);
-});
-
-test("hand checks: corrected and withheld notes are found and split from the scrape note", () => {
+test("hand checks: corrected and withheld notes are found after the scrape note", () => {
   const corrected = parseHandCheck(
     "Prices from the restaurant's own site (x.com). Prices corrected by hand after re-checking the menu on 2026-09-23: the $32 burger is the lunch price; dinner lists it at $34.",
   );
-  assert.deepEqual(corrected, {
-    kind: "corrected",
-    checkedOn: "2026-09-23",
-    reason: "the $32 burger is the lunch price; dinner lists it at $34.",
-    scrapeDetail: "Prices from the restaurant's own site (x.com).",
-  });
+  assert.deepEqual(corrected, { kind: "corrected", checkedOn: "2026-09-23" });
   const withheld = parseHandCheck("Prices withheld after re-checking the menu on 2026-09-23: the aggregator copy looks years out of date.");
-  assert.equal(withheld?.kind, "withheld");
-  assert.equal(withheld?.scrapeDetail, null);
+  assert.deepEqual(withheld, { kind: "withheld", checkedOn: "2026-09-23" });
   assert.equal(parseHandCheck("Prices from a delivery app (grubhub.com)."), null);
   assert.equal(parseHandCheck(null), null);
 });
 
-test("a chain's hand check is one corrected menu, not one per location", () => {
-  const note = "Prices corrected by hand after re-checking the menu on 2026-09-23: the full Burgers section starts lower.";
-  const list = [
-    place({ chain: "mcdonalds", price: 4.39, detail: note }),
-    place({ chain: "mcdonalds", price: 4.39, detail: note }),
-    place({ name: "Waverly", price: null, detail: "Prices withheld after re-checking the menu on 2026-09-23: stale copy." }),
-    place({ price: 20, detail: "Prices from the restaurant's own site." }),
-  ];
-  const checked = handCheckedMenus(list);
-  assert.deepEqual(
-    checked.map((h) => [h.check.kind, h.locations]),
-    [
-      ["corrected", 2],
-      ["withheld", 1],
-    ],
-  );
-});
-
-const AIRPORT = "Airport location: McDonald's's prices from its street locations are not applied here, and no airport menu has been read.";
-
-test("listed menus count every chain and independent once, priced or not", () => {
-  const list = [
-    mcd("a"),
-    mcd("b"),
-    place({ chain: "burger-king", name: "Burger King", price: null }),
-    place({ chain: "burger-king", name: "Burger King", price: null }),
-    place({ price: 12 }),
-    place({ price: null }),
-  ];
-  assert.deepEqual(listedMenus(list), { menus: 4, independents: 2, chains: 2, locations: 6 });
-  // Priced menus leave the unpriced chain and restaurant out.
-  assert.deepEqual(menuCounts(list), { menus: 2, independents: 1, chains: 1, locations: 3 });
-});
-
-test("airport rows and unpriced chains never borrow a chain price", () => {
-  const airport = { ...place({ chain: "mcdonalds", name: "McDonald's", price: null, detail: AIRPORT }), status: "no_menu_found" as const };
-  assert.equal(isAirportLocation(airport), true);
-  assert.equal(isAirportLocation(mcd("x")), false);
-  // The same words on an independent restaurant are not a chain's airport concession.
-  assert.equal(isAirportLocation(place({ price: null, detail: AIRPORT })), false);
-
-  const rows = [airport, mcd("a"), mcd("b")];
+test("unpriced chain rows never borrow a chain price", () => {
+  const unpricedRow = { ...place({ chain: "mcdonalds", name: "McDonald's", price: null }), status: "no_menu_found" as const };
+  const rows = [unpricedRow, mcd("a"), mcd("b")];
   const { priced, unpriced } = chainCoverage(rows);
   assert.equal(priced.length, 2, "'Same menu, same price' lists only priced locations");
-  assert.deepEqual(unpriced, [airport]);
+  assert.deepEqual(unpriced, [unpricedRow]);
   const bk = Array.from({ length: 3 }, () => ({ ...place({ chain: "burger-king", price: null }), status: "no_menu_found" as const }));
   assert.equal(chainCoverage(bk).priced.length, 0, "an unpriced chain has no shared price to claim");
   assert.equal(pricedMenus(bk).length, 0, "and it isn't in the index");
-});
-
-test("status tally: a chain is one menu in one status, locations keep their own status", () => {
-  const airport = { ...place({ chain: "mcdonalds", name: "McDonald's", price: null, detail: AIRPORT }), status: "no_menu_found" as const };
-  const bk = () => ({ ...place({ chain: "burger-king", price: null }), status: "no_menu_found" as const });
-  const list = [
-    airport,
-    mcd("a"),
-    mcd("b"),
-    bk(),
-    bk(),
-    place({ price: 12 }),
-    place({ price: null }), // no_prices
-    { ...place({ price: null }), status: "no_burgers" as const },
-  ];
-  const t = statusTally(list);
-  assert.deepEqual(t.priced, { independents: 1, chains: 1, locations: 3 }, "McDonald's is priced despite its airport row");
-  assert.deepEqual(t.no_menu_found, { independents: 0, chains: 1, locations: 3 }, "Burger King once; the airport row counts as a location");
-  assert.deepEqual(t.no_prices, { independents: 1, chains: 0, locations: 1 });
-  assert.deepEqual(t.no_burgers, { independents: 1, chains: 0, locations: 1 });
-  assert.deepEqual(t.error, { independents: 0, chains: 0, locations: 0 });
-  const menus = Object.values(t).reduce((n, x) => n + x.independents + x.chains, 0);
-  assert.equal(menus, listedMenus(list).menus, "every listed menu lands in exactly one status");
-  assert.equal(
-    Object.values(t).reduce((n, x) => n + x.locations, 0),
-    list.length,
-  );
+  // Priced menus leave the unpriced chain and restaurant out.
+  assert.deepEqual(menuCounts([...rows, ...bk, place({ price: 12 }), place({ price: null })]), { menus: 2, independents: 1, chains: 1, locations: 3 });
 });
 
 test("per-area thresholds: five locations of one chain in a neighborhood are one menu", () => {
@@ -356,11 +221,8 @@ test("empty data: every helper returns an empty, zero answer", () => {
   assert.deepEqual(menuCounts([]), NO_MENUS);
   assert.deepEqual(menusByIndexPrice([]), []);
   assert.deepEqual(chainNames([]), []);
-  assert.deepEqual(handCheckedMenus([]), []);
   assert.equal(isRankable(NO_MENUS, null), false);
-  assert.deepEqual(listedMenus([]), NO_MENUS);
   assert.deepEqual(chainCoverage([]), { priced: [], unpriced: [] });
-  assert.ok(Object.values(statusTally([])).every((t) => t.independents + t.chains + t.locations === 0));
 });
 
 // The web computes distributions and thresholds itself; the pipeline computes the medians it
@@ -374,7 +236,6 @@ function assertMatchesPipeline(label: string, data: BurgerIndex) {
   };
   const city = menuIndexPrices(data.restaurants);
   close(median(city), data.stats.index_median, "index_median");
-  close(median(pooledBurgerPrices(data.restaurants)), data.stats.all_burgers_median, "all_burgers_median (pooled over distinct menus)");
   close(percentile(city, 0.1), data.stats.index_p10, "index_p10");
   close(percentile(city, 0.9), data.stats.index_p90, "index_p90");
   assert.equal(
@@ -397,12 +258,6 @@ function assertMatchesPipeline(label: string, data: BurgerIndex) {
   }
 }
 
-test("per-menu medians match the pipeline's in the sample fixture", () => {
-  const fixture = JSON.parse(readFileSync(new URL("../fixtures/burger_index.sample.json", import.meta.url), "utf8")) as BurgerIndex;
-  assertMatchesPipeline("fixture", fixture);
-});
-
-const synced = new URL("../src/data/burger_index.json", import.meta.url);
-test("per-menu medians match the pipeline's in the synced dataset", { skip: !existsSync(synced) && "run npm run sync-data first" }, () => {
-  assertMatchesPipeline("src/data", JSON.parse(readFileSync(synced, "utf8")) as BurgerIndex);
+test("per-menu medians match the pipeline's in the real dataset", () => {
+  assertMatchesPipeline("data/burger_index.json", loadDataset());
 });

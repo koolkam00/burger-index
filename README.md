@@ -66,7 +66,7 @@ Needs Node 20.9 or later.
 ```bash
 cd web
 npm install
-npm run dev          # http://localhost:3000 with ../data/burger_index.json (or the sample fixture if it is missing)
+npm run dev          # http://localhost:3000 with ../data/burger_index.json
 npm run lint && npm run typecheck && npm test
 npm run build        # static site in web/out/
 npm run preview      # serve web/out/ at http://localhost:4173

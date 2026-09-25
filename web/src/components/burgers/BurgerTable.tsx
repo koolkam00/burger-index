@@ -111,11 +111,9 @@ export function BurgerTable({
                   <Highlight text={where} tokens={tokens} />
                   {r.nb ? ` · ${r.borough}` : ""}
                 </div>
-                {r.source ? (
-                  <div className="mt-1">
-                    <SourceBadge source={r.source} />
-                  </div>
-                ) : null}
+                <div className="mt-1">
+                  <SourceBadge source={r.source} />
+                </div>
               </td>
               <td className="hidden min-w-0 sm:table-cell">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -134,7 +132,7 @@ export function BurgerTable({
                   <PriceChip price={b.price} median={median} delta={false} />
                 </span>
               </td>
-              <td className="num t-num-s muted hidden whitespace-nowrap sm:table-cell">{b.price === null ? "—" : formatDelta(b.price, median)}</td>
+              <td className="num t-num-s muted hidden whitespace-nowrap sm:table-cell">{formatDelta(b.price, median)}</td>
             </tr>
           );
         })}

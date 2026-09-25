@@ -6,15 +6,6 @@ export const MINUS = "−"; // true minus sign for deltas
 const countFmt = new Intl.NumberFormat("en-US");
 const centsFmt = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const dateFmt = new Intl.DateTimeFormat("en-US", { timeZone: TZ, month: "short", day: "numeric", year: "numeric" });
-const dateTimeFmt = new Intl.DateTimeFormat("en-US", {
-  timeZone: TZ,
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-  timeZoneName: "short",
-});
 
 export type CentsMode = "always" | "auto";
 
@@ -56,13 +47,6 @@ export function formatDate(iso: string | null | undefined): string {
   return Number.isNaN(d.getTime()) ? "—" : dateFmt.format(d);
 }
 
-/** "Sep 23, 2026, 3:05 PM EDT" in New York time. */
-export function formatDateTime(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "—" : dateTimeFmt.format(d);
-}
-
 /** Percent difference of `value` from `base` (e.g. 12.3 for +12.3%). */
 export function pctDiff(value: number, base: number): number {
   return ((value - base) / base) * 100;
@@ -76,12 +60,6 @@ export function formatDelta(value: number | null, base: number | null, opts: { s
   const rounded = Math.round(Math.abs(pct));
   const text = `${pct > 0 ? "+" : MINUS}${rounded}%`;
   return opts.suffix ? `${text} ${opts.suffix}` : text;
-}
-
-/** "−30%" style signed percent for legends. */
-export function formatSignedPct(pct: number): string {
-  if (pct === 0) return "0%";
-  return `${pct > 0 ? "+" : MINUS}${Math.abs(pct)}%`;
 }
 
 /** Upper-cases the first letter, for a list or name that opens a sentence ("the Bronx" -> "The Bronx"). */
@@ -98,20 +76,17 @@ export function formatSpan(lo: string, hi: string, sep = "–"): string {
   return lo === hi ? lo : `${lo}${sep}${hi}`;
 }
 
-export type Ends<T> = { kind: "none" } | { kind: "one"; top: T } | { kind: "tied"; top: T } | { kind: "spread"; top: T; bottom: T };
-
 /**
- * How the ends of a list sorted priciest first can be described: nothing yet, a single item, every
- * item on the same price (to the cent), or a real top and bottom. Only the last one supports copy
- * like "X is the priciest; Y is the cheapest".
+ * The top and bottom of a list sorted priciest first, when they differ (to the cent): only then is
+ * copy like "X is the priciest; Y is the cheapest" true. Null for an empty list, a single item, or
+ * every item on the same price.
  */
-export function ends<T>(sorted: readonly T[], price: (item: T) => number | null): Ends<T> {
-  if (!sorted.length) return { kind: "none" };
+export function spreadEnds<T>(sorted: readonly T[], price: (item: T) => number | null): { top: T; bottom: T } | null {
+  if (sorted.length < 2) return null;
   const top = sorted[0];
-  if (sorted.length === 1) return { kind: "one", top };
   const bottom = sorted[sorted.length - 1];
   const cents = (item: T) => Math.round((price(item) ?? 0) * 100);
-  return cents(top) === cents(bottom) ? { kind: "tied", top } : { kind: "spread", top, bottom };
+  return cents(top) === cents(bottom) ? null : { top, bottom };
 }
 
 /** Hostname without "www.", for link labels. */

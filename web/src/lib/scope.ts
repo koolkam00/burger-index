@@ -18,7 +18,7 @@
 // Only the parts the patterns below name are load-bearing: how the list is matched to DOHMH ("matched
 // to ... for address and location") and what kind of national chains are left out ("fast-food",
 // "fast-food and casual-dining") can be reworded without changing the scope. A note in neither
-// phrasing (the sample fixture's) gives kind "unknown".
+// phrasing gives kind "unknown".
 //
 // The site shows none of this as copy (DESIGN.md "No methodology copy"): only the home page reads
 // `pending` and `lookedUp`, for the plain-count "Looked up so far" tile while part of the list is unread.

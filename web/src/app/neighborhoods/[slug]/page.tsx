@@ -9,7 +9,6 @@ import { BoroughName, ChainOnlyBadge, DetailOverline, Money, MoneyRange, PageHea
 import { boroughInProse, boroughSlug } from "@/lib/boroughs";
 import {
   getGeneratedAt,
-  getMenuCounts,
   getNeighborhood,
   getNeighborhoods,
   getNeighborhoodsInBorough,
@@ -19,7 +18,7 @@ import {
   withMenuCounts,
 } from "@/lib/data";
 import { formatCount, formatDate, formatDelta, formatPrice, pctDiff, pluralize } from "@/lib/format";
-import { chainNames, isChainOnly, isRankable, joinSome, menuBreakdown, menuBreakdownShort, shareOfCity } from "@/lib/menus";
+import { chainNames, isChainOnly, isRankable, joinSome, menuBreakdown, menuBreakdownShort } from "@/lib/menus";
 import { pageMetadata } from "@/lib/metadata";
 import { atLeastOneParam, PLACEHOLDER_PARAM } from "@/lib/site";
 
@@ -60,16 +59,11 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
   // Both ends on one price (a single priced menu, or every one charging the same) is one value.
   const oneLevel = n.index_min !== null && formatPrice(n.index_min, { cents: "always" }) === formatPrice(n.index_max, { cents: "always" });
   const chains = joinSome(chainNames(restaurants), 3);
-  const city = getMenuCounts();
-  // All of the NYC index's menus are here: the neighborhood median IS the NYC median, so no comparison.
-  // Most of them: the comparison is mostly the neighborhood against itself, and the copy says so.
-  const cityShare = chainOnly ? null : shareOfCity(c, city);
 
   let lede: string;
   if (n.index_median === null) lede = `${pluralize(n.restaurants, "restaurant")} here, none priced.`;
   else if (chainOnly) lede = `${pluralize(c.menus, "priced menu")} here: ${menuBreakdown(c)}${chains ? ` (${chains})` : ""}.`;
   else if (!ranked) lede = `${pluralize(c.menus, "priced menu")} here: ${menuBreakdown(c)}.`;
-  else if (cityShare === "all") lede = `The median index price here is ${formatPrice(n.index_median)}, across ${pluralize(c.menus, "menu")}: ${menuBreakdown(c)}.`;
   else {
     // The median index price (one per menu), not "the median burger": the home page's pooled
     // every-burger median is a different number.
@@ -110,21 +104,17 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
       />
       <div className="wrap">
       <section className="mt-2" aria-label="Key numbers">
-        <StatGrid cols={cityShare === "all" ? 3 : 4}>
+        <StatGrid>
           <StatTile
             label="Median"
             value={n.index_median !== null ? <Money value={n.index_median} /> : "—"}
             sub={chainOnly ? "Chain prices only" : "Index price"}
           />
-          {cityShare === "all" ? null : (
-            <StatTile
-              label="vs NYC"
-              value={chainOnly ? "—" : formatDelta(n.index_median, median)}
-              sub={
-                chainOnly ? "Chain prices only" : median !== null ? `NYC median ${formatPrice(median, { cents: "always" })}` : undefined
-              }
-            />
-          )}
+          <StatTile
+            label="vs NYC"
+            value={chainOnly ? "—" : formatDelta(n.index_median, median)}
+            sub={chainOnly ? "Chain prices only" : median !== null ? `NYC median ${formatPrice(median, { cents: "always" })}` : undefined}
+          />
           <StatTile
             label="Range"
             value={

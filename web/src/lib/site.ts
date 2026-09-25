@@ -1,7 +1,6 @@
 // Client-safe site constants.
 
 export const SITE_NAME = "The Burger Index";
-export const SITE_TAGLINE = "What a burger costs in New York.";
 
 export type NavItem = { href: string; label: string };
 

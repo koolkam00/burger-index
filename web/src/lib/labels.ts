@@ -1,5 +1,5 @@
 // Display labels and copy for contract enums (DESIGN.md "Source badges", "Status badges", "Voice").
-import type { Borough, PriceSource, Protein, Status } from "./schema";
+import type { PriceSource, Protein, Status } from "./schema";
 
 /** Source badge labels, also used by the explorer's Source filter. */
 export const PRICE_SOURCE_LABEL: Record<PriceSource, string> = {
@@ -41,12 +41,4 @@ export const PROTEIN_LABEL: Record<Protein, string> = {
   lamb: "Lamb",
   pork: "Pork",
   other: "Other",
-};
-
-export const BOROUGH_SHORT: Record<Borough, string> = {
-  Manhattan: "Manhattan",
-  Brooklyn: "Brooklyn",
-  Queens: "Queens",
-  Bronx: "Bronx",
-  "Staten Island": "Staten Island",
 };

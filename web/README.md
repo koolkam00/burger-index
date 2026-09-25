@@ -15,12 +15,12 @@ pipeline (Python) ──> ../data/burger_index.json ──> npm run sync-data �
                           (contract: ../contract/burger_index.schema.json)
 ```
 
-1. `scripts/sync-data.mjs` runs automatically before `dev` and `build`. It copies `../data/burger_index.json` into
-   `src/data/`. If the pipeline hasn't written that file yet, it copies `fixtures/burger_index.sample.json` instead, prints a loud
-   warning, and every page shows a "Sample data" banner.
+1. `scripts/sync-data.mjs` runs automatically before `dev` and `build`. It copies `../data/burger_index.json` (committed) into
+   `src/data/`. There is no sample data: if that file is missing, `dev` and `build` stop with a message saying how to get it back
+   (`.venv/bin/python -m pipeline build` from the repo root rewrites it from the scrape cache).
 2. The same script validates the file against the JSON Schema contract (ajv, draft 2020-12 with formats). Invalid data stops the build.
 3. `src/lib/data.ts` (server-only) parses it again with the zod mirror in `src/lib/schema.ts` and checks the invariants (unique ids,
-   exactly one index burger per priced restaurant). All pages read data through its typed selectors: `getStats()`,
+   exactly one index burger per priced restaurant, every published burger priced and its restaurant's price source set). All pages read data through its typed selectors: `getStats()`,
    `getRestaurant(id)`, `getNeighborhood(slug)`, `getBorough(slug)`, `allBurgers()`, and others.
 
 `src/data/` and `public/vendor/` are generated; both are gitignored.
@@ -32,8 +32,7 @@ Requires Node 20.9 or later.
 ```bash
 cd web
 npm install
-npm run dev            # http://localhost:3000, uses ../data/burger_index.json if it exists
-npm run dev:sample     # force the sample fixture
+npm run dev            # http://localhost:3000, from ../data/burger_index.json
 ```
 
 Build and preview the static export:
@@ -48,7 +47,7 @@ Checks (all must pass with zero errors):
 ```bash
 npm run lint
 npm run typecheck      # next typegen && tsc --noEmit
-npm test               # node:test on the TypeScript in src/lib (test/*.test.ts, no extra deps)
+npm test               # node:test on the TypeScript in src/lib (test/*.test.ts, no extra deps; reads ../data/burger_index.json)
 npm run build
 ```
 
@@ -57,9 +56,7 @@ Other scripts:
 | Script | What it does |
 |---|---|
 | `npm run sync-data` | Copy and validate the dataset (runs before dev and build) |
-| `npm run build:sample` | Build with the sample fixture, even if pipeline data exists |
-| `npm run validate:data [file]` | Validate a dataset against the contract (defaults to the fixture) |
-| `npm run fixture` | Regenerate `fixtures/burger_index.sample.json` (deterministic, fictional restaurants on `.example` domains) and validate it |
+| `npm run validate:data [file]` | Validate a dataset against the contract (defaults to `../data/burger_index.json`) |
 
 ## What's it worth? (Supabase)
 
@@ -163,7 +160,7 @@ Notes:
   'Hamburgers'..."), the in-scope and not-yet-scraped counts, and whether national fast-food chains are left out. The only thing
   that reads it is the home "Looked up so far" tile (a plain count, shown while some of the list is unread); no copy names the list
   or says how much of it is read. `test/scope.test.ts` pins both phrasings; if the pipeline rewords the note, update both together.
-  An unrecognised note (the fixture's) gives kind "unknown" and no pending count.
+  An unrecognised note gives kind "unknown" and no pending count.
 - **No methodology copy:** the site has no Methodology page and explains nowhere how the data is gathered, computed, counted,
   filtered, corrected or limited (user decision 2026-09-25; DESIGN.md "No methodology copy"). Keep new copy to numbers and
   short labels.

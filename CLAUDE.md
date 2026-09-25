@@ -176,23 +176,20 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
 
 ```bash
 cd web && npm install
-npm run dev              # sync-data, then http://localhost:3000 (uses ../data/burger_index.json if it exists)
-npm run dev:sample       # force the fictional fixture (fixtures/burger_index.sample.json)
-npm run lint             # these four must pass with zero errors, with the real file AND the fixture
+npm run dev              # sync-data, then http://localhost:3000 (from ../data/burger_index.json)
+npm run lint             # these four must pass with zero errors
 npm run typecheck        # next typegen && tsc --noEmit
-npm test                 # node:test over test/*.test.ts (no extra deps)
+npm test                 # node:test over test/*.test.ts (no extra deps; reads ../data/burger_index.json)
 npm run build            # sync-data, then static export to web/out/
-npm run build:sample     # same, with the fixture
 npm run preview          # serve out/ at http://localhost:4173
-npm run validate:data -- ../data/burger_index.json   # ajv check against the contract (default: the fixture)
-npm run fixture          # regenerate + validate the fixture (deterministic, fictional, .example domains)
+npm run validate:data    # ajv check against the contract (default ../data/burger_index.json; pass a path for another)
 ```
 
 - **Data in:** `scripts/sync-data.mjs` (runs as `predev`/`prebuild`) copies `../data/burger_index.json` to
-  `src/data/`, validates it against the contract with ajv (invalid data fails the build), writes `src/data/meta.json`
-  (`source: pipeline | fixture`) and copies the MapLibre worker to `public/vendor/maplibre/`. No pipeline file (or
-  `BURGER_INDEX_USE_FIXTURE=1`) → the fixture, a loud warning, and a "Sample data" banner on every page. All of these
-  outputs are generated and gitignored.
+  `src/data/`, validates it against the contract with ajv (invalid data fails the build) and copies the MapLibre worker to
+  `public/vendor/maplibre/`; both outputs are generated and gitignored. There is no sample data: a missing
+  `data/burger_index.json` fails `dev` and `build` with a message (it is committed; `pipeline build` rewrites it from the
+  cache). The web tests read the same file (`test/dataset.ts`) or small inline rows.
 - **Reading data:** `src/lib/data.ts` is `server-only`: it parses the file once with the zod mirror
   (`src/lib/schema.ts`), re-checks the invariants, and exposes typed selectors (`getStats()`, `getRestaurant(id)`, …).
   Client components import enum lists from `src/lib/enums.ts` and only `import type` from `schema.ts`, which keeps zod
@@ -204,7 +201,7 @@ npm run fixture          # regenerate + validate the fixture (deterministic, fic
   rule as `build.menu_index_prices`: histograms, typical range, rankings, cheapest/priciest lists and the `MIN_RANKED` /
   `MIN_HISTOGRAM` thresholds are per menu; map pins, restaurant pages and table rows are per location. Areas with priced chain
   menus but no priced independent are labelled "Chain prices only" (`isChainOnly`) and kept out of like-for-like copy.
-  `test/menus.test.ts` checks the web's per-menu medians against the pipeline's for the fixture and the synced dataset.
+  `test/menus.test.ts` checks the web's per-menu medians against the pipeline's in `data/burger_index.json`.
 - Price colors (Steal → Splurge) are always measured against the citywide median (`src/lib/price-bins.ts`), never a
   filtered subset. Fonts load through `next/font/google` (the build needs network); the OG image reads `@fontsource`.
 - **Deploy (Vercel):** project Root Directory `web`, build `npm run build`, output `out`, and keep "Include files

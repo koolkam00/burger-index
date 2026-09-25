@@ -16,12 +16,11 @@ import {
   type ExplorerData,
   type Filters,
   type SortKey,
-  type SourceKey,
 } from "@/lib/explorer";
 import { formatCount, formatPrice, pluralize } from "@/lib/format";
 import { PRICE_SOURCE_LABEL, PROTEIN_LABEL } from "@/lib/labels";
 import { binRanges } from "@/lib/price-bins";
-import type { Borough, Protein } from "@/lib/schema";
+import type { Borough, PriceSource, Protein } from "@/lib/schema";
 import { useMediaQuery } from "../charts/hooks";
 import { ShipWheel } from "../icons/nautical";
 import { BoroughDot, EmptyState } from "../ui";
@@ -32,10 +31,6 @@ const PAGE = 100;
 const collator = new Intl.Collator("en", { sensitivity: "base", numeric: true });
 
 type Row = TableRow & { hay: string };
-
-function sourceLabel(s: SourceKey) {
-  return s === "unknown" ? "Unknown" : PRICE_SOURCE_LABEL[s];
-}
 
 function priceLabel(min: number | null, max: number | null) {
   if (min !== null && max !== null) return `${formatPrice(min, { cents: "always" })}–${formatPrice(max, { cents: "always" })}`;
@@ -127,20 +122,15 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
       if (bset.size && !bset.has(BOROUGH_META.find((m) => m.name === r.borough)!.slug)) return false;
       if (neighborhood && r.nbSlug !== neighborhood) return false;
       if (pset.size && !pset.has(b.protein)) return false;
-      if (sset.size && !sset.has(r.source ?? "unknown")) return false;
+      if (sset.size && !sset.has(r.source)) return false;
       if (hideDelivery && r.source === "delivery_app") return false;
       if (indexOnly && !b.idx) return false;
-      if (min !== null && (b.price === null || b.price < min)) return false;
-      if (max !== null && (b.price === null || b.price > max)) return false;
+      if (min !== null && b.price < min) return false;
+      if (max !== null && b.price > max) return false;
       for (const t of tokens) if (!hay.includes(t)) return false;
       return true;
     });
-    const byPrice = (a: Row, z: Row, dir: 1 | -1) => {
-      if (a.b.price === null && z.b.price === null) return 0;
-      if (a.b.price === null) return 1;
-      if (z.b.price === null) return -1;
-      return (a.b.price - z.b.price) * dir;
-    };
+    const byPrice = (a: Row, z: Row, dir: 1 | -1) => (a.b.price - z.b.price) * dir;
     out.sort((a, z) => {
       switch (sort) {
         case "-price":
@@ -171,7 +161,7 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
   // drops "Delivery app" from that list, and ticking "Delivery app" there un-hides, so the two never
   // contradict each other.
   const setHideDelivery = (on: boolean) => update({ hideDelivery: on, sources: on ? filters.sources.filter((s) => s !== "delivery_app") : filters.sources });
-  const setSources = (next: SourceKey[]) =>
+  const setSources = (next: PriceSource[]) =>
     update({ sources: next.length >= data.sources.length ? [] : next, hideDelivery: filters.hideDelivery && !next.includes("delivery_app") });
   const clearAll = () => {
     setQuery("");
@@ -214,11 +204,11 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
     />
   );
   const sourceGroup = (inSheet: boolean) => (
-    <CheckList<SourceKey>
+    <CheckList<PriceSource>
       legend="Price source"
       hideLegend={!inSheet}
       variant={inSheet ? "chips" : "list"}
-      options={data.sources.map((s) => ({ value: s, label: sourceLabel(s) }))}
+      options={data.sources.map((s) => ({ value: s, label: PRICE_SOURCE_LABEL[s] }))}
       selected={filters.sources}
       onChange={setSources}
     />
@@ -317,7 +307,7 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
     ...(selectedNeighborhood ? [{ key: "nb", label: selectedNeighborhood.name, clear: () => update({ neighborhood: "" }) }] : []),
     ...(filters.min !== null || filters.max !== null ? [{ key: "price", label: priceLabel(filters.min, filters.max), clear: () => update({ min: null, max: null }) }] : []),
     ...filters.proteins.map((p) => ({ key: `p-${p}`, label: PROTEIN_LABEL[p], clear: () => update({ proteins: filters.proteins.filter((x) => x !== p) }) })),
-    ...filters.sources.map((s) => ({ key: `s-${s}`, label: sourceLabel(s), clear: () => update({ sources: filters.sources.filter((x) => x !== s) }) })),
+    ...filters.sources.map((s) => ({ key: `s-${s}`, label: PRICE_SOURCE_LABEL[s], clear: () => update({ sources: filters.sources.filter((x) => x !== s) }) })),
     ...(filters.hideDelivery ? [{ key: "no-delivery", label: "Delivery-app prices hidden", clear: () => update({ hideDelivery: false }) }] : []),
     ...(filters.indexOnly ? [{ key: "idx", label: "Index burgers only", clear: () => update({ indexOnly: false }) }] : []),
   ];

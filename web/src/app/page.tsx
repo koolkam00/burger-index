@@ -5,13 +5,12 @@ import { ChartFigure } from "@/components/charts/ChartFigure";
 import { PriceDistribution } from "@/components/charts/PriceDistribution";
 import { AreaTable, RangePlot } from "@/components/charts/RangePlot";
 import { Letterboard } from "@/components/Letterboard";
-import { SoleRanked } from "@/components/AreaList";
 import { MenuEnds } from "@/components/RestaurantBits";
 import { Anchor, Buoy, LobsterTrap, Net, OrderBell, Scales, ShipWheel, Spatula, Spyglass } from "@/components/icons/nautical";
 import { Bubbles, Caustics, ChartEmpty, KickerTicket, Money, MoneyRange, SectionHeading, StatGrid, StatTile, WaveEdge } from "@/components/ui";
 import { boroughInProse } from "@/lib/boroughs";
 import { allBurgers, getBoroughs, getBurger, getGeneratedAt, getMenuCounts, getRestaurants, getScope, getStats, rankedNeighborhoods } from "@/lib/data";
-import { capitalize, ends, formatCount, formatDate, formatPrice, pluralize } from "@/lib/format";
+import { capitalize, formatCount, formatDate, formatPrice, pluralize, spreadEnds } from "@/lib/format";
 import { isChainOnly, joinList, menuBreakdown, menuBreakdownShort, menuIndexPrices, menusByIndexPrice, menusByIndexPriceDesc, splitByCoverage } from "@/lib/menus";
 import { pageMetadata } from "@/lib/metadata";
 
@@ -53,35 +52,20 @@ export default function HomePage() {
     .filter((b) => b.summary?.index_median != null)
     .sort((a, b) => (b.summary!.index_median as number) - (a.summary!.index_median as number));
   const { comparable, chainOnly } = splitByCoverage(pricedBoroughs, (b) => b.menuCounts, (b) => b.summary?.index_median ?? null);
-  const boroughEnds = ends(comparable, (b) => b.summary!.index_median);
+  const boroughEnds = spreadEnds(comparable, (b) => b.summary!.index_median);
   const chainOnlyNames = joinList(chainOnly.map((b) => boroughInProse(b.name)));
-  const boroughTitle =
-    pricedBoroughs.length === 0
-      ? "Boroughs, once we have prices."
-      : boroughEnds.kind === "none"
-        ? "Only chain menus are priced."
-        : boroughEnds.kind === "one"
-          ? chainOnly.length
-            ? `Only ${boroughEnds.top.name} has independent restaurants priced.`
-            : `Only ${boroughEnds.top.name} has priced restaurants.`
-          : boroughEnds.kind === "tied"
-            ? `${comparable.length === boroughs.length ? "Every borough" : chainOnly.length ? "Every borough with independent menus" : "Every priced borough"} lands on ${formatPrice(boroughEnds.top.summary!.index_median)}.`
-            : `The priciest borough is ${boroughEnds.top.name}.`;
+  const boroughTitle = boroughEnds ? `The priciest borough is ${boroughEnds.top.name}.` : "Boroughs, once we have prices.";
   const boroughTakeaway = [
-    boroughEnds.kind === "spread"
+    boroughEnds
       ? `${boroughEnds.top.name} ${formatPrice(boroughEnds.top.summary!.index_median, { cents: "always" })}, ${boroughEnds.bottom.name} ${formatPrice(boroughEnds.bottom.summary!.index_median, { cents: "always" })}.`
-      : boroughEnds.kind === "tied"
-        ? `The median is ${formatPrice(boroughEnds.top.summary!.index_median, { cents: "always" })} in every borough with independent menus.`
-        : boroughEnds.kind === "one"
-          ? `${boroughEnds.top.name}: ${formatPrice(boroughEnds.top.summary!.index_median, { cents: "always" })} across ${pluralize(boroughEnds.top.menuCounts.menus, "menu")}.`
-          : null,
+      : "The line marks the NYC median.",
     chainOnly.length ? `${capitalize(chainOnlyNames)}: chain prices only.` : null,
   ]
     .filter(Boolean)
     .join(" ");
 
   // The neighborhood headline compares like for like too; chain-only ranked rows stay labelled.
-  const hoodEnds = ends(
+  const hoodEnds = spreadEnds(
     ranked.filter((n) => !isChainOnly(n.menuCounts)),
     (n) => n.index_median,
   );
@@ -217,38 +201,20 @@ export default function HomePage() {
           id="hoods"
           kicker="Neighborhood specials"
           icon={Buoy}
-          title={
-            hoodEnds.kind === "none"
-              ? ranked.length
-                ? "Only chain menus are ranked."
-                : "Neighborhoods, once they're ranked."
-              : hoodEnds.kind === "one"
-                ? ranked.length === 1
-                  ? `Only ${hoodEnds.top.name} is ranked.`
-                  : `${hoodEnds.top.name} is the only ranked neighborhood with independent menus.`
-                : hoodEnds.kind === "tied"
-                  ? `Every ranked neighborhood lands on ${formatPrice(hoodEnds.top.index_median)}.`
-                  : `The priciest neighborhood is ${hoodEnds.top.name}.`
-          }
+          title={hoodEnds ? `The priciest neighborhood is ${hoodEnds.top.name}.` : "Neighborhoods, once they're ranked."}
         >
           {ranked.length ? `${pluralize(ranked.length, "neighborhood")} ranked.` : null}
         </SectionHeading>
         <div className="mt-8">
-          {ranked.length === 1 ? (
-            <SoleRanked area={ranked[0]} cityMedian={median} cityMenus={getMenuCounts()} />
-          ) : ranked.length ? (
+          {ranked.length ? (
             <ChartFigure
               id="hood-range"
               title={ranked.length > 16 ? "The 8 priciest and 8 cheapest neighborhoods" : "Neighborhoods by median index price"}
-              takeaway={`${
-                hoodEnds.kind === "spread"
+              takeaway={
+                hoodEnds
                   ? `${hoodEnds.top.name} ${formatPrice(hoodEnds.top.index_median, { cents: "always" })} at the top, ${hoodEnds.bottom.name} ${formatPrice(hoodEnds.bottom.index_median, { cents: "always" })} at the bottom.`
-                  : hoodEnds.kind === "tied"
-                    ? `All ranked neighborhoods with independent menus sit at ${formatPrice(hoodEnds.top.index_median, { cents: "always" })}.`
-                    : hoodEnds.kind === "one"
-                      ? `${hoodEnds.top.name}: ${formatPrice(hoodEnds.top.index_median, { cents: "always" })}.`
-                      : "Every ranked neighborhood has chain prices only."
-              }`}
+                  : "The line marks the NYC median."
+              }
               chart={<RangePlot areas={neighborhoodRows} cityMedian={median} labelledBy="hood-range-title hood-range-desc" />}
               table={<AreaTable areas={neighborhoodRows} />}
             />

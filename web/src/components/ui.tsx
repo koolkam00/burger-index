@@ -78,11 +78,6 @@ export function StatGrid({ children, cols = 4 }: { children: ReactNode; cols?: n
   );
 }
 
-export function Swatch({ price, median }: { price: number; median: number }) {
-  const bin = binFor(price, median);
-  return <span className="swatch" style={{ background: bin.color }} aria-hidden="true" />;
-}
-
 /**
  * Price chip ("price tag"): a full-height ramp stripe on the left, the price, the delta vs the
  * citywide median. Deltas are never colored. `narrowWrap` lets the delta drop to a second line inside

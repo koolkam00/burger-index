@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { ends, formatDate, formatSpan } from "../src/lib/format";
+import { formatDate, formatSpan, spreadEnds } from "../src/lib/format";
 import { atLeastOneParam, PLACEHOLDER_PARAM } from "../src/lib/site";
 
 test("a range whose ends print the same collapses to one value", () => {
@@ -9,16 +9,15 @@ test("a range whose ends print the same collapses to one value", () => {
   assert.equal(formatSpan("Sep 23, 2026", "Sep 23, 2026", " to "), "Sep 23, 2026");
 });
 
-test("ends tells a real spread from a tie or a single item", () => {
+test("spreadEnds tells a real spread from a tie or a single item", () => {
   const price = (x: { p: number | null }) => x.p;
-  assert.deepEqual(ends([], price), { kind: "none" });
-  assert.equal(ends([{ p: 4.19 }], price).kind, "one");
+  assert.equal(spreadEnds([], price), null);
+  assert.equal(spreadEnds([{ p: 4.19 }], price), null);
   // "Manhattan is the priciest at $4.19; Staten Island is the cheapest at $4.19" is the bug.
-  assert.equal(ends([{ p: 4.19 }, { p: 4.19 }, { p: 4.19 }], price).kind, "tied");
-  assert.equal(ends([{ p: 4.19 }, { p: 4.1900000001 }], price).kind, "tied");
-  const spread = ends([{ p: 6.5 }, { p: 5 }, { p: 4.19 }], price);
-  assert.equal(spread.kind, "spread");
-  if (spread.kind === "spread") assert.deepEqual([spread.top.p, spread.bottom.p], [6.5, 4.19]);
+  assert.equal(spreadEnds([{ p: 4.19 }, { p: 4.19 }, { p: 4.19 }], price), null);
+  assert.equal(spreadEnds([{ p: 4.19 }, { p: 4.1900000001 }], price), null);
+  const spread = spreadEnds([{ p: 6.5 }, { p: 5 }, { p: 4.19 }], price);
+  assert.deepEqual([spread?.top.p, spread?.bottom.p], [6.5, 4.19]);
 });
 
 test("an empty dataset still gives every dynamic route one (404) param to export", () => {

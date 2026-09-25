@@ -30,6 +30,12 @@ test("the Source list stays an inclusion list alongside the delivery toggle", ()
 });
 
 test("filters round-trip through the URL", () => {
-  const qs = "q=cheese&borough=brooklyn,queens&neighborhood=soho&protein=beef&source=unknown&hide=delivery_app&min=5&max=12.5&index=1&sort=-price";
+  const qs = "q=cheese&borough=brooklyn,queens&neighborhood=soho&protein=beef&source=menu_aggregator&hide=delivery_app&min=5&max=12.5&index=1&sort=-price";
   assert.equal(serializeFilters(parse(qs)), qs);
+});
+
+test("a source the data can't have is dropped from the URL", () => {
+  // Every published burger has a price source, so an old "unknown" link filters nothing.
+  assert.deepEqual(parse("source=unknown,official_pdf").sources, ["official_pdf"]);
+  assert.equal(activeFilterCount(parse("source=unknown")), 0);
 });

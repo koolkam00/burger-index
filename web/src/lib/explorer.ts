@@ -12,7 +12,7 @@ export type ExRestaurant = {
   nb: string | null;
   nbSlug: string | null;
   borough: Borough;
-  source: PriceSource | null;
+  source: PriceSource;
 };
 
 export type ExBurger = {
@@ -21,7 +21,7 @@ export type ExBurger = {
   /** full burger id */
   id: string;
   name: string;
-  price: number | null;
+  price: number;
   protein: Protein;
   idx: boolean;
 };
@@ -33,8 +33,8 @@ export type ExplorerData = {
   restaurants: ExRestaurant[];
   burgers: ExBurger[];
   neighborhoods: ExNeighborhood[];
-  /** Price sources present in the data ("unknown" = null source). */
-  sources: Array<PriceSource | "unknown">;
+  /** Price sources present in the data. */
+  sources: PriceSource[];
   proteins: Protein[];
 };
 
@@ -46,15 +46,13 @@ export const SORTS: ReadonlyArray<{ key: SortKey; label: string }> = [
   { key: "restaurant", label: "Restaurant" },
 ];
 
-export type SourceKey = PriceSource | "unknown";
-
 export type Filters = {
   q: string;
   boroughs: BoroughSlug[];
   neighborhood: string;
   proteins: Protein[];
   /** Inclusion list: only these sources (empty = all). */
-  sources: SourceKey[];
+  sources: PriceSource[];
   /** Exclusion, separate from `sources`: one choice, one chip, one active filter. */
   hideDelivery: boolean;
   min: number | null;
@@ -78,7 +76,7 @@ export const EMPTY_FILTERS: Filters = {
 
 const BOROUGH_SLUGS = new Set<string>(BOROUGH_META.map((b) => b.slug));
 const PROTEIN_SET = new Set<string>(PROTEINS);
-const SOURCE_SET = new Set<string>([...PRICE_SOURCES, "unknown"]);
+const SOURCE_SET = new Set<string>(PRICE_SOURCES);
 const SORT_SET = new Set<string>(["price", "-price", "name", "restaurant"]);
 
 function list(v: string | null): string[] {
@@ -103,7 +101,7 @@ export function parseFilters(sp: { get(name: string): string | null }, neighborh
     boroughs: list(sp.get("borough")).filter((s): s is BoroughSlug => BOROUGH_SLUGS.has(s)),
     neighborhood: neighborhoods.has(neighborhood) ? neighborhood : "",
     proteins: list(sp.get("protein")).filter((s): s is Protein => PROTEIN_SET.has(s)),
-    sources: list(sp.get("source")).filter((s): s is SourceKey => SOURCE_SET.has(s)),
+    sources: list(sp.get("source")).filter((s): s is PriceSource => SOURCE_SET.has(s)),
     hideDelivery: list(sp.get("hide")).includes("delivery_app"),
     min: num(sp.get("min")),
     max: num(sp.get("max")),
