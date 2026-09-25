@@ -36,6 +36,14 @@ DISPLAY_OVERRIDES = {
 }
 
 
+# Restaurant-list names copied from a DOHMH DBA with broken casing, shown as the restaurant spells its
+# name (display only: the list, its keys and the ids keep the list's spelling; slugify gives the same id).
+LIST_NAME_DISPLAY = {
+    "p mcdaids irish pub": "P. McDaid's Irish Pub",
+    "57s all american grill": "57's All American Grill",
+}
+
+
 # Letters NFKD doesn't decompose: 'Tørst' -> 'Torst', not 'Trst'.
 _FOLD = str.maketrans({"ø": "o", "Ø": "O", "æ": "ae", "Æ": "AE", "œ": "oe", "Œ": "OE", "ß": "ss", "ł": "l", "Ł": "L",
                        "đ": "d", "Đ": "D", "ı": "i"})
@@ -86,7 +94,7 @@ def _case_word(w: str, first: bool) -> str:
     if re.match(r"^o'[a-z]", lw):
         return "O'" + lw[2].upper() + lw[3:]
     idx = next((i for i, c in enumerate(lw) if c.isalpha()), None)
-    if idx is None:
+    if idx is None or (idx and lw[idx - 1] in "'’"):  # a possessive after a number stays lower: "57'S" -> "57's"
         return lw
     return lw[:idx] + lw[idx].upper() + lw[idx + 1 :]
 
@@ -105,6 +113,11 @@ def display_case(s: str | None) -> str:
         out.append(_case_word(p, first))
         first = False
     return "".join(out)
+
+
+def list_display_name(name: str) -> str:
+    """The display name of a restaurant-list row: the list's own spelling, unless LIST_NAME_DISPLAY fixes it."""
+    return LIST_NAME_DISPLAY.get(norm_name(name), name)
 
 
 def display_name(dba: str | None) -> str:

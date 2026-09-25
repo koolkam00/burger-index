@@ -79,15 +79,19 @@ def percentile(sorted_vals: list[float], q: float) -> float | None:
     return sorted_vals[lo] + (sorted_vals[hi] - sorted_vals[lo]) * (pos - lo)
 
 
-def _nbhd_short(neighborhood: str | None, borough: str) -> str:
+def _nbhd_short(neighborhood: str | None, borough: str, nta: str | None = None) -> str:
     # NTA names are compound ("Hudson Yards-Chelsea-Flat Iron-Union Square"): use the first part in ids.
+    # The park/cemetery NTAs (BX99, BK99, ...) keep the "park" of their 2010 placeholder name
+    # ("park-cemetery-etc-Bronx"), whatever sources.NTA_DISPLAY_OVERRIDES shows, so ids never change.
+    if nta and nta.endswith("99"):
+        return "park"
     return (neighborhood or borough).split("-")[0].strip()
 
 
 def assign_restaurant_ids(rows: list[tuple[dict, str]]) -> list[str]:
     """rows: (restaurant record, display name). Unique URL slugs: name + neighborhood,
     + short camis suffix for every member of a colliding group, then -2, -3 as a last resort."""
-    bases = [slugify(f"{name} {_nbhd_short(r.get('neighborhood'), r['borough'])}") or "restaurant" for r, name in rows]
+    bases = [slugify(f"{name} {_nbhd_short(r.get('neighborhood'), r['borough'], r.get('nta'))}") or "restaurant" for r, name in rows]
     groups: dict[str, list[int]] = defaultdict(list)
     for i, b in enumerate(bases):
         groups[b].append(i)

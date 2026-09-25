@@ -1,11 +1,11 @@
 {
  "version": 2,
- "generated_at": "2026-09-25T13:44:09Z",
+ "generated_at": "2026-09-25T18:09:01Z",
  "stats": {
-  "restaurants_priced": 548,
+  "restaurants_priced": 547,
   "index_median": 20.0,
   "index_p10": 13.0,
-  "index_p90": 28.46
+  "index_p90": 28.5
  },
  "boroughs": [
   {
@@ -30,7 +30,7 @@
    "slug": "queens",
    "name": "Queens",
    "borough": "Queens",
-   "restaurants_priced": 74,
+   "restaurants_priced": 73,
    "index_median": 18.0,
    "index_min": 7.75,
    "index_max": 75.0
@@ -1046,6 +1046,15 @@
    "index_max": 16.64
   },
   {
+   "slug": "bronx-parks",
+   "name": "Bronx parks",
+   "borough": "Bronx",
+   "restaurants_priced": 2,
+   "index_median": 18.0,
+   "index_min": 12.0,
+   "index_max": 24.0
+  },
+  {
    "slug": "claremont-bathgate",
    "name": "Claremont-Bathgate",
    "borough": "Bronx",
@@ -1125,15 +1134,6 @@
    "index_median": null,
    "index_min": null,
    "index_max": null
-  },
-  {
-   "slug": "park-cemetery-etc-bronx",
-   "name": "park-cemetery-etc-Bronx",
-   "borough": "Bronx",
-   "restaurants_priced": 2,
-   "index_median": 18.0,
-   "index_min": 12.0,
-   "index_max": 24.0
   },
   {
    "slug": "parkchester",
@@ -1470,7 +1470,7 @@
   },
   {
    "id": "57s-all-american-grill-bayside",
-   "name": "57'S All American Grill",
+   "name": "57's All American Grill",
    "chain": null,
    "address": "33-45 Francis Lewis Boulevard",
    "borough": "Queens",
@@ -3661,22 +3661,10 @@
   {
    "id": "brooklyn-diner-queens",
    "name": "Brooklyn Diner",
-   "chain": null,
    "address": null,
-   "borough": "Queens",
-   "neighborhood": null,
    "neighborhood_slug": null,
-   "lat": null,
-   "lng": null,
-   "website": "https://www.brooklyndiner.com/",
-   "menu_url": "https://www.brooklyndiner.com/menus/",
-   "price_source": "official_site",
-   "index_price": 25.95,
-   "burger": {
-    "name": "Backyard BBQ Burger",
-    "description": "double patty, caramelized onions, bacon, cheddar cheese"
-   },
-   "hand_check": null
+   "index_price": null,
+   "burger": null
   },
   {
    "id": "broome-street-bar-soho",
@@ -5266,7 +5254,7 @@
    "id": "croton-reservoir-tavern-manhattan",
    "name": "Croton Reservoir Tavern",
    "chain": null,
-   "address": "108110 West 40 Street",
+   "address": "108 West 40 Street",
    "borough": "Manhattan",
    "neighborhood": null,
    "neighborhood_slug": null,
@@ -7856,8 +7844,8 @@
    "chain": null,
    "address": "2900 Southern Boulevard",
    "borough": "Bronx",
-   "neighborhood": "park-cemetery-etc-Bronx",
-   "neighborhood_slug": "park-cemetery-etc-bronx",
+   "neighborhood": "Bronx parks",
+   "neighborhood_slug": "bronx-parks",
    "lat": 40.865678,
    "lng": -73.88331,
    "website": "https://www.nybg.org/visit/dining/",
@@ -11146,8 +11134,8 @@
    "chain": null,
    "address": "1 Orchard Beach Road",
    "borough": "Bronx",
-   "neighborhood": "park-cemetery-etc-Bronx",
-   "neighborhood_slug": "park-cemetery-etc-bronx",
+   "neighborhood": "Bronx parks",
+   "neighborhood_slug": "bronx-parks",
    "lat": 40.865153,
    "lng": -73.802838,
    "website": "https://www.orchardbeachgrill.com/",
@@ -11268,7 +11256,7 @@
   },
   {
    "id": "p-mcdaids-irish-pub-midtown",
-   "name": "P.McDAID'S IRISH PUB",
+   "name": "P. McDaid's Irish Pub",
    "chain": null,
    "address": "837 7 Avenue",
    "borough": "Manhattan",

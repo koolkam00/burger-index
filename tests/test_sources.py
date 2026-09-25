@@ -3,7 +3,7 @@ import json
 import pytest
 
 from pipeline import sources
-from pipeline.names import address_in_text, display_case, display_name, norm_name, slugify
+from pipeline.names import address_in_text, display_case, display_name, list_display_name, norm_name, slugify
 
 
 def dohmh(camis, dba, *, boro="Manhattan", building="1", street="MAIN STREET", nta="MN23", zipcode="10014",
@@ -58,6 +58,13 @@ def test_display_names():
     assert display_name("Daily Burger") == "Daily Burger"  # mixed case kept
     assert display_name("HAMBURGER, DAILY BURGER") == "Daily Burger"
     assert display_name("WENDY'S (CONCOURSE F)") == "Wendy's"
+    assert display_case("57'S ALL AMERICAN GRILL") == "57's All American Grill"
+    assert display_case("JOE'S PIZZA") == "Joe's Pizza"
+    assert list_display_name("P.McDAID'S IRISH PUB") == "P. McDaid's Irish Pub"
+    assert list_display_name("57'S All American Grill") == "57's All American Grill"
+    assert list_display_name("Jack's Wife Freda") == "Jack's Wife Freda"  # the list's spelling otherwise
+    for raw, shown in [("P.McDAID'S IRISH PUB", "P. McDaid's Irish Pub"), ("57'S All American Grill", "57's All American Grill")]:
+        assert slugify(raw) == slugify(shown)  # same id
     assert display_case("100 WEST 124 STREET") == "100 West 124 Street"
     assert display_case("7TH AVE") == "7th Ave"
 

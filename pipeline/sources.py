@@ -33,8 +33,8 @@ from rapidfuzz import fuzz, process
 from . import config
 from .chains import brand_of, is_national_chain
 from .names import (
-    address_in_text, address_tokens, at_address, display_case, display_name, named_addresses, norm_name, slugify,
-    street_in_name, street_in_text, strip_store_number,
+    address_in_text, address_tokens, at_address, display_case, display_name, list_display_name, named_addresses, norm_name,
+    slugify, street_in_name, street_in_text, strip_store_number,
 )
 
 DOHMH_DATASET = "43nn-pn8j"
@@ -146,12 +146,16 @@ LOCATE_NUMBERS = 40  # records on the named street within this many house number
 # 2010 NTA names that mislead today, shown as current usage. MN27 'Chinatown' also covers the
 # Lower East Side west of Essex (Orchard, Ludlow, Eldridge); MN28 'Lower East Side' is the LES
 # east of Essex plus Alphabet City (Avenues B-D); BK73 'North Side-South Side' is what everyone
-# calls Williamsburg, and BK72 'Williamsburg' is South Williamsburg.
+# calls Williamsburg, and BK72 'Williamsburg' is South Williamsburg. BX99 is the 2010 placeholder
+# 'park-cemetery-etc-Bronx'; the priced places in it are park concessions (Hudson Garden Grill in the
+# Botanical Garden, Orchard Beach Grill in Pelham Bay Park). Restaurant ids keep the placeholder's "park"
+# (build._nbhd_short), so a label here never changes an id.
 NTA_DISPLAY_OVERRIDES = {
     "MN27": "Chinatown-Lower East Side",
     "MN28": "Lower East Side-Alphabet City",
     "BK72": "South Williamsburg",
     "BK73": "Williamsburg",
+    "BX99": "Bronx parks",
 }
 
 _log_lock = threading.Lock()
@@ -1213,7 +1217,7 @@ def build_restaurants(
             if any(o.key[:3] == c.key[:3] and o.near < c.near and _place(o.rec) != _place(rec) for o in found[i][0]):
                 method += f"+{c.tiebreak}"  # it tied with another place on everything else
             r.update(
-                name=row["name"], website=row["website"], menu_url=row["menu_url"], csv=True,
+                name=list_display_name(row["name"]), website=row["website"], menu_url=row["menu_url"], csv=True,
                 csv_name=row["name"], csv_neighborhood=row["neighborhood"], csv_notes=row["notes"],
                 csv_row=row["row"], match={"score": round(c.score, 1), "method": method, "dba": rec["dba"]},
             )
@@ -1250,7 +1254,7 @@ def build_restaurants(
                 key = f"{key}-{slugify(row['neighborhood']) or 'row'}-{row['row']}"
             r = {
                 "key": key,
-                "camis": None, "dba": None, "name": row["name"], "address": None, "borough": row["borough"],
+                "camis": None, "dba": None, "name": list_display_name(row["name"]), "address": None, "borough": row["borough"],
                 "zipcode": None, "lat": None, "lng": None, "nta": nta,
                 "neighborhood": nta_map[nta]["name"] if nta else row["neighborhood"],
                 "nta_source": "csv-neighborhood" if nta else None,

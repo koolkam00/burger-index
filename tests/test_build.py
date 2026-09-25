@@ -91,6 +91,13 @@ def test_restaurant_ids_unique_with_camis_suffix():
     assert sorted(ids[3:]) == ["joe-west-village", "joe-west-village-2"]
 
 
+def test_park_nta_ids_keep_park_whatever_the_label():
+    # BX99's 2010 name is 'park-cemetery-etc-Bronx'; sources shows it as "Bronx parks", and the id keeps "park".
+    rs = [rec("Hudson Garden Grill", camis="50154811", borough="Bronx", neighborhood="Bronx parks", nta="BX99"),
+          rec("Burger Urway", camis="50110832", borough="Brooklyn", neighborhood="park-cemetery-etc-Brooklyn", nta="BK99")]
+    assert build.assign_restaurant_ids([(r, r["name"]) for r in rs]) == ["hudson-garden-grill-park", "burger-urway-park"]
+
+
 def test_chain_applies_burgers_to_every_location_and_areas():
     rs = [rec("Shake Shack", camis=str(i), dba="SHAKE SHACK") for i in range(3)]
     rs[2].update(borough="Brooklyn", nta="BK09", neighborhood="Brooklyn Heights-Cobble Hill")

@@ -1788,6 +1788,7 @@
    }
   ],
   "dohmh_overrides_applied": [
+   "40942152",
    "41668282"
   ],
   "dohmh_overrides_unused": [],
@@ -19624,7 +19625,7 @@
    "camis": "40942152",
    "dba": "CROTON RESERVOIR TAVERN",
    "name": "Croton Reservoir Tavern",
-   "address": "108110 West 40 Street",
+   "address": "108 West 40 Street",
    "borough": "Manhattan",
    "zipcode": null,
    "lat": null,
@@ -19643,7 +19644,7 @@
    "csv_row": 666,
    "match": {
     "score": 100.0,
-    "method": "name+notes-address",
+    "method": "name+notes-street",
     "dba": "CROTON RESERVOIR TAVERN"
    }
   },
@@ -21415,7 +21416,7 @@
    "key": "camis:50128424",
    "camis": "50128424",
    "dba": "P.McDAID'S IRISH PUB",
-   "name": "P.McDAID'S IRISH PUB",
+   "name": "P. McDaid's Irish Pub",
    "address": "837 7 Avenue",
    "borough": "Manhattan",
    "zipcode": "10019",
@@ -26516,7 +26517,7 @@
    "key": "camis:41419342",
    "camis": "41419342",
    "dba": "57'S ALL AMERICAN GRILL",
-   "name": "57'S All American Grill",
+   "name": "57's All American Grill",
    "address": "33-45 Francis Lewis Boulevard",
    "borough": "Queens",
    "zipcode": "11358",
@@ -30243,7 +30244,7 @@
    "lat": 40.865678,
    "lng": -73.88331,
    "nta": "BX99",
-   "neighborhood": "park-cemetery-etc-Bronx",
+   "neighborhood": "Bronx parks",
    "nta_source": "dohmh",
    "cuisine": "American",
    "last_inspection": "2025-03-27",
@@ -30691,7 +30692,7 @@
    "lat": 40.865153,
    "lng": -73.802838,
    "nta": "BX99",
-   "neighborhood": "park-cemetery-etc-Bronx",
+   "neighborhood": "Bronx parks",
    "nta_source": "dohmh",
    "cuisine": "American",
    "last_inspection": "2025-07-11",
