@@ -92,9 +92,10 @@ def test_restaurant_ids_unique_with_camis_suffix():
 
 
 def test_park_nta_ids_keep_park_whatever_the_label():
-    # BX99's 2010 name is 'park-cemetery-etc-Bronx'; sources shows it as "Bronx parks", and the id keeps "park".
+    # BX99's 2010 name is 'park-cemetery-etc-Bronx' and BK99's 'park-cemetery-etc-Brooklyn'; sources shows them as
+    # "Bronx parks" and "Other Brooklyn areas", and the ids keep "park".
     rs = [rec("Hudson Garden Grill", camis="50154811", borough="Bronx", neighborhood="Bronx parks", nta="BX99"),
-          rec("Burger Urway", camis="50110832", borough="Brooklyn", neighborhood="park-cemetery-etc-Brooklyn", nta="BK99")]
+          rec("Burger Urway", camis="50110832", borough="Brooklyn", neighborhood="Other Brooklyn areas", nta="BK99")]
     assert build.assign_restaurant_ids([(r, r["name"]) for r in rs]) == ["hudson-garden-grill-park", "burger-urway-park"]
 
 

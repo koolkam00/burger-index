@@ -1,6 +1,6 @@
 {
  "version": 2,
- "generated_at": "2026-09-25T18:09:01Z",
+ "generated_at": "2026-09-25T18:27:58Z",
  "stats": {
   "restaurants_priced": 547,
   "index_median": 20.0,
@@ -533,6 +533,15 @@
    "index_max": 19.0
   },
   {
+   "slug": "other-brooklyn-areas",
+   "name": "Other Brooklyn areas",
+   "borough": "Brooklyn",
+   "restaurants_priced": 0,
+   "index_median": null,
+   "index_min": null,
+   "index_max": null
+  },
+  {
    "slug": "park-slope-gowanus",
    "name": "Park Slope-Gowanus",
    "borough": "Brooklyn",
@@ -540,15 +549,6 @@
    "index_median": 21.5,
    "index_min": 13.0,
    "index_max": 31.2
-  },
-  {
-   "slug": "park-cemetery-etc-brooklyn",
-   "name": "park-cemetery-etc-Brooklyn",
-   "borough": "Brooklyn",
-   "restaurants_priced": 0,
-   "index_median": null,
-   "index_min": null,
-   "index_max": null
   },
   {
    "slug": "prospect-heights",
@@ -4014,7 +4014,7 @@
    "id": "burger-urway-park",
    "name": "Burger Urway",
    "address": "40 Washington Avenue",
-   "neighborhood_slug": "park-cemetery-etc-brooklyn",
+   "neighborhood_slug": "other-brooklyn-areas",
    "index_price": null,
    "burger": null
   },
@@ -5816,7 +5816,7 @@
    "id": "dyker-beach-golf-park",
    "name": "Dyker Beach Golf",
    "address": "1020 86th Street",
-   "neighborhood_slug": "park-cemetery-etc-brooklyn",
+   "neighborhood_slug": "other-brooklyn-areas",
    "index_price": null,
    "burger": null
   },

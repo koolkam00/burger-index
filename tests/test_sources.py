@@ -81,6 +81,10 @@ def test_neighborhood_to_nta(nta_map):
     # BK73 ('North Side-South Side' in 2010) is shown as Williamsburg; exact beats 'East Williamsburg'
     assert sources.neighborhood_to_nta("Williamsburg", "Brooklyn", nta_map) == "BK73"
     assert nta_map["BK72"]["name"] == "South Williamsburg"
+    # The 2010 park/cemetery placeholders show as plain labels and never match a free-text neighborhood.
+    assert nta_map["BX99"]["name"] == "Bronx parks"
+    assert nta_map["BK99"]["name"] == "Other Brooklyn areas"
+    assert sources.neighborhood_to_nta("Other Brooklyn areas", "Brooklyn", nta_map) is None
     assert sources.neighborhood_to_nta("Lower East Side", "Manhattan", nta_map) == "MN27"  # Orchard / Ludlow
     assert sources.neighborhood_to_nta("Park Slope", "Brooklyn", nta_map) == "BK37"  # 'Park Slope-Gowanus'
     assert sources.neighborhood_to_nta("SoHo", "Manhattan", nta_map) == "MN24"
