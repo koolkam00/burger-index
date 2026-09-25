@@ -812,3 +812,12 @@ def test_blank_dohmh_name_at_a_named_address_does_not_crash(nta_map):
     row["notes"] = "DOHMH American; 585 East 189 Street, 10458"
     out, _ = sources.build_restaurants([row], rows, nta_map, cuisines=[], min_date="2023-01-01")
     assert [r["camis"] for r in out] == ["301"]
+
+
+def test_grill_named_fast_food_chains_are_national(nta_map):
+    rows = [dohmh("400", "CHIPOTLE MEXICAN GRILL"), dohmh("401", "QDOBA MEXICAN GRILL"),
+            dohmh("402", "MUSCLE MAKER GRILL", cuisine="American"), dohmh("403", "MUSCLE MAKER"),
+            dohmh("404", "SMASH HOUSE"), dohmh("405", "THE GRILL ON MUSCLE BEACH", cuisine="American")]
+    out, report = sources.build_restaurants([], rows, nta_map, cuisines=["Hamburgers", "American"], min_date="2023-01-01")
+    assert sorted(r["name"] for r in out) == ["Smash House", "The Grill on Muscle Beach"]
+    assert report["national_chains_excluded"] == {"Muscle Maker Grill": 2, "Chipotle": 1, "Qdoba": 1}

@@ -93,6 +93,10 @@ NATIONAL_ONLY: tuple[ChainDef, ...] = tuple(
         ("next-level-burger", "Next Level Burger", r"^next level burger\b"),
         ("jollibee", "Jollibee", r"^jollibee\b"),
         ("arbys", "Arby's", r"^arbys\b"),
+        # Fast-food chains that came in through a 'Grill' name in the 2026-09-24 list expansion.
+        ("chipotle", "Chipotle", r"^chipotle\b"),
+        ("qdoba", "Qdoba", r"^qdoba\b"),
+        ("muscle-maker-grill", "Muscle Maker Grill", r"^muscle maker( grill)?\b"),
         ("tgi-fridays", "TGI Fridays", r"^t ?g ?i fridays?\b"),
         ("chilis", "Chili's", r"^chilis\b"),
         ("ihop", "IHOP", r"^ihop\b"),
