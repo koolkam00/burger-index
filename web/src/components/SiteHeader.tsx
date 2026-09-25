@@ -3,8 +3,9 @@
 import { Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, type ComponentType } from "react";
-import { isRankingPath, NAV } from "@/lib/site";
+import { useEffect, useRef, type ComponentType, type MouseEvent } from "react";
+import { fromPath, track } from "@/lib/analytics";
+import { isRankingPath, NAV, PRICER_FOCUS_EVENT, PRICER_HREF } from "@/lib/site";
 import { Buoy, CompassRose, LifeRing, Scales, ShipWheel, Spyglass, type IconProps } from "./icons/nautical";
 import { ThemeToggle } from "./theme";
 import { Wordmark } from "./Wordmark";
@@ -36,6 +37,29 @@ export function SiteHeader() {
     sheetRef.current?.close();
   }, [pathname]);
 
+  /** The search button (the header's, and the menu sheet's below sm): already on /burgers, it just focuses the search box. */
+  const searchClick = (e: MouseEvent<HTMLAnchorElement>) => {
+    const input = document.getElementById("search");
+    if (pathname === "/burgers" && input) {
+      e.preventDefault();
+      sheetRef.current?.close();
+      input.focus();
+      input.scrollIntoView({ block: "center" });
+    }
+  };
+
+  /**
+   * "Price a burger" (the header's and the menu sheet's): links to the home pricer (/#price). On the
+   * home page it scrolls to the pricer and focuses it instead (after the sheet has handed focus back).
+   */
+  const priceClick = (e: MouseEvent<HTMLAnchorElement>) => {
+    track("price_a_burger_clicked", { from_path: fromPath(pathname) });
+    sheetRef.current?.close();
+    if (pathname !== "/" || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    requestAnimationFrame(() => window.dispatchEvent(new Event(PRICER_FOCUS_EVENT)));
+  };
+
   return (
     <header className="site-header atmo no-print">
       {/* The facade: honey-wood planks with a rope trim along the bottom edge. */}
@@ -58,26 +82,17 @@ export function SiteHeader() {
           </nav>
 
           <div className="flex flex-none items-center gap-1 sm:gap-2">
-            <Link
-              href="/burgers#search"
-              className="wood-btn"
-              aria-label="Search burgers"
-              title="Search burgers"
-              onClick={(e) => {
-                // Already on /burgers: just focus the search box.
-                const input = document.getElementById("search");
-                if (pathname === "/burgers" && input) {
-                  e.preventDefault();
-                  input.focus();
-                  input.scrollIntoView({ block: "center" });
-                }
-              }}
-            >
+            {/* Below sm the search moves into the menu sheet, so "Price a burger" fits beside the wordmark. */}
+            <Link href="/burgers#search" className="wood-btn hidden sm:inline-flex" aria-label="Search burgers" title="Search burgers" onClick={searchClick}>
               <Search strokeWidth={2} aria-hidden="true" />
             </Link>
             <span className="hidden sm:inline-flex">
               <ThemeToggle />
             </span>
+            <Link href={PRICER_HREF} className="btn btn-primary price-cta" onClick={priceClick}>
+              <Scales className="hidden sm:block" aria-hidden="true" />
+              Price a burger
+            </Link>
             {/* A wheel alone is not a recognizable menu icon, so the word "Menu" is shown too. */}
             <button type="button" className="wood-btn menu-btn lg:hidden" aria-haspopup="dialog" onClick={() => sheetRef.current?.showModal()}>
               <ShipWheel aria-hidden="true" />
@@ -105,7 +120,17 @@ export function SiteHeader() {
             </button>
           </div>
           <nav aria-label="Main" className="wrap flex-1 overflow-y-auto pb-4">
-            <p className="kicker t-kicker mb-2">On the menu</p>
+            <div className="sheet-actions">
+              <Link href={PRICER_HREF} className="btn btn-primary btn-lg sheet-cta" onClick={priceClick}>
+                <Scales aria-hidden="true" />
+                Price a burger
+              </Link>
+              <Link href="/burgers#search" className="btn btn-secondary btn-lg sm:hidden" onClick={searchClick}>
+                <Search strokeWidth={2} aria-hidden="true" />
+                Search
+              </Link>
+            </div>
+            <p className="kicker t-kicker mt-6 mb-2">On the menu</p>
             <ul>
               {NAV.map((item) => {
                 const Icon = SHEET_ICON[item.href] ?? LifeRing;

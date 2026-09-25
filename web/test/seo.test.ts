@@ -116,8 +116,10 @@ test("area titles and descriptions carry the median, the comparison and the mont
   assert.equal(one.title, "Burger prices in Old Astoria: $12.49");
   assert.match(one.description, /^What a burger costs in Old Astoria, Queens: Triple Cheeseburger at Petey's Burger, \$12\.49\./);
   const uws = neighborhoodSeo({ name: "Upper West Side", ambiguous: false, borough: "Manhattan", median: 21.95, menus: 12, cityMedian: 20, cheapest: null, priciest: null, only: null, generatedAt: GEN });
-  assert.equal(uws.title, "Burger prices in the Upper West Side: $21.95 median");
-  assert.match(uws.description, /^What a burger costs in the Upper West Side, Manhattan: \$21\.95/);
+  assert.equal(uws.title, "Burger prices on the Upper West Side: $21.95 median");
+  assert.match(uws.description, /^What a burger costs on the Upper West Side, Manhattan: \$21\.95/);
+  const ev = neighborhoodSeo({ name: "East Village", ambiguous: false, borough: "Manhattan", median: 21, menus: 12, cityMedian: 20, cheapest: null, priciest: null, only: null, generatedAt: GEN });
+  assert.equal(ev.title, "Burger prices in the East Village: $21 median");
   const parks = neighborhoodSeo({ name: "Bronx parks", ambiguous: false, borough: "Bronx", median: 18, menus: 2, cityMedian: 20, cheapest: null, priciest: null, only: null, generatedAt: GEN });
   assert.match(parks.description, /^What a burger costs in Bronx parks: \$18\.00/);
   assert.ok(!/median across 1 menu/.test(one.description));
@@ -175,7 +177,8 @@ test("llmsTxt: headline numbers, the date, links to pages and the CSV, all on th
       bottom: { name: "Bay Ridge", price: 14.73, path: "/neighborhoods/bay-ridge" },
     },
     csvPath: "/data/burger-prices.csv",
-    sections: [{ title: "Rankings", links: [{ title: "Cheapest burgers in NYC", path: "/cheapest-burgers" }] }],
+    csvLicense: { name: "CC BY 4.0", url: "https://creativecommons.org/licenses/by/4.0/" },
+    sections: [{ title: "Rankings", links: [{ title: "Cheapest burger spots in NYC", path: "/cheapest-burgers" }] }],
   });
   assert.match(txt, /^# The Burger Index\n\n> /);
   assert.match(txt, /The NYC Burger Index is \$20\.00/);
@@ -188,8 +191,11 @@ test("llmsTxt: headline numbers, the date, links to pages and the CSV, all on th
   assert.match(txt, /- Cheapest of the 27 ranked neighborhoods: \[Bay Ridge\]\([^)]+\), \$14\.73 median/);
   assert.match(txt, /\[Map\]\([^)]+\): 526 of the 548 priced restaurants on a map/);
   assert.ok(!/every priced restaurant/.test(txt));
-  assert.match(txt, /\[Burger prices \(CSV\)\]\(https:\/\/burger-index\.example\/data\/burger-prices\.csv\)/);
-  assert.match(txt, /## Rankings\n\n- \[Cheapest burgers in NYC\]\(https:\/\/burger-index\.example\/cheapest-burgers\)/);
+  assert.match(txt, /\[Burger prices \(CSV\)\]\(https:\/\/burger-index\.example\/data\/burger-prices\.csv\): .*\. License: CC BY 4\.0 \(https:\/\/creativecommons\.org\/licenses\/by\/4\.0\/\)$/m);
+  assert.match(txt, /## Rankings\n\n- \[Cheapest burger spots in NYC\]\(https:\/\/burger-index\.example\/cheapest-burgers\)/);
+  // The cheap end is a spot and its priciest burger, never "the cheapest burger".
+  assert.match(txt, /- Cheapest burger spot: \[Johnny's Reef\]\([^)]+\), City Island, Bronx\. Its priciest burger is the Cheeseburger, \$6\.00/);
+  assert.ok(!/cheapest burger[^ ]* (in|at|:)/i.test(txt.replace("Cheapest burger spot:", "")), "no cheapest-burger claim");
   const links = [...txt.matchAll(/\]\(([^)]+)\)/g)].map((m) => m[1]);
   assert.ok(links.length > 5);
   for (const l of links) assert.ok(l === site || l.startsWith(`${site}/`), l);

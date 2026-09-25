@@ -8,9 +8,10 @@ import { JsonLd } from "@/components/JsonLd";
 import { Letterboard } from "@/components/Letterboard";
 import { QandA } from "@/components/QandA";
 import { MenuEnds, menuEndsLists } from "@/components/RestaurantBits";
+import { Pricer } from "@/components/worth/Pricer";
 import { Buoy, Net, Scales, ShipWheel, Spatula, Spyglass } from "@/components/icons/nautical";
 import { BoroughDot, Bubbles, Caustics, ChartEmpty, KickerTicket, SectionHeading, WaveEdge } from "@/components/ui";
-import { cityFaq } from "@/lib/answers";
+import { cityFaq, medianClause } from "@/lib/answers";
 import { boroughInProse, neighborhoodInProse } from "@/lib/boroughs";
 import { getBoroughs, getGeneratedAt, getMenuCounts, getPricedRestaurants, getStats, rankedNeighborhoods } from "@/lib/data";
 import { CSV_PATH } from "@/lib/csv";
@@ -18,6 +19,8 @@ import { formatCount, formatDate, formatIsoDay, formatMonthYear, formatPrice, pl
 import { datasetNode, itemListNode, organizationNode, websiteNode } from "@/lib/jsonld";
 import { menuIndexPrices, menusByIndexPrice, menusByIndexPriceDesc, type Menu } from "@/lib/menus";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
+import { pricerHoods } from "@/lib/pricer";
+import { PRICER_ANCHOR, PRICER_TITLE_ID } from "@/lib/site";
 import { cheapestSpec, priciestSpec, rankingNameInSentence, rankingPath, rankMenus, topTied } from "@/lib/rankings";
 import { homeSeo, sourceLine, type NamedPrice } from "@/lib/seo";
 
@@ -90,30 +93,45 @@ export default function HomePage() {
   return (
     <>
       <JsonLd nodes={jsonLd} />
-      {/* The view through the front window: sea water, surface ripples, bubbles in the gutters. The
-          kicker ticket and H1 sit here (a lede only when nothing is priced), and the Order Board hangs in
-          columns 6–12 at lg. */}
-      <section className="hero atmo" aria-labelledby="hero-title">
+      {/* The view through the front window: sea water, surface ripples, bubbles in the gutters. A compact
+          band (kicker ticket, H1, the median as a plain sentence and the source line) sits beside the
+          burger pricer at lg and above it on a phone; the Order Board hangs below them. */}
+      <section className="hero hero-home atmo" aria-labelledby="hero-title">
         <Caustics id="caustic-hero" />
         <Bubbles />
         <div className="wrap band-body">
-          <div className="grid gap-10 lg:grid-cols-12 lg:items-end lg:gap-8">
-            <div className="min-w-0 lg:col-span-5 lg:pb-6">
+          <div className="grid gap-4 md:gap-8 lg:grid-cols-12 lg:items-start">
+            <div className="min-w-0 lg:col-span-5 lg:pt-2">
               <KickerTicket>Now serving · NYC</KickerTicket>
-              <h1 id="hero-title" className="t-display-l mt-5">
+              <h1 id="hero-title" className="t-display-l mt-4 md:mt-5">
                 What a burger costs in New York.
               </h1>
-              {/* The menu count shows once, on the board line below. The source line is the one sourcing
-                  sentence on the site (--ink: it sits on the darker water at lg). */}
-              {median === null ? <p className="t-lede mt-5">No prices yet.</p> : <p className="t-ui-m mt-4 text-balance">{sourceLine(generated)}</p>}
+              {/* The answer and the one sourcing sentence on the site, in the static HTML at the top of
+                  the page (--ink: at lg they sit on the darker water). The menu count shows once, on the
+                  board line below. */}
+              {median === null ? (
+                <p className="t-lede mt-4">No prices yet.</p>
+              ) : (
+                <>
+                  <p className="t-lede mt-3 text-balance">{medianClause(median, generated)}.</p>
+                  <p className="t-ui-m mt-2 text-balance">{sourceLine(generated)}</p>
+                </>
+              )}
             </div>
-            <div className="min-w-0 lg:col-span-7">
-              <Letterboard
-                overline="The Burger Index · NYC median"
-                price={median}
-                line={[pluralize(counts.menus, "menu"), `Updated ${formatDate(generated)}`]}
-              />
-            </div>
+            {median !== null ? (
+              // The burger pricer: the first thing to do here (user decision 2026-09-25). Client-rendered;
+              // the header's "Price a burger" links to /#price.
+              <div id={PRICER_ANCHOR} role="region" aria-labelledby={PRICER_TITLE_ID} className="pricer-slot min-w-0 lg:col-span-7">
+                <Pricer hoods={pricerHoods(restaurants)} boroughs={boroughs.filter((b) => b.menuCounts.menus > 0).map((b) => b.slug)} />
+              </div>
+            ) : null}
+          </div>
+          <div className="hero-board">
+            <Letterboard
+              overline="The Burger Index · NYC median"
+              price={median}
+              line={[pluralize(counts.menus, "menu"), `Updated ${formatDate(generated)}`]}
+            />
           </div>
         </div>
         <WaveEdge />
@@ -216,7 +234,7 @@ export default function HomePage() {
 
       <QandA items={faq} />
 
-      {/* "What's it worth?": a link only, so the home page never loads the Supabase client. */}
+      {/* "What's it worth?": the People's Price boards (the pricer at the top feeds them). */}
       <section className="section" aria-labelledby="worth">
         <SectionHeading id="worth" kicker="What's it worth?" icon={Scales} title="What would you pay for a burger?">
           Name your price for any burger, then see what everyone else would pay.

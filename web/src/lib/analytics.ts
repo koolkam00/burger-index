@@ -7,7 +7,7 @@
 // initAnalytics() before hydration; posthog-js arrives in its own chunk after that, and events
 // tracked in the meantime are queued.
 //
-// No personal data: events carry ids, prices, counts and control names. The only free text is the
+// No personal data: events carry ids, prices, counts, paths and control names. The only free text is the
 // /burgers search query, trimmed, lowercased and cut to 60 characters; the full query in the page URL
 // (?q=) is masked in every URL PostHog records, and session recordings mask it in the search boxes
 // (every input) and where a "No burgers match" message echoes it (class ph-mask). The voter id never
@@ -22,6 +22,10 @@ export type SearchSurface = "burgers" | "peoples_price";
 export type FilterName = "borough" | "neighborhood" | "price" | "sort" | "clear_all";
 /** The People's Price page lists a row can be clicked in. */
 export type BoardName = "bargains" | "overpriced" | "most_answered" | "needs_answers" | "find";
+/** Where an answer to "What's it worth?" was given: a restaurant page's picker or the home pricer. */
+export type WorthSurface = "restaurant" | "home_pricer";
+/** The home pricer's area kinds (lib/pricer areaType). */
+export type PricerAreaType = "anywhere" | "borough" | "neighborhood";
 
 type LinkClick = {
   restaurant_id: string;
@@ -46,7 +50,21 @@ export type AnalyticsEvents = {
     first_answer: boolean | null;
     /** The answer this one replaced (only when it changed one). */
     previous_dollars?: number;
+    /** Where it was given: a restaurant page ("restaurant") or the home pricer ("home_pricer"). */
+    surface: WorthSurface;
+    /** The menu price was hidden when the visitor answered (the home pricer), or on the page (a restaurant page). */
+    price_hidden: boolean;
   };
+  /** The home pricer: an area picked ("nyc" for anywhere, else the borough or neighborhood slug). */
+  pricer_area_selected: { area_type: PricerAreaType; area: string };
+  /** The home pricer: "Skip" on a burger. */
+  pricer_skipped: { menu_key: string };
+  /** The home pricer: "Next burger" after a reveal; the burgers answered there this session so far. */
+  pricer_next_clicked: { count_this_session: number };
+  /** The home pricer ran out of burgers in an area (the same area value as pricer_area_selected). */
+  pricer_exhausted: { area: string };
+  /** The header's (or the menu sheet's) "Price a burger", from the page it was clicked on (path only). */
+  price_a_burger_clicked: { from_path: string };
   /** A row of a People's Price list followed to its restaurant's slider. */
   peoples_price_board_clicked: { board: BoardName; menu_key: string; restaurant_id: string; rank: number | null; position: number };
   /** A map pin's popup opened: tapped, or opened for /map?r=<id> ("See it on the map"). */
@@ -110,6 +128,8 @@ export function worthAnsweredProps(a: {
   dollars: number;
   menuPrice: number;
   previous: number | null | undefined;
+  surface: WorthSurface;
+  priceHidden: boolean;
 }): AnalyticsEvents["worth_answered"] {
   const previous = a.previous;
   return {
@@ -119,7 +139,15 @@ export function worthAnsweredProps(a: {
     menu_price: a.menuPrice,
     first_answer: previous === undefined ? null : previous === null,
     ...(typeof previous === "number" && previous !== a.dollars ? { previous_dollars: previous } : {}),
+    surface: a.surface,
+    price_hidden: a.priceHidden,
   };
+}
+
+/** The page a "Price a burger" click came from: its path only (no query, no hash: the /burgers search text stays out). */
+export function fromPath(pathname: string | null | undefined): string {
+  const path = (pathname ?? "").split(/[?#]/)[0];
+  return path.startsWith("/") ? path : "/";
 }
 
 /** An outbound link's host ("www." dropped), or null for a URL that doesn't parse. */

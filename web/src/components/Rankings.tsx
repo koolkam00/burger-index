@@ -102,11 +102,11 @@ export function RankingLinks({ current, available }: { current?: string; availab
               return (
                 <li key={path} className="flex min-h-11 items-center border-b border-line py-1.5">
                   {path === current ? (
-                    <span className="t-ui-m muted break-anywhere" aria-current="page">
+                    <span className="t-ui-m muted break-anywhere text-balance" aria-current="page">
                       {rankingName(s)}
                     </span>
                   ) : (
-                    <Link href={path} className="ui-link t-ui-m break-anywhere">
+                    <Link href={path} className="ui-link t-ui-m break-anywhere text-balance">
                       {rankingName(s)}
                     </Link>
                   )}

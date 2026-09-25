@@ -38,9 +38,22 @@ export function boroughInProse(name: Borough): string {
 /** Neighborhoods that take "the" in a sentence ("in the East Village", "the Upper West Side"). */
 const TAKES_THE = /^(East Village|West Village|Upper (East|West) Side|Lower East Side)\b/;
 
+/** Neighborhoods New Yorkers are "on", not "in": "on the Upper East Side", "on the Lower East Side". */
+const TAKES_ON = /^(Upper (East|West) Side|Lower East Side)\b/;
+
 /** A neighborhood name inside a sentence: "the East Village", "Astoria". Capitalize it yourself at a sentence start. */
 export function neighborhoodInProse(name: string): string {
   return TAKES_THE.test(name) ? `the ${name}` : name;
+}
+
+/** "in" or "on" for a neighborhood: "on the Upper West Side", but "in the East Village", "in Astoria". */
+export function neighborhoodPreposition(name: string): "in" | "on" {
+  return TAKES_ON.test(name) ? "on" : "in";
+}
+
+/** A neighborhood with its preposition: "on the Upper West Side", "in the West Village", "in Astoria". */
+export function inNeighborhood(name: string): string {
+  return `${neighborhoodPreposition(name)} ${neighborhoodInProse(name)}`;
 }
 
 /**
@@ -51,4 +64,9 @@ export function neighborhoodInProse(name: string): string {
 export function neighborhoodPlace(name: string, borough: Borough): string {
   const prose = neighborhoodInProse(name);
   return name.includes(borough) ? prose : `${prose}, ${boroughInProse(borough)}`;
+}
+
+/** neighborhoodPlace with its preposition: "on the Upper East Side, Manhattan", "in Astoria, Queens". */
+export function inNeighborhoodPlace(name: string, borough: Borough): string {
+  return `${neighborhoodPreposition(name)} ${neighborhoodPlace(name, borough)}`;
 }

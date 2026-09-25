@@ -10,9 +10,15 @@
 // anywhere. Ranking pages: the table, its ranks and prices and its ItemList equal a ranking recomputed
 // here from the dataset (distinct menus, a chain once). Q&A blocks: the FAQPage JSON-LD says word for
 // word what the block shows, and home, borough and neighborhood pages have one. The footer carries the
-// source line and the NYC ranking links on every page. Titles and descriptions unique. The sitemap lists exactly the pages; robots.txt, llms.txt
-// (every link resolves) and the CSV (one row per priced restaurant, equal to the dataset) are checked,
-// and so is every internal link (no broken targets, no page without an inbound link).
+// source line, the CSV link with its CC BY 4.0 license link and the NYC ranking links on every page.
+// Titles and descriptions unique. The sitemap lists exactly the pages; robots.txt, llms.txt (every link
+// resolves, the license named) and the CSV (one row per priced restaurant, equal to the dataset) are
+// checked, and so is every internal link (no broken targets, no page without an inbound link).
+// Honest wording (user decision 2026-09-25): each spot publishes its priciest burger, so no page text,
+// title, description, JSON-LD, llms.txt or CSV may claim "the cheapest burger in …", "cheapest burgers
+// in …" or "burgers under $15"; the cheapest lists name burger spots and their priciest burger. Every
+// count matches its noun: "N burger spots" counts locations (a chain's every one), "N menus" distinct
+// menus (a chain once).
 // Exit 1 on any error; warnings are printed and don't fail.
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -127,6 +133,7 @@ function expectedRanking(path) {
   let menus = distinctMenus(scope).sort((a, b) => (desc ? b.price - a.price : a.price - b.price) || a.r.name.localeCompare(b.r.name) || byKeyOrder(a, b));
   if (under) menus = menus.filter((x) => cents(x.price) < +under * 100);
   const total = menus.length;
+  const spots = menus.reduce((n, x) => n + x.locations, 0);
   let rank = 0;
   menus.forEach((x, i) => {
     if (i === 0 || cents(x.price) !== cents(menus[i - 1].price)) rank = i + 1;
@@ -136,11 +143,29 @@ function expectedRanking(path) {
   // every menu tied with the last of them; under $N: every row.
   const cap = Math.max(1, Math.min(25, Math.floor(total / 2)));
   const rows = under || menus.length <= cap ? menus : menus.filter((x) => x.rank <= menus[cap - 1].rank);
-  return { rows, total, desc };
+  return { rows, total, spots, desc };
 }
 
+const count = (v) => v.toLocaleString("en-US");
 const month = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "long", year: "numeric" }).format(new Date(data.generated_at));
 const SOURCE_LINE = `Prices from restaurant menus and ordering pages, checked ${month}.`;
+const LICENSE_URL = "https://creativecommons.org/licenses/by/4.0/";
+
+// Claims that would treat each spot's one published burger (its priciest) as if every burger on every
+// menu were known. "Which borough has the cheapest burgers?" (a comparison of medians) is not one.
+const OVERCLAIMS = [
+  /\bcheapest burgers? (?:in|at|on|of)\b/i,
+  /\bburgers (?:priced )?under \$/i,
+  /\bburgers? (?:in [^.]{1,40} )?costs? (?:less than|under)\b/i,
+  /\bdifferent burgers under\b/i,
+  /\bno burger costs? more than\b/i,
+];
+function overclaims(where, str) {
+  for (const re of OVERCLAIMS) {
+    const m = re.exec(str);
+    if (m) err(`${where}: overclaiming "${str.slice(Math.max(0, m.index - 40), m.index + m[0].length + 40)}"`);
+  }
+}
 
 // ---- pages ---------------------------------------------------------------------------------------
 
@@ -281,7 +306,7 @@ for (const p of pages) {
     if (ds) {
       for (const k of ["name", "description", "url", "creator", "dateModified", "temporalCoverage", "spatialCoverage", "distribution"]) if (!ds[k]) err(`/: Dataset lacks ${k}`);
       if ((ds.description ?? "").length < 50) err("/: Dataset description under 50 characters");
-      if ("license" in ds) err("/: Dataset has a license (the user has not chosen one)");
+      if (ds.license !== LICENSE_URL) err(`/: Dataset license is ${ds.license}, expected ${LICENSE_URL}`);
       const dl = [].concat(ds.distribution)[0] ?? {};
       if (dl["@type"] !== "DataDownload" || dl.encodingFormat !== "text/csv" || dl.contentUrl !== `${site}/data/burger-prices.csv`) err(`/: Dataset distribution is ${JSON.stringify(dl)}`);
       if (ds.dateModified !== data.generated_at) err(`/: Dataset dateModified ${ds.dateModified} ≠ ${data.generated_at}`);
@@ -359,13 +384,26 @@ for (const p of pages) {
     const lede = text(/<p class="t-lede[^"]*">(.*?)<\/p>/s.exec(html)?.[1] ?? "");
     const top = ranking.rows[0];
     if (top && !(lede.includes(top.r.name) && lede.includes(money(top.price)) && lede.includes(`(${month})`))) err(`${path}: lede "${lede}" does not name ${top.r.name}, ${money(top.price)} and ${month}`);
-    // How many there are, under the table ("The 25 cheapest of 532 different burgers in NYC.", "All 90 different burgers under $15 …").
-    const n = (v) => v.toLocaleString("en-US");
+    // The cheap lists say what they rank: each spot's priciest burger ("Cheapest burger spots in NYC.").
+    if (!ranking.desc) {
+      if (!/burger spots/i.test(h1)) err(`${path}: h1 "${h1}" does not name burger spots`);
+      if (top && !lede.includes("priciest burger")) err(`${path}: lede "${lede}" does not say it is each spot's priciest burger`);
+    }
+    // How many there are, under the table: the rows are menus ("The 25 cheapest of 531 menus in NYC.",
+    // "All 90 menus on this list, cheapest first.").
     const countLine = text(/<\/table>\s*<\/div>\s*<p class="t-ui-s muted mt-3">(.*?)<\/p>/s.exec(html)?.[1] ?? "");
     const wantCount = /under/.test(path)
-      ? `All ${n(ranking.rows.length)} different burgers under`
-      : `The ${n(ranking.rows.length)} ${ranking.desc ? "most expensive" : "cheapest"} of ${n(ranking.total)} different burgers`;
+      ? `All ${count(ranking.rows.length)} menus on this list, cheapest first.`
+      : `The ${count(ranking.rows.length)} ${ranking.desc ? "most expensive" : "cheapest"} of ${count(ranking.total)} menus in`;
     if (ranking.rows.length > 1 && !countLine.startsWith(wantCount)) err(`${path}: count line "${countLine}", expected "${wantCount} …"`);
+    // "Burger spots" are locations: the under-$N lede counts them ("At 96 burger spots in NYC, …"), and
+    // any "N burger spots" in the page, its title or description is the list's location count.
+    if (/under/.test(path) && ranking.rows.length > 1 && !lede.startsWith(`At ${count(ranking.spots)} burger spots `)) err(`${path}: lede "${lede}" does not count ${count(ranking.spots)} burger spots`);
+    for (const [where, str] of [["page", text(html.replace(/<script\b[^>]*>.*?<\/script>/gs, " "))], ["<title>", p.title], ["description", p.description]]) {
+      for (const m of str.matchAll(/\b(\d[\d,]*) (?:NYC )?burger spots?\b/g)) {
+        if (m[1] !== count(ranking.spots)) err(`${path} ${where}: "${m[0]}", but the list covers ${count(ranking.spots)} burger spots (${count(ranking.total)} menus)`);
+      }
+    }
     p.rankingRows = trs.length;
   }
 
@@ -390,9 +428,21 @@ for (const p of pages) {
     p.faqs = visibleQa.length;
   }
 
-  // Footer: the source line and the NYC ranking links, on every page; home also has the line by the board.
-  const footer = text(/<footer\b[^>]*>(.*?)<\/footer>/s.exec(html)?.[1] ?? "");
+  // Footer: the source line, the CSV link with its license and the NYC ranking links, on every page;
+  // home also has the line by the board.
+  const footerHtml = /<footer\b[^>]*>(.*?)<\/footer>/s.exec(html)?.[1] ?? "";
+  const footer = text(footerHtml);
   if (!footer.includes(SOURCE_LINE)) err(`${path}: footer lacks "${SOURCE_LINE}"`);
+  const csvAt = footerHtml.indexOf('href="/data/burger-prices.csv"');
+  const licenseAt = footerHtml.indexOf(`href="${LICENSE_URL}"`);
+  if (licenseAt < 0 || !/<a\b[^>]*href="https:\/\/creativecommons\.org\/licenses\/by\/4\.0\/"[^>]*rel="license"[^>]*>CC BY 4\.0/.test(footerHtml)) err(`${path}: footer lacks the "CC BY 4.0" license link`);
+  else if (csvAt < 0 || licenseAt < csvAt) err(`${path}: the license link does not follow the CSV link`);
+
+  // Honest wording: the visible text, the title and description and the JSON-LD.
+  overclaims(path, text(html.replace(/<script\b[^>]*>.*?<\/script>/gs, " ")));
+  overclaims(`${path} <title>`, p.title);
+  overclaims(`${path} description`, p.description);
+  overclaims(`${path} JSON-LD`, JSON.stringify(p.ld));
   for (const r of CITY_RANKING_PATHS) if (!html.includes(`href="${r}"`)) err(`${path}: no link to ${r}`);
   if (path === "/" && !text(/<section class="hero[^"]*"[^>]*>(.*?)<\/section>/s.exec(html)?.[1] ?? "").includes(SOURCE_LINE)) err("/: no source line near the board");
 
@@ -441,6 +491,15 @@ const disallows = [...robots.matchAll(/^Disallow:\s*(\S+)/gm)].map((m) => m[1]);
 if (disallows.some((d) => d !== "/ingest/")) err(`robots.txt disallows more than /ingest/: ${disallows.join(", ")}`);
 
 const llms = readFileSync(join(OUT, "llms.txt"), "utf8");
+overclaims("llms.txt", llms);
+if (!new RegExp(`\\[Burger prices \\(CSV\\)\\]\\(${site}/data/burger-prices\\.csv\\):[^\\n]*License: CC BY 4\\.0 \\(${LICENSE_URL.replace(/[./]/g, "\\$&")}\\)`).test(llms)) err("llms.txt: the CSV link does not name its license (CC BY 4.0)");
+// The ranking notes count like the pages: burger spots are locations, menus count a chain once.
+for (const path of CITY_RANKING_PATHS) {
+  const r = expectedRanking(path);
+  const line = llms.split("\n").find((l) => l.includes(`](${site}${path})`)) ?? "";
+  const want = /under/.test(path) ? `: ${count(r.spots)} burger spots, ` : ` of ${count(r.total)} menus`;
+  if (!line.includes(want)) err(`llms.txt: the ${path} line "${line}" lacks "${want}"`);
+}
 const llmsLinks = [...llms.matchAll(/\]\((https?:\/\/[^)\s]+)\)/g)].map((m) => m[1]);
 for (const l of llmsLinks) {
   if (!l.startsWith(site)) err(`llms.txt links off-site: ${l}`);
@@ -484,6 +543,7 @@ function parseCsv(src) {
 const LABEL = { official_site: "Restaurant site", official_pdf: "Menu PDF", online_ordering: "Online ordering", menu_aggregator: "Menu aggregator", delivery_app: "Delivery app" };
 const checked = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(data.generated_at));
 const csvSrc = readFileSync(join(OUT, "data", "burger-prices.csv"), "utf8");
+overclaims("CSV", csvSrc);
 if (csvSrc.charCodeAt(0) === 0xfeff) warn("CSV starts with a BOM");
 const [header, ...csvRows] = parseCsv(csvSrc);
 const COLS = ["restaurant", "neighborhood", "borough", "burger", "price_usd", "source", "page_url", "checked"];

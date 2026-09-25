@@ -28,6 +28,9 @@ import {
   verdictFor,
   worthAnnouncement,
   worthHref,
+  worthStatusText,
+  MINE_FAILED_COPY,
+  WORTH_ERROR_COPY,
   worthMenus,
   type Hist,
 } from "../src/lib/worth";
@@ -387,4 +390,17 @@ test("the screen-reader line after an answer: People's Price, count and verdict,
   assert.equal(worthAnnouncement(summarize(h([10, 11, 12]), 20)), "People's Price $11, 3 answers. Overpriced by 82%.");
   assert.equal(worthAnnouncement(summarize(undefined, 20)), "", "no answers: nothing to say");
   assert.doesNotMatch(worthAnnouncement(summarize(h([22, 26, 30]), 27)), /median|needs? 3|5%|measured/i, "no methodology");
+});
+
+test("the status line beside Order up: closed, failure, sending, saved answers missing, the answer, the nudge", () => {
+  const base = { enabled: true, error: null, saving: false, mineFailed: false, answer: null, dirty: false, justSaved: false } as const;
+  assert.equal(worthStatusText({ ...base, enabled: false, error: "rate" }), "Answers open soon.");
+  assert.equal(worthStatusText({ ...base, error: "rate", saving: true }), WORTH_ERROR_COPY.rate);
+  assert.equal(WORTH_ERROR_COPY.rate, "Too many answers from this connection — try again in a bit.");
+  assert.equal(worthStatusText({ ...base, saving: true, mineFailed: true }), "Sending your answer…");
+  assert.equal(worthStatusText({ ...base, mineFailed: true }), MINE_FAILED_COPY);
+  assert.equal(worthStatusText({ ...base, answer: 29, dirty: true }), "Your answer: $29. Order up to change it.");
+  assert.equal(worthStatusText({ ...base, answer: 29, justSaved: true }), "Saved: $29.");
+  assert.equal(worthStatusText({ ...base, answer: 29 }), "Your answer: $29.");
+  assert.equal(worthStatusText(base), "Slide to your price, then order up.");
 });

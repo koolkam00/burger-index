@@ -86,20 +86,22 @@ export const MENU_ENDS_SPLIT = 8;
 
 /**
  * The lists MenuEnds shows, with their headings: the four cheapest and the four priciest menus when
- * there are enough that they can't overlap, else every menu once, cheapest first. The home page's
- * ItemList JSON-LD is built from the same lists.
+ * there are enough that they can't overlap, else every menu once, cheapest first. The headings name
+ * what the ranking pages behind "See all" name (each spot shows its priciest burger, so the cheap end
+ * is burger spots, not "the cheapest burgers"). The home page's ItemList JSON-LD is built from the
+ * same lists.
  */
 export function menuEndsLists(cheapest: readonly Menu[], priciest: readonly Menu[]): Array<{ title: string; order: "ascending" | "descending"; menus: Menu[] }> {
   if (cheapest.length >= MENU_ENDS_SPLIT) {
     return [
-      { title: "Cheapest index prices", order: "ascending", menus: cheapest.slice(0, 4) },
-      { title: "Priciest index prices", order: "descending", menus: priciest.slice(0, 4) },
+      { title: "Cheapest burger spots", order: "ascending", menus: cheapest.slice(0, 4) },
+      { title: "Most expensive burgers", order: "descending", menus: priciest.slice(0, 4) },
     ];
   }
-  return [{ title: "Index prices, cheapest first", order: "ascending", menus: [...cheapest] }];
+  return [{ title: "Burger spots, cheapest first", order: "ascending", menus: [...cheapest] }];
 }
 
-/** A ranking page a card list leads to: its path and what "See all" means there ("cheapest burgers in NYC"). */
+/** A ranking page a card list leads to: its path and what "See all" means there ("cheapest burger spots in NYC"). */
 export type SeeAll = { href: string; what: string };
 
 /** "See all" under a card list, naming the list for screen readers (the visible words stay in the name). */

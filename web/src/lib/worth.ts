@@ -427,6 +427,34 @@ export function classifyWorthError(err: unknown): WorthErrorKind {
   return "unknown";
 }
 
+/** When this browser's saved answers couldn't be loaded (the slider can't start at the saved one). */
+export const MINE_FAILED_COPY = "Couldn't load your saved answer.";
+
+/**
+ * The status line beside "Order up!" (DESIGN.md "WorthPicker"): answers closed, the last failure,
+ * sending, saved answers that didn't load, then the visitor's answer (moved and not yet sent, just
+ * saved, or saved earlier), else the nudge. The home pricer passes no answer: its burgers are new.
+ */
+export function worthStatusText(s: {
+  enabled: boolean;
+  error: WorthErrorKind | null;
+  saving: boolean;
+  mineFailed: boolean;
+  answer: number | null;
+  dirty: boolean;
+  justSaved: boolean;
+}): string {
+  if (!s.enabled) return WORTH_ERROR_COPY.disabled;
+  if (s.error) return WORTH_ERROR_COPY[s.error];
+  if (s.saving) return "Sending your answer…";
+  if (s.mineFailed) return MINE_FAILED_COPY;
+  if (s.answer !== null) {
+    if (s.dirty) return `Your answer: ${formatDollars(s.answer)}. Order up to change it.`;
+    return s.justSaved ? `Saved: ${formatDollars(s.answer)}.` : `Your answer: ${formatDollars(s.answer)}.`;
+  }
+  return "Slide to your price, then order up.";
+}
+
 /** Friendly copy for each failure (DESIGN.md "WorthPicker": error states). */
 export const WORTH_ERROR_COPY: Record<WorthErrorKind, string> = {
   rate: "Too many answers from this connection — try again in a bit.",

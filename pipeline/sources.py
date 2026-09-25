@@ -148,14 +148,16 @@ LOCATE_NUMBERS = 40  # records on the named street within this many house number
 # east of Essex plus Alphabet City (Avenues B-D); BK73 'North Side-South Side' is what everyone
 # calls Williamsburg, and BK72 'Williamsburg' is South Williamsburg. BX99 is the 2010 placeholder
 # 'park-cemetery-etc-Bronx'; the priced places in it are park concessions (Hudson Garden Grill in the
-# Botanical Garden, Orchard Beach Grill in Pelham Bay Park). Restaurant ids keep the placeholder's "park"
-# (build._nbhd_short), so a label here never changes an id.
+# Botanical Garden, Orchard Beach Grill in Pelham Bay Park). BK99, 'park-cemetery-etc-Brooklyn', is not
+# only parks (Dyker Beach golf course, for one), so it shows as "Other Brooklyn areas". Restaurant ids
+# keep the placeholder's "park" (build._nbhd_short), so a label here never changes an id.
 NTA_DISPLAY_OVERRIDES = {
     "MN27": "Chinatown-Lower East Side",
     "MN28": "Lower East Side-Alphabet City",
     "BK72": "South Williamsburg",
     "BK73": "Williamsburg",
     "BX99": "Bronx parks",
+    "BK99": "Other Brooklyn areas",
 }
 
 _log_lock = threading.Lock()

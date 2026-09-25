@@ -4,7 +4,8 @@
 //
 // Rules (user decisions 2026-09-25): the markup restates what the page shows (names, prices, links),
 // never more; the People's Price (visitors' answers) is never marked up as a Review, Rating or
-// AggregateRating; no license on the Dataset until the user picks one.
+// AggregateRating; the Dataset (the public CSV) carries its license, CC BY 4.0 (lib/csv.ts CSV_LICENSE).
+import { CSV_LICENSE } from "./csv";
 import { SITE_NAME } from "./site";
 
 /** Any JSON-LD node. */
@@ -66,7 +67,7 @@ export function websiteNode(site: string, description: string): JsonLdNode {
   };
 }
 
-/** The public CSV as a schema.org Dataset (no license: the user has not chosen one). */
+/** The public CSV as a schema.org Dataset, licensed CC BY 4.0. */
 export function datasetNode(
   site: string,
   d: { name: string; description: string; csvPath: string; generatedAt: string; month: string; keywords?: readonly string[] },
@@ -83,6 +84,7 @@ export function datasetNode(
     temporalCoverage: d.month,
     spatialCoverage: { "@type": "Place", name: "New York City" },
     isAccessibleForFree: true,
+    license: CSV_LICENSE.url,
     ...(d.keywords?.length ? { keywords: [...d.keywords] } : {}),
     distribution: [
       {

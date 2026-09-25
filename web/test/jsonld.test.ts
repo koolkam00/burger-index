@@ -116,7 +116,7 @@ test("breadcrumbNode: positions from 1, absolute items, the last crumb is the pa
 
 test("itemListNode: ordered ListItems with absolute urls and a count", () => {
   const n = plain(itemListNode(SITE, {
-    name: "Cheapest index prices",
+    name: "Cheapest burger spots",
     order: "ascending",
     entries: [
       { name: "A", path: "/restaurants/a" },
@@ -129,7 +129,7 @@ test("itemListNode: ordered ListItems with absolute urls and a count", () => {
   assert.deepEqual(n.itemListElement[1], { "@type": "ListItem", position: 2, name: "B", url: `${SITE}/restaurants/b` });
 });
 
-test("datasetNode: the CSV as a DataDownload, creator The Burger Index, no license", () => {
+test("datasetNode: the CSV as a DataDownload, creator The Burger Index, licensed CC BY 4.0", () => {
   const n = plain(datasetNode(SITE, {
     name: "NYC burger prices",
     description: "Burger prices at 548 New York City restaurants, with each one's burger and price.",
@@ -145,7 +145,7 @@ test("datasetNode: the CSV as a DataDownload, creator The Burger Index, no licen
   assert.equal(n.temporalCoverage, "2026-09");
   assert.deepEqual(n.spatialCoverage, { "@type": "Place", name: "New York City" });
   assert.deepEqual(n.distribution, [{ "@type": "DataDownload", encodingFormat: "text/csv", contentUrl: `${SITE}/data/burger-prices.csv` }]);
-  assert.equal("license" in n, false);
+  assert.equal(n.license, "https://creativecommons.org/licenses/by/4.0/");
 });
 
 test("websiteNode and organizationNode link up by @id", () => {
