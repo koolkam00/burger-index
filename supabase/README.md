@@ -7,8 +7,9 @@ with the project's **publishable** key, and the database decides what it may do.
 **Project:** `burger-index` — ref `wtbtivqubzymhbmijnri`, region `us-east-1`, org "koolkam00's Org"
 (free plan). URL `https://wtbtivqubzymhbmijnri.supabase.co`. Set up 2026-09-25 with the Supabase
 connector. Schema: `migrations/20260925010000_whats_it_worth.sql` plus
-`migrations/20260925020000_worth_one_per_connection.sql` (applied as migrations `whats_it_worth`,
-`whats_it_worth_range_5_45`, `whats_it_worth_range_5_75` and `worth_one_per_connection`).
+`migrations/20260925020000_worth_one_per_connection.sql` and `migrations/20260925030000_worth_rate_150.sql` (applied as migrations `whats_it_worth`,
+`whats_it_worth_range_5_45`, `whats_it_worth_range_5_75`, `worth_one_per_connection` and `worth_rate_150`,
+which raised the per-IP budget from 60 to 150 answers an hour for the pricer-first home page).
 `20260925000000_burger_votes.sql` (the retired 1-10 rating) now only supplies `burger_vote_rate`.
 
 ## How it works: "What's it worth?" (no sign-in)
@@ -19,7 +20,7 @@ rating on 2026-09-25; the old objects were dropped — migration `20260925010000
 
 - The browser makes a random voter id (UUID in `localStorage`) the first time it answers.
 - `rpc/cast_worth(p_menu_key, p_voter, p_dollars)` is the only write path: checks a whole number
-  5-75 and the key format, allows 60 answers per hour per client IP (md5 hash in
+  5-75 and the key format, allows 150 answers per hour per client IP (md5 hash in
   `burger_vote_rate`), then inserts or updates the one `(menu_key, voter)` answer and returns the
   burger's answer count and median.
 - **One answer per connection per burger** (`worth_one_per_connection`): each answer stores the
