@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { OrderBell } from "@/components/icons/nautical";
 import { Money } from "@/components/ui";
+import { track, worthAnsweredProps } from "@/lib/analytics";
 import { pluralize } from "@/lib/format";
 import { WORTH_ENABLED } from "@/lib/worth-config";
 import { ANSWER_MAX, ANSWER_MIN, ANSWER_START, formatDollars, summarize, WORTH_ERROR_COPY, worthAnnouncement } from "@/lib/worth";
@@ -27,9 +28,10 @@ const MINE_FAILED_COPY = "Couldn't load your saved answer.";
  * the answer count, the verdict and the answer distribution show below, refreshed every 30 s while
  * the tab is visible. Nothing is fetched (and the Supabase client isn't loaded) until the card comes
  * within a screen or so of the viewport. Without the Supabase settings the slider and button are
- * disabled and the card says answers open soon.
+ * disabled and the card says answers open soon. `restaurantId` (the page's restaurant; a chain's
+ * locations share `menuKey`) only labels the worth_answered analytics event.
  */
-export function WorthPicker({ menuKey, burger, price }: { menuKey: string; burger: string; price: number }) {
+export function WorthPicker({ menuKey, restaurantId, burger, price }: { menuKey: string; restaurantId: string; burger: string; price: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const sliderRef = useRef<HTMLInputElement>(null);
   const mine = useMyWorth();
@@ -63,6 +65,15 @@ export function WorthPicker({ menuKey, burger, price }: { menuKey: string; burge
     io.observe(el);
     return () => io.disconnect();
   }, [menuKey]);
+
+  // worth_answered once the server has saved an answer (a no-op without the PostHog key).
+  useEffect(
+    () =>
+      worthStore.onSaved(({ menuKey: key, dollars, previous }) => {
+        if (key === menuKey) track("worth_answered", worthAnsweredProps({ menuKey, restaurantId, dollars, menuPrice: price, previous }));
+      }),
+    [menuKey, restaurantId, price],
+  );
 
   const answer = mine.answers.get(menuKey) ?? null;
   // The slider shows what the visitor dragged to; before that, their saved answer, else the middle.

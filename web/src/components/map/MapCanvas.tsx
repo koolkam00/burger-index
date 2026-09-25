@@ -3,6 +3,7 @@
 import type { Map as MlMap, MapMouseEvent, Popup } from "maplibre-gl";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef } from "react";
+import { track } from "@/lib/analytics";
 import { formatDelta, formatPrice } from "@/lib/format";
 import { binFor } from "@/lib/price-bins";
 import { useResolvedTheme } from "../theme";
@@ -36,6 +37,7 @@ function popupContent(p: PinProps, median: number, color: string, go: (href: str
   const link = el("a", "t-ui-l ui-link font-semibold break-anywhere", p.name);
   link.href = `/restaurants/${p.id}`;
   link.addEventListener("click", (e) => {
+    track("map_popup_link_clicked", { restaurant_id: p.id });
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
     e.preventDefault();
     go(link.pathname);
@@ -139,7 +141,8 @@ export default function MapCanvas({ pins, median, onBasemapFail, onFatal }: { pi
       return best;
     };
 
-    const open = (props: PinProps, lngLat: [number, number]) => {
+    const open = (props: PinProps, lngLat: [number, number], source: "pin" | "link") => {
+      track("map_pin_opened", { restaurant_id: props.id, source });
       popup?.remove();
       setState(selectedId, "selected", false);
       selectedId = props.id;
@@ -173,7 +176,7 @@ export default function MapCanvas({ pins, median, onBasemapFail, onFatal }: { pi
       const f = pick(e);
       if (!f) return;
       const [lng, lat] = (f.geometry as GeoJSON.Point).coordinates;
-      open(f.properties as unknown as PinProps, [lng, lat]);
+      open(f.properties as unknown as PinProps, [lng, lat], "pin");
     });
 
     // First load: fit the pins, or fly to ?r=<restaurant id>. (A theme switch rebuilds the map and
@@ -187,7 +190,7 @@ export default function MapCanvas({ pins, median, onBasemapFail, onFatal }: { pi
       if (target) {
         const [lng, lat] = target.geometry.coordinates;
         map.jumpTo({ center: [lng, lat], zoom: 15 });
-        open(target.properties, [lng, lat]);
+        open(target.properties, [lng, lat], "link");
       } else if (features.length) {
         const b = new maplibregl.LngLatBounds();
         features.forEach((f) => b.extend(f.geometry.coordinates as [number, number]));

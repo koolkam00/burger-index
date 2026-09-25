@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Anchor, Net, OrderBell, Scales, Spatula, Spyglass } from "@/components/icons/nautical";
 import { EmptyState, Money, SectionHeading, StatGrid, StatTile } from "@/components/ui";
+import { searchTracker, track, type BoardName } from "@/lib/analytics";
 import { formatCount, formatPrice, pluralize } from "@/lib/format";
 import { WORTH_ENABLED } from "@/lib/worth-config";
 import { buildWorthBoards, formatDollars, peoplesPrice, searchWorthMenus, summarize, worthHref, type Hist, type WorthMenu, type WorthRow } from "@/lib/worth";
@@ -166,19 +167,19 @@ export function PeoplesPriceBoard({ menus, burgerIndex, menuCount }: { menus: Wo
           <section className="section" aria-labelledby="bargains">
             <SectionHeading id="bargains" kicker="Good catch" icon={Net} title="Biggest bargains." />
             <div className="mt-6">
-              {boards.bargains.length ? <PagedBoard rows={boards.bargains} label="Biggest bargains" /> : <BoardEmpty>No bargains on the board yet.</BoardEmpty>}
+              {boards.bargains.length ? <PagedBoard rows={boards.bargains} label="Biggest bargains" board="bargains" /> : <BoardEmpty>No bargains on the board yet.</BoardEmpty>}
             </div>
           </section>
           <section className="section" aria-labelledby="overpriced">
             <SectionHeading id="overpriced" kicker="Walk the plank" icon={Anchor} title="Most overpriced." />
             <div className="mt-6">
-              {boards.overpriced.length ? <PagedBoard rows={boards.overpriced} label="Most overpriced" /> : <BoardEmpty>Nothing overpriced on the board yet.</BoardEmpty>}
+              {boards.overpriced.length ? <PagedBoard rows={boards.overpriced} label="Most overpriced" board="overpriced" /> : <BoardEmpty>Nothing overpriced on the board yet.</BoardEmpty>}
             </div>
           </section>
           <section className="section" aria-labelledby="answered">
             <SectionHeading id="answered" kicker="Talk of the dock" icon={OrderBell} title="Most answered." />
             <div className="mt-6">
-              <PagedBoard rows={boards.mostAnswered} label="Most answered" />
+              <PagedBoard rows={boards.mostAnswered} label="Most answered" board="most_answered" />
             </div>
           </section>
           {boards.needsAnswers.length ? (
@@ -212,11 +213,11 @@ function BoardEmpty({ children }: { children: ReactNode }) {
 }
 
 /** A board with its first PAGE rows, then "Haul in … more". */
-function PagedBoard({ rows, label }: { rows: Row[]; label: string }) {
+function PagedBoard({ rows, label, board }: { rows: Row[]; label: string; board: BoardName }) {
   const [limit, setLimit] = useState(PAGE);
   return (
     <>
-      <RowList rows={rows.slice(0, limit)} ranked label={label} />
+      <RowList rows={rows.slice(0, limit)} ranked label={label} board={board} />
       {rows.length > limit ? (
         <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
           <button type="button" className="btn btn-secondary" onClick={() => setLimit((n) => n + PAGE)}>
@@ -262,7 +263,7 @@ function BoardSkeleton() {
  * where they are (320 ms) and a changed row flashes the highlight tint once (1.2 s); neither happens
  * under reduced motion.
  */
-function RowList({ rows, ranked = false, label }: { rows: Row[]; ranked?: boolean; label: string }) {
+function RowList({ rows, ranked = false, label, board }: { rows: Row[]; ranked?: boolean; label: string; board: BoardName }) {
   const listRef = useRef<HTMLOListElement>(null);
   const tops = useRef(new Map<string, number>());
   const tallies = useRef(new Map<string, string>());
@@ -313,15 +314,20 @@ function RowList({ rows, ranked = false, label }: { rows: Row[]; ranked?: boolea
         <span className="worth-cell wa-count num">Answers</span>
       </div>
       <ol ref={listRef} className="worth-board" aria-label={label}>
-        {rows.map((r) => (
-          <BoardRow key={r.key} row={r} ranked={ranked} />
+        {rows.map((r, i) => (
+          <BoardRow key={r.key} row={r} ranked={ranked} board={board} position={i + 1} />
         ))}
       </ol>
     </div>
   );
 }
 
-function BoardRow({ row: r, ranked }: { row: Row; ranked: boolean }) {
+/** peoples_price_board_clicked: a row followed to its restaurant's slider (`position` counts from 1). */
+function trackBoardClick(board: BoardName, r: Row, position: number) {
+  track("peoples_price_board_clicked", { board, menu_key: r.key, restaurant_id: r.id, rank: r.rank, position });
+}
+
+function BoardRow({ row: r, ranked, board, position }: { row: Row; ranked: boolean; board: BoardName; position: number }) {
   const where = r.neighborhood ? `${r.neighborhood}, ${r.borough}` : r.locations > 1 ? pluralize(r.locations, "location") : r.borough;
   const verdict = r.answers === 0 ? "No answers yet" : r.verdict.label;
   return (
@@ -333,7 +339,7 @@ function BoardRow({ row: r, ranked }: { row: Row; ranked: boolean }) {
         </span>
       ) : null}
       <div className="worth-what">
-        <Link href={worthHref(r.id)} prefetch={false} className="ui-link t-ui-l break-anywhere font-semibold">
+        <Link href={worthHref(r.id)} prefetch={false} className="ui-link t-ui-l break-anywhere font-semibold" onClick={() => trackBoardClick(board, r, position)}>
           {r.name}
         </Link>
         <p className="t-ui-s muted break-anywhere">{[r.burger, where].join(" · ")}</p>
@@ -360,9 +366,9 @@ function NeedsAnswers({ rows }: { rows: Row[] }) {
   return (
     <>
       <ul className="worth-needs mt-6">
-        {rows.slice(0, limit).map((r) => (
+        {rows.slice(0, limit).map((r, i) => (
           <li key={r.key}>
-            <Link href={worthHref(r.id)} prefetch={false} className="ui-link break-anywhere min-w-0 font-semibold">
+            <Link href={worthHref(r.id)} prefetch={false} className="ui-link break-anywhere min-w-0 font-semibold" onClick={() => trackBoardClick("needs_answers", r, i + 1)}>
               {r.name}
               <span className="t-ui-s muted block font-medium">{r.burger}</span>
             </Link>
@@ -389,6 +395,10 @@ function FindBurger({ menus, hists }: { menus: WorthMenu[]; hists: ReadonlyMap<s
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const hits = useMemo(() => searchWorthMenus(menus, query), [menus, query]);
+  // burger_search once typing pauses (lib/analytics); a no-op without the PostHog key.
+  const [searchLog] = useState(() => searchTracker("peoples_price"));
+  useEffect(() => searchLog.cancel, [searchLog]);
+  const logSearch = (q: string) => searchLog(q, () => searchWorthMenus(menus, q).length);
   const shown: Row[] = hits.slice(0, MAX_HITS).map((m) => ({ ...m, ...summarize(hists.get(m.key), m.price), rank: null }));
   const searching = query.trim().length > 0;
 
@@ -409,11 +419,15 @@ function FindBurger({ menus, hists }: { menus: WorthMenu[]; hists: ReadonlyMap<s
           autoComplete="off"
           spellCheck={false}
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            logSearch(e.target.value);
+          }}
           onKeyDown={(e) => {
             if (e.key === "Escape" && query) {
               e.preventDefault();
               setQuery("");
+              logSearch("");
             }
           }}
         />
@@ -424,6 +438,7 @@ function FindBurger({ menus, hists }: { menus: WorthMenu[]; hists: ReadonlyMap<s
             aria-label="Clear search"
             onClick={() => {
               setQuery("");
+              logSearch("");
               inputRef.current?.focus();
             }}
           >
@@ -437,7 +452,7 @@ function FindBurger({ menus, hists }: { menus: WorthMenu[]; hists: ReadonlyMap<s
       {searching ? (
         hits.length ? (
           <div className="mt-3">
-            <RowList rows={shown} label="Search results" />
+            <RowList rows={shown} label="Search results" board="find" />
           </div>
         ) : (
           <div className="mt-3">

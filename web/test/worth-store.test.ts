@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { HistRow } from "../src/lib/worth";
-import { canOrderUp, createWorthStore, histKnown, type WorthApi } from "../src/lib/worth-store";
+import { canOrderUp, createWorthStore, histKnown, type SavedAnswer, type WorthApi } from "../src/lib/worth-store";
 
 const VOTER = "8f14e45f-ceea-467a-9575-2b7b1a0c3d11";
 
@@ -488,4 +488,60 @@ test("a failed load of the saved answers reports it and can be tried again", asy
   await s.loadMine();
   assert.equal(s.getMine().status, "ready");
   assert.equal(s.getMine().answers.get("amity-hall"), 33);
+});
+
+test("onSaved hears each saved answer with the answer it replaced, and never a failed one", async () => {
+  const f = fakeServer({ mine: { "due-west": 20 } });
+  const s = store(f.api);
+  const heard: SavedAnswer[] = [];
+  const stop = s.onSaved((a) => heard.push(a));
+  s.answer("chain:7th-street-burger", 12);
+  await s.settled();
+  await s.loadMine();
+  s.answer("due-west", 30);
+  await s.settled();
+  f.failCast = { code: "", message: "TypeError: Failed to fetch" };
+  s.answer("due-west", 40);
+  await s.settled();
+  f.failCast = undefined;
+  s.answer("due-west", 35);
+  await s.settled();
+  stop();
+  s.answer("due-west", 50);
+  await s.settled();
+  assert.deepEqual(heard, [
+    { menuKey: "chain:7th-street-burger", dollars: 12, previous: null },
+    { menuKey: "due-west", dollars: 30, previous: 20 },
+    { menuKey: "due-west", dollars: 35, previous: 30 },
+  ]);
+});
+
+test("onSaved: an answer made while the saved ones load still reports the one it replaced", async () => {
+  const f = fakeServer({ mine: { "due-west": 20 } });
+  const s = store(f.api);
+  const heard: SavedAnswer[] = [];
+  s.onSaved((a) => heard.push(a));
+  const gate = deferred<void>();
+  f.mineGate = () => gate.promise;
+  const loading = s.loadMine();
+  const cast = deferred<void>();
+  f.castGate = () => cast.promise;
+  s.answer("due-west", 45);
+  gate.resolve();
+  await loading;
+  cast.resolve();
+  await s.settled();
+  assert.deepEqual(heard, [{ menuKey: "due-west", dollars: 45, previous: 20 }]);
+});
+
+test("a listener that throws doesn't turn a saved answer into an error", async () => {
+  const f = fakeServer();
+  const s = store(f.api);
+  s.onSaved(() => {
+    throw new Error("analytics down");
+  });
+  s.answer("due-west", 25);
+  await s.settled();
+  assert.equal(s.getMine().errors.has("due-west"), false);
+  assert.equal(s.getMine().saved.has("due-west"), true);
 });

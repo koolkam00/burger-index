@@ -1,9 +1,10 @@
-import { ClipboardCheck, ExternalLink, MapPin } from "lucide-react";
+import { ClipboardCheck } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { WorthPicker } from "@/components/worth/WorthPicker";
 import { repeatedNames } from "@/components/RestaurantBits";
+import { OutboundLink, SeeOnMapLink } from "@/components/RestaurantLinks";
 import { Scales } from "@/components/icons/nautical";
 import { DetailOverline, Money, PageHeader, PriceChip, SectionHeading, SourceBadge } from "@/components/ui";
 import { boroughSlug } from "@/lib/boroughs";
@@ -36,16 +37,6 @@ export async function generateMetadata({ params }: PageProps<"/restaurants/[id]"
   const where = r.neighborhood ? `${r.neighborhood}, ${r.borough}` : r.borough;
   const description = `${r.name} (${where}): ${r.burger.name}, ${formatPrice(r.index_price, { cents: "always" })}.`;
   return pageMetadata({ title: `${r.name}, ${r.neighborhood ?? r.borough}`, description, path: `/restaurants/${r.id}` });
-}
-
-function ExternalA({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <a href={href} className="link inline-flex items-center gap-1" rel="nofollow noopener noreferrer" target="_blank">
-      {children}
-      <ExternalLink className="size-3.5 flex-none" strokeWidth={2} aria-hidden="true" />
-      <span className="sr-only">(opens in a new tab)</span>
-    </a>
-  );
 }
 
 /**
@@ -155,20 +146,23 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
           <ul className="t-ui-m mt-4 flex flex-wrap gap-x-6 gap-y-2">
             {menuUrl ? (
               <li>
-                <span className="muted">Menu page:</span> <ExternalA href={menuUrl}>{hostname(menuUrl)}</ExternalA>
+                <span className="muted">Menu page:</span>{" "}
+                <OutboundLink href={menuUrl} kind="menu" restaurantId={r.id} priceSource={r.price_source}>
+                  {hostname(menuUrl)}
+                </OutboundLink>
               </li>
             ) : null}
             {website ? (
               <li>
-                <span className="muted">Website:</span> <ExternalA href={website}>{hostname(website)}</ExternalA>
+                <span className="muted">Website:</span>{" "}
+                <OutboundLink href={website} kind="website" restaurantId={r.id} priceSource={r.price_source}>
+                  {hostname(website)}
+                </OutboundLink>
               </li>
             ) : null}
             {onMap ? (
               <li>
-                <Link className="link inline-flex items-center gap-1" href={`/map?r=${encodeURIComponent(r.id)}`}>
-                  <MapPin className="size-4 flex-none" strokeWidth={2} aria-hidden="true" />
-                  See it on the map
-                </Link>
+                <SeeOnMapLink restaurantId={r.id} />
               </li>
             ) : null}
           </ul>
@@ -181,7 +175,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
         <section id={WORTH_ANCHOR} className="section" aria-labelledby="worth-title">
           <SectionHeading id="worth-title" kicker="What's it worth?" icon={Scales} title="What would you pay?" />
           <div className="mt-6 max-w-3xl">
-            <WorthPicker menuKey={menuKey(r)} burger={burger.name} price={price} />
+            <WorthPicker menuKey={menuKey(r)} restaurantId={r.id} burger={burger.name} price={price} />
           </div>
         </section>
 

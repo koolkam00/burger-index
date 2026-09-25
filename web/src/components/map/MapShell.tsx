@@ -3,6 +3,7 @@
 import { List, Map as MapIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback, useState, type ReactNode } from "react";
+import { track } from "@/lib/analytics";
 import { EmptyState } from "../ui";
 import type { MapPin } from "./MapCanvas";
 
@@ -30,16 +31,20 @@ export function MapShell({ pins, median, legend, list }: { pins: MapPin[]; media
     setView("list");
   }, []);
   const showMap = view === "map" && !fatal && median !== null && pins.length > 0;
+  const choose = (next: "map" | "list") => {
+    if (next !== view) track("map_view_changed", { view: next });
+    setView(next);
+  };
 
   return (
     <div>
       <div className="wrap flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex gap-2" role="group" aria-label="View">
-          <button type="button" className="chip disabled:cursor-not-allowed disabled:opacity-40" aria-pressed={view === "map"} disabled={!!fatal || pins.length === 0} onClick={() => setView("map")}>
+          <button type="button" className="chip disabled:cursor-not-allowed disabled:opacity-40" aria-pressed={view === "map"} disabled={!!fatal || pins.length === 0} onClick={() => choose("map")}>
             <MapIcon strokeWidth={2} aria-hidden="true" />
             Map
           </button>
-          <button type="button" className="chip" aria-pressed={view === "list"} onClick={() => setView("list")}>
+          <button type="button" className="chip" aria-pressed={view === "list"} onClick={() => choose("list")}>
             <List strokeWidth={2} aria-hidden="true" />
             List
           </button>

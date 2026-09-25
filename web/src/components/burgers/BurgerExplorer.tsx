@@ -3,6 +3,7 @@
 import { Search, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useDeferredValue, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { filterValue, searchTracker, track, type FilterName } from "@/lib/analytics";
 import { BOROUGH_META, boroughBySlug, boroughInProse, type BoroughSlug } from "@/lib/boroughs";
 import {
   activeFilterCount,
@@ -61,6 +62,11 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
   const uid = useId();
   const wide = useMediaQuery("(min-width: 640px)", true);
   const filters: Filters = useMemo(() => ({ ...urlFilters, q: query }), [urlFilters, query]);
+  const rows = useMemo(() => data.rows.map(searchable), [data]);
+  // burger_search once typing pauses (lib/analytics); a no-op without the PostHog key.
+  const [searchLog] = useState(() => searchTracker("burgers"));
+  useEffect(() => searchLog.cancel, [searchLog]);
+  const logSearch = (q: string) => searchLog(q, () => filterRows(rows, urlFilters, queryTokens(q)).length);
 
   const commit = useCallback(
     (next: Filters) => {
@@ -71,7 +77,15 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
     },
     [neighborhoodSlugs],
   );
-  const update = (patch: Partial<Filters>) => commit({ ...filters, ...patch });
+  /** Apply one control's change; `filter` names the control for burger_filter_changed. */
+  const update = (patch: Partial<Filters>, filter: FilterName) => {
+    const next = { ...filters, ...patch };
+    const value = filterValue(filter, next);
+    if (value !== filterValue(filter, filters)) {
+      track("burger_filter_changed", { filter, value, results: filterRows(rows, next, queryTokens(next.q)).length });
+    }
+    commit(next);
+  };
 
   // Debounced write of the search box to the URL.
   useEffect(() => {
@@ -95,8 +109,6 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
     inputRef.current?.focus();
   };
 
-  const rows = useMemo(() => data.rows.map(searchable), [data]);
-
   // Boroughs with at least one burger row: a borough with none gets "none yet" in the filter and its
   // own empty message, since no change of filters would bring rows back.
   const boroughsWithRows = useMemo(() => new Set<string>(data.rows.map((r) => r.borough)), [data]);
@@ -119,6 +131,8 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
 
   const clearAll = () => {
     setQuery("");
+    logSearch("");
+    track("burger_filter_changed", { filter: "clear_all", value: null, results: rows.length });
     commit({ ...EMPTY_FILTERS, sort: filters.sort });
   };
 
@@ -143,15 +157,15 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
       selected={filters.boroughs}
       onChange={(next) => {
         const keepNb = selectedNeighborhood && (!next.length || next.some((s) => boroughBySlug(s)!.name === selectedNeighborhood.borough));
-        update({ boroughs: next, neighborhood: keepNb ? filters.neighborhood : "" });
+        update({ boroughs: next, neighborhood: keepNb ? filters.neighborhood : "" }, "borough");
       }}
     />
   );
   const priceGroup = (prefix: string) => (
     <div className="grid gap-3">
       <div className="grid grid-cols-2 gap-3">
-        <PriceInput id={`${uid}-${prefix}-min`} label="Min" value={filters.min} onCommit={(v) => update({ min: v })} />
-        <PriceInput id={`${uid}-${prefix}-max`} label="Max" value={filters.max} onCommit={(v) => update({ max: v })} />
+        <PriceInput id={`${uid}-${prefix}-min`} label="Min" value={filters.min} onCommit={(v) => update({ min: v }, "price")} />
+        <PriceInput id={`${uid}-${prefix}-max`} label="Max" value={filters.max} onCommit={(v) => update({ max: v }, "price")} />
       </div>
       {bins.length ? (
         <fieldset>
@@ -165,7 +179,7 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
                     type="button"
                     aria-pressed={active}
                     className={`t-ui-s flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-[10px] px-2 text-left ${active ? "bg-accent text-accent-ink" : "hover:bg-surface-2"}`}
-                    onClick={() => update(active ? { min: null, max: null } : { min: bin.min, max: bin.max })}
+                    onClick={() => update(active ? { min: null, max: null } : { min: bin.min, max: bin.max }, "price")}
                   >
                     <span className="swatch" style={{ background: bin.color }} aria-hidden="true" />
                     <span className="font-semibold">{bin.name}</span>
@@ -184,7 +198,7 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
       id={id}
       className={className}
       value={filters.neighborhood}
-      onChange={(e) => update({ neighborhood: e.target.value })}
+      onChange={(e) => update({ neighborhood: e.target.value }, "neighborhood")}
       aria-label="Neighborhood"
     >
       <option value="">All neighborhoods</option>
@@ -206,7 +220,7 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
       <label htmlFor={id} className="t-label muted whitespace-nowrap">
         Sort
       </label>
-      <select id={id} className={className} value={filters.sort} onChange={(e) => update({ sort: e.target.value as SortKey })}>
+      <select id={id} className={className} value={filters.sort} onChange={(e) => update({ sort: e.target.value as SortKey }, "sort")}>
         {SORTS.map((s) => (
           <option key={s.key} value={s.key}>
             {s.label}
@@ -221,10 +235,10 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
       key: `b-${s}`,
       label: boroughBySlug(s)!.name,
       borough: boroughBySlug(s)!.name,
-      clear: () => update({ boroughs: filters.boroughs.filter((x) => x !== s) }),
+      clear: () => update({ boroughs: filters.boroughs.filter((x) => x !== s) }, "borough"),
     })),
-    ...(selectedNeighborhood ? [{ key: "nb", label: selectedNeighborhood.name, clear: () => update({ neighborhood: "" }) }] : []),
-    ...(filters.min !== null || filters.max !== null ? [{ key: "price", label: priceLabel(filters.min, filters.max), clear: () => update({ min: null, max: null }) }] : []),
+    ...(selectedNeighborhood ? [{ key: "nb", label: selectedNeighborhood.name, clear: () => update({ neighborhood: "" }, "neighborhood") }] : []),
+    ...(filters.min !== null || filters.max !== null ? [{ key: "price", label: priceLabel(filters.min, filters.max), clear: () => update({ min: null, max: null }, "price") }] : []),
   ];
 
   const scope = [
@@ -265,11 +279,13 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
               onChange={(e) => {
                 setQuery(e.target.value);
                 setLimit(PAGE);
+                logSearch(e.target.value);
               }}
               onKeyDown={(e) => {
                 if (e.key === "Escape" && query) {
                   e.preventDefault();
                   setQuery("");
+                  logSearch("");
                 }
               }}
             />
@@ -280,6 +296,7 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
                 aria-label="Clear search"
                 onClick={() => {
                   setQuery("");
+                  logSearch("");
                   inputRef.current?.focus();
                 }}
               >
@@ -385,7 +402,7 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
 
       {results.length ? (
         <div className={deferredQuery !== query ? "opacity-50 transition-opacity" : "transition-opacity"}>
-          <BurgerTable rows={shown} median={data.median} tokens={tokens} sort={filters.sort} onSort={(s) => update({ sort: s })} />
+          <BurgerTable rows={shown} median={data.median} tokens={tokens} sort={filters.sort} onSort={(s) => update({ sort: s }, "sort")} />
           {results.length > shown.length ? (
             <div className="mt-6 flex flex-wrap items-center gap-4">
               <button type="button" className="btn btn-secondary" onClick={() => setLimit((l) => l + PAGE)}>

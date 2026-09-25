@@ -4,7 +4,8 @@ The public site for the NYC Burger Index: the median index price across the New 
 the restaurants in the pipeline's scope (by default our curated list of burger restaurants).
 It is a fully static Next.js site (App Router, TypeScript strict, Tailwind v4, zod). There is no server code and no secret key: the Python
 pipeline writes one JSON file, and `next build` turns it into plain HTML in `out/`. The one live part, "What's it worth?", talks to
-Supabase straight from the browser with a public key (see "What's it worth? (Supabase)" below).
+Supabase straight from the browser with a public key (see "What's it worth? (Supabase)" below). Product analytics (PostHog) run in
+the browser too, only in builds that have the PostHog key (see "Analytics (PostHog)").
 
 Design rules live in [`../DESIGN.md`](../DESIGN.md) (fonts, color tokens, components, voice). Read it before changing anything visual.
 
@@ -40,6 +41,8 @@ cd web
 npm install
 npm run dev            # http://localhost:3000, from ../data/burger_index.json
 ```
+
+Local runs send no analytics: the PostHog key is set only on Vercel, never in `web/.env.local`.
 
 Build and preview the static export:
 
@@ -115,6 +118,49 @@ The rules behind the numbers (the People's Price is the median answer; a verdict
 under 5%, measured from the smaller of the two prices; the People's Burger Index counts each burger with a verdict once, a chain
 once) are never explained on the site.
 
+## Analytics (PostHog)
+
+The site sends product analytics to the PostHog project "Burger Index" (id 628020, US cloud). Nothing on the page changes:
+there is no banner, and surveys, product tours and the conversations widget are switched off in code. Cookies are allowed
+(user decision 2026-09-25), so there is no consent banner.
+
+- **Off without the key.** `NEXT_PUBLIC_POSTHOG_KEY` is read at build time. Without it (local dev, local builds, tests)
+  `posthog-js` is never loaded and no request goes to PostHog; `track()` does nothing. Its chunk is still emitted into `out/`,
+  but nothing ever fetches it.
+- **Start-up:** `src/instrumentation-client.ts` (Next's client instrumentation file, run before hydration) calls
+  `initAnalytics()`, which imports `posthog-js` in its own chunk and starts it with `defaults: "2026-08-30"`, the newest config
+  defaults of the installed version: among them a `$pageview` on every client-side navigation that changes the path (the page
+  left behind rides along as `$prev_pageview_*` properties), `$pageleave` when the visitor leaves the site, and URL hashes
+  stripped.
+  Events tracked before it has loaded are queued (up to 50).
+- **Automatic, per the project settings:** `$pageview`, `$pageleave`, autocapture, web vitals, heatmaps and session replay. The
+  explorer's filter URL updates (`replaceState` with a new query string) are not pageviews: only path changes are.
+- **Custom events** (`src/lib/analytics.ts`, the typed `AnalyticsEvents` map; components call `track()`):
+
+| Event | Properties | Sent from |
+|---|---|---|
+| `burger_search` | `surface` (`burgers` / `peoples_price`), `query`, `results` | the /burgers search box and "Find a burger" on /peoples-price, once typing pauses for 1 s; empty and repeated queries are skipped |
+| `burger_filter_changed` | `filter` (`borough`, `neighborhood`, `price`, `sort`, `clear_all`), `value`, `results` | every /burgers control: filter popovers, the mobile sheet, chips, price presets, the sort select and the column headers |
+| `worth_answered` | `menu_key`, `restaurant_id`, `dollars`, `menu_price`, `first_answer`, `previous_dollars` (a changed answer only) | `WorthPicker`, after Supabase has saved the answer (`worthStore.onSaved`) |
+| `peoples_price_board_clicked` | `board` (`bargains`, `overpriced`, `most_answered`, `needs_answers`, `find`), `menu_key`, `restaurant_id`, `rank`, `position` | a row link on /peoples-price |
+| `map_pin_opened` | `restaurant_id`, `source` (`pin` tapped, or `link` for `/map?r=<id>`) | `MapCanvas` |
+| `map_popup_link_clicked` | `restaurant_id` | the restaurant link in a map popup |
+| `map_view_changed` | `view` (`map` / `list`) | the Map / List toggle |
+| `menu_link_clicked`, `website_link_clicked` | `restaurant_id`, `host`, `price_source` | "Menu page:" and "Website:" on restaurant pages (`components/RestaurantLinks.tsx`) |
+| `see_on_map_clicked` | `restaurant_id` | "See it on the map" |
+
+- **No personal data.** Events carry ids, prices, counts and control names. The only free text is the search query: trimmed,
+  lowercased and cut to 60 characters. The full query in the page URL (`?q=`) is replaced by `<MASKED>` in every URL PostHog
+  records (`mask_personal_data_properties` with `q`, plus a `before_send` for referrers). The voter id never reaches an event,
+  and session recordings drop Supabase request bodies (they carry it).
+- **Proxy:** in production `posthog-js` talks to `/ingest` on the site itself; `web/vercel.json` rewrites `/ingest/static/*` and
+  `/ingest/array/*` to `https://us-assets.i.posthog.com` and the rest of `/ingest/*` to `https://us.i.posthog.com`, so ad
+  blockers that block PostHog's domains don't drop the events. The site has no Content-Security-Policy to update.
+- **Bots:** `posthog-js` drops events from automated browsers (headless Chrome, `navigator.webdriver`), so a Playwright or
+  gstack check sees no events unless it poses as a normal browser.
+- **Tests:** `test/analytics.test.ts` (off without a key, loading and queueing, property shaping, URL masking, the debounce) and
+  the `onSaved` cases in `test/worth-store.test.ts`.
+
 ## Deploy to Vercel
 
 The Vercel project uses **Root Directory** `web`, **Build Command** `npm run build`, **Output Directory** `out`. Either:
@@ -129,9 +175,24 @@ Notes:
   keep Vercel's "Include files outside the root directory in the Build Step" setting on (the default for new projects).
 - The repo-root `.vercelignore` is an allowlist (`web/`, `contract/`, `data/burger_index.json`). Vercel does not read
   `.gitignore`, so without it a CLI deploy from the root would upload `.env` (the Context.dev key), `.venv/` and the scrape cache.
-- Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (see "What's it worth?"), or answers stay closed on the live site.
-- Set `NEXT_PUBLIC_SITE_URL` (for example `https://burgerindex.nyc`) so canonical URLs, the sitemap and Open Graph tags point at your
-  domain. When it is unset, Vercel's production URL is used, then `https://burgerindex.nyc`.
+- Environment variables (Project → Settings → Environment Variables, for Production and Preview). All are public, inlined into the
+  JavaScript at build time, so a change needs a redeploy:
+
+  | Variable | Value | Without it |
+  |---|---|---|
+  | `NEXT_PUBLIC_SUPABASE_URL` | `https://<project-ref>.supabase.co` (also in `web/.env.local`) | answers stay closed ("Answers open soon.") |
+  | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the Supabase **publishable** key, `sb_publishable_…` (also in `web/.env.local`) | answers stay closed |
+  | `NEXT_PUBLIC_POSTHOG_KEY` | `phc_soMqVLQsk4hmuZYyWwGDrjjPQwRng7a6bK4i9E9vpBQ9` (the PostHog project's public token; **Vercel only**, never in `web/.env.local`) | no analytics |
+  | `NEXT_PUBLIC_POSTHOG_HOST` | optional; leave unset for the `/ingest` proxy in `web/vercel.json` | `/ingest` |
+  | `NEXT_PUBLIC_SITE_URL` | for example `https://burgerindex.nyc` | Vercel's production URL, then `https://burgerindex.nyc` |
+
+  `NEXT_PUBLIC_SITE_URL` sets canonical URLs, the sitemap and Open Graph tags. `NEXT_PUBLIC_POSTHOG_HOST` is only for a build
+  served somewhere without the proxy (for example `https://us.i.posthog.com` for a local check).
+- `web/vercel.json` (read from the Root Directory, and uploaded by the `.vercelignore` allowlist) holds the PostHog `/ingest`
+  rewrites. Vercel applies rewrites to external origins for every framework, this Next.js static export included; Next's own
+  `rewrites` don't work with `output: "export"`. After a deploy, the browser's network tab should show `/ingest/e/` (or
+  `/ingest/i/v0/e/`) answering 200. PostHog accepts its endpoints with or without the trailing slash, so a trailing-slash
+  redirect on the way doesn't lose events.
 - Any static host works: upload `out/`. Routes are emitted as `name.html` files, so the host needs clean URLs (`/map` → `map.html`),
   which Vercel, Netlify and `serve` handle by default.
 

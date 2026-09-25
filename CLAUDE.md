@@ -212,10 +212,25 @@ npm run validate:data    # ajv check against the contract (default ../data/burge
   `test/menus.test.ts` checks the web's per-menu medians against the pipeline's in `data/burger_index.json`.
 - Price colors (Steal → Splurge) are always measured against the citywide median (`src/lib/price-bins.ts`), never a
   filtered subset. Fonts load through `next/font/google` (the build needs network); the OG image reads `@fontsource`.
+- **Analytics (PostHog project "Burger Index", id 628020, US cloud; never the "Run With Kam" org or project 614669):**
+  `src/lib/analytics.ts` is the one client-only module: the typed `AnalyticsEvents` map, `track()` (a no-op without the
+  key), property shaping, the debounced search sender and the posthog-js config (`defaults: "2026-08-30"`, `?q=` masked in
+  every URL, Supabase bodies kept out of replays, surveys/tours/conversations off: analytics must not change what visitors
+  see). `src/instrumentation-client.ts` calls `initAnalytics()` before hydration; posthog-js loads as its own chunk and only
+  when `NEXT_PUBLIC_POSTHOG_KEY` was set at build time. That key lives **only in the Vercel project settings, never in
+  `web/.env.local`**, so dev and local builds send nothing. Components call `track()` in event handlers; nothing in server
+  components (the restaurant page's links are the client `components/RestaurantLinks.tsx`). `worth_answered` comes from
+  `worthStore.onSaved` (after Supabase saved the answer). No personal data: never the voter id, and no free text but the
+  search query (trimmed, lowercased, 60 characters). Events and properties are listed in `web/README.md` "Analytics
+  (PostHog)"; tests in `test/analytics.test.ts`. posthog-js drops headless/webdriver browsers, so browser checks see no
+  events unless they pose as a normal Chrome.
 - **Deploy (Vercel):** project Root Directory `web`, build `npm run build`, output `out`, and keep "Include files
   outside the root directory" on (the build reads `../data` and `../contract`). CLI deploys run **from the repo
   root** (`npx vercel link` once, then `npx vercel --prod`); the root `.vercelignore` is an allowlist so `.env`,
-  `.venv/` and `data/cache/` are never uploaded. Set `NEXT_PUBLIC_SITE_URL` for canonical/OG URLs.
+  `.venv/` and `data/cache/` are never uploaded. Set `NEXT_PUBLIC_SITE_URL` for canonical/OG URLs, the two Supabase
+  variables, and `NEXT_PUBLIC_POSTHOG_KEY` (`NEXT_PUBLIC_POSTHOG_HOST` stays unset: the default `/ingest` is proxied to
+  PostHog by the rewrites in `web/vercel.json`, which Vercel reads from the Root Directory; Next's own `rewrites` don't
+  work with `output: "export"`). The site has no Content-Security-Policy.
 - **Refresh the live site:** `pipeline run` (spends credits) → `pipeline build` → commit `data/burger_index.json` →
   deploy.
 

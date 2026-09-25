@@ -38,6 +38,9 @@ export type VoterIds = {
 
 export type LoadStatus = "disabled" | "idle" | "loading" | "ready" | "error";
 
+/** An answer the server accepted: `previous` is the saved answer it replaced (null: none known). */
+export type SavedAnswer = { menuKey: string; dollars: number; previous: number | null };
+
 export type MineSnapshot = {
   status: LoadStatus;
   /** Each menu's answer as the picker shows it: one being sent, else the saved one. */
@@ -96,6 +99,8 @@ export type WorthStore = {
   loadHist(keys?: readonly string[], opts?: { all?: boolean }): Promise<void>;
   /** Answer a menu (whole dollars, 5–75): shown at once, sent now. */
   answer(menuKey: string, dollars: number): void;
+  /** Called after each answer the server saved (for analytics). Returns the unsubscribe function. */
+  onSaved(listener: (saved: SavedAnswer) => void): () => void;
   /** A realtime insert or update. */
   applyRow(row: HistRow): void;
   /** A realtime delete (the cell has no answers left). */
@@ -123,6 +128,7 @@ const cellId = (menuKey: string, dollars: number) => `${menuKey} ${dollars}`;
 
 export function createWorthStore({ api, voter, enabled }: { api: WorthApi; voter: VoterIds; enabled: boolean }): WorthStore {
   const listeners = new Set<() => void>();
+  const savedListeners = new Set<(saved: SavedAnswer) => void>();
 
   // ---- this browser's answers ----
   const confirmed = new Map<string, number>(); // saved on the server
@@ -292,11 +298,21 @@ export function createWorthStore({ api, voter, enabled }: { api: WorthApi; voter
         if (confirmed.get(key) === dollars) continue; // already saved: nothing to send
         try {
           await api.castWorth(key, voter.get(), dollars);
+          const e = episodes.get(key);
+          // The saved answer this one replaced: confirmed, else the one my_worth reported during the
+          // episode (an answer made before my_worth loaded); unknown if my_worth hasn't answered yet.
+          const previous = confirmed.get(key) ?? (e && !e.sent ? e.base : null);
           confirmed.set(key, dollars);
           saved.add(key);
           errors.delete(key);
-          const e = episodes.get(key);
           if (e) e.sent = true;
+          for (const l of [...savedListeners]) {
+            try {
+              l({ menuKey: key, dollars, previous });
+            } catch {
+              // A listener's failure is not the answer's.
+            }
+          }
         } catch (err) {
           errors.set(key, classifyWorthError(err));
           saved.delete(key);
@@ -425,6 +441,13 @@ export function createWorthStore({ api, voter, enabled }: { api: WorthApi; voter
       queued.set(menuKey, dollars);
       changed({ mine: true, hist: true });
       void pump(menuKey);
+    },
+
+    onSaved(listener) {
+      savedListeners.add(listener);
+      return () => {
+        savedListeners.delete(listener);
+      };
     },
 
     applyRow(row) {
