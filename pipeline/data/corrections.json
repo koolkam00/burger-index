@@ -1,5 +1,5 @@
 {
-  "about": "Hand-checked corrections applied by `pipeline build` (see pipeline/corrections.py). The 2026-09-23 entries were found by re-reading the live menu during that day's price check; all but Tavern on Jane and Jimbo's Hamburger Palace were confirmed by two independent checks. Every 2026-09-24 entry was confirmed by two independent checks; where the restaurant's own current menu page can be scraped, the fix is a menu-URL override in pipeline/data/menu_urls.json instead (re-scraped on the next run). The 2026-09-25 entries come from the review of each restaurant's one published burger (its highest-priced beef burger): Boeuf & Bun and the two Carnegie Diners were re-read on their own current menu pages; the Grillify-NYC delivery prices could not be confirmed; and the Grubhub/Seamless entries withhold pages whose cached scrape shows only the Best Sellers / recently ordered items (the burger section never loaded). Remove one of those once a full menu for the restaurant has been scraped. A second 2026-09-25 batch records the errors two independent checks agreed on in that review: closed restaurants (Abbey Tavern, Bell Book & Candle, Kelly's Tavern) and a page for another restaurant (True Burger at JFK) are withheld, and so are pages whose only prices are years old or marked up; a missed or mispriced top burger is corrected from the page named in source_url.",
+  "about": "Hand-checked corrections applied by `pipeline build` (see pipeline/corrections.py). The 2026-09-23 entries were found by re-reading the live menu during that day's price check; all but Tavern on Jane and Jimbo's Hamburger Palace were confirmed by two independent checks. Every 2026-09-24 entry was confirmed by two independent checks; where the restaurant's own current menu page can be scraped, the fix is a menu-URL override in pipeline/data/menu_urls.json instead (re-scraped on the next run). The 2026-09-25 entries come from the review of each restaurant's one published burger (its highest-priced beef burger): Boeuf & Bun and the two Carnegie Diners were re-read on their own current menu pages, and the Grubhub/Seamless entries withhold pages whose cached scrape shows only the Best Sellers / recently ordered items (the burger section never loaded). Remove one of those once a full menu for the restaurant has been scraped. A second 2026-09-25 batch records the errors two independent checks agreed on in that review: pages whose only prices are years old are withheld, and a missed or mispriced top burger is corrected from the page named in source_url. The user's decisions of 2026-09-25 then changed some entries: a price marked up for delivery or online ordering is published, labelled by its price_source, when it is the only price found (American Whiskey and Grillify-NYC are no longer withheld, and XO Burgers' entry is retired: its webshop's scraped $22.54, the price that page shows, is published; an own-site price already read, such as Boeuf & Bun's, stays); a burger club counts as a burger (Washington Square Diner, Tom's Restaurant, Murray Hill Diner and The Flame Diner gain the club their scrape missed); a diner's bunless diet plate never counts (extract.is_diet_plate, which replaces Mike's Oakwood Diner's Lo-Cal Burger entry); and the closed Abbey Tavern, Bell Book & Candle and Kelly's Tavern and True Burger at JFK were deleted from the restaurant list, with their entries.",
   "corrections": [
     {
       "target": "camis:50054294",
@@ -171,13 +171,6 @@
       "checked_at": "2026-09-23",
       "source_url": "https://cititour.com/NYC_Restaurants/The-Waverly-Inn/1178/menu",
       "reason": "the $13 Waverly Burger came from an aggregator copy that looks years out of date (recent menus list it well above $30), and the restaurant publishes no menu to check against.",
-      "withhold": true
-    },
-    {
-      "target": "csv:abbey-tavern-manhattan",
-      "checked_at": "2026-09-25",
-      "source_url": "https://spot-sample-10281.spotapps.co/New-York-Murray-Hill--Gramercy-Park--Kips-Bay---Flat-Iron-Abbey-Tavern-food-menu",
-      "reason": "Abbey Tavern at 354 3rd Ave closed on January 20, 2025, after 60 years (another business, Buddy's, now holds the DOHMH permit at that address); its old SpotApps menu page is still online.",
       "withhold": true
     },
     {
@@ -606,8 +599,14 @@
       "checked_at": "2026-09-25",
       "source_url": "https://www.seamless.com/menu/american-whiskey-247-west-30th-street-new-york/9190520",
       "price_source": "delivery_app",
-      "reason": "the only price found for its Burger, $20.40 on Grubhub/Seamless, is marked up for delivery (every price on that menu is a whole-dollar price times 1.2), and the restaurant's own menu page blocks automated reads, so its in-house price could not be confirmed.",
-      "withhold": true
+      "reason": "the restaurant's own menu page read lists only its Beef Burger Sliders; its Burger is priced only on Grubhub/Seamless, at $20.40, a delivery price marked up about 20% over the in-house price (every price on that menu is a whole-dollar price times 1.2), which could not be confirmed.",
+      "add": [
+        {
+          "name": "Burger",
+          "price": 20.4,
+          "protein": "beef"
+        }
+      ]
     },
     {
       "target": "camis:41626109",
@@ -819,13 +818,6 @@
         "Bahh Bahh Burger": 28.0,
         "Veg Out": 19.0
       }
-    },
-    {
-      "target": "csv:grillify-nyc-manhattan",
-      "checked_at": "2026-09-25",
-      "source_url": "https://postmates.com/store/grillify-nyc-e-5th-st/-_8Qs-wSRFSUxVI1RTqiRg",
-      "reason": "the Postmates and Uber Eats prices are marked up for delivery (each one is a .99 menu price divided by 0.775: $33.53 for a $25.99 burger), and the restaurant's own sites have lapsed, so no in-store price could be confirmed.",
-      "withhold": true
     },
     {
       "target": "camis:50138084",
@@ -1054,27 +1046,6 @@
       "withhold": true
     },
     {
-      "target": "csv:bell-book-and-candle-manhattan",
-      "checked_at": "2026-09-25",
-      "source_url": "https://menupages.com/bell-book-candle/141-w-10th-st-new-york",
-      "reason": "Bell Book & Candle at 141 W 10th St appears closed: Yelp lists it as closed, DOHMH has no permit at that address, and its old domain now hosts an unrelated blog; the MenuPages listing is a leftover.",
-      "withhold": true
-    },
-    {
-      "target": "camis:40787908",
-      "checked_at": "2026-09-25",
-      "source_url": "http://places.singleplatform.com/kellys-tavern-17/menu",
-      "reason": "Kelly's Tavern appears closed: Yelp (August 2026) and Foursquare list it as closed and its Grubhub listing is deactivated; the SinglePlatform page is a leftover copy.",
-      "withhold": true
-    },
-    {
-      "target": "camis:50074036",
-      "checked_at": "2026-09-25",
-      "source_url": "https://trueburger.square.site/",
-      "reason": "the ordering site found (trueburger.square.site) belongs to TrueBurger in Oakland, California; no menu with prices was found for the True Burger Co. concession at JFK Terminal 7.",
-      "withhold": true
-    },
-    {
       "target": "camis:40536534",
       "checked_at": "2026-09-25",
       "source_url": "https://wnam-cdn.menuweb.menu/storage/media/companies_menu_pdf/116778373/cassidys-ale-house-east-elmhurst-menu.pdf",
@@ -1093,13 +1064,6 @@
       "checked_at": "2026-09-25",
       "source_url": "https://www.beermenus.com/places/66170-macdougal-street-alehouse",
       "reason": "the BeerMenus page was last updated in March 2020 and no longer lists any food (its $12 two-slider plate is gone), and the bar's own site has only a drinks menu, so no current burger price could be found.",
-      "withhold": true
-    },
-    {
-      "target": "camis:50161525",
-      "checked_at": "2026-09-25",
-      "source_url": "https://xoburgersbrooklyn.com/menu/ce74d9de-8138-4683-b2b5-3ca06cf37802",
-      "reason": "the webshop's $22.54 adds a 10% charge to the item price, and that $20.49 item price (the same on Grubhub) is itself a marked-up online price (every online price is a round menu price times about 1.14, e.g. $18); the in-store price could not be confirmed.",
       "withhold": true
     },
     {
@@ -1239,7 +1203,7 @@
       "checked_at": "2026-09-25",
       "source_url": "https://www.grubhub.com/restaurant/washington-square-diner-150-w-4th-st-new-york/64201",
       "price_source": "delivery_app",
-      "reason": "the SinglePlatform copy is years out of date (7 oz burgers, Texas Cheeseburger $7.35); the diner's current Grubhub/Seamless menu lists its 8 oz beef burgers from $12.95 (Plain Beef Burger) to $14.95 (Texas Cheeseburger).",
+      "reason": "the SinglePlatform copy is years out of date (7 oz burgers, Texas Cheeseburger $7.35); the diner's current Grubhub/Seamless menu lists its 8 oz beef burgers from $12.95 (Plain Beef Burger) to $14.95 (Texas Cheeseburger), and its Triple Deckers section has a Cheeseburger Club (bacon, lettuce and tomato, with coleslaw, pickle and french fries) at $18.95, the diner's highest-priced burger (a burger club counts).",
       "drop": [
         "Plain Beefburger",
         "Pizza Burger",
@@ -1268,6 +1232,12 @@
           "name": "Patty Melt Burger",
           "price": 14.45,
           "protein": "beef"
+        },
+        {
+          "name": "Cheeseburger Club",
+          "price": 18.95,
+          "protein": "beef",
+          "description": "Bacon, lettuce and tomatoes. Served with coleslaw, pickle and french fries."
         }
       ]
     },
@@ -1471,15 +1441,6 @@
       ]
     },
     {
-      "target": "camis:41005946",
-      "checked_at": "2026-09-25",
-      "source_url": "https://oakwood.mikesdinersi.com/restaurant/order-online-1001.html",
-      "reason": "the $16.50 Lo-Cal Burger is the diet plate of the $12 Jumbo Beef Burger (the patty with cottage cheese on lettuce and tomato, no bun), so it gives way to the plain burger; the priciest burger is the Bacon Cheese Burger at $16.25.",
-      "drop": [
-        "Lo-Cal Burger"
-      ]
-    },
-    {
       "target": "camis:41297788",
       "checked_at": "2026-09-25",
       "source_url": "https://pageplazasi.com/restaurant/order-online-1140.html",
@@ -1511,6 +1472,48 @@
         "Texan Burger": 11.25,
         "West Coast Burger": 11.83
       }
+    },
+    {
+      "target": "camis:40389356",
+      "checked_at": "2026-09-24",
+      "source_url": "https://tomsrestaurant.net/menu",
+      "reason": "the menu read lists a Hamburger Club (beef patty, bacon, lettuce and tomato, with French fries) at $18.85 that the scrape's burger list missed; a burger club counts as a burger, so it is the restaurant's highest-priced burger, above the $14.96 Patty Melt.",
+      "add": [
+        {
+          "name": "Hamburger Club",
+          "price": 18.85,
+          "protein": "beef",
+          "description": "Beef patty, bacon, lettuce, and tomato. Served with French fries"
+        }
+      ]
+    },
+    {
+      "target": "camis:41089834",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.getsauce.com/order/murray-hill-diner/menu",
+      "reason": "the menu read lists a Cheeseburger Club Sandwich (#9) among its Triple Decker Sandwiches at $22.95 (bacon, cheese, lettuce, tomato and mayo, with French fries, coleslaw and pickle) that the scrape's burger list missed; a burger club counts as a burger, so it is the diner's highest-priced burger, above the $17.95 Texas Burger.",
+      "add": [
+        {
+          "name": "Cheeseburger Club Sandwich",
+          "price": 22.95,
+          "protein": "beef",
+          "description": "Bacon, cheese, lettuce, tomato & mayo. Served with French fries, coleslaw & pickle."
+        }
+      ]
+    },
+    {
+      "target": "camis:40367365",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.getsauce.com/order/the-flame-diner/menu",
+      "reason": "the menu read lists a Cheeseburger Club Sandwich among its Triple Decker Sandwiches at $23.95 (bacon, lettuce and tomato, with French fries) that the scrape's burger list missed; a burger club counts as a burger, so it is the diner's highest-priced burger (the $21.95 Slim-Line is a bunless diet plate, which never counts).",
+      "add": [
+        {
+          "name": "Cheeseburger Club Sandwich",
+          "price": 23.95,
+          "protein": "beef",
+          "description": "With Bacon, Lettuce, Tomato & French Fries."
+        }
+      ]
     }
   ]
 }

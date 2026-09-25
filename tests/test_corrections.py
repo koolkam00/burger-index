@@ -30,8 +30,71 @@ def test_set_drop_add_recompute_index_and_label_the_source():
     assert [(x["name"], x["price"]) for x in out["burgers"]] == [("Burger", 24), ("Veggie", 14), ("Smash", 12)]
     assert out["status"] == "priced" and out["menu_url"] == "https://place.example/menus"
     assert out["price_source"] == "official_site" and out["scraped_at"] == "2026-09-23T16:00:00Z"
-    assert out["status_detail"].startswith("Scraped. Prices corrected by hand after re-checking the menu on 2026-09-23")
+    # the prices now come from the restaurant's own page, so the note names it, not the aggregator scraped
+    assert out["status_detail"].startswith("Prices from the restaurant's own site (place.example). Prices corrected by "
+                                           "hand after re-checking the menu on 2026-09-23")
     assert res["burgers"][0]["price"] == 16  # input left untouched
+
+
+def test_a_correction_on_the_scraped_page_keeps_the_scrape_note():
+    res = scraped(b("Burger", 16))
+    res["status_detail"] = "Prices from a menu aggregator (agg.example). The menu file dates from May 2024."
+    out = corrections.apply_one(res, fix(source_url="https://agg.example/menu#burgers", set={"Burger": 18}))
+    assert out["status_detail"].startswith("Prices from a menu aggregator (agg.example). The menu file dates from "
+                                           "May 2024. Prices corrected by hand")
+
+
+@pytest.mark.parametrize("scraped_source,scraped_url,scraped_detail,kw,note", [
+    # American Whiskey: own site scraped (sliders only); the Burger priced on Seamless is published
+    ("official_site", "https://www.americanwhiskeynyc.com/popmenu-order/midtown/menus/food",
+     "Prices from the restaurant's own site (americanwhiskeynyc.com).",
+     {"source_url": "https://www.seamless.com/menu/american-whiskey/9190520", "price_source": "delivery_app",
+      "add": [{"name": "Burger", "price": 20.4, "protein": "beef"}]},
+     "Prices from a delivery app (seamless.com). Delivery-app prices usually run above in-store prices."),
+    # Boeuf & Bun: Uber Eats scraped; its own ordering page's prices set by hand (the delivery note goes too)
+    ("delivery_app", "https://www.ubereats.com/store/boeuf-and-bun/x",
+     "Prices from a delivery app (ubereats.com). Delivery-app prices usually run above in-store prices.",
+     {"source_url": "https://boeufbun.orders2me.com/order-now", "price_source": "online_ordering",
+      "set": {"Classic": 32}},
+     "Prices from an online-ordering page (boeufbun.orders2me.com)."),
+    # the same host read as another kind of page (Tavern on Jane's .shop site: an online-ordering page)
+    ("official_site", "https://tavernonjane.shop/menu", "Prices from the restaurant's own site (tavernonjane.shop).",
+     {"source_url": "https://tavernonjane.shop/order", "price_source": "online_ordering", "set": {"Classic": 22}},
+     "Prices from an online-ordering page (tavernonjane.shop)."),
+    # another page of the same kind, no price_source given (Pipin's Pub: Uber Eats scraped, Postmates read);
+    # the scrape's caveat about its own (partial) page goes with it
+    ("delivery_app", "https://www.ubereats.com/store/pipins-pub/x",
+     ("Prices from a delivery app (ubereats.com). Delivery-app prices usually run above in-store prices. The delivery "
+      "page looked incomplete (only 1 priced beef burger on the page); no fuller menu was found."),
+     {"source_url": "https://postmates.com/store/pipins-pub/y", "add": [{"name": "Beef Burger", "price": 18.95,
+                                                                           "protein": "beef"}]},
+     "Prices from a delivery app (postmates.com). Delivery-app prices usually run above in-store prices."),
+])
+def test_a_correction_from_another_page_names_that_page(scraped_source, scraped_url, scraped_detail, kw, note):
+    res = scraped(b("Classic", 16))
+    res.update(price_source=scraped_source, menu_url=scraped_url, status_detail=scraped_detail)
+    out = corrections.apply_one(res, fix(**kw))
+    assert out["status_detail"] == f"{note} Prices corrected by hand after re-checking the menu on 2026-09-23: " \
+                                   "the aggregator copy was stale."
+    assert out["menu_url"] == kw["source_url"] and out["price_source"] == kw.get("price_source", scraped_source)
+
+
+def test_a_chain_keeps_its_source_location_sentence():
+    res = scraped(b("Burger", 16))
+    res["status_detail"] = ("Prices from a delivery app (ubereats.com). Delivery-app prices usually run above in-store "
+                            "prices. Chain-level prices from one NYC location (113 Court Street, Brooklyn); prices may "
+                            "vary by location.")
+    out = corrections.apply_one(res, fix(price_source="official_site", set={"Burger": 18}))
+    assert out["status_detail"].startswith(
+        "Prices from the restaurant's own site (place.example). Chain-level prices from one NYC location (113 Court "
+        "Street, Brooklyn); prices may vary by location. Prices corrected by hand")
+
+
+def test_withheld_prices_keep_the_scrape_note():
+    res = scraped(b("Cheeseburger Deluxe", 20.45))
+    res["status_detail"] = "Prices from a delivery app (seamless.com). Delivery-app prices usually run above in-store prices."
+    out = corrections.apply_one(res, fix(source_url="https://www.grubhub.com/restaurant/x/1", withhold=True))
+    assert out["status_detail"].startswith(res["status_detail"] + " Prices withheld after re-checking")
 
 
 def test_withhold_publishes_no_prices():

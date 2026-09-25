@@ -1,27 +1,27 @@
 {
  "version": 1,
- "generated_at": "2026-09-25T08:04:04Z",
+ "generated_at": "2026-09-25T08:58:38Z",
  "currency": "USD",
  "methodology": {
-  "index_price_rule": "Each restaurant is represented by one burger: its highest-priced beef burger, and that burger's price is the restaurant's index price. It is one burger for one person, by itself (no combo or meal deal, no drink, no add-ons), at its listed dinner or all-day menu price; doubles, triples and specialty burgers count. Lunch, brunch or late-night prices count only when no beef burger on the menu has a dinner or all-day price; happy-hour prices are left out. Group platters and items for several people, combos (a drink or beer included), eating challenges, kids' items and hot dogs never count; a Deluxe or with-fries version counts at the plain burger's price when the menu lists both; plates of sliders or twin burgers count only when the menu has no other beef burger. The Burger Index is the median index price across distinct menus: every independent restaurant counts once and each chain counts once, however many locations it has (they share one scraped menu). Borough and neighborhood figures count a chain at most once per area.",
+  "index_price_rule": "Each restaurant is represented by one burger: its highest-priced beef burger, and that burger's price is the restaurant's index price. It is one burger for one person, by itself (no combo or meal deal, no drink, no add-ons), at its listed dinner or all-day menu price; doubles, triples, specialty burgers and burger clubs count. Lunch, brunch or late-night prices count only when no beef burger on the menu has a dinner or all-day price; happy-hour prices are left out. Group platters and items for several people, combos (a drink or beer included), eating challenges, kids' items, diners' bunless diet plates and hot dogs never count; a Deluxe or with-fries version counts at the plain burger's price when the menu lists both; plates of sliders or twin burgers count only when the menu has no other beef burger. When the only price found is a delivery-app or online-ordering price, that price is used, although it usually runs above the in-store price. The Burger Index is the median index price across distinct menus: every independent restaurant counts once and each chain counts once, however many locations it has (they share one scraped menu). Borough and neighborhood figures count a chain at most once per area.",
   "sources": [
    "The Burger Index restaurant list: a curated list of NYC burger restaurants.",
    "NYC DOHMH Restaurant Inspection Results (NYC Open Data 43nn-pn8j): addresses, coordinates, neighborhoods and cuisine for the restaurants on our list that match its records.",
    "2010 Neighborhood Tabulation Areas (NYC Open Data 8ius-dhrr): neighborhood names, a few relabeled to current usage (MN27 as Chinatown-Lower East Side, MN28 as Lower East Side-Alphabet City, BK72 as South Williamsburg, BK73 as Williamsburg).",
    "Menu prices from each restaurant's own site or menu PDF, online-ordering pages, menu aggregators and delivery apps, read with Context.dev web scraping."
   ],
-  "coverage_note": "1075 restaurants: our curated list of NYC burger restaurants, matched to NYC DOHMH inspection records for address and location where possible (970 of 1075), except national fast-food chains (Shake Shack, Five Guys, McDonald's, Muscle Maker Grill and the like). NYC's own small chains stay in. Chain locations share one menu price scraped from a single NYC location. Delivery-app prices usually run above in-store prices."
+  "coverage_note": "1071 restaurants: our curated list of NYC burger restaurants, matched to NYC DOHMH inspection records for address and location where possible (968 of 1071), except national fast-food chains (Shake Shack, Five Guys, McDonald's, Muscle Maker Grill and the like). NYC's own small chains stay in. Chain locations share one menu price scraped from a single NYC location. Delivery-app prices usually run above in-store prices."
  },
  "stats": {
-  "restaurants_scanned": 1075,
-  "restaurants_priced": 545,
-  "burgers": 545,
-  "beef_burgers": 545,
-  "index_median": 19.95,
-  "index_mean": 20.55,
+  "restaurants_scanned": 1071,
+  "restaurants_priced": 548,
+  "burgers": 548,
+  "beef_burgers": 548,
+  "index_median": 20.0,
+  "index_mean": 20.59,
   "index_p10": 13.0,
-  "index_p90": 28.16,
-  "all_burgers_median": 19.95,
+  "index_p90": 28.46,
+  "all_burgers_median": 20.0,
   "cheapest_burger_id": "johnnys-reef-pelham-bay--cheeseburger",
   "priciest_burger_id": "kx-burger-and-beyond-steinway--gold-burger"
  },
@@ -30,10 +30,10 @@
    "slug": "manhattan",
    "name": "Manhattan",
    "borough": "Manhattan",
-   "restaurants": 555,
-   "restaurants_priced": 309,
-   "burgers": 309,
-   "index_median": 21.95,
+   "restaurants": 553,
+   "restaurants_priced": 311,
+   "burgers": 311,
+   "index_median": 21.97,
    "index_min": 7.25,
    "index_max": 39.0
   },
@@ -41,10 +41,10 @@
    "slug": "brooklyn",
    "name": "Brooklyn",
    "borough": "Brooklyn",
-   "restaurants": 202,
-   "restaurants_priced": 93,
-   "burgers": 93,
-   "index_median": 18.54,
+   "restaurants": 201,
+   "restaurants_priced": 94,
+   "burgers": 94,
+   "index_median": 18.65,
    "index_min": 7.99,
    "index_max": 34.0
   },
@@ -52,7 +52,7 @@
    "slug": "queens",
    "name": "Queens",
    "borough": "Queens",
-   "restaurants": 170,
+   "restaurants": 169,
    "restaurants_priced": 74,
    "burgers": 74,
    "index_median": 18.0,
@@ -165,9 +165,9 @@
    "name": "East Village",
    "borough": "Manhattan",
    "restaurants": 34,
-   "restaurants_priced": 10,
-   "burgers": 10,
-   "index_median": 18.78,
+   "restaurants_priced": 11,
+   "burgers": 11,
+   "index_median": 19.55,
    "index_min": 10.0,
    "index_max": 38.0
   },
@@ -175,7 +175,7 @@
    "slug": "gramercy",
    "name": "Gramercy",
    "borough": "Manhattan",
-   "restaurants": 17,
+   "restaurants": 16,
    "restaurants_priced": 8,
    "burgers": 8,
    "index_median": 19.98,
@@ -264,8 +264,8 @@
    "name": "Midtown-Midtown South",
    "borough": "Manhattan",
    "restaurants": 75,
-   "restaurants_priced": 46,
-   "burgers": 46,
+   "restaurants_priced": 47,
+   "burgers": 47,
    "index_median": 23.0,
    "index_min": 14.99,
    "index_max": 38.99
@@ -278,7 +278,7 @@
    "restaurants_priced": 3,
    "burgers": 3,
    "index_median": 21.75,
-   "index_min": 14.96,
+   "index_min": 18.85,
    "index_max": 23.0
   },
   {
@@ -288,8 +288,8 @@
    "restaurants": 25,
    "restaurants_priced": 15,
    "burgers": 15,
-   "index_median": 20.0,
-   "index_min": 17.95,
+   "index_median": 20.5,
+   "index_min": 18.0,
    "index_max": 29.0
   },
   {
@@ -362,7 +362,7 @@
    "slug": "west-village",
    "name": "West Village",
    "borough": "Manhattan",
-   "restaurants": 110,
+   "restaurants": 109,
    "restaurants_priced": 65,
    "burgers": 65,
    "index_median": 24.0,
@@ -384,7 +384,7 @@
    "slug": "bay-ridge",
    "name": "Bay Ridge",
    "borough": "Brooklyn",
-   "restaurants": 12,
+   "restaurants": 11,
    "restaurants_priced": 8,
    "burgers": 8,
    "index_median": 14.73,
@@ -671,9 +671,9 @@
    "name": "Park Slope-Gowanus",
    "borough": "Brooklyn",
    "restaurants": 23,
-   "restaurants_priced": 9,
-   "burgers": 9,
-   "index_median": 21.0,
+   "restaurants_priced": 10,
+   "burgers": 10,
+   "index_median": 21.5,
    "index_min": 13.0,
    "index_max": 31.2
   },
@@ -802,7 +802,7 @@
    "slug": "airport",
    "name": "Airport",
    "borough": "Queens",
-   "restaurants": 2,
+   "restaurants": 1,
    "restaurants_priced": 0,
    "burgers": 0,
    "index_median": null,
@@ -970,7 +970,7 @@
    "restaurants": 13,
    "restaurants_priced": 10,
    "burgers": 10,
-   "index_median": 18.0,
+   "index_median": 17.48,
    "index_min": 10.0,
    "index_max": 25.5
   },
@@ -2348,28 +2348,6 @@
    "burgers": []
   },
   {
-   "id": "abbey-tavern-gramercy",
-   "camis": null,
-   "name": "Abbey Tavern",
-   "chain": null,
-   "address": null,
-   "borough": "Manhattan",
-   "neighborhood": "Gramercy",
-   "neighborhood_slug": "gramercy",
-   "zipcode": null,
-   "lat": null,
-   "lng": null,
-   "cuisine": null,
-   "website": "https://theabbeytaverndenver.com/",
-   "menu_url": "https://spot-sample-10281.spotapps.co/New-York-Murray-Hill--Gramercy-Park--Kips-Bay---Flat-Iron-Abbey-Tavern-food-menu",
-   "price_source": "menu_aggregator",
-   "status": "no_prices",
-   "status_detail": "Prices from a menu aggregator (spot-sample-10281.spotapps.co). Prices withheld after re-checking the menu on 2026-09-25: Abbey Tavern at 354 3rd Ave closed on January 20, 2025, after 60 years (another business, Buddy's, now holds the DOHMH permit at that address); its old SpotApps menu page is still online.",
-   "scraped_at": "2026-09-25T16:00:00Z",
-   "index_price": null,
-   "burgers": []
-  },
-  {
    "id": "adobe-blues-west-new-brighton",
    "camis": null,
    "name": "Adobe Blues",
@@ -2554,7 +2532,7 @@
    "menu_url": "https://www.allswellnyc.com/home-1",
    "price_source": "official_site",
    "status": "priced",
-   "status_detail": "Prices from a menu aggregator (places.singleplatform.com). Prices corrected by hand after re-checking the menu on 2026-09-24: the SinglePlatform copy is out of date; the restaurant's current Fall 2026 dinner menu (an image on its site) lists one burger, the Classic Allswell Burger at $22 (no Cali, Kraut or Pioneer burger).",
+   "status_detail": "Prices from the restaurant's own site (allswellnyc.com). Prices corrected by hand after re-checking the menu on 2026-09-24: the SinglePlatform copy is out of date; the restaurant's current Fall 2026 dinner menu (an image on its site) lists one burger, the Classic Allswell Burger at $22 (no Cali, Kraut or Pioneer burger).",
    "scraped_at": "2026-09-24T16:00:00Z",
    "index_price": 22.0,
    "burgers": [
@@ -2584,11 +2562,20 @@
    "website": "https://www.americanwhiskeynyc.com/",
    "menu_url": "https://www.seamless.com/menu/american-whiskey-247-west-30th-street-new-york/9190520",
    "price_source": "delivery_app",
-   "status": "no_prices",
-   "status_detail": "Prices from the restaurant's own site (americanwhiskeynyc.com). Prices withheld after re-checking the menu on 2026-09-25: the only price found for its Burger, $20.40 on Grubhub/Seamless, is marked up for delivery (every price on that menu is a whole-dollar price times 1.2), and the restaurant's own menu page blocks automated reads, so its in-house price could not be confirmed.",
+   "status": "priced",
+   "status_detail": "Prices from a delivery app (seamless.com). Delivery-app prices usually run above in-store prices. Prices corrected by hand after re-checking the menu on 2026-09-25: the restaurant's own menu page read lists only its Beef Burger Sliders; its Burger is priced only on Grubhub/Seamless, at $20.40, a delivery price marked up about 20% over the in-house price (every price on that menu is a whole-dollar price times 1.2), which could not be confirmed.",
    "scraped_at": "2026-09-25T16:00:00Z",
-   "index_price": null,
-   "burgers": []
+   "index_price": 20.4,
+   "burgers": [
+    {
+     "id": "american-whiskey-midtown--burger",
+     "name": "Burger",
+     "price": 20.4,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": true
+    }
+   ]
   },
   {
    "id": "amity-hall-west-village",
@@ -3069,13 +3056,13 @@
    "status": "priced",
    "status_detail": "Prices from the restaurant's own site (order.com).",
    "scraped_at": "2026-09-25T03:07:48Z",
-   "index_price": 18.8,
+   "index_price": 11.55,
    "burgers": [
     {
-     "id": "austin-house-diner-forest-hills--slime-line-jumbo-hamburger",
-     "name": "Slime Line Jumbo Hamburger",
-     "price": 18.8,
-     "description": "Served with cottage cheese and fruit salad.",
+     "id": "austin-house-diner-forest-hills--beef-burger-8oz",
+     "name": "Beef Burger (8oz)",
+     "price": 11.55,
+     "description": "Deluxe includes lettuce, tomato, French fries or for an extra charge onion rings. Additional charge to add tomatoes, bacon and fried onions.",
      "protein": "beef",
      "is_index_item": true
     }
@@ -4069,28 +4056,6 @@
      "is_index_item": true
     }
    ]
-  },
-  {
-   "id": "bell-book-and-candle-west-village",
-   "camis": null,
-   "name": "Bell Book & Candle",
-   "chain": null,
-   "address": null,
-   "borough": "Manhattan",
-   "neighborhood": "West Village",
-   "neighborhood_slug": "west-village",
-   "zipcode": null,
-   "lat": null,
-   "lng": null,
-   "cuisine": null,
-   "website": "http://bbandcnyc.com/",
-   "menu_url": "https://menupages.com/bell-book-candle/141-w-10th-st-new-york",
-   "price_source": "menu_aggregator",
-   "status": "no_prices",
-   "status_detail": "Prices from a menu aggregator (menupages.com). Prices withheld after re-checking the menu on 2026-09-25: Bell Book & Candle at 141 W 10th St appears closed: Yelp lists it as closed, DOHMH has no permit at that address, and its old domain now hosts an unrelated blog; the MenuPages listing is a leftover.",
-   "scraped_at": "2026-09-25T16:00:00Z",
-   "index_price": null,
-   "burgers": []
   },
   {
    "id": "bell-diner-oakland-gardens",
@@ -5288,7 +5253,7 @@
    "menu_url": "https://boeufbun.orders2me.com/order-now",
    "price_source": "online_ordering",
    "status": "priced",
-   "status_detail": "Prices from a delivery app (ubereats.com). Delivery-app prices usually run above in-store prices. Prices corrected by hand after re-checking the menu on 2026-09-25: the Uber Eats prices scraped are the restaurant's own prices grossed up by about 79% (every one is the in-store price divided by 0.56). Boeuf & Bun's own ordering page lists the Double Trouble Burger (two patties, 1 lb total) at $32, not $57.14, and the other burgers at $13 to $28.",
+   "status_detail": "Prices from an online-ordering page (boeufbun.orders2me.com). Prices corrected by hand after re-checking the menu on 2026-09-25: the Uber Eats prices scraped are the restaurant's own prices grossed up by about 79% (every one is the in-store price divided by 0.56). Boeuf & Bun's own ordering page lists the Double Trouble Burger (two patties, 1 lb total) at $32, not $57.14, and the other burgers at $13 to $28.",
    "scraped_at": "2026-09-25T16:00:00Z",
    "index_price": 32.0,
    "burgers": [
@@ -6118,7 +6083,7 @@
    "menu_url": "https://www.grubhub.com/restaurant/bugging-out-4-burgers-134-06-guy-r-brewer-blvd-jamaica/14460968",
    "price_source": "delivery_app",
    "status": "priced",
-   "status_detail": "Prices from the restaurant's own site (buggingout4burgers.weebly.com). Prices corrected by hand after re-checking the menu on 2026-09-25: the restaurant's Weebly site dates from 2020 (Double Cheeseburger $12.95); its current Grubhub menu at 134-06 Guy R Brewer Blvd starts at a $13 Beef Burger and tops out at the $18 Reggae Burger (beef, jerk, fried plantains, cheddar, grilled peppers).",
+   "status_detail": "Prices from a delivery app (grubhub.com). Delivery-app prices usually run above in-store prices. Prices corrected by hand after re-checking the menu on 2026-09-25: the restaurant's Weebly site dates from 2020 (Double Cheeseburger $12.95); its current Grubhub menu at 134-06 Guy R Brewer Blvd starts at a $13 Beef Burger and tops out at the $18 Reggae Burger (beef, jerk, fried plantains, cheddar, grilled peppers).",
    "scraped_at": "2026-09-25T16:00:00Z",
    "index_price": 18.0,
    "burgers": [
@@ -8164,7 +8129,7 @@
    "menu_url": "https://clintonhallny.com/fidi/",
    "price_source": "official_site",
    "status": "priced",
-   "status_detail": "Prices from a menu aggregator (places.singleplatform.com). Prices corrected by hand after re-checking the menu on 2026-09-24: the $14 Cheeseburger Sliders (3) are listed 'For the Table' (a shared plate); on the official FiDi menu the cheapest standalone beef burgers are the Fondue and German Burgers at $18, the same prices as the SinglePlatform copy.",
+   "status_detail": "Prices from the restaurant's own site (clintonhallny.com). Prices corrected by hand after re-checking the menu on 2026-09-24: the $14 Cheeseburger Sliders (3) are listed 'For the Table' (a shared plate); on the official FiDi menu the cheapest standalone beef burgers are the Fondue and German Burgers at $18, the same prices as the SinglePlatform copy.",
    "scraped_at": "2026-09-24T16:00:00Z",
    "index_price": 22.0,
    "burgers": [
@@ -9299,7 +9264,7 @@
    "menu_url": "https://www.seamless.com/menu/daves-smash-burgers-3009-westchester-ave-bronx/12426184",
    "price_source": "delivery_app",
    "status": "priced",
-   "status_detail": "Prices from a delivery app (ubereats.com). Delivery-app prices usually run above in-store prices. Prices corrected by hand after re-checking the menu on 2026-09-25: the Uber Eats page read missed the triple specialty burgers; the restaurant's Grubhub/Seamless menu, whose other burger prices match Uber Eats, lists the Hawaiian Triple Smash Burger at $14.99 and the Triple Mushroom Pepperjack Smash Burger at $13.99.",
+   "status_detail": "Prices from a delivery app (seamless.com). Delivery-app prices usually run above in-store prices. Prices corrected by hand after re-checking the menu on 2026-09-25: the Uber Eats page read missed the triple specialty burgers; the restaurant's Grubhub/Seamless menu, whose other burger prices match Uber Eats, lists the Hawaiian Triple Smash Burger at $14.99 and the Triple Mushroom Pepperjack Smash Burger at $13.99.",
    "scraped_at": "2026-09-25T16:00:00Z",
    "index_price": 14.99,
    "burgers": [
@@ -10270,7 +10235,7 @@
    "menu_url": "https://www.seamless.com/menu/ellies-diner-58-metropolitan-oval-bronx/305994",
    "price_source": "delivery_app",
    "status": "priced",
-   "status_detail": "Prices from a delivery app (ubereats.com). Delivery-app prices usually run above in-store prices. The delivery page looked incomplete (only 1 priced beef burger on the page); no fuller menu was found. Prices corrected by hand after re-checking the menu on 2026-09-25: the Uber Eats page read showed a single burger; the diner's full Grubhub/Seamless menu lists its Char-Broiled Burgers from the $12.37 Cheeseburger to Ellie's Burger (avocado, fried onions, bacon, cheddar) at $16.51, and its Deluxe versions are the same burgers with sides.",
+   "status_detail": "Prices from a delivery app (seamless.com). Delivery-app prices usually run above in-store prices. Prices corrected by hand after re-checking the menu on 2026-09-25: the Uber Eats page read showed a single burger; the diner's full Grubhub/Seamless menu lists its Char-Broiled Burgers from the $12.37 Cheeseburger to Ellie's Burger (avocado, fried onions, bacon, cheddar) at $16.51, and its Deluxe versions are the same burgers with sides.",
    "scraped_at": "2026-09-25T16:00:00Z",
    "index_price": 16.51,
    "burgers": [
@@ -12275,7 +12240,7 @@
    "menu_url": "https://www.gbsc.nyc/lower-east-side/",
    "price_source": "official_site",
    "status": "priced",
-   "status_detail": "Prices from a delivery app (ubereats.com). Delivery-app prices usually run above in-store prices. Prices corrected by hand after re-checking the menu on 2026-09-25: the Uber Eats page read gave California Dreamin' no price and listed a 'Dirty Love' that is not on the restaurant's menu; its own Lower East Side menu sells California Dreamin' as a Single ($12), Double ($15) or Triple ($18).",
+   "status_detail": "Prices from the restaurant's own site (gbsc.nyc). Prices corrected by hand after re-checking the menu on 2026-09-25: the Uber Eats page read gave California Dreamin' no price and listed a 'Dirty Love' that is not on the restaurant's menu; its own Lower East Side menu sells California Dreamin' as a Single ($12), Double ($15) or Triple ($18).",
    "scraped_at": "2026-09-25T16:00:00Z",
    "index_price": 18.0,
    "burgers": [
@@ -12654,11 +12619,20 @@
    "website": "https://grillifynyc.com/",
    "menu_url": "https://postmates.com/store/grillify-nyc-e-5th-st/-_8Qs-wSRFSUxVI1RTqiRg",
    "price_source": "delivery_app",
-   "status": "no_prices",
-   "status_detail": "Prices from a delivery app (postmates.com). Delivery-app prices usually run above in-store prices. Prices withheld after re-checking the menu on 2026-09-25: the Postmates and Uber Eats prices are marked up for delivery (each one is a .99 menu price divided by 0.775: $33.53 for a $25.99 burger), and the restaurant's own sites have lapsed, so no in-store price could be confirmed.",
-   "scraped_at": "2026-09-25T16:00:00Z",
-   "index_price": null,
-   "burgers": []
+   "status": "priced",
+   "status_detail": "Prices from a delivery app (postmates.com). Delivery-app prices usually run above in-store prices.",
+   "scraped_at": "2026-09-24T11:47:19Z",
+   "index_price": 33.53,
+   "burgers": [
+    {
+     "id": "grillify-nyc-east-village--double-meat-burger",
+     "name": "Double-Meat Burger",
+     "price": 33.53,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": true
+    }
+   ]
   },
   {
    "id": "gus-american-grill-bensonhurst-west",
@@ -13795,7 +13769,7 @@
    "menu_url": "https://hudsonhoundnyc.com/new-york-west-village-hudson-hound-food-menu",
    "price_source": "official_site",
    "status": "priced",
-   "status_detail": "Prices from a menu aggregator (menucollectors.com). Prices corrected by hand after re-checking the menu on 2026-09-23: the $20 prices came from an out-of-date aggregator copy; the restaurant's own menu lists its burgers at $23.71 (beef sliders are $3.09 each, minimum two, bar menu only).",
+   "status_detail": "Prices from the restaurant's own site (hudsonhoundnyc.com). Prices corrected by hand after re-checking the menu on 2026-09-23: the $20 prices came from an out-of-date aggregator copy; the restaurant's own menu lists its burgers at $23.71 (beef sliders are $3.09 each, minimum two, bar menu only).",
    "scraped_at": "2026-09-23T16:00:00Z",
    "index_price": 23.71,
    "burgers": [
@@ -14223,7 +14197,7 @@
    "menu_url": "https://www.jackandcharlies118.com/menus/",
    "price_source": "official_site",
    "status": "priced",
-   "status_detail": "Prices from a menu aggregator (menucollectors.com). Prices corrected by hand after re-checking the menu on 2026-09-23: the $26 came from an aggregator copy last updated in 2022; the restaurant's dinner and brunch menus list the Bacon Cheeseburger at $30.",
+   "status_detail": "Prices from the restaurant's own site (jackandcharlies118.com). Prices corrected by hand after re-checking the menu on 2026-09-23: the $26 came from an aggregator copy last updated in 2022; the restaurant's dinner and brunch menus list the Bacon Cheeseburger at $30.",
    "scraped_at": "2026-09-23T16:00:00Z",
    "index_price": 30.0,
    "burgers": [
@@ -15931,28 +15905,6 @@
    "status": "no_burgers",
    "status_detail": "Found a menu but no beef burger on it. Tried: carta.menu (menu without burgers). No more candidate pages.",
    "scraped_at": "2026-09-25T03:11:13Z",
-   "index_price": null,
-   "burgers": []
-  },
-  {
-   "id": "kellys-tavern-bay-ridge",
-   "camis": "40787908",
-   "name": "Kelly's Tavern",
-   "chain": null,
-   "address": "9259 4 Avenue",
-   "borough": "Brooklyn",
-   "neighborhood": "Bay Ridge",
-   "neighborhood_slug": "bay-ridge",
-   "zipcode": "11209",
-   "lat": 40.617337,
-   "lng": -74.03057,
-   "cuisine": "American",
-   "website": null,
-   "menu_url": "http://places.singleplatform.com/kellys-tavern-17/menu",
-   "price_source": "menu_aggregator",
-   "status": "no_prices",
-   "status_detail": "Prices from a menu aggregator (places.singleplatform.com). Prices withheld after re-checking the menu on 2026-09-25: Kelly's Tavern appears closed: Yelp (August 2026) and Foursquare list it as closed and its Grubhub listing is deactivated; the SinglePlatform page is a leftover copy.",
-   "scraped_at": "2026-09-25T16:00:00Z",
    "index_price": null,
    "burgers": []
   },
@@ -17898,7 +17850,7 @@
    "menu_url": "https://www.grubhub.com/restaurant/midnight-express-diner-1715-2nd-ave-new-york/24919",
    "price_source": "delivery_app",
    "status": "priced",
-   "status_detail": "Prices from an online-ordering page (order.online). Prices corrected by hand after re-checking the menu on 2026-09-24: the ordering page scraped missed the plain Beef Burger; Grubhub's '1/2 lb. Angus Burgers' for 1715 2nd Ave list it at $14.50, and its other burger prices match the scraped page to the cent.",
+   "status_detail": "Prices from a delivery app (grubhub.com). Delivery-app prices usually run above in-store prices. Prices corrected by hand after re-checking the menu on 2026-09-24: the ordering page scraped missed the plain Beef Burger; Grubhub's '1/2 lb. Angus Burgers' for 1715 2nd Ave list it at $14.50, and its other burger prices match the scraped page to the cent.",
    "scraped_at": "2026-09-24T16:00:00Z",
    "index_price": 19.95,
    "burgers": [
@@ -17929,8 +17881,8 @@
    "menu_url": "https://oakwood.mikesdinersi.com/restaurant/order-online-1001.html",
    "price_source": "official_site",
    "status": "priced",
-   "status_detail": "Prices from the restaurant's own site (oakwood.mikesdinersi.com). Prices corrected by hand after re-checking the menu on 2026-09-25: the $16.50 Lo-Cal Burger is the diet plate of the $12 Jumbo Beef Burger (the patty with cottage cheese on lettuce and tomato, no bun), so it gives way to the plain burger; the priciest burger is the Bacon Cheese Burger at $16.25.",
-   "scraped_at": "2026-09-25T16:00:00Z",
+   "status_detail": "Prices from the restaurant's own site (oakwood.mikesdinersi.com).",
+   "scraped_at": "2026-09-25T03:22:18Z",
    "index_price": 16.25,
    "burgers": [
     {
@@ -18799,15 +18751,15 @@
    "menu_url": "https://www.getsauce.com/order/murray-hill-diner/menu",
    "price_source": "official_site",
    "status": "priced",
-   "status_detail": "Prices from the restaurant's own site (getsauce.com).",
-   "scraped_at": "2026-09-25T02:51:43Z",
-   "index_price": 17.95,
+   "status_detail": "Prices from the restaurant's own site (getsauce.com). Prices corrected by hand after re-checking the menu on 2026-09-25: the menu read lists a Cheeseburger Club Sandwich (#9) among its Triple Decker Sandwiches at $22.95 (bacon, cheese, lettuce, tomato and mayo, with French fries, coleslaw and pickle) that the scrape's burger list missed; a burger club counts as a burger, so it is the diner's highest-priced burger, above the $17.95 Texas Burger.",
+   "scraped_at": "2026-09-25T16:00:00Z",
+   "index_price": 22.95,
    "burgers": [
     {
-     "id": "murray-hill-diner-murray-hill--texas-burger",
-     "name": "Texas Burger",
-     "price": 17.95,
-     "description": "Pepper Jack Cheese, Bacon, Sunny Side Up-Egg, Lettuce, Tomato, Mayo. Served w/ Coleslaw & Pickle. Served deluxe w/ French fries, lettuce & tomato for add'l charge. Sub baked potato or sweet potato fries for add'l charge.",
+     "id": "murray-hill-diner-murray-hill--cheeseburger-club-sandwich",
+     "name": "Cheeseburger Club Sandwich",
+     "price": 22.95,
+     "description": "Bacon, cheese, lettuce, tomato & mayo. Served with French fries, coleslaw & pickle.",
      "protein": "beef",
      "is_index_item": true
     }
@@ -19621,7 +19573,7 @@
    "menu_url": "https://www.grubhub.com/restaurant/oasis-diner-2132-flatbush-ave-brooklyn/5402536",
    "price_source": "delivery_app",
    "status": "priced",
-   "status_detail": "Prices from an online-ordering page (order.online). Prices corrected by hand after re-checking the menu on 2026-09-25: the order.online page read showed only three burgers (the Cheeseburger Deluxe at $17.95, not $15.95); the diner's full Grubhub menu, the list's menu link, has burgers only in its lunch sections, topped by the Bonko Burger (bacon, ham, cheese, fried onions) at $18.95.",
+   "status_detail": "Prices from a delivery app (grubhub.com). Delivery-app prices usually run above in-store prices. Prices corrected by hand after re-checking the menu on 2026-09-25: the order.online page read showed only three burgers (the Cheeseburger Deluxe at $17.95, not $15.95); the diner's full Grubhub menu, the list's menu link, has burgers only in its lunch sections, topped by the Bonko Burger (bacon, ham, cheese, fried onions) at $18.95.",
    "scraped_at": "2026-09-25T16:00:00Z",
    "index_price": 18.95,
    "burgers": [
@@ -20946,7 +20898,7 @@
    "menu_url": "https://postmates.com/store/pipins-pub/H0M2bvoFSI6F7sg1dmqEQw",
    "price_source": "delivery_app",
    "status": "priced",
-   "status_detail": "Prices from a delivery app (ubereats.com). Delivery-app prices usually run above in-store prices. Prices corrected by hand after re-checking the menu on 2026-09-24: the Uber Eats page scraped missed the Beef Burger; the same Uber catalog on Postmates lists it at $18.95, below the $19.95 Cheese Burger (the $12 Monday burger is a promotion).",
+   "status_detail": "Prices from a delivery app (postmates.com). Delivery-app prices usually run above in-store prices. Prices corrected by hand after re-checking the menu on 2026-09-24: the Uber Eats page scraped missed the Beef Burger; the same Uber catalog on Postmates lists it at $18.95, below the $19.95 Cheese Burger (the $12 Monday burger is a promotion).",
    "scraped_at": "2026-09-24T16:00:00Z",
    "index_price": 22.95,
    "burgers": [
@@ -22164,7 +22116,7 @@
    "menu_url": "https://rowhouseharlem.com/menus/dinner-menu/",
    "price_source": "official_site",
    "status": "priced",
-   "status_detail": "Prices from the restaurant's own site (therowharlem.com). Prices corrected by hand after re-checking the menu on 2026-09-24: the page scraped belongs to The Row Harlem, a different restaurant; Row House's own dinner menu (an image on its site, dated December 2023) lists the Row House Burger at $19 under 'Between the Bread'.",
+   "status_detail": "Prices from the restaurant's own site (rowhouseharlem.com). Prices corrected by hand after re-checking the menu on 2026-09-24: the page scraped belongs to The Row Harlem, a different restaurant; Row House's own dinner menu (an image on its site, dated December 2023) lists the Row House Burger at $19 under 'Between the Bread'.",
    "scraped_at": "2026-09-24T16:00:00Z",
    "index_price": 19.0,
    "burgers": [
@@ -24907,7 +24859,7 @@
    "menu_url": "https://tavernonjane.shop/menu",
    "price_source": "online_ordering",
    "status": "priced",
-   "status_detail": "Prices from the restaurant's own site (tavernonjane.shop). Prices corrected by hand after re-checking the menu on 2026-09-23: the page scraped showed only four featured burgers; the full ordering menu starts at the $24 Original Tavern Burger. Its dine-in menu may list lower prices.",
+   "status_detail": "Prices from an online-ordering page (tavernonjane.shop). Prices corrected by hand after re-checking the menu on 2026-09-23: the page scraped showed only four featured burgers; the full ordering menu starts at the $24 Original Tavern Burger. Its dine-in menu may list lower prices.",
    "scraped_at": "2026-09-23T16:00:00Z",
    "index_price": 28.0,
    "burgers": [
@@ -25848,15 +25800,15 @@
    "menu_url": "https://www.getsauce.com/order/the-flame-diner/menu",
    "price_source": "official_site",
    "status": "priced",
-   "status_detail": "Prices from the restaurant's own site (getsauce.com).",
-   "scraped_at": "2026-09-25T02:54:29Z",
-   "index_price": 21.95,
+   "status_detail": "Prices from the restaurant's own site (getsauce.com). Prices corrected by hand after re-checking the menu on 2026-09-25: the menu read lists a Cheeseburger Club Sandwich among its Triple Decker Sandwiches at $23.95 (bacon, lettuce and tomato, with French fries) that the scrape's burger list missed; a burger club counts as a burger, so it is the diner's highest-priced burger (the $21.95 Slim-Line is a bunless diet plate, which never counts).",
+   "scraped_at": "2026-09-25T16:00:00Z",
+   "index_price": 23.95,
    "burgers": [
     {
-     "id": "the-flame-diner-clinton--slim-line",
-     "name": "Slim-Line",
-     "price": 21.95,
-     "description": "Beef Burger with a scoop o f Cotage Cheese & Peach halves.",
+     "id": "the-flame-diner-clinton--cheeseburger-club-sandwich",
+     "name": "Cheeseburger Club Sandwich",
+     "price": 23.95,
+     "description": "With Bacon, Lettuce, Tomato & French Fries.",
      "protein": "beef",
      "is_index_item": true
     }
@@ -26612,7 +26564,7 @@
    "menu_url": "https://thelittleowlnyc.com/",
    "price_source": "official_site",
    "status": "priced",
-   "status_detail": "Prices from an online-ordering page (thelittleowl.netwaiter.com). The index price is from the brunch menu (no dinner or all-day burger price listed). Prices corrected by hand after re-checking the menu on 2026-09-23: the $16 came from a retired online-ordering page; the restaurant's lunch menu lists the Bacon Cheeseburger & Fries at $24 (dinner has no burger).",
+   "status_detail": "Prices from the restaurant's own site (thelittleowlnyc.com). Prices corrected by hand after re-checking the menu on 2026-09-23: the $16 came from a retired online-ordering page; the restaurant's lunch menu lists the Bacon Cheeseburger & Fries at $24 (dinner has no burger).",
    "scraped_at": "2026-09-23T16:00:00Z",
    "index_price": 24.0,
    "burgers": [
@@ -28118,15 +28070,15 @@
    "menu_url": "https://tomsrestaurant.net/menu",
    "price_source": "official_site",
    "status": "priced",
-   "status_detail": "Prices from the restaurant's own site (tomsrestaurant.net).",
-   "scraped_at": "2026-09-24T12:04:46Z",
-   "index_price": 14.96,
+   "status_detail": "Prices from the restaurant's own site (tomsrestaurant.net). Prices corrected by hand after re-checking the menu on 2026-09-24: the menu read lists a Hamburger Club (beef patty, bacon, lettuce and tomato, with French fries) at $18.85 that the scrape's burger list missed; a burger club counts as a burger, so it is the restaurant's highest-priced burger, above the $14.96 Patty Melt.",
+   "scraped_at": "2026-09-24T16:00:00Z",
+   "index_price": 18.85,
    "burgers": [
     {
-     "id": "toms-restaurant-morningside-heights--patty-melt",
-     "name": "Patty Melt",
-     "price": 14.96,
-     "description": "Beef patty with caramelized onions on rye bread grilled cheese",
+     "id": "toms-restaurant-morningside-heights--hamburger-club",
+     "name": "Hamburger Club",
+     "price": 18.85,
+     "description": "Beef patty, bacon, lettuce, and tomato. Served with French fries",
      "protein": "beef",
      "is_index_item": true
     }
@@ -28415,28 +28367,6 @@
    "price_source": "delivery_app",
    "status": "no_prices",
    "status_detail": "Prices from a delivery app (seamless.com). Delivery-app prices usually run above in-store prices. Prices withheld after re-checking the menu on 2026-09-25: the Seamless page read showed only its Best Sellers and recently ordered items (Cheeseburger Deluxe, $15.45); the rest of its menu, burgers included, never loaded, so the restaurant's highest-priced burger is not known.",
-   "scraped_at": "2026-09-25T16:00:00Z",
-   "index_price": null,
-   "burgers": []
-  },
-  {
-   "id": "true-burger-airport",
-   "camis": "50074036",
-   "name": "True Burger",
-   "chain": null,
-   "address": "JFK International Airport",
-   "borough": "Queens",
-   "neighborhood": "Airport",
-   "neighborhood_slug": "airport",
-   "zipcode": "11430",
-   "lat": 40.648313,
-   "lng": -73.788281,
-   "cuisine": "Hamburgers",
-   "website": "https://trueburgeroakland.com/",
-   "menu_url": "https://trueburger.square.site/",
-   "price_source": "online_ordering",
-   "status": "no_prices",
-   "status_detail": "Prices from an online-ordering page (trueburger.square.site). Prices withheld after re-checking the menu on 2026-09-25: the ordering site found (trueburger.square.site) belongs to TrueBurger in Oakland, California; no menu with prices was found for the True Burger Co. concession at JFK Terminal 7.",
    "scraped_at": "2026-09-25T16:00:00Z",
    "index_price": null,
    "burgers": []
@@ -29152,15 +29082,15 @@
    "menu_url": "https://www.grubhub.com/restaurant/washington-square-diner-150-w-4th-st-new-york/64201",
    "price_source": "delivery_app",
    "status": "priced",
-   "status_detail": "Prices from a menu aggregator (places.singleplatform.com). Prices corrected by hand after re-checking the menu on 2026-09-25: the SinglePlatform copy is years out of date (7 oz burgers, Texas Cheeseburger $7.35); the diner's current Grubhub/Seamless menu lists its 8 oz beef burgers from $12.95 (Plain Beef Burger) to $14.95 (Texas Cheeseburger).",
+   "status_detail": "Prices from a delivery app (grubhub.com). Delivery-app prices usually run above in-store prices. Prices corrected by hand after re-checking the menu on 2026-09-25: the SinglePlatform copy is years out of date (7 oz burgers, Texas Cheeseburger $7.35); the diner's current Grubhub/Seamless menu lists its 8 oz beef burgers from $12.95 (Plain Beef Burger) to $14.95 (Texas Cheeseburger), and its Triple Deckers section has a Cheeseburger Club (bacon, lettuce and tomato, with coleslaw, pickle and french fries) at $18.95, the diner's highest-priced burger (a burger club counts).",
    "scraped_at": "2026-09-25T16:00:00Z",
-   "index_price": 14.95,
+   "index_price": 18.95,
    "burgers": [
     {
-     "id": "washington-square-diner-west-village--texas-cheeseburger",
-     "name": "Texas Cheeseburger",
-     "price": 14.95,
-     "description": null,
+     "id": "washington-square-diner-west-village--cheeseburger-club",
+     "name": "Cheeseburger Club",
+     "price": 18.95,
+     "description": "Bacon, lettuce and tomatoes. Served with coleslaw, pickle and french fries.",
      "protein": "beef",
      "is_index_item": true
     }
@@ -29435,7 +29365,7 @@
    "menu_url": "https://www.whitehorsetavern1880.com/items/wht-burger",
    "price_source": "official_site",
    "status": "priced",
-   "status_detail": "Prices from a delivery app (postmates.com). Delivery-app prices usually run above in-store prices. The delivery page looked incomplete (the cheapest burger on the page is 'Double Smash Burger'); no fuller menu was found. Prices corrected by hand after re-checking the menu on 2026-09-25: the Postmates copy is out of date (Double Smash Burger $18); the restaurant's own all-day menu lists the Double Smash Burger at $27 and the White Horse Tavern Burger (8 oz blend, smoked pork belly, egg, white cheddar) at $35.",
+   "status_detail": "Prices from the restaurant's own site (whitehorsetavern1880.com). Prices corrected by hand after re-checking the menu on 2026-09-25: the Postmates copy is out of date (Double Smash Burger $18); the restaurant's own all-day menu lists the Double Smash Burger at $27 and the White Horse Tavern Burger (8 oz blend, smoked pork belly, egg, white cheddar) at $35.",
    "scraped_at": "2026-09-25T16:00:00Z",
    "index_price": 35.0,
    "burgers": [
@@ -29912,7 +29842,7 @@
    "menu_url": "http://orderwrapnrun.com/print.php",
    "price_source": "online_ordering",
    "status": "priced",
-   "status_detail": "Prices from a menu aggregator (places.singleplatform.com). Prices corrected by hand after re-checking the menu on 2026-09-25: the SinglePlatform prices are years old (Beefburger $5.45, West Coast Burger $7.45); the restaurant's own ordering site lists its 8 oz sirloin burgers from the $8.93 Beef Burger to the West Coast Burger at $11.83.",
+   "status_detail": "Prices from an online-ordering page (orderwrapnrun.com). Prices corrected by hand after re-checking the menu on 2026-09-25: the SinglePlatform prices are years old (Beefburger $5.45, West Coast Burger $7.45); the restaurant's own ordering site lists its 8 oz sirloin burgers from the $8.93 Beef Burger to the West Coast Burger at $11.83.",
    "scraped_at": "2026-09-25T16:00:00Z",
    "index_price": 11.83,
    "burgers": [
@@ -29942,11 +29872,20 @@
    "website": "https://xoburgersbrooklyn.com/",
    "menu_url": "https://xoburgersbrooklyn.com/menu/ce74d9de-8138-4683-b2b5-3ca06cf37802",
    "price_source": "official_site",
-   "status": "no_prices",
-   "status_detail": "Prices from the restaurant's own site (xoburgersbrooklyn.com). Prices withheld after re-checking the menu on 2026-09-25: the webshop's $22.54 adds a 10% charge to the item price, and that $20.49 item price (the same on Grubhub) is itself a marked-up online price (every online price is a round menu price times about 1.14, e.g. $18); the in-store price could not be confirmed.",
-   "scraped_at": "2026-09-25T16:00:00Z",
-   "index_price": null,
-   "burgers": []
+   "status": "priced",
+   "status_detail": "Prices from the restaurant's own site (xoburgersbrooklyn.com).",
+   "scraped_at": "2026-09-25T03:07:04Z",
+   "index_price": 22.54,
+   "burgers": [
+    {
+     "id": "xo-burgers-park-slope--xo-burger-filet-mignon",
+     "name": "Xo burger filet mignon",
+     "price": 22.54,
+     "description": null,
+     "protein": "beef",
+     "is_index_item": true
+    }
+   ]
   },
   {
    "id": "yankee-tavern-west-concourse",

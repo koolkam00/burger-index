@@ -575,3 +575,30 @@ Row numbers are rows of the list after the web check.
 ## Corrections retired (2026-09-25)
 
 - `chain:jimbos-hamburger-palace`: the 2026-09-23 hand correction (Postmates "Deluxe" platters replaced by Grubhub plain-burger prices) is retired. The expansion re-scrape reads a full Grubhub menu for the 2027 Lexington Ave store that lists the plain burgers itself (Beef Burger $7.80, Super Beef Burger $7.50), so the correction no longer matched and is no longer needed.
+- `csv:grillify-nyc-manhattan` (withheld: Postmates / Uber Eats prices marked up for delivery) and
+  `camis:50005067` American Whiskey (withheld: Grubhub/Seamless price marked up for delivery) are no longer withheld
+  (user decision: a marked-up delivery or online price is published when it is the only price found). Grillify-NYC's
+  entry is retired, so its Postmates Double-Meat Burger ($33.53, `delivery_app`) publishes; American Whiskey's entry now
+  adds the Seamless `Burger` ($20.40, `delivery_app`) that its own-site scrape missed.
+- `camis:50161525` XO Burgers: retired. The entry first withheld the webshop's prices as marked up, then set them to a
+  hand-derived $20.49 "item price without a 10% charge" labelled `online_ordering`; the webshop the entry cited shows
+  $22.54 for the Xo burger filet mignon (no separate charge, no $20.49 anywhere) and the Grubhub store could not be read.
+  The scraped $22.54 from that page now publishes (`official_site`).
+- `camis:41005946` Mike's Oakwood Diner: retired. Its Lo-Cal Burger drop is now the `extract.is_diet_plate` rule
+  (user decision: a diner's bunless diet plate never counts); the published Bacon Cheese Burger ($16.25) is unchanged.
+
+## Deleted after the one-burger review (2026-09-25, user decision)
+
+Row numbers are data rows of the list before this deletion (1,105 rows; 1,101 after). The user approved deleting
+these four rows; each was checked by name and key against `data/restaurants.json` first, and its hand correction
+(a withhold in `pipeline/data/corrections.json`) was removed with it. No `menu_urls.json` entry named them.
+
+- **57** Bell Book & Candle (West Village, Manhattan; `csv:bell-book-and-candle-manhattan`): closed. Yelp lists it as
+  closed, DOHMH has no permit at 141 W 10th St, and its old domain hosts an unrelated blog; the MenuPages listing is a
+  leftover.
+- **242** Abbey Tavern (Gramercy, Manhattan; `csv:abbey-tavern-manhattan`): closed on January 20, 2025, after 60
+  years; another business (Buddy's) holds the DOHMH permit at 354 3rd Ave.
+- **848** Kelly's Tavern (Bay Ridge, Brooklyn; `camis:40787908`, 9259 4th Ave): closed. Yelp (August 2026) and
+  Foursquare list it as closed and its Grubhub listing is deactivated.
+- **1020** True Burger (JFK Airport, Queens; `camis:50074036`): the only menu page found (trueburger.square.site) is
+  TrueBurger in Oakland, California; no menu with prices exists for the JFK Terminal 7 concession.

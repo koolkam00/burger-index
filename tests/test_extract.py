@@ -246,6 +246,71 @@ def test_kids_items_and_non_burgers_are_never_the_published_burger(name, descrip
     assert extract.top_item_exclusion(_item(name, description)) == why
 
 
+@pytest.mark.parametrize("name,description", [
+    ("Slim-Line", "Beef Burger with a scoop o f Cotage Cheese & Peach halves."),  # The Flame Diner, $21.95
+    ("Slime Line Jumbo Hamburger", "Served with cottage cheese and fruit salad."),  # Austin House Diner (menu typo)
+    ("Slim Line Burger", "Served on a bed of crisp lettuce with tomato and cucumber."), ("Slimline Burger", None),
+    ("Lo-Cal Burger", "Jumbo Broiled Hamburger & cottage cheese on a bed of lettuce"),  # Mike's Oakwood Diner
+    ("Lo - Cal Burger", None), ("Low Cal Burger", None), ("Low-Calorie Burger", "Served with Cottage Cheese"),
+    ("Diet Burger", "With coleslaw & tomato."), ("Diet Plate", "chopped steak, cottage cheese, peaches"),
+    ("Hamburger Diet Delights", "Cottage cheese, lettuce and tomato. Served with Melba toast."),
+    ("Beef Burger Diet", "Burger on a bed of lettuce with tomatoes, cucumber & red onion"),  # Page Plaza Diner
+    ("Dieter's Delight", "8 oz burger, cottage cheese"), ("Weight Watchers Burger", None),
+    ("Bunless Burger Plate", None), ("No Bun Burger", "with a side salad"),
+    ("Atkins Burger", "9 oz. burger (no bun) with fried egg, cheddar cheese, bacon, and onion."),  # Orion Diner
+    ("Low-Carb Topless Burger", "No bun burger, melted pepper jack, grilled onions, field greens"),  # Crosstown
+    ("Keto My Heart", "bunless, beef patties, shaved ham, brisket, bacon, vermont white cheddar"),  # Bill's
+    ("Burger Delight", "Jumbo burger with cottage cheese on a bed of lettuce"),  # Fort Hamilton Diner
+])
+def test_a_diet_plate_is_never_the_published_burger(name, description):
+    item = _item(name, description)
+    assert extract.is_diet_plate(item) and extract.top_item_exclusion(item) == "diet plate"
+
+
+@pytest.mark.parametrize("name,description", [
+    ("Slim Jim Burger", None), ("Local Burger", "8 oz local grass-fed beef"), ("The Local", None),
+    ("Low Country Burger", "pimento cheese, fried green tomato"), ("Dietrich's Burger", None),
+    ("Keto Burger", "prime beef in between a zucchini bun"),  # Inwood Bar & Grill: a keto bun is still a bun
+    ("Lettuce Wrap Burger", "Bunless! Wrapped in Lettuce with Quarter pound beef, American Cheese"),  # Best Buds
+    ("Double Bacon Smash", "Two Beef Patties smashed on a bed of onions, Double Bacon, Double Cheese"),
+    ("Hamburger", "with cottage cheese, fruit salad, lettuce, tomato and cucumber"),  # no bun is not said
+    ("Buffalo Burger", "Low-fat. Served on a toasted bun, with coleslaw and pickle."),
+])
+def test_diet_plate_look_alikes_are_eligible(name, description):
+    item = _item(name, description)
+    assert not extract.is_diet_plate(item) and extract.top_item_exclusion(item) is None
+
+
+def test_a_diet_plate_gives_way_to_the_burgers():
+    # The Flame Diner: the $21.95 Slim-Line was its published burger; the Blue Burger ($19.95, first) is next
+    flame = _items(("Beef Burger", 14.95), ("Blue Burger", 19.95), ("Patty Melt Burger", 19.95),
+                   ("Slim-Line", 21.95, "beef", "all_day", "Beef Burger with a scoop o f Cotage Cheese & Peach halves."))
+    assert _top_name(flame) == "Blue Burger"
+    # a menu whose only priced beef burger is a diet plate publishes none
+    assert _top_name(_items(("Slim Line Burger", 21.95), ("Veggie Burger", 14.0, "veggie"))) is None
+
+
+@pytest.mark.parametrize("name,description", [
+    ("Cheeseburger Club", "With bacon, lettuce, tomato and mayo. Served with french fries or potato salad."),
+    ("Bacon Burger Club", "Comes with bacon, lettuce and tomato."),  # Red Flame Diner
+    ("Cheeseburger Club Sandwich (#9)", "Bacon, cheese, lettuce, tomato & mayo. Served with French fries, Coleslaw"),
+    ("Hamburger Club", "Beef patty, bacon, lettuce, and tomato. Served with French fries"),  # Tom's Restaurant
+    ("BURGER CLUB Triple", None), ("Cheese Burger Club", "triple decker"), ("Burger Club", None),
+])
+def test_a_burger_club_is_one_burger(name, description):
+    # user decision (2026-09-25): a burger served club-sandwich style counts like any other burger
+    item = _item(name, description)
+    assert extract.top_item_exclusion(item) is None and not extract.is_multi_burger_plate(item)
+    assert extract.burger_with_sides_key(item) is None and not extract.is_diet_plate(item)
+
+
+def test_a_burger_club_can_be_the_published_burger():
+    club = ("Cheeseburger Club Sandwich", 23.95, "beef", "all_day", "With Bacon, Lettuce, Tomato & French Fries.")
+    assert _top_name(_items(("Cheeseburger", 15.95), ("Blue Burger", 19.95), club)) == "Cheeseburger Club Sandwich"
+    # it is not the Deluxe twin of the plain burger: its price stands
+    assert _top_name(_items(("Hamburger Club", 18.85), ("Hamburger", 9.98))) == "Hamburger Club"
+
+
 def test_an_eating_challenge_is_never_the_published_burger():
     # Clinton Hall FiDi: $50, free if finished in 25 minutes, served with a 16 oz beer
     ch = _item("The CH Challenge", "Conquer this burger and fries by yourself in 25 mins and it's free. 20 oz signature "

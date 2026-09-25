@@ -2,7 +2,7 @@ import json
 
 from conftest import menu, rec
 
-from pipeline import build, config
+from pipeline import build, config, corrections
 from pipeline.api import Api, CreditLedger, DiskCache
 from pipeline.chains import build_targets
 from pipeline.process import process_target, replay, run_targets
@@ -174,6 +174,8 @@ def test_unmapped_homepage_searches_first_and_tries_marketplaces_before_it(tmp_p
     assert f.count("scrape") == 1 and res["website"] == home
     # Grubhub is a delivery marketplace: delivery prices, labeled as such
     assert res["price_source"] == "delivery_app" and "Delivery-app prices" in res["status_detail"]
+    # a hand correction naming another page words its source note the same way (corrections.scrape_note)
+    assert res["status_detail"] == corrections.source_note("delivery_app", gh)
 
 
 def test_ctrl_c_stops_queued_targets_and_live_calls(tmp_path, fake, monkeypatch):

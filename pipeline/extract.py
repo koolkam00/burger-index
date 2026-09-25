@@ -10,8 +10,9 @@ first; only when no beef burger has one, the next menu period; never a happy-hou
     whether a page is priced and whether to keep searching, so it must not change without a re-scrape.
   - top_item (build only): the restaurant's one published burger, its highest-priced eligible beef
     burger (user decision, 2026-09-24); its price is the restaurant's index price. Group items,
-    combos, eating challenges and kids' items never count; a Deluxe / with-fries burger gives way to
-    its cheaper plain twin; plates of several burgers only when there is nothing else.
+    combos, eating challenges, kids' items and diners' bunless diet plates never count; a burger club
+    does; a Deluxe / with-fries burger gives way to its cheaper plain twin; plates of several burgers
+    only when there is nothing else.
 
 Index eligibility rules (index_item; post-processing only, so the scrape cache replays unchanged):
   - is_slider_plate: a plate of small burgers ('Cheeseburger Sliders (3)', 'Mini Burgers', '2 Mini
@@ -273,10 +274,13 @@ def index_item(burgers: list[dict]) -> int | None:
 # Eligible: beef, priced, not happy hour, from the best menu period that has one (INDEX_PERIOD_TIER),
 # and one burger for one person. Doubles, triples, specialty and wagyu burgers are one burger; a
 # burger plated with fries ('Burger Platter', 'Burger & Fries') is still one burger.
-#   never: not a burger (is_not_a_burger), a kids' item, a group item (a platter of 10 burgers, 'for 4',
-#          family / party / catering / tray / dozen / bucket / tower / flight / sampler / kit / box / bundle,
-#          a count of 6 or more: '(6)', 'x6', '12 pc'; 'serves 3'), an eating challenge, or a combo / meal deal
-#          ('Meal', 'Combo', a drink or a beer included).
+#   never: not a burger (is_not_a_burger), a kids' item, a diner's diet plate (is_diet_plate: 'Slim-Line',
+#          'Lo-Cal', 'Diet Delights', a bunless keto / Atkins / low-carb plate), a group item (a platter of 10
+#          burgers, 'for 4', family / party / catering / tray / dozen / bucket / tower / flight / sampler / kit /
+#          box / bundle, a count of 6 or more: '(6)', 'x6', '12 pc'; 'serves 3'), an eating challenge, or a combo /
+#          meal deal ('Meal', 'Combo', a drink or a beer included).
+#   always one burger: a burger club ('Cheeseburger Club', 'Bacon Burger Club', a triple-decker 'Cheeseburger Club
+#          Sandwich'; user decision, 2026-09-25). Nothing below treats 'club' as a plate, a group item or a sides mark.
 #   twin: a burger with sides ('BBQ Burger Deluxe', 'Burger with Fries') when the menu also prices the plain
 #          burger for less (is_sides_twin): the plain burger's price stands.
 #   fallback: a plate of several burgers (a slider plate, 'Three sliders per order', a 'Twin Burger' of two
@@ -335,6 +339,28 @@ CHALLENGE_RE = re.compile(r"\bchallenge\b|\b(?:its|it is) free\b|\bfree if you\b
 KIDS_NAME_RE = re.compile(r"\b(?:kid|kids|kiddie|kiddy|child|childs|children|childrens|toddlers?)\b")
 KIDS_DESC_RE = re.compile(r"\bfor (?:the )?(?:kids|children)\b|\bkids? (?:menu|meal|size|portion)\b"
                           r"|\b(?:10|12) (?:and|or) (?:under|younger)\b")
+# A diner's diet plate (user decision, 2026-09-25): the patty without a bun, with cottage cheese, fruit or a salad,
+# priced as a platter and often above the diner's burgers (The Flame Diner's $21.95 'Slim-Line', Austin House's
+# 'Slime Line Jumbo Hamburger', Mike's Oakwood 'Lo-Cal Burger'). The name says so (norm_name text, so 'Slim-Line'
+# is 'slim line' and 'Lo - Cal' is 'lo cal'); 'Local Burger', 'Slim Jim Burger' and 'Low Country Burger' do not.
+DIET_NAME_RE = re.compile(
+    r"\bslime? ?line\b"  # 'Slim-Line', 'Slim Line', 'Slimline', 'Slime Line' (a menu typo)
+    r"|\blo cal\b|\blow ?cal(?:orie|ories)?\b"  # 'Lo-Cal', 'Low Cal', 'Low-Calorie' ('local' is not 'lo cal')
+    r"|\bdiet\b|\bdieters?\b|\bweight ?watchers?\b|\bcalorie counters?\b|\bfigure watchers?\b"  # 'Diet Delights'
+    r"|\bbunless\b|\bno bun\b"  # 'Bunless Burger Plate'
+)
+# A low-carb burger is a diet plate only without a bun ('Atkins Burger': "9 oz. burger (no bun)", 'Low-Carb Topless
+# Burger', Bill's 'Keto My Heart': "bunless"); a keto burger on a zucchini bun stays a burger.
+LOW_CARB_RE = re.compile(r"\bketo\b|\batkins\b|\blow ?carbs?\b")
+# Otherwise the description must say both: a diet plate ("cottage cheese", "low-fat", "diet") and no bun ("on a bed
+# of lettuce", "no bun"): Fort Hamilton Diner's 'Burger Delight', "Jumbo burger with cottage cheese on a bed of
+# lettuce". A lettuce-wrapped burger ("Bunless! Wrapped in Lettuce") or a burger served with cottage cheese on the
+# side is still a burger.
+DIET_DESC_RE = re.compile(r"\bdiet\b|\bdieters?\b|\blo cal\b|\blow ?cal(?:orie|ories)?\b|\blow ?fat\b|\bslime? ?line\b"
+                          r"|\bweight ?watchers?\b|\bcottage cheese\b|\bketo\b|\batkins\b|\blow ?carbs?\b")
+BUNLESS_RE = re.compile(r"\bbunless\b|\bno bun\b|\bwithout (?:a |the )?bun\b|\bbun ?free\b|\btopless\b"
+                        r"|\bon a bed of\b|\bover (?:a bed of )?(?:lettuce|greens|romaine|salad)\b"
+                        r"|\bin place of (?:a |the )?bun\b")
 # Several burgers on one plate (fallback only; see above). The name side is is_slider_plate + the counts.
 PLATE_NAME_RE = re.compile(rf"\b{_FEW} ?{_PIECES}\b|^{_FEW} (?:\w+ ){{0,3}}(?:burgers|cheeseburgers|hamburgers|sliders)\b")
 PLATE_COUNT_RE = re.compile(rf"\(\s*{_FEW}\s*{_PIECES}?\s*\)")  # 'Smash Burger (2)', 'Sliders (4)' (raw name)
@@ -356,14 +382,30 @@ def _raw(s: Any) -> str:
     return re.sub(r"\s+", " ", str(s or "").lower()).strip()
 
 
+def is_diet_plate(item: dict) -> bool:
+    """True for a diner's bunless diet / low-calorie plate ('Slim-Line', 'Slime Line Jumbo Hamburger', 'Lo-Cal
+    Burger', 'Hamburger Diet Delights', a bunless 'Atkins Burger'), by its name, or by a description that says
+    both diet plate and no bun ('with cottage cheese on a bed of lettuce'). Never the published burger."""
+    n, d = norm_name(item.get("name")), norm_name(item.get("description"))
+    if DIET_NAME_RE.search(n):
+        return True
+    bunless = BUNLESS_RE.search(n) or BUNLESS_RE.search(d)
+    if LOW_CARB_RE.search(n):
+        return bool(bunless)
+    return bool(bunless and DIET_DESC_RE.search(d))
+
+
 def top_item_exclusion(item: dict) -> str | None:
     """Why an item can never be a restaurant's one published burger, else None:
-    'not a burger' | 'kids' | 'group' | 'challenge' | 'combo'. Protein, price and menu period are top_item's."""
+    'not a burger' | 'kids' | 'diet plate' | 'group' | 'challenge' | 'combo'. Protein, price and menu period are
+    top_item's."""
     if is_not_a_burger(item):
         return "not a burger"
     n, d = norm_name(item.get("name")), norm_name(item.get("description"))
     if KIDS_NAME_RE.search(n) or KIDS_DESC_RE.search(d):
         return "kids"
+    if is_diet_plate(item):
+        return "diet plate"
     if (GROUP_NAME_RE.search(n) or GROUP_COUNT_RE.search(_raw(item.get("name"))) or GROUP_DESC_RE.search(d)
             or GROUP_LEAD_RE.search(_raw(item.get("description")))):
         return "group"
@@ -448,7 +490,8 @@ def top_item_candidates(burgers: list[dict]) -> list[tuple[int, int, bool]]:
 def top_item(burgers: list[dict]) -> int | None:
     """Position of the restaurant's one published burger: the highest-priced eligible beef burger from
     the best menu period that has one (first on the menu on ties), or None. Plates of several burgers
-    count only when no other eligible beef burger is priced; group items and combos never count."""
+    count only when no other eligible beef burger is priced; group items, combos and diet plates never
+    count; a burger club counts like any other burger."""
     cands = top_item_candidates(burgers)
     pool = [c for c in cands if not c[2]] or cands
     return min(pool, key=lambda c: (c[0], -burgers[c[1]]["price"], c[1]))[1] if pool else None

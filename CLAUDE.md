@@ -51,7 +51,7 @@ cancelled, in-flight ones make no further live call (exit 130, no build); finish
 | `api.py` | disk cache, credit ledger, `--max-credits`, rate gate around `context_client` |
 | `extract.py` | post-processing of the JSON extraction |
 | `process.py` | per-target workflow + ThreadPoolExecutor runner + `data/run_log.jsonl` |
-| `corrections.py` | hand-checked fixes from `pipeline/data/corrections.json` (per `target`: `set` / `drop` / `add` burgers, `price_source`, `withhold`; each with `source_url`, `reason`, `checked_at`), applied by `build` on top of the scraped results (cache untouched) — free, no API calls. Strict: `build` fails if one names a target or burger no longer in the scrape |
+| `corrections.py` | hand-checked fixes from `pipeline/data/corrections.json` (per `target`: `set` / `drop` / `add` burgers, `price_source`, `withhold`; each with `source_url`, `reason`, `checked_at`), applied by `build` on top of the scraped results (cache untouched) — free, no API calls. Strict: `build` fails if one names a target or burger no longer in the scrape. A correction that publishes prices from another page (another host or `price_source`) replaces the scrape's `Prices from …` note (and its caveats) in `status_detail` with one naming that page, so it agrees with `menu_url`/`price_source`; a chain keeps its `Chain-level prices from one NYC location (…)` sentence |
 | `build.py` | ids, stats, area summaries, methodology, JSON-Schema validation |
 | `cli.py` | `python -m pipeline …` |
 
@@ -87,7 +87,15 @@ exactly one burger, `extract.top_item` (build only): its highest-priced eligible
 price; only if none has one, the highest from the next period (late-night, lunch, brunch, other); **never a
 happy-hour price**; ties → first on the menu. That burger is the whole `burgers` list, has `is_index_item: true`,
 and its price is `index_price`. Eligible = one burger for one person at its listed price: doubles, triples,
-specialty/wagyu burgers and a burger plated with fries (`Burger Platter`, `Burger & Fries`) count; **never** a
+specialty/wagyu burgers and a burger plated with fries (`Burger Platter`, `Burger & Fries`) count, and so does **a
+burger club** (user decision, 2026-09-25: `Cheeseburger Club`, `Bacon Burger Club`, a triple-decker `Cheeseburger Club
+Sandwich`; nothing treats `club` as a plate, group item or sides mark, and a scrape that missed a club section is
+fixed with an `add` correction); burgers sold in sizes stay at the single size; **never** a diner's **bunless diet
+plate** (user decision, 2026-09-25; `extract.is_diet_plate`: by name `Slim-Line`/`Slim Line`/`Slimline`/`Slime Line`,
+`Lo-Cal`/`Low Cal`/`Low-Calorie`, `Diet` (`Diet Delights`), `Dieter's`, `Weight Watchers`, `Bunless`/`No Bun`; a
+`Keto`/`Atkins`/`Low-Carb` burger only when bunless; otherwise only a description saying both diet plate and no bun,
+"cottage cheese on a bed of lettuce"; `Slim Jim Burger`, `Local Burger`, a keto burger on a zucchini bun and a
+lettuce-wrapped burger stay eligible), never a
 group item (`extract.top_item_exclusion`: `for 4`, family/party/catering/tray/dozen/bucket/tower/flight/sampler/kit/
 box/bundle, a count of 6+ like `(6)`/`x6`/`12 pc`, `serves 3`, a description opening with "10 … cheeseburgers"
 such as Cubby's catering platters), a combo/meal deal (`Meal`, `Combo`, `Deal`, a drink in the price: "+ fries &
@@ -105,11 +113,16 @@ burgers, so `stats.burgers` = `beef_burgers` = `restaurants_priced` and `all_bur
 source location, not its copies). `extract.index_item` (the cheapest beef burger) is unchanged: `process.py` uses it,
 through `classify_menu`, to decide whether a page is priced and whether to keep searching, so the cache replays
 exactly; don't switch process to `top_item` without planning a re-scrape. Corrections apply to the full scraped
-menu before the pick. The 2026-09-25 corrections come from a review of these picks: delivery prices grossed up by a
-commission (Boeuf & Bun: Uber Eats = own price / 0.56; Grillify-NYC withheld), another city's menu (Carnegie Diner's
-Vienna, VA page for both Midtown locations), and **Grubhub/Seamless pages whose burger section never loaded** (the
-cached scrape's `metadata.headings` show only Best Sellers / recently ordered items, so the highest-priced burger is
-unknown: 26 such pages are withheld; drop the entry once a full menu is scraped).
+menu before the pick. The 2026-09-25 corrections come from a review of these picks: another city's menu (Carnegie
+Diner's Vienna, VA page for both Midtown locations), and **Grubhub/Seamless pages whose burger section never loaded**
+(the cached scrape's `metadata.headings` show only Best Sellers / recently ordered items, so the highest-priced burger
+is unknown: 26 such pages are withheld; drop the entry once a full menu is scraped). **Marked-up delivery / online
+prices are published when they are the only price (user decision, 2026-09-25):** a markup alone is never a reason
+to withhold, so American Whiskey (its Grubhub/Seamless `Burger`, $20.40, `delivery_app`), Grillify-NYC (Postmates,
+`delivery_app`) and XO Burgers (no correction: its webshop's scraped $22.54, the price that page shows) publish;
+where the restaurant's own price was read and set by hand (Boeuf & Bun: Uber Eats = own price / 0.56, so its own
+ordering page's $32) the own price stays. Withholds remain for closed places, another restaurant's page, stale copies
+and partial pages.
 
 Post-processing index rules (`extract.py`/`build.py`; free on the next `build`, no re-scrape; `normalize_menu` never
 removes these rows, because `corrections.json` names them and `process` counts them):
@@ -139,7 +152,7 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
 ## Data files
 
 - `data/burger_index.json` — THE dataset (contract above). `build` validates before writing and fails loudly.
-- `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 636 rows after the 2026-09-23 clean-up and its 2026-09-24 second pass, see `data/list_changes_2026-09-23.md`: `name, neighborhood,
+- `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,101 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, and the 2026-09-25 deletions, see `data/list_changes_2026-09-23.md`: `name, neighborhood,
   borough, website, menu_url, notes, source` where `source` is `pilot-100|uptown|downtown|outer`). It's the user's data:
   don't edit it without their approval; report duplicates (`report.csv_duplicate_matches`), unmatched rows (`report.csv_unmatched`),
   ambiguous rows (`report.csv_ambiguous`) and closed places (`report.csv_address_now_other_business`,
