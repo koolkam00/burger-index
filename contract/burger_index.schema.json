@@ -90,7 +90,7 @@
         "price_source": { "type": "string", "enum": ["official_site", "official_pdf", "online_ordering", "delivery_app", "menu_aggregator"], "description": "delivery_app prices usually run above in-store prices; the site labels them." },
         "index_price": { "type": "number", "minimum": 0, "description": "The price of the restaurant's burger." },
         "burger": { "$ref": "#/$defs/Burger" },
-        "hand_check": { "anyOf": [{ "$ref": "#/$defs/HandCheck" }, { "type": "null" }], "description": "Set when a hand correction changed the published prices; null otherwise." }
+        "hand_check": { "anyOf": [{ "$ref": "#/$defs/HandCheck" }, { "type": "null" }], "description": "Set when a hand correction (not a withhold) from pipeline/data/corrections.json applies to this restaurant's menu and it stays priced; the published burger or price may be unchanged. Null otherwise." }
       }
     },
     "UnpricedRestaurant": {

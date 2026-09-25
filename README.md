@@ -1,13 +1,18 @@
 # The Burger Index
 
 What a burger costs in New York City. For each restaurant on our curated list of NYC burger places
-([`burger-list-master.csv`](burger-list-master.csv), 636 rows), we find its menu online, read every burger price, and
-take its **index price**: the cheapest beef burger, on its own, at the dinner or all-day price. The Burger Index is
-the median of those prices, with a chain's menu counted once. National fast-food chains (Shake Shack, Five Guys,
-McDonald's, White Castle, Tex's Chicken & Burgers and the like) are left out. NYC's own small chains, such as 7th
-Street Burger, Bareburger and Black Tap, stay in, and so do national sit-down restaurants such as Del Frisco's,
-Smith & Wollensky, STK, Hillstone and Burger & Lobster. The website shows that number by borough, neighborhood and restaurant,
-plus a searchable table of every priced burger and a map.
+([`burger-list-master.csv`](burger-list-master.csv), 1,101 rows), we find its menu online and publish one burger:
+its **highest-priced eligible beef burger**, one burger for one person at its dinner or all-day price where the menu
+has one (never a happy-hour price; no combos, group platters, kids' items or bunless diet plates). That price is the
+restaurant's **index price**, and the Burger Index is the median of them, with a chain's menu counted once. National
+fast-food chains (Shake Shack, Five Guys, McDonald's, White Castle, Tex's Chicken & Burgers and the like) are left
+out. NYC's own small chains, such as 7th Street Burger, Bareburger and Black Tap, stay in, and so do national
+sit-down restaurants such as Del Frisco's, Smith & Wollensky, STK, Hillstone and Burger & Lobster. The website shows
+that number by borough, neighborhood and restaurant, with a searchable list of every priced burger, a map, and the
+People's Price (what visitors say each burger is worth).
+
+The full rules live in [`CLAUDE.md`](CLAUDE.md), the design in [`DESIGN.md`](DESIGN.md) and the website in
+[`web/README.md`](web/README.md).
 
 ```
 burger-list-master.csv (the restaurant list)
@@ -27,8 +32,8 @@ web/out/  ── plain HTML, deployed to Vercel
 The city's health-inspection records (DOHMH) only **match** its rows, which gives a row its address, map location
 and neighborhood; a row that matches no record stays in with the neighborhood from the list. `pipeline sources`
 reports the rows it could not match, the ones that tie between two records, two rows that match one record, and
-addresses that now hold another business, so the list can be fixed by hand. The 2026-09-23 clean-up (687 to 635
-rows) and its 2026-09-24 second pass (636 rows) are logged row by row in [`data/list_changes_2026-09-23.md`](data/list_changes_2026-09-23.md).
+addresses that now hold another business, so the list can be fixed by hand. Changes to the list since 2026-09-23 are
+logged row by row in [`data/list_changes_2026-09-23.md`](data/list_changes_2026-09-23.md).
 
 `--cuisines "Hamburgers"` adds every DOHMH restaurant of those cuisines on top of the list (default: none; the flag
 is remembered until you pass `--cuisines none`).
@@ -55,9 +60,8 @@ python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ```
 
 Every API response is cached in `data/cache/`, so re-runs and `build` cost nothing. `--max-credits` is a hard cap.
-Always run `plan` before a real `run`: on 2026-09-24 the list was 595 targets (608 restaurants), 78 already
-scraped, and the other 517 were estimated at about 4,900 credits (3,500 first pass, 8,800 worst case). Details,
-flags and cost rules are in [`CLAUDE.md`](CLAUDE.md).
+Always run `plan` before a real `run`: it prints the targets and the first-pass, expected and worst-case credits
+(about 5,300 for the whole list). Details, flags and cost rules are in [`CLAUDE.md`](CLAUDE.md).
 
 ## Website
 

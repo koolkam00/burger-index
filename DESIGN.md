@@ -16,7 +16,7 @@
   |---|---|---|
   | Nav | The front facade | Honey-wood plank sign board, rope trim along the bottom edge |
   | Under the nav | The awning | Red and cream scalloped stripes, full bleed, 30px, scrolls away |
-  | Home hero | The view through the front window | Sea-teal water with caustic ripples at the surface, bubbles in the side gutters, a wave edge at the bottom. Kicker ticket, H1 and lede sit here |
+  | Home hero | The view through the front window | Sea-teal water with caustic ripples at the surface, bubbles in the side gutters, a wave edge at the bottom. Kicker ticket and H1 sit here (a lede only when nothing is priced) |
   | Headline price | The order board over the counter | A yellow painted sign in a plank frame, hanging from a beam on two ropes, with an "ORDER UP!" plaque, a service bell on the beam and a life ring on the corner |
   | Stat tiles | Portholes along the counter | Cream cards with brass rims and rivets, a porthole badge bolted to the top-left (borough and neighborhood headers, the People's Price page) |
   | Inner-page header | The shallows | A half-height sea band behind breadcrumbs, kicker, H1 and lede |
@@ -302,7 +302,7 @@ Every rule of the data desk stands. The costume comes off inside the figure.
 
   The **delivery_app** badge uses a `--highlight-tint` background, a `--highlight-edge` border and `--ink` text. No badge has a tooltip, and no delivery-price note goes with it anywhere on the site. A restaurant page shows it once, in the burger block.
 - **Pages only for priced places (user decision, 2026-09-25):** a restaurant without a price (no menu found, no beef burger, no price online, a failed scrape, a withheld price) has no page, no sitemap URL and no row in the explorer, the map, the map's "Not on the map" list or a chain list. It appears only as a plain name on its neighborhood's page, under the `label` heading "Not priced" (three columns from `lg`, 44px rows, the street address after a name that repeats). A neighborhood with nothing priced has no page either: `/neighborhoods` lists it as a plain `--ink-muted` name with "not priced", and borough pages and "Elsewhere in …" lists leave it out. There are no status badges and no status copy.
-- **Hand-check note ("the cook's correction slip"):** the restaurant's hand check (the dataset's `hand_check`, set by `pipeline/corrections.py`) is shown as its own card under the burger block's links, because it changes the price the page shows. It is a label only: it says that a hand check happened and when, never what was changed or why.
+- **Hand-check note ("the cook's correction slip"):** the restaurant's hand check (the dataset's `hand_check`, set by `pipeline/corrections.py`) is shown as its own card under the burger block's links, because a person re-read and corrected this menu (the burger and price shown may still be the scrape's own). It is a label only: it says that a hand check happened and when, never what was changed or why.
   - Shape: a guest-check slip at prose width (max 680px), radius 0 0 12px 12px (torn top), padding 14px 16px 14px 40px (the margin line sits at 24px), `--shadow-block`.
   - One label line, its only content (a `p`, not a heading, since nothing sits under it; `label` in `--ink-muted`, 16px ClipboardCheck icon): "Prices corrected by hand · Sep 23, 2026". The date never wraps.
   - No body, no reason and no chain line (the correction reasons and "they share one menu" were removed 2026-09-25).
@@ -391,7 +391,7 @@ Every rule of the data desk stands. The costume comes off inside the figure.
 - **Reduced motion:** under `prefers-reduced-motion: reduce`, every duration goes to 0ms and every animation to `none`: the board hangs straight, the bell is still, the bubbles are simply there, the bars are drawn, cards don't lift. Content is complete at t=0. (All three proposal mocks were checked with emulated reduced motion: `document.getAnimations()` returned 0.)
 
 ## Iconography & Imagery
-- **Utility icons:** `lucide-react` stays for functional glyphs (Search, X, ChevronDown, ArrowRight, ArrowUp/Down for sort, Map, MapPin, List, ExternalLink, Globe, FileText, ShoppingBag, BookOpen, Bike, TriangleAlert, ClipboardCheck, EyeOff), set to `strokeWidth={2}` so they match the nautical set's chunkier line. Round caps and joins, `currentColor`. 16px beside 14–15px text, 20px in buttons and nav, 14px in badges. The search icon stays a magnifier everywhere a control needs to be recognized.
+- **Utility icons:** `lucide-react` stays for functional glyphs (Search, X, ChevronDown, ArrowRight, ArrowUp/Down for sort, Map, MapPin, List, ExternalLink, Globe, FileText, ShoppingBag, BookOpen, Bike, TriangleAlert, ClipboardCheck), set to `strokeWidth={2}` so they match the nautical set's chunkier line. Round caps and joins, `currentColor`. 16px beside 14–15px text, 20px in buttons and nav, 14px in badges. The search icon stays a magnifier everywhere a control needs to be recognized.
 - **Original nautical set** (`web/src/components/icons/nautical.tsx`, hand-drawn inline SVG on a 24px grid, 2px stroke, round caps and joins, `currentColor`; `aria-hidden` unless it is a control's only content, in which case the control has an `aria-label`):
 
   | Icon | Drawn as | Used for |
@@ -496,7 +496,6 @@ Every rule of the data desk stands. The costume comes off inside the figure.
 | Date | Decision | Rationale |
 |------|----------|-----------|
 | 2026-09-23 | Initial design system | Written for the Next.js build; the palettes were checked with the dataviz validator and a WCAG contrast script |
-| 2026-09-23 | Big Shoulders + Newsreader + Libre Franklin | Signage display, news body, and Franklin data labels (Upshot lineage) |
 | 2026-09-23 | Price bins at ±15% / ±30% of the citywide median | Colors stay stable under filters, and bin names make good share copy |
 | 2026-09-23 | Chains count once: every figure, chart, ranking and threshold counts distinct menus; chain-only areas are labelled "Chain prices only" | User decision. A chain's locations share one scraped menu, so counting locations let 150+ McDonald's copies set the city number and fill the cheapest lists. So far only Manhattan has independent restaurants priced, and chain medians elsewhere must not read as borough prices |
 | 2026-09-23 | National fast-food chains removed from the index (McDonald's, Burger King, Wendy's, White Castle, Checkers, Sonic, Five Guys, Smashburger, Shake Shack); NYC's own small chains (7th Street Burger, Jimbo's, Bareburger, Jackson Hole, Burger Joint, Harlem Shake) stay and still count once | User decision (the user chose to remove Shake Shack too). The other national burger and casual-dining brands listed in `pipeline/chains.py` are left out as well |

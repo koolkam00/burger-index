@@ -160,7 +160,7 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
 
 - `data/burger_index.json` — THE dataset (contract v2 above). `build` validates before writing and fails loudly.
 - `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,101 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, and the 2026-09-25 deletions, see `data/list_changes_2026-09-23.md`: `name, neighborhood,
-  borough, website, menu_url, notes, source` where `source` is `pilot-100|uptown|downtown|outer`). It's the user's data:
+  borough, website, menu_url, notes, source` where `source` is `pilot-100|uptown|downtown|outer|dohmh-diner-pub|dohmh-hamburgers`). It's the user's data:
   don't edit it without their approval; report duplicates (`report.csv_duplicate_matches`), unmatched rows (`report.csv_unmatched`),
   ambiguous rows (`report.csv_ambiguous`) and closed places (`report.csv_address_now_other_business`,
   `report.csv_stale_matches`; e.g. "Guy Fieri's American Kitchen & Bar", Times Square, closed 2017) for the user to fix.
@@ -262,8 +262,3 @@ npm run validate:data    # ajv check against the contract (default ../data/burge
   Finished targets are cached, unstarted ones are logged as `stopped`; the next `run` resumes where it stopped.
 - Always `plan` first. It prints first-pass / expected / worst-case credits and the last seen account balance.
   Test with `--only "<name>"` or `--limit 1`. Never run the full list casually (`plan` first: ~5,300 credits for the master list).
-- **Batch API** (https://docs.context.dev/guides/scrape-websites-in-batches): outputs Markdown or HTML only —
-  **no JSON extraction** — at 1 credit per successful page (+OCR), with its own rate bucket. Switching makes sense
-  once we scrape thousands of known menu URLs (e.g. after widening `--cuisines`, or monthly re-pricing) *and* run
-  our own extraction over the Markdown; until then `/web/scrape` + JSON (5 credits) is simpler. Not implemented.
-- For scheduled re-pricing, use Monitors (https://docs.context.dev/guides/monitor-website-changes) rather than a polling loop.

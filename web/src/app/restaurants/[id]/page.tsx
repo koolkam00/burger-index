@@ -41,8 +41,8 @@ export async function generateMetadata({ params }: PageProps<"/restaurants/[id]"
 
 /**
  * The label a hand check leaves (the dataset's hand_check, from pipeline/corrections.py): shown as its
- * own slip, because it changes the price the page shows. A label only, so a paragraph rather than a
- * heading: nothing sits under it.
+ * own slip, because a person re-read and corrected this menu (the burger and price shown may be the
+ * scrape's own). A label only, so a paragraph rather than a heading: nothing sits under it.
  */
 function HandCheckNote({ checkedOn }: { checkedOn: string }) {
   // "The cook's correction slip": a ruled guest check with a torn top; its text sits on the rules.
