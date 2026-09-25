@@ -217,7 +217,10 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   rendered by `components/JsonLd.tsx` as a native `<script type="application/ld+json">`: WebSite, Organization and Dataset
   (the CSV; no license until the user picks one) plus ItemLists of the cheapest/priciest cards on home, Restaurant →
   Menu → MenuItem → Offer on restaurant pages, BreadcrumbList on every page below home (the visible crumbs where shown),
-  ItemList for the `/neighborhoods` ranking and each neighborhood's restaurant table. Never mark up the People's Price
+  ItemList for the `/neighborhoods` ranking, each neighborhood's restaurant table and each ranking page, FAQPage for the Q&A
+  blocks (home, borough and neighborhood pages; `src/lib/answers.ts` + `components/QandA.tsx`, visible text = markup text).
+  The 14 ranking pages (`/cheapest-burgers[/<borough>]`, `/most-expensive-burgers[/<borough>]`, `/burgers-under-15|20`;
+  `src/lib/rankings.ts`, `components/RankingPage.tsx`) are per distinct menu and stay out of the nav. Never mark up the People's Price
   as Review, Rating or AggregateRating. `robots.ts` (`src/lib/robots.ts`) allows every crawler, names the AI search and
   training bots, and disallows only the `/ingest/` analytics proxy. `/llms.txt` (`src/lib/llms.ts`) and
   `/data/burger-prices.csv` (`src/lib/csv.ts`: one row per priced location; restaurant, neighborhood, borough, burger,

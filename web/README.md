@@ -174,21 +174,34 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   `pageMetadata()` (`src/lib/metadata.ts`) adds " · The Burger Index" only when the title stays within 60 characters.
   Descriptions are sentences assembled to at most 160 characters. Every title and description is unique (restaurant titles
   that would repeat, such as chain locations, name the street address: `sharedTitleIds`). `sourceLine()` is the one plain
-  source/date line ("Prices from restaurant menus and ordering pages, checked September 2026.").
+  source/date line ("Prices from restaurant menus and ordering pages, checked September 2026."), shown under the home H1 and
+  in the footer.
+- **Ranking pages:** `src/lib/rankings.ts` defines the 14 lists and their rows (`rankMenus`: distinct menus in the site's
+  usual cheapest/priciest order, a chain once with its location count, ties sharing a rank; the first 25, or every row under
+  $N), `components/RankingPage.tsx` draws them (breadcrumbs, a ticket, the H1, a one-line answer, the table, a link to the
+  same list on `/burgers`, "More burger rankings.") and `rankingSeo()` titles them. Each route is a thin static page:
+  `app/cheapest-burgers/page.tsx`, `app/cheapest-burgers/[borough]/page.tsx` (`generateStaticParams` over the boroughs with
+  a priced restaurant), the same for `most-expensive-burgers`, and `app/burgers-under-15|20/page.tsx`. They are linked from the
+  home and borough card lists ("See all"), `/burgers`, every ranking page and the footer's "Rankings" group, never the nav.
+- **Q&A blocks:** `src/lib/answers.ts` builds plain answer-first sentences from the dataset (`cityFaq`, `boroughFaq`,
+  `neighborhoodFaq`; `endSentence` and `underSentence` also make the ranking pages' one-line answers). Each answer is a list of
+  text and link segments; `components/QandA.tsx` renders them as a `<dl>` and emits FAQPage JSON-LD from the same segments
+  (`segmentsText`), so the markup is the visible text word for word.
 - **JSON-LD:** pure builders in `src/lib/jsonld.ts`, rendered by `components/JsonLd.tsx` as a native
   `<script type="application/ld+json">` (Next 16 guide "JSON-LD"); `serializeJsonLd` escapes `<`, `>` and `&` so data can
   never close the tag. Home: WebSite, Organization, Dataset (the CSV as a `DataDownload`; no license until one is chosen) and
   an ItemList per cheapest/priciest card list (`menuEndsLists`, the same lists `MenuEnds` draws). Restaurant pages:
   Restaurant (PostalAddress, GeoCoordinates, `sameAs` the restaurant's site) → Menu → MenuItem → Offer (price, USD).
   Every page below home: BreadcrumbList (the visible breadcrumbs where the page shows them). `/neighborhoods`: an ItemList of
-  the ranking; neighborhood pages: an ItemList of the restaurant table (`byIndexPrice`). The People's Price is never marked
-  up as a Review, Rating or AggregateRating.
+  the ranking; neighborhood pages: an ItemList of the restaurant table (`byIndexPrice`); ranking pages: an ItemList of the
+  ranked table. Home, borough and neighborhood pages: FAQPage (the Q&A block). The People's Price is never marked up as a
+  Review, Rating or AggregateRating.
 - **robots.txt** (`src/lib/robots.ts`): every crawler is allowed, AI search and training bots are named (OAI-SearchBot,
   ChatGPT-User, PerplexityBot, Perplexity-User, Claude-SearchBot, Claude-User, GPTBot, ClaudeBot, Google-Extended,
   Applebot-Extended, CCBot), and only the analytics proxy `/ingest/` is disallowed.
 - **`/llms.txt`** (`src/lib/llms.ts`) and **`/data/burger-prices.csv`** (`src/lib/csv.ts`: `restaurant, neighborhood, borough,
   burger, price_usd, source, page_url, checked`; RFC 4180 quoting, CRLF, UTF-8, formula-looking text cells prefixed with `'`)
-  are force-static route handlers.
+  are force-static route handlers. llms.txt lists the ranking pages under "Rankings".
 - **IndexNow:** `public/<key>.txt` holds the key (public by design: IndexNow fetches it to check we control the host). After
   each production deploy, from `web/`: `SITE_URL=https://<production host> npm run indexnow` (or `-- --site https://…`). It
   checks that the live site serves the key file, reads the live sitemap, refuses URLs on another host, and POSTs them to
@@ -196,9 +209,12 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   and prints without sending; `-- --sitemap out/sitemap.xml` reads a local build's sitemap instead.
 - **Check a build:** `npm run check:seo` reads `out/` and the dataset: one `<title>`, a description, an absolute
   self-referencing canonical and one `<h1>` per page, no skipped heading levels, JSON-LD that parses, has the expected types
-  and matches the page (names, prices, breadcrumbs, list order), unique titles and descriptions (with a length summary), the
-  sitemap equal to the pages, robots.txt, every llms.txt link, the CSV against the dataset, and no broken or orphaned
-  internal links. `-- --site https://…` also asserts the origin. Tests: `test/seo.test.ts`, `test/jsonld.test.ts`,
+  and matches the page (names, prices, breadcrumbs, list order), each ranking table (ranks, restaurants, prices, count line
+  and ItemList) against a ranking it recomputes from the dataset, every Q&A block against its FAQPage word for word (and
+  one on home, every borough and every neighborhood page), the footer's source line and ranking links on every page, unique
+  titles and descriptions (with a length summary), the sitemap equal to the pages, robots.txt, every llms.txt link, the CSV
+  against the dataset, and no broken or orphaned internal links. `-- --site https://…` also asserts the origin. Tests:
+  `test/seo.test.ts`, `test/jsonld.test.ts`, `test/rankings.test.ts` (ranking rows, answers, FAQ, ranking titles),
   `test/csv.test.ts`, `test/site.test.ts` (origin, titles, robots) and `test/indexnow.test.ts`.
 
 ## Deploy to Vercel
@@ -246,15 +262,16 @@ Notes:
 
 | Route | Page |
 |---|---|
-| `/` | The headline index on the Order Board, price histogram, borough bars with links to the five borough pages (`#boroughs`, which replaced `/boroughs`), cheapest and priciest, neighborhood ranking |
-| `/burgers` | Every priced restaurant's burger, one row each: search, filters (borough, neighborhood, price), sort, all synced to the URL |
+| `/` | The headline index on the Order Board with the source line, price histogram, borough bars with links to the five borough pages (`#boroughs`, which replaced `/boroughs`), cheapest and priciest (each with "See all"), neighborhood ranking, Q&A |
+| `/burgers` | Every priced restaurant's burger, one row each: search, filters (borough, neighborhood, price), sort, all synced to the URL; then links to every ranking page |
+| `/cheapest-burgers`, `/most-expensive-burgers` (and `/[borough]` under each), `/burgers-under-15`, `/burgers-under-20` | Ranking pages: a one-line answer and a ranked table, one row per distinct menu (top 25; every row under $N) |
 | `/peoples-price` | The People's Price: the People's Burger Index beside the Burger Index, live boards (biggest bargains, most overpriced, most answered), burgers that need a few more answers, and a search that links to any burger's slider (all loaded in the browser) |
 | `/restaurants/[id]` | Priced restaurants only: "The burger" (name, price, description, vs neighborhood and NYC, price source), menu page and website links, "See it on the map" (`/map?r=<id>`), hand-check label, "What would you pay?" (the slider, then the People's Price), more in the neighborhood, other chain locations |
-| `/neighborhoods`, `/neighborhoods/[slug]` | Sortable ranking (areas with at least 5 distinct priced menus; a chain counts once) and a page for every neighborhood with a priced restaurant (its unpriced restaurants listed as plain names); neighborhoods with nothing priced are plain names on `/neighborhoods` |
-| `/boroughs/[slug]` | The five borough pages (there is no `/boroughs` index) |
+| `/neighborhoods`, `/neighborhoods/[slug]` | Sortable ranking (areas with at least 5 distinct priced menus; a chain counts once) and a page for every neighborhood with a priced restaurant (its unpriced restaurants listed as plain names, then a Q&A); neighborhoods with nothing priced are plain names on `/neighborhoods` |
+| `/boroughs/[slug]` | The five borough pages (there is no `/boroughs` index), each with "See all" links to its two ranking pages and a Q&A |
 | `/map` | MapLibre GL map of the priced restaurants, pins colored by price level, legend, list view, priced restaurants without coordinates |
 | `/og.png`, `/sitemap.xml`, `/robots.txt` | Open Graph image (the Order Board), sitemap (every page), robots (every crawler welcome, AI bots named, only `/ingest/` disallowed) |
-| `/llms.txt` | Plain summary for AI assistants: the headline numbers and date, links to the main pages and the CSV |
+| `/llms.txt` | Plain summary for AI assistants: the headline numbers and date, links to the main pages, the ranking pages and the CSV |
 | `/data/burger-prices.csv` | The public price list, one row per priced restaurant location (linked from the footer) |
 | `/<key>.txt` | The IndexNow key file (`public/`, public by design) |
 
