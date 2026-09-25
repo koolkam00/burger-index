@@ -457,7 +457,8 @@ function FindBurger({ menus, hists }: { menus: WorthMenu[]; hists: ReadonlyMap<s
         ) : (
           <div className="mt-3">
             <EmptyState art="net" height={160}>
-              No burgers match “{query.trim()}”. Nothing in the net; try another name.
+              {/* The echoed search text is masked in session recordings (ph-mask), like the search box. */}
+              No burgers match “<span className="ph-mask">{query.trim()}</span>”. Nothing in the net; try another name.
             </EmptyState>
           </div>
         )

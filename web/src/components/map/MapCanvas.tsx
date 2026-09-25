@@ -2,7 +2,7 @@
 
 import type { Map as MlMap, MapMouseEvent, Popup } from "maplibre-gl";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { track } from "@/lib/analytics";
 import { formatDelta, formatPrice } from "@/lib/format";
 import { binFor } from "@/lib/price-bins";
@@ -51,7 +51,20 @@ function popupContent(p: PinProps, median: number, color: string, go: (href: str
   return root;
 }
 
-export default function MapCanvas({ pins, median, onBasemapFail, onFatal }: { pins: MapPin[]; median: number; onBasemapFail: () => void; onFatal: (why: string) => void }) {
+export default function MapCanvas({
+  pins,
+  median,
+  linkTrackedRef,
+  onBasemapFail,
+  onFatal,
+}: {
+  pins: MapPin[];
+  median: number;
+  /** Set once the ?r=<id> arrival has been tracked this visit (it outlives a List/Map round trip). */
+  linkTrackedRef: RefObject<boolean>;
+  onBasemapFail: () => void;
+  onFatal: (why: string) => void;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const theme = useResolvedTheme();
   const router = useRouter();
@@ -141,8 +154,9 @@ export default function MapCanvas({ pins, median, onBasemapFail, onFatal }: { pi
       return best;
     };
 
-    const open = (props: PinProps, lngLat: [number, number], source: "pin" | "link") => {
-      track("map_pin_opened", { restaurant_id: props.id, source });
+    // `source` null reopens a popup without tracking it (a ?r= arrival already counted this visit).
+    const open = (props: PinProps, lngLat: [number, number], source: "pin" | "link" | null) => {
+      if (source) track("map_pin_opened", { restaurant_id: props.id, source });
       popup?.remove();
       setState(selectedId, "selected", false);
       selectedId = props.id;
@@ -190,7 +204,8 @@ export default function MapCanvas({ pins, median, onBasemapFail, onFatal }: { pi
       if (target) {
         const [lng, lat] = target.geometry.coordinates;
         map.jumpTo({ center: [lng, lat], zoom: 15 });
-        open(target.properties, [lng, lat], "link");
+        open(target.properties, [lng, lat], linkTrackedRef.current ? null : "link");
+        linkTrackedRef.current = true;
       } else if (features.length) {
         const b = new maplibregl.LngLatBounds();
         features.forEach((f) => b.extend(f.geometry.coordinates as [number, number]));
@@ -208,7 +223,7 @@ export default function MapCanvas({ pins, median, onBasemapFail, onFatal }: { pi
       popup?.remove();
       map.remove();
     };
-  }, [theme, features, median, router]);
+  }, [theme, features, median, router, linkTrackedRef]);
 
   // MapLibre's CSS makes its container position:relative, so size it with a wrapper.
   return (

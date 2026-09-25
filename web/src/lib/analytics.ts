@@ -9,7 +9,9 @@
 //
 // No personal data: events carry ids, prices, counts and control names. The only free text is the
 // /burgers search query, trimmed, lowercased and cut to 60 characters; the full query in the page URL
-// (?q=) is masked in every URL PostHog records. The voter id never reaches an event.
+// (?q=) is masked in every URL PostHog records, and session recordings mask it in the search boxes
+// (every input) and where a "No burgers match" message echoes it (class ph-mask). The voter id never
+// reaches an event.
 import type { CaptureResult, PostHog, PostHogConfig } from "posthog-js";
 import type { Filters } from "./explorer";
 import type { PriceSource } from "./schema";
@@ -40,7 +42,8 @@ export type AnalyticsEvents = {
     restaurant_id: string;
     dollars: number;
     menu_price: number;
-    first_answer: boolean;
+    /** True: no earlier answer; false: it replaced one; null: unknown (the browser's saved answers hadn't loaded). */
+    first_answer: boolean | null;
     /** The answer this one replaced (only when it changed one). */
     previous_dollars?: number;
   };
@@ -97,21 +100,25 @@ export function filterValue(filter: FilterName, f: Filters): string | null {
   }
 }
 
-/** The worth_answered properties for a saved answer; `previous` is the answer it replaced (null: none). */
+/**
+ * The worth_answered properties for a saved answer; `previous` is the answer it replaced (null: none,
+ * undefined: unknown).
+ */
 export function worthAnsweredProps(a: {
   menuKey: string;
   restaurantId: string;
   dollars: number;
   menuPrice: number;
-  previous: number | null;
+  previous: number | null | undefined;
 }): AnalyticsEvents["worth_answered"] {
+  const previous = a.previous;
   return {
     menu_key: a.menuKey,
     restaurant_id: a.restaurantId,
     dollars: a.dollars,
     menu_price: a.menuPrice,
-    first_answer: a.previous === null,
-    ...(a.previous !== null && a.previous !== a.dollars ? { previous_dollars: a.previous } : {}),
+    first_answer: previous === undefined ? null : previous === null,
+    ...(typeof previous === "number" && previous !== a.dollars ? { previous_dollars: previous } : {}),
   };
 }
 
@@ -140,10 +147,13 @@ const URL_PROP = /url|referrer/i;
 
 /**
  * before_send: masks the search text in URL properties PostHog's own masking skips (the referrer of a
- * page opened from a search, and the initial-referrer person properties).
+ * page opened from a search, and the initial-referrer person properties), and drops the title of a
+ * client-side $pageview: posthog-js sends it from its history hook, before Next has put the new page's
+ * <title> in place, so it would carry the title of the page just left.
  */
 export function scrubEvent(event: CaptureResult | null): CaptureResult | null {
   if (!event) return event;
+  if (event.event === "$pageview" && event.properties?.navigation_type) delete event.properties.title;
   for (const bag of [event.properties, event.$set, event.$set_once]) {
     if (!bag) continue;
     for (const [k, v] of Object.entries(bag)) {

@@ -2,7 +2,7 @@
 
 import { List, Map as MapIcon } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useRef, useState, type ReactNode } from "react";
 import { track } from "@/lib/analytics";
 import { EmptyState } from "../ui";
 import type { MapPin } from "./MapCanvas";
@@ -25,6 +25,9 @@ export function MapShell({ pins, median, legend, list }: { pins: MapPin[]; media
   const [fatal, setFatal] = useState<string | null>(null);
   const [basemapDown, setBasemapDown] = useState(false);
   const [legendOpen, setLegendOpen] = useState(false);
+  // A ?r=<id> arrival is tracked once per visit: the List view unmounts the map, and the remount
+  // reopens that popup without counting it again.
+  const linkTrackedRef = useRef(false);
   const onBasemapFail = useCallback(() => setBasemapDown(true), []);
   const onFatal = useCallback((why: string) => {
     setFatal(why);
@@ -64,7 +67,7 @@ export function MapShell({ pins, median, legend, list }: { pins: MapPin[]; media
         <>
         <span className="rope rope-flat map-rope mt-4" aria-hidden="true" />
         <div className="map-frame">
-          <MapCanvas pins={pins} median={median} onBasemapFail={onBasemapFail} onFatal={onFatal} />
+          <MapCanvas pins={pins} median={median} linkTrackedRef={linkTrackedRef} onBasemapFail={onBasemapFail} onFatal={onFatal} />
           <div className="absolute top-3 left-3 z-10 max-w-[calc(100%-5rem)]">
             <button type="button" className="btn btn-secondary btn-sm md:hidden" aria-expanded={legendOpen} aria-controls="map-legend" onClick={() => setLegendOpen((o) => !o)}>
               Legend

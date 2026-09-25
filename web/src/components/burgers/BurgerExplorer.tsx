@@ -248,11 +248,16 @@ export function BurgerExplorer({ data }: { data: ExplorerData }) {
     .filter(Boolean)
     .join(", ");
   const unpricedScope = filters.boroughs.length > 0 && filters.boroughs.every((s) => !boroughsWithRows.has(boroughBySlug(s)!.name));
-  const emptyMessage = unpricedScope
-    ? `We haven't priced any burgers in ${filters.boroughs.map((s) => boroughInProse(boroughBySlug(s)!.name)).join(" or ")} yet.`
-    : query.trim()
-      ? `No burgers match “${query.trim()}”${scope ? ` in ${scope}` : ""}. Nothing in the net; try fewer filters.`
-      : `No burgers match these filters${scope ? ` in ${scope}` : ""}. Nothing in the net; try fewer filters.`;
+  // The echoed search text is masked in session recordings (ph-mask), like the search box itself.
+  const emptyMessage = unpricedScope ? (
+    `We haven't priced any burgers in ${filters.boroughs.map((s) => boroughInProse(boroughBySlug(s)!.name)).join(" or ")} yet.`
+  ) : query.trim() ? (
+    <>
+      No burgers match “<span className="ph-mask">{query.trim()}</span>”{scope ? ` in ${scope}` : ""}. Nothing in the net; try fewer filters.
+    </>
+  ) : (
+    `No burgers match these filters${scope ? ` in ${scope}` : ""}. Nothing in the net; try fewer filters.`
+  );
 
   return (
     // The keydown listener only catches "/" (see onExplorerKey); the div itself is not focusable.

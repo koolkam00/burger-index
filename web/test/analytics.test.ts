@@ -169,6 +169,22 @@ test("worth_answered: first answers and changed answers", () => {
     first_answer: false,
     previous_dollars: 20,
   });
+  // The same answer again replaced one, and changed nothing.
+  assert.deepEqual(worthAnsweredProps({ menuKey: "due-west", restaurantId: "due-west", dollars: 30, menuPrice: 24, previous: 30 }), {
+    menu_key: "due-west",
+    restaurant_id: "due-west",
+    dollars: 30,
+    menu_price: 24,
+    first_answer: false,
+  });
+  // The browser's saved answers hadn't loaded (or failed): unknown, not a first answer.
+  assert.deepEqual(worthAnsweredProps({ menuKey: "due-west", restaurantId: "due-west", dollars: 42, menuPrice: 24, previous: undefined }), {
+    menu_key: "due-west",
+    restaurant_id: "due-west",
+    dollars: 42,
+    menu_price: 24,
+    first_answer: null,
+  });
 });
 
 test("link hosts drop www. and never throw", () => {
@@ -200,6 +216,20 @@ test("the search text is masked in every URL property, and nothing else changes"
   assert.equal(out.properties.query, "q=kept as is", "not a URL property");
   assert.equal(out.$set_once?.$initial_referrer, "https://burgerindex.nyc/burgers?q=<MASKED>&min=10");
   assert.equal(scrubEvent(null), null);
+});
+
+test("a client-side $pageview drops the title (still the page just left); a full load keeps it", () => {
+  const pageview = (properties: Record<string, unknown>) => ({ uuid: "u", event: "$pageview", properties }) as unknown as CaptureResult;
+  const spa = scrubEvent(pageview({ $current_url: "https://burgerindex.nyc/burgers", title: "The Burger Index", navigation_type: "pushState" }))!;
+  assert.equal("title" in spa.properties, false);
+  assert.equal(spa.properties.$current_url, "https://burgerindex.nyc/burgers");
+  assert.equal(spa.properties.navigation_type, "pushState");
+  const back = scrubEvent(pageview({ title: "Every burger · The Burger Index", navigation_type: "popstate" }))!;
+  assert.equal("title" in back.properties, false);
+  const load = scrubEvent(pageview({ title: "Every burger · The Burger Index" }))!;
+  assert.equal(load.properties.title, "Every burger · The Burger Index");
+  const other = scrubEvent({ uuid: "u", event: "map_view_changed", properties: { title: "kept", navigation_type: "pushState" } } as unknown as CaptureResult)!;
+  assert.equal(other.properties.title, "kept", "only $pageview");
 });
 
 test("session recordings never keep a Supabase request body (it carries the voter id)", () => {

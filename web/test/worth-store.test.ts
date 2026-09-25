@@ -498,6 +498,10 @@ test("onSaved hears each saved answer with the answer it replaced, and never a f
   s.answer("chain:7th-street-burger", 12);
   await s.settled();
   await s.loadMine();
+  s.answer("chain:7th-street-burger", 14);
+  await s.settled();
+  s.answer("amity-hall", 25);
+  await s.settled();
   s.answer("due-west", 30);
   await s.settled();
   f.failCast = { code: "", message: "TypeError: Failed to fetch" };
@@ -510,10 +514,49 @@ test("onSaved hears each saved answer with the answer it replaced, and never a f
   s.answer("due-west", 50);
   await s.settled();
   assert.deepEqual(heard, [
-    { menuKey: "chain:7th-street-burger", dollars: 12, previous: null },
+    // Saved before the browser's saved answers were loaded: whether it replaced one is unknown.
+    { menuKey: "chain:7th-street-burger", dollars: 12, previous: undefined },
+    { menuKey: "chain:7th-street-burger", dollars: 14, previous: 12 },
+    { menuKey: "amity-hall", dollars: 25, previous: null },
     { menuKey: "due-west", dollars: 30, previous: 20 },
     { menuKey: "due-west", dollars: 35, previous: 30 },
   ]);
+});
+
+test("onSaved: an answer saved while the saved ones are still loading, or after they failed, replaced an unknown one", async () => {
+  const f = fakeServer({ mine: { "due-west": 30 } });
+  const gate = deferred<void>();
+  f.mineGate = () => gate.promise;
+  const s = store(f.api);
+  const heard: SavedAnswer[] = [];
+  s.onSaved((a) => heard.push(a));
+  const loading = s.loadMine();
+  assert.equal(s.getMine().status, "loading");
+  s.answer("due-west", 42);
+  await s.settled();
+  gate.resolve();
+  await loading;
+  s.answer("due-west", 44);
+  await s.settled();
+  assert.deepEqual(heard, [
+    { menuKey: "due-west", dollars: 42, previous: undefined },
+    { menuKey: "due-west", dollars: 44, previous: 42 },
+  ]);
+
+  const g = fakeServer({ mine: { "due-west": 30 } });
+  const failed = store({
+    ...g.api,
+    async fetchMyWorth() {
+      throw new TypeError("Failed to fetch");
+    },
+  });
+  const heardFailed: SavedAnswer[] = [];
+  failed.onSaved((a) => heardFailed.push(a));
+  await failed.loadMine();
+  assert.equal(failed.getMine().status, "error");
+  failed.answer("due-west", 42);
+  await failed.settled();
+  assert.deepEqual(heardFailed, [{ menuKey: "due-west", dollars: 42, previous: undefined }]);
 });
 
 test("onSaved: an answer made while the saved ones load still reports the one it replaced", async () => {

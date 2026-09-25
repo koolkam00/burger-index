@@ -131,7 +131,8 @@ there is no banner, and surveys, product tours and the conversations widget are 
   `initAnalytics()`, which imports `posthog-js` in its own chunk and starts it with `defaults: "2026-08-30"`, the newest config
   defaults of the installed version: among them a `$pageview` on every client-side navigation that changes the path (the page
   left behind rides along as `$prev_pageview_*` properties), `$pageleave` when the visitor leaves the site, and URL hashes
-  stripped.
+  stripped. A client-side `$pageview` carries no `title`: posthog-js sends it before Next has swapped in the new page's
+  `<title>`, so `before_send` drops the stale one (a full page load keeps its title).
   Events tracked before it has loaded are queued (up to 50).
 - **Automatic, per the project settings:** `$pageview`, `$pageleave`, autocapture, web vitals, heatmaps and session replay. The
   explorer's filter URL updates (`replaceState` with a new query string) are not pageviews: only path changes are.
@@ -141,9 +142,9 @@ there is no banner, and surveys, product tours and the conversations widget are 
 |---|---|---|
 | `burger_search` | `surface` (`burgers` / `peoples_price`), `query`, `results` | the /burgers search box and "Find a burger" on /peoples-price, once typing pauses for 1 s; empty and repeated queries are skipped |
 | `burger_filter_changed` | `filter` (`borough`, `neighborhood`, `price`, `sort`, `clear_all`), `value`, `results` | every /burgers control: filter popovers, the mobile sheet, chips, price presets, the sort select and the column headers |
-| `worth_answered` | `menu_key`, `restaurant_id`, `dollars`, `menu_price`, `first_answer`, `previous_dollars` (a changed answer only) | `WorthPicker`, after Supabase has saved the answer (`worthStore.onSaved`) |
+| `worth_answered` | `menu_key`, `restaurant_id`, `dollars`, `menu_price`, `first_answer` (`true`, `false`, or `null` when the browser's saved answers hadn't loaded or failed to), `previous_dollars` (a changed answer only) | `WorthPicker`, after Supabase has saved the answer (`worthStore.onSaved`) |
 | `peoples_price_board_clicked` | `board` (`bargains`, `overpriced`, `most_answered`, `needs_answers`, `find`), `menu_key`, `restaurant_id`, `rank`, `position` | a row link on /peoples-price |
-| `map_pin_opened` | `restaurant_id`, `source` (`pin` tapped, or `link` for `/map?r=<id>`) | `MapCanvas` |
+| `map_pin_opened` | `restaurant_id`, `source` (`pin` tapped, or `link` for `/map?r=<id>`, once per visit: a List/Map round trip reopens the popup without sending it again) | `MapCanvas` |
 | `map_popup_link_clicked` | `restaurant_id` | the restaurant link in a map popup |
 | `map_view_changed` | `view` (`map` / `list`) | the Map / List toggle |
 | `menu_link_clicked`, `website_link_clicked` | `restaurant_id`, `host`, `price_source` | "Menu page:" and "Website:" on restaurant pages (`components/RestaurantLinks.tsx`) |
@@ -151,8 +152,9 @@ there is no banner, and surveys, product tours and the conversations widget are 
 
 - **No personal data.** Events carry ids, prices, counts and control names. The only free text is the search query: trimmed,
   lowercased and cut to 60 characters. The full query in the page URL (`?q=`) is replaced by `<MASKED>` in every URL PostHog
-  records (`mask_personal_data_properties` with `q`, plus a `before_send` for referrers). The voter id never reaches an event,
-  and session recordings drop Supabase request bodies (they carry it).
+  records (`mask_personal_data_properties` with `q`, plus a `before_send` for referrers). Session recordings mask the search
+  boxes (every input) and the search text echoed in the "No burgers match “…”" messages (`ph-mask`). The voter id never
+  reaches an event, and session recordings drop Supabase request bodies (they carry it).
 - **Proxy:** in production `posthog-js` talks to `/ingest` on the site itself; `web/vercel.json` rewrites `/ingest/static/*` and
   `/ingest/array/*` to `https://us-assets.i.posthog.com` and the rest of `/ingest/*` to `https://us.i.posthog.com`, so ad
   blockers that block PostHog's domains don't drop the events. The site has no Content-Security-Policy to update.

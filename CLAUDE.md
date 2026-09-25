@@ -215,13 +215,14 @@ npm run validate:data    # ajv check against the contract (default ../data/burge
 - **Analytics (PostHog project "Burger Index", id 628020, US cloud; never the "Run With Kam" org or project 614669):**
   `src/lib/analytics.ts` is the one client-only module: the typed `AnalyticsEvents` map, `track()` (a no-op without the
   key), property shaping, the debounced search sender and the posthog-js config (`defaults: "2026-08-30"`, `?q=` masked in
-  every URL, Supabase bodies kept out of replays, surveys/tours/conversations off: analytics must not change what visitors
-  see). `src/instrumentation-client.ts` calls `initAnalytics()` before hydration; posthog-js loads as its own chunk and only
+  every URL, a client-side `$pageview`'s stale title dropped, Supabase bodies kept out of replays, surveys/tours/conversations
+  off: analytics must not change what visitors see). `src/instrumentation-client.ts` calls `initAnalytics()` before hydration; posthog-js loads as its own chunk and only
   when `NEXT_PUBLIC_POSTHOG_KEY` was set at build time. That key lives **only in the Vercel project settings, never in
   `web/.env.local`**, so dev and local builds send nothing. Components call `track()` in event handlers; nothing in server
   components (the restaurant page's links are the client `components/RestaurantLinks.tsx`). `worth_answered` comes from
-  `worthStore.onSaved` (after Supabase saved the answer). No personal data: never the voter id, and no free text but the
-  search query (trimmed, lowercased, 60 characters). Events and properties are listed in `web/README.md` "Analytics
+  `worthStore.onSaved` (after Supabase saved the answer). No personal data: never the voter id, and no free text in events
+  but the search query (trimmed, lowercased, 60 characters); replays mask inputs and the query echoed in the "No burgers
+  match" messages (`ph-mask`). Events and properties are listed in `web/README.md` "Analytics
   (PostHog)"; tests in `test/analytics.test.ts`. posthog-js drops headless/webdriver browsers, so browser checks see no
   events unless they pose as a normal Chrome.
 - **Deploy (Vercel):** project Root Directory `web`, build `npm run build`, output `out`, and keep "Include files

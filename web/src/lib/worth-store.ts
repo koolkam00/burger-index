@@ -38,8 +38,11 @@ export type VoterIds = {
 
 export type LoadStatus = "disabled" | "idle" | "loading" | "ready" | "error";
 
-/** An answer the server accepted: `previous` is the saved answer it replaced (null: none known). */
-export type SavedAnswer = { menuKey: string; dollars: number; previous: number | null };
+/**
+ * An answer the server accepted. `previous` is the saved answer it replaced: a number, null when there
+ * was none, undefined when that isn't known (my_worth hadn't answered yet, or failed).
+ */
+export type SavedAnswer = { menuKey: string; dollars: number; previous: number | null | undefined };
 
 export type MineSnapshot = {
   status: LoadStatus;
@@ -300,8 +303,10 @@ export function createWorthStore({ api, voter, enabled }: { api: WorthApi; voter
           await api.castWorth(key, voter.get(), dollars);
           const e = episodes.get(key);
           // The saved answer this one replaced: confirmed, else the one my_worth reported during the
-          // episode (an answer made before my_worth loaded); unknown if my_worth hasn't answered yet.
-          const previous = confirmed.get(key) ?? (e && !e.sent ? e.base : null);
+          // episode (an answer made before my_worth loaded). With neither, it was none only if my_worth
+          // has answered; while it is loading, or after it failed, it is unknown.
+          const found = confirmed.get(key) ?? (e && !e.sent ? e.base : null);
+          const previous = found !== null || mineStatus === "ready" ? found : undefined;
           confirmed.set(key, dollars);
           saved.add(key);
           errors.delete(key);
