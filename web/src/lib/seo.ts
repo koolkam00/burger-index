@@ -6,7 +6,7 @@
 // Copy rules (DESIGN.md "Voice & Copy"): numbers and plain labels, no methodology, no quality words.
 // Titles aim at 60 characters or fewer, descriptions at 150–160 (DESCRIPTION_MAX is a hard cap).
 import { boroughInProse } from "./boroughs";
-import { formatCount, formatMonthYear, formatPrice, pctDiff, pluralize } from "./format";
+import { formatCount, formatMonthYear, formatPrice, pctDiff, pluralize, theBurger } from "./format";
 import type { Borough } from "./schema";
 
 export const DESCRIPTION_MAX = 160;
@@ -228,6 +228,59 @@ export function neighborhoodSeo(d: {
       vs ? `${cap(vs)}.` : null,
       span(d.cheapest, d.priciest),
       updated(d.generatedAt),
+    ]),
+  };
+}
+
+// ---- ranking pages -------------------------------------------------------------------------------
+
+export type RankingSeoInput = {
+  kind: "cheapest" | "priciest" | "under";
+  /** The page's name: "Cheapest burgers in NYC", "Burgers under $15 in NYC" (rankings.ts rankingName). */
+  name: string;
+  /** "NYC", "Brooklyn", "the Bronx". */
+  place: string;
+  /** "under" only: the price the burgers stay under. */
+  under: number | null;
+  /** The rows the page shows, in order. */
+  rows: ReadonlyArray<{ restaurant: string; burger: string; price: number }>;
+  /** Burgers the list covers before the cap. */
+  total: number;
+  generatedAt: string;
+};
+
+/**
+ * "Cheapest burgers in NYC: from $6 (Sep 2026)", "Most expensive burgers in Brooklyn: up to $34 (Sep
+ * 2026)", "90 burgers under $15 in NYC (Sep 2026)"; the description names the first rows.
+ */
+export function rankingSeo(d: RankingSeoInput): Seo {
+  const mon = formatMonthYear(d.generatedAt, { short: true });
+  const month = formatMonthYear(d.generatedAt);
+  const [first, second, third] = d.rows;
+  if (!first) return { title: d.name, description: `${d.name}: no priced burgers yet.` };
+  if (d.kind === "under") {
+    const last = d.rows[d.rows.length - 1];
+    const limit = short(d.under as number);
+    return {
+      title: pickTitle([`${pluralize(d.total, "burger")} under ${limit} in ${d.place} (${mon})`, `${pluralize(d.total, "burger")} under ${limit} in ${d.place}`, d.name]),
+      description: assemble(`${pluralize(d.total, "burger")} under ${limit} in ${d.place}, cheapest first (${month}).`, [
+        d.rows.length > 1 ? `From ${money(first.price)} at ${first.restaurant} to ${money(last.price)} at ${last.restaurant}.` : `${cap(theBurger(first.burger))} at ${first.restaurant}, ${money(first.price)}.`,
+        "With each restaurant's neighborhood and price.",
+      ]),
+    };
+  }
+  const cheapest = d.kind === "cheapest";
+  const edge = cheapest ? `from ${short(first.price)}` : `up to ${short(first.price)}`;
+  const then = [
+    second && third ? `Then ${second.restaurant} at ${money(second.price)} and ${third.restaurant} at ${money(third.price)}.` : null,
+    second ? `Then ${second.restaurant} at ${money(second.price)}.` : null,
+  ].filter((s): s is string => Boolean(s));
+  return {
+    title: pickTitle([`${d.name}: ${edge} (${mon})`, `${d.name}: ${edge}`, d.name]),
+    description: assemble(`The ${pluralize(d.rows.length, cheapest ? "cheapest burger" : "most expensive burger")} in ${d.place}, ranked by price (${month}).`, [
+      `${cap(theBurger(first.burger))} at ${first.restaurant} ${cheapest ? "is the cheapest" : "tops the list"} at ${money(first.price)}.`,
+      then.length ? then : null,
+      d.total > d.rows.length ? `Out of ${pluralize(d.total, "burger")} in ${d.place}.` : null,
     ]),
   };
 }

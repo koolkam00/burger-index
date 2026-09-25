@@ -4,15 +4,18 @@ import { Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type ComponentType } from "react";
-import { NAV } from "@/lib/site";
+import { isRankingPath, NAV } from "@/lib/site";
 import { Buoy, CompassRose, LifeRing, Scales, ShipWheel, Spyglass, type IconProps } from "./icons/nautical";
 import { ThemeToggle } from "./theme";
 import { Wordmark } from "./Wordmark";
 
-/** Restaurant pages belong to Burgers; borough pages to the Index, whose borough section they grew from. */
+/**
+ * Restaurant and ranking pages belong to Burgers; borough pages to the Index, whose borough section
+ * they grew from.
+ */
 function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/" || pathname.startsWith("/boroughs/");
-  return pathname === href || pathname.startsWith(`${href}/`) || (href === "/burgers" && pathname.startsWith("/restaurants/"));
+  return pathname === href || pathname.startsWith(`${href}/`) || (href === "/burgers" && (pathname.startsWith("/restaurants/") || isRankingPath(pathname)));
 }
 
 /** Menu-sheet row icons (DESIGN.md "Original nautical set"). */

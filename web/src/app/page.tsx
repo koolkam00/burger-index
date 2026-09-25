@@ -6,16 +6,20 @@ import { PriceDistribution } from "@/components/charts/PriceDistribution";
 import { AreaTable, RangePlot } from "@/components/charts/RangePlot";
 import { JsonLd } from "@/components/JsonLd";
 import { Letterboard } from "@/components/Letterboard";
+import { QandA } from "@/components/QandA";
 import { MenuEnds, menuEndsLists } from "@/components/RestaurantBits";
 import { Buoy, Net, Scales, ShipWheel, Spatula, Spyglass } from "@/components/icons/nautical";
 import { BoroughDot, Bubbles, Caustics, ChartEmpty, KickerTicket, SectionHeading, WaveEdge } from "@/components/ui";
+import { cityFaq } from "@/lib/answers";
+import { boroughInProse } from "@/lib/boroughs";
 import { getBoroughs, getGeneratedAt, getMenuCounts, getPricedRestaurants, getStats, rankedNeighborhoods } from "@/lib/data";
 import { CSV_PATH } from "@/lib/csv";
 import { formatCount, formatDate, formatIsoDay, formatMonthYear, formatPrice, pluralize, spreadEnds } from "@/lib/format";
 import { datasetNode, itemListNode, organizationNode, websiteNode } from "@/lib/jsonld";
 import { menuIndexPrices, menusByIndexPrice, menusByIndexPriceDesc, type Menu } from "@/lib/menus";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
-import { homeSeo, type NamedPrice } from "@/lib/seo";
+import { cheapestSpec, priciestSpec, rankingNameInSentence, rankingPath, rankMenus, topTied } from "@/lib/rankings";
+import { homeSeo, sourceLine, type NamedPrice } from "@/lib/seo";
 
 const named = (m: Menu | undefined): NamedPrice | null => (m ? { name: m.restaurant.name, price: m.indexPrice } : null);
 
@@ -52,6 +56,16 @@ export default function HomePage() {
     : "The line marks the NYC median.";
 
   const hoodEnds = spreadEnds(ranked, (n) => n.index_median);
+  const faq = cityFaq({
+    generatedAt: generated,
+    median,
+    p10: stats.index_p10,
+    p90: stats.index_p90,
+    cheapest: topTied(rankMenus(restaurants, cheapestSpec()).rows),
+    priciest: topTied(rankMenus(restaurants, priciestSpec()).rows),
+    boroughs: pricedBoroughs.map((b) => ({ name: boroughInProse(b.name), href: `/boroughs/${b.slug}`, median: b.summary!.index_median as number })),
+    neighborhoods: ranked.map((n) => ({ name: n.name, href: `/neighborhoods/${n.slug}`, median: n.index_median as number })),
+  });
   const neighborhoodRows = ranked.length > 16 ? [...ranked.slice(0, 8), ...ranked.slice(-8)] : ranked;
 
   const jsonLd = [
@@ -89,8 +103,9 @@ export default function HomePage() {
               <h1 id="hero-title" className="t-display-l mt-5">
                 What a burger costs in New York.
               </h1>
-              {/* The menu count shows once, on the board line below. */}
-              {median === null ? <p className="t-lede mt-5">No prices yet.</p> : null}
+              {/* The menu count shows once, on the board line below. The source line is the one sourcing
+                  sentence on the site (--ink: it sits on the darker water at lg). */}
+              {median === null ? <p className="t-lede mt-5">No prices yet.</p> : <p className="t-ui-m mt-4 text-balance">{sourceLine(generated)}</p>}
             </div>
             <div className="min-w-0 lg:col-span-7">
               <Letterboard
@@ -153,7 +168,15 @@ export default function HomePage() {
       {cheapest.length ? (
         <section className="section" aria-labelledby="cheap">
           <SectionHeading id="cheap" kicker="Catch of the day" icon={Net} title={`Where ${formatPrice(cheapest[0].indexPrice)} still gets you lunch.`} />
-          <MenuEnds cheapest={cheapest} priciest={priciest} median={median} />
+          <MenuEnds
+            cheapest={cheapest}
+            priciest={priciest}
+            median={median}
+            seeAll={{
+              cheapest: { href: rankingPath(cheapestSpec()), what: rankingNameInSentence(cheapestSpec()) },
+              priciest: { href: rankingPath(priciestSpec()), what: rankingNameInSentence(priciestSpec()) },
+            }}
+          />
         </section>
       ) : null}
 
@@ -190,6 +213,8 @@ export default function HomePage() {
           </p>
         </div>
       </section>
+
+      <QandA items={faq} />
 
       {/* "What's it worth?": a link only, so the home page never loads the Supabase client. */}
       <section className="section" aria-labelledby="worth">

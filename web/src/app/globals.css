@@ -1647,6 +1647,22 @@
     color: var(--ink);
   }
 
+  /* Ranking pages: the rank column takes only its numbers' width. */
+  .ranking-table .rank-col {
+    width: 1%;
+    white-space: nowrap;
+  }
+
+  /* ---- Q&A block: questions and answer-first sentences on the counter, as a plain list -------- */
+  .qa {
+    max-width: var(--max-prose);
+    border-top: 1.5px solid var(--line);
+  }
+  .qa-item {
+    padding-block: 14px;
+    border-bottom: 1.5px solid var(--line);
+  }
+
   /* ---- Menu line: a name, a dotted leader, a price (the restaurant page's burger block) ------ */
   .menu-line {
     display: flex;

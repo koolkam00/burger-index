@@ -4,9 +4,11 @@ import { AreaListItem } from "@/components/AreaList";
 import { AreaStats } from "@/components/AreaStats";
 import { JsonLd } from "@/components/JsonLd";
 import { Letterboard } from "@/components/Letterboard";
+import { QandA } from "@/components/QandA";
 import { byIndexPrice, RestaurantTable } from "@/components/RestaurantBits";
 import { Buoy, Spyglass } from "@/components/icons/nautical";
 import { BoroughName, DetailOverline, PageHeader, SectionHeading } from "@/components/ui";
+import { neighborhoodFaq } from "@/lib/answers";
 import { boroughInProse, boroughSlug } from "@/lib/boroughs";
 import {
   getGeneratedAt,
@@ -25,6 +27,7 @@ import { formatDate, pluralize } from "@/lib/format";
 import { breadcrumbNode, itemListNode } from "@/lib/jsonld";
 import { isRankable, menuBreakdown, menusByIndexPrice, menusByIndexPriceDesc } from "@/lib/menus";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
+import { topTied, withRanks } from "@/lib/rankings";
 import { neighborhoodSeo } from "@/lib/seo";
 import { atLeastOneParam, PLACEHOLDER_PARAM } from "@/lib/site";
 
@@ -83,6 +86,15 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
   ];
   const path = `/neighborhoods/${n.slug}`;
   const table = `Restaurants in ${n.name}`;
+  const faq = neighborhoodFaq({
+    generatedAt: getGeneratedAt(),
+    name: n.name,
+    median: n.index_median,
+    cityMedian: median,
+    menus: c.menus,
+    cheapest: topTied(withRanks(menusByIndexPrice(restaurants))),
+    priciest: topTied(withRanks(menusByIndexPriceDesc(restaurants))),
+  });
 
   return (
     <>
@@ -137,6 +149,8 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
             />
           </div>
         </section>
+
+        <QandA items={faq} />
 
         {siblings.length ? (
           <section className="section" aria-labelledby="nearby">

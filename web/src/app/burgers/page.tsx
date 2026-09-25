@@ -3,13 +3,15 @@ import { BurgerExplorer } from "@/components/burgers/BurgerExplorer";
 import { BurgerTable } from "@/components/burgers/BurgerTable";
 import { Spyglass } from "@/components/icons/nautical";
 import { JsonLd } from "@/components/JsonLd";
-import { PageHeader } from "@/components/ui";
+import { RankingLinks } from "@/components/Rankings";
+import { PageHeader, SectionHeading } from "@/components/ui";
 import { getGeneratedAt, getPricedRestaurants } from "@/lib/data";
 import { buildExplorerData } from "@/lib/explorer-data";
 import { formatCount, formatPrice } from "@/lib/format";
 import { breadcrumbNode } from "@/lib/jsonld";
 import { menusByIndexPrice, menusByIndexPriceDesc } from "@/lib/menus";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
+import { rankingSpecs } from "@/lib/rankings";
 import { burgersSeo } from "@/lib/seo";
 import { SITE_NAME } from "@/lib/site";
 
@@ -52,6 +54,14 @@ export default function BurgersPage() {
         >
           <BurgerExplorer data={data} />
         </Suspense>
+
+        {/* The ranking pages: the same burgers as short, fixed lists (a chain once). */}
+        <section className="section" aria-labelledby="rankings">
+          <SectionHeading id="rankings" title="Burger rankings." />
+          <div className="mt-6">
+            <RankingLinks available={rankingSpecs(getPricedRestaurants())} />
+          </div>
+        </section>
       </div>
     </>
   );

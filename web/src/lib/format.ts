@@ -87,6 +87,14 @@ export function pluralize(n: number, one: string, many = `${one}s`): string {
   return `${formatCount(n)} ${n === 1 ? one : many}`;
 }
 
+/**
+ * A burger's name inside a sentence: "the Cheeseburger". A name that opens with its own article or a
+ * possessive ("The Big Flat", "Our Famous Burger", "Crosstown's Monster Double Deluxe") takes none.
+ */
+export function theBurger(name: string): string {
+  return /^(the|a|an|our|my|your|his|her|their)\s/i.test(name) || /^\S+['’]s\s/.test(name) ? name : `the ${name}`;
+}
+
 /** "$4.19–$6.50", or just "$4.19" when both ends print the same (one price, one day). */
 export function formatSpan(lo: string, hi: string, sep = "–"): string {
   return lo === hi ? lo : `${lo}${sep}${hi}`;

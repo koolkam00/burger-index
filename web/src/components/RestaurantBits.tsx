@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { formatCount, pluralize } from "@/lib/format";
@@ -98,15 +99,46 @@ export function menuEndsLists(cheapest: readonly Menu[], priciest: readonly Menu
   return [{ title: "Index prices, cheapest first", order: "ascending", menus: [...cheapest] }];
 }
 
-/** Cheapest and priciest distinct menus side by side, or one list when there are too few to split. */
-export function MenuEnds({ cheapest, priciest, median, chainCount }: { cheapest: Menu[]; priciest: Menu[]; median: number | null; chainCount?: ChainCount }) {
+/** A ranking page a card list leads to: its path and what "See all" means there ("cheapest burgers in NYC"). */
+export type SeeAll = { href: string; what: string };
+
+/** "See all" under a card list, naming the list for screen readers (the visible words stay in the name). */
+function SeeAllLink({ to }: { to: SeeAll }) {
+  return (
+    <p className="mt-auto pt-4">
+      <Link href={to.href} className="link t-ui-m inline-flex items-center gap-1.5">
+        See all<span className="sr-only"> {to.what}</span>
+        <ArrowRight className="size-4" strokeWidth={2} aria-hidden="true" />
+      </Link>
+    </p>
+  );
+}
+
+/**
+ * Cheapest and priciest distinct menus side by side, or one list when there are too few to split.
+ * `seeAll`: the ranking pages each list leads to (the single list leads to the cheapest).
+ */
+export function MenuEnds({
+  cheapest,
+  priciest,
+  median,
+  chainCount,
+  seeAll,
+}: {
+  cheapest: Menu[];
+  priciest: Menu[];
+  median: number | null;
+  chainCount?: ChainCount;
+  seeAll?: { cheapest: SeeAll; priciest: SeeAll };
+}) {
   const lists = menuEndsLists(cheapest, priciest);
   // Two lists of four only when they can't overlap; otherwise every menu once, cheapest first.
   if (lists.length === 2) {
     return (
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
         {lists.map((list, l) => (
-          <div key={list.title} className="min-w-0">
+          // A column: the "See all" links sit level at the foot of both lists.
+          <div key={list.title} className="flex min-w-0 flex-col">
             <h3 className="t-label muted">{list.title}</h3>
             <ul className="mt-3 grid gap-3 sm:grid-cols-2">
               {list.menus.map((m, i) => (
@@ -115,6 +147,7 @@ export function MenuEnds({ cheapest, priciest, median, chainCount }: { cheapest:
                 </li>
               ))}
             </ul>
+            {seeAll ? <SeeAllLink to={l === 0 ? seeAll.cheapest : seeAll.priciest} /> : null}
           </div>
         ))}
       </div>
@@ -136,6 +169,7 @@ export function MenuEnds({ cheapest, priciest, median, chainCount }: { cheapest:
           </li>
         ))}
       </ul>
+      {seeAll ? <SeeAllLink to={seeAll.cheapest} /> : null}
     </div>
   );
 }

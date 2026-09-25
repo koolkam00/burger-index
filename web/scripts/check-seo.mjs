@@ -7,7 +7,10 @@
 // Every HTML page: one <title>, a meta description, an absolute self-referencing canonical, one <h1>,
 // no skipped heading level, <img> alt text, JSON-LD that parses, has the expected @types and restates
 // the page (names, prices, breadcrumbs, list order), and no Review / Rating / AggregateRating
-// anywhere. Titles and descriptions unique. The sitemap lists exactly the pages; robots.txt, llms.txt
+// anywhere. Ranking pages: the table, its ranks and prices and its ItemList equal a ranking recomputed
+// here from the dataset (distinct menus, a chain once). Q&A blocks: the FAQPage JSON-LD says word for
+// word what the block shows, and home, borough and neighborhood pages have one. The footer carries the
+// source line and the NYC ranking links on every page. Titles and descriptions unique. The sitemap lists exactly the pages; robots.txt, llms.txt
 // (every link resolves) and the CSV (one row per priced restaurant, equal to the dataset) are checked,
 // and so is every internal link (no broken targets, no page without an inbound link).
 // Exit 1 on any error; warnings are printed and don't fail.
@@ -95,6 +98,46 @@ function deepUrls(value, acc = []) {
   return acc;
 }
 const money = (v) => `$${v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const cents = (v) => Math.round(v * 100);
+
+// ---- rankings, recomputed from the dataset (independently of src/lib/rankings.ts) ------------------
+
+const BOROUGH_BY_SLUG = { manhattan: "Manhattan", brooklyn: "Brooklyn", queens: "Queens", bronx: "Bronx", "staten-island": "Staten Island" };
+const RANKING_PATH = /^\/(?:(cheapest-burgers|most-expensive-burgers)(?:\/([a-z-]+))?|burgers-under-(\d+))$/;
+const CITY_RANKING_PATHS = ["/cheapest-burgers", "/most-expensive-burgers", "/burgers-under-15", "/burgers-under-20"];
+
+/** Distinct menus in dataset order: a chain once (its first priced location), with its location count. */
+function distinctMenus(list) {
+  const byKey = new Map();
+  for (const r of list) {
+    const key = r.chain ? `chain:${r.chain}` : r.id;
+    if (byKey.has(key)) byKey.get(key).locations += 1;
+    else byKey.set(key, { key, r, price: r.index_price, locations: 1 });
+  }
+  return [...byKey.values()];
+}
+const byKeyOrder = (a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
+function expectedRanking(path) {
+  const m = RANKING_PATH.exec(path);
+  if (!m) return null;
+  const [, list, slug, under] = m;
+  if (slug && !BOROUGH_BY_SLUG[slug]) return { error: `unknown borough ${slug}` };
+  const scope = slug ? priced.filter((r) => r.borough === BOROUGH_BY_SLUG[slug]) : priced;
+  const desc = list === "most-expensive-burgers";
+  let menus = distinctMenus(scope).sort((a, b) => (desc ? b.price - a.price : a.price - b.price) || a.r.name.localeCompare(b.r.name) || byKeyOrder(a, b));
+  if (under) menus = menus.filter((x) => cents(x.price) < +under * 100);
+  const total = menus.length;
+  const rows = under ? menus : menus.slice(0, 25);
+  let rank = 0;
+  rows.forEach((x, i) => {
+    if (i === 0 || cents(x.price) !== cents(rows[i - 1].price)) rank = i + 1;
+    x.rank = rank;
+  });
+  return { rows, total, desc };
+}
+
+const month = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "long", year: "numeric" }).format(new Date(data.generated_at));
+const SOURCE_LINE = `Prices from restaurant menus and ordering pages, checked ${month}.`;
 
 // ---- pages ---------------------------------------------------------------------------------------
 
@@ -255,7 +298,7 @@ for (const p of pages) {
       });
     }
   } else {
-    checkBreadcrumbs(p, /^\/(restaurants|neighborhoods|boroughs)\//.test(path));
+    checkBreadcrumbs(p, /^\/(restaurants|neighborhoods|boroughs)\//.test(path) || RANKING_PATH.test(path));
   }
 
   const rest = /^\/restaurants\/([^/]+)$/.exec(path);
@@ -289,6 +332,65 @@ for (const p of pages) {
     const rows = [...table.matchAll(/<th scope="row"[^>]*>\s*<a\b[^>]*href="(\/restaurants\/[^"]+)"[^>]*>(.*?)<\/a>/gs)].map((m) => ({ name: text(m[2]), path: decode(m[1]) }));
     checkItemList(p, one(p, "ItemList"), rows, "restaurant table");
   }
+  const ranking = expectedRanking(path);
+  if (ranking?.error) err(`${path}: ${ranking.error}`);
+  else if (ranking) {
+    const h1 = text((/<h1[^>]*>(.*?)<\/h1>/s.exec(html) ?? ["", ""])[1]);
+    const table = /<table class="data-table ranking-table">(.*?)<\/table>/s.exec(html)?.[1] ?? "";
+    const trs = [...(/<tbody>(.*?)<\/tbody>/s.exec(table)?.[1] ?? "").matchAll(/<tr\b[^>]*>(.*?)<\/tr>/gs)].map(([, tr]) => {
+      const link = /<th scope="row"[^>]*>\s*<a\b[^>]*href="(\/restaurants\/[^"]+)"[^>]*>(.*?)<\/a>/s.exec(tr);
+      return {
+        rank: +(/<td class="num rank-col[^"]*">(\d+)<\/td>/.exec(tr)?.[1] ?? NaN),
+        path: link ? decode(link[1]) : null,
+        name: link ? text(link[2]) : null,
+        price: text(/<span class="t-num-m">(.*?)<\/span>/s.exec(tr)?.[1] ?? ""),
+      };
+    });
+    const list = one(p, "ItemList");
+    checkItemList(p, list, trs, "ranking table");
+    if (list && list.name !== h1.replace(/\.$/, "")) err(`${path}: ItemList "${list.name}" ≠ h1 "${h1}"`);
+    if (list && list.itemListOrder !== `https://schema.org/ItemListOrder${ranking.desc ? "Descending" : "Ascending"}`) err(`${path}: ItemList order ${list.itemListOrder}`);
+    const want = ranking.rows.map((x) => ({ rank: x.rank, path: `/restaurants/${x.r.id}`, name: x.r.name, price: money(x.price) }));
+    const fmt = (rows) => rows.map((x) => `${x.rank}. ${x.name} <${x.path}> ${x.price}`).join("\n");
+    if (fmt(trs) !== fmt(want)) err(`${path}: ranking table differs from the dataset:\n    page    ${fmt(trs).split("\n").slice(0, 3).join(" | ")}…\n    dataset ${fmt(want).split("\n").slice(0, 3).join(" | ")}…`);
+    const lede = text(/<p class="t-lede[^"]*">(.*?)<\/p>/s.exec(html)?.[1] ?? "");
+    const top = ranking.rows[0];
+    if (top && !(lede.includes(top.r.name) && lede.includes(money(top.price)) && lede.includes(`(${month})`))) err(`${path}: lede "${lede}" does not name ${top.r.name}, ${money(top.price)} and ${month}`);
+    // How many there are, under the table ("The 25 cheapest of 532 burgers in NYC.", "All 90 burgers under $15 …").
+    const n = (v) => v.toLocaleString("en-US");
+    const countLine = text(/<\/table>\s*<\/div>\s*<p class="t-ui-s muted mt-3">(.*?)<\/p>/s.exec(html)?.[1] ?? "");
+    const wantCount = /under/.test(path) ? `All ${n(ranking.rows.length)} burgers under` : `The ${n(ranking.rows.length)} ${ranking.desc ? "most expensive" : "cheapest"} of ${n(ranking.total)} burgers`;
+    if (ranking.rows.length > 1 && !countLine.startsWith(wantCount)) err(`${path}: count line "${countLine}", expected "${wantCount} …"`);
+    p.rankingRows = trs.length;
+  }
+
+  // Q&A block and its FAQPage: same questions, same words, same order.
+  const faqs = ofType(p, "FAQPage");
+  const qa = /<dl class="qa[^"]*">(.*?)<\/dl>/s.exec(html);
+  const visibleQa = qa ? [...qa[1].matchAll(/<dt\b[^>]*>(.*?)<\/dt>\s*<dd\b[^>]*>(.*?)<\/dd>/gs)].map((m) => ({ q: text(m[1]), a: text(m[2]) })) : [];
+  const needsFaq = path === "/" || /^\/(boroughs|neighborhoods)\/[^/]+$/.test(path);
+  if (faqs.length > 1) err(`${path}: ${faqs.length} FAQPage nodes`);
+  if (needsFaq && !faqs.length) err(`${path}: no FAQPage`);
+  if (!faqs.length && visibleQa.length) err(`${path}: a Q&A block without FAQPage JSON-LD`);
+  if (faqs.length === 1) {
+    const marked = (faqs[0].mainEntity ?? []).map((e) => {
+      if (e["@type"] !== "Question" || e.acceptedAnswer?.["@type"] !== "Answer") err(`${path}: FAQPage entry is not Question → Answer`);
+      return { q: e.name, a: e.acceptedAnswer?.text };
+    });
+    const show = (list) => list.map((x) => `Q: ${x.q}\n      A: ${x.a}`).join("\n      ");
+    if (JSON.stringify(marked) !== JSON.stringify(visibleQa)) err(`${path}: FAQPage ≠ the visible Q&A:\n      ${show(marked)}\n    visible:\n      ${show(visibleQa)}`);
+    // Spot-check the first answer's number against the dataset.
+    const area = path === "/" ? data.stats : /^\/boroughs\//.test(path) ? data.boroughs.find((b) => `/boroughs/${b.slug}` === path) : data.neighborhoods.find((n) => `/neighborhoods/${n.slug}` === path);
+    if (area?.index_median != null && visibleQa[0] && !visibleQa[0].a.includes(money(area.index_median))) err(`${path}: first answer lacks the median ${money(area.index_median)}: ${visibleQa[0].a}`);
+    p.faqs = visibleQa.length;
+  }
+
+  // Footer: the source line and the NYC ranking links, on every page; home also has the line by the board.
+  const footer = text(/<footer\b[^>]*>(.*?)<\/footer>/s.exec(html)?.[1] ?? "");
+  if (!footer.includes(SOURCE_LINE)) err(`${path}: footer lacks "${SOURCE_LINE}"`);
+  for (const r of CITY_RANKING_PATHS) if (!html.includes(`href="${r}"`)) err(`${path}: no link to ${r}`);
+  if (path === "/" && !text(/<section class="hero[^"]*"[^>]*>(.*?)<\/section>/s.exec(html)?.[1] ?? "").includes(SOURCE_LINE)) err("/: no source line near the board");
+
   if (path === "/neighborhoods") {
     const section = /<section[^>]*aria-label="Ranked neighborhoods"[^>]*>(.*?)<\/section>/s.exec(html)?.[1] ?? "";
     const rows = [...section.matchAll(/<th scope="row"[^>]*>.*?<a\b[^>]*href="(\/neighborhoods\/[^"]+)"[^>]*>(.*?)<\/a>/gs)].map((m) => ({ name: text(m[2]), path: decode(m[1]) }));
@@ -409,6 +511,9 @@ for (const [path] of orphans) warn(`${path}: no inbound link from another page's
 
 console.log(`site ${site} · ${pages.length} pages · sitemap ${locs.length} URLs · CSV ${csvRows.length} rows · llms.txt ${llmsLinks.length} links`);
 console.log(`JSON-LD nodes: ${[...typeCounts].map(([t, n]) => `${t} ${n}`).join(", ")}`);
+const rankingPages = pages.filter((p) => p.rankingRows !== undefined);
+console.log(`ranking pages: ${rankingPages.length} (${rankingPages.map((p) => `${p.path} ${p.rankingRows}`).join(", ")})`);
+console.log(`Q&A blocks: ${pages.filter((p) => p.faqs).length} pages, ${pages.reduce((n, p) => n + (p.faqs ?? 0), 0)} questions`);
 console.log(`title lengths: min ${Math.min(...tl)}, max ${Math.max(...tl)}, ${tl.filter((n) => n > 60).length} over 60 · ${histogram(tl, [40, 50, 60, 70, 80])}`);
 console.log(`description lengths: min ${Math.min(...dl)}, max ${Math.max(...dl)} · ${histogram(dl, [100, 120, 140, 150, 160])}`);
 for (const w of warnings.slice(0, 40)) console.log(`  ⚠ ${w}`);

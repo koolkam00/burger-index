@@ -12,6 +12,11 @@ export const NAV: readonly NavItem[] = [
   { href: "/neighborhoods", label: "Neighborhoods" },
 ];
 
+/** The ranking pages' paths (lib/rankings.ts rankingPath): /cheapest-burgers[/borough], /most-expensive-burgers[/borough], /burgers-under-N. */
+export function isRankingPath(pathname: string): boolean {
+  return /^\/(cheapest-burgers|most-expensive-burgers|burgers-under-\d+)(\/|$)/.test(pathname);
+}
+
 /** Where the borough comparison lives since /boroughs was folded into the home page (breadcrumbs). */
 export const BOROUGHS_HREF = "/#boroughs";
 

@@ -132,6 +132,23 @@ export function itemListNode(site: string, list: { name: string; entries: readon
   };
 }
 
+export type FaqEntry = { question: string; answer: string };
+
+/**
+ * A page's Q&A block as FAQPage: each question and its answer, word for word as the page shows them
+ * (components/QandA.tsx builds both from one list, so the markup restates the page and nothing more).
+ */
+export function faqPageNode(entries: readonly FaqEntry[]): JsonLdNode {
+  return {
+    "@type": "FAQPage",
+    mainEntity: entries.map((e) => ({
+      "@type": "Question",
+      name: e.question,
+      acceptedAnswer: { "@type": "Answer", text: e.answer },
+    })),
+  };
+}
+
 // ---- restaurants ---------------------------------------------------------------------------------
 
 /** Money as schema.org wants it: a plain decimal string with a dot ("15.99", "20.00"). */

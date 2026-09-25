@@ -9,9 +9,11 @@ import { ChartFigure } from "@/components/charts/ChartFigure";
 import { PriceDistribution } from "@/components/charts/PriceDistribution";
 import { AreaTable, RangePlot } from "@/components/charts/RangePlot";
 import { Letterboard } from "@/components/Letterboard";
+import { QandA } from "@/components/QandA";
 import { MENU_ENDS_SPLIT, MenuEnds } from "@/components/RestaurantBits";
 import { Buoy, Net, Spatula } from "@/components/icons/nautical";
 import { BoroughDot, DetailOverline, PageHeader, SectionHeading } from "@/components/ui";
+import { boroughFaq } from "@/lib/answers";
 import { BOROUGH_META, boroughInProse } from "@/lib/boroughs";
 import {
   getBorough,
@@ -27,6 +29,7 @@ import { formatDate, formatPrice, pluralize, spreadEnds } from "@/lib/format";
 import { breadcrumbNode } from "@/lib/jsonld";
 import { isRankable, menuBreakdown, menuIndexPrices, menusByIndexPrice, menusByIndexPriceDesc, type Menu } from "@/lib/menus";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
+import { boroughRankings, rankingNameInSentence, rankingPath, rankMenus, topTied } from "@/lib/rankings";
 import { boroughSeo, type NamedPrice } from "@/lib/seo";
 import { BOROUGHS_HREF } from "@/lib/site";
 
@@ -78,6 +81,21 @@ export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug
   // Ranked: the board carries the median and the menu count; otherwise the lede and a Median tile do.
   const showBoard = priced && isRankable(c, s.index_median);
   const crumbs = [{ href: BOROUGHS_HREF, label: "Boroughs" }, { label: b.name }];
+  // The borough's two ranking pages (cheapest, most expensive): the cards' "See all" and the answers link there.
+  const [cheapestList, priciestList] = boroughRankings(b);
+  const faq = priced
+    ? boroughFaq({
+        generatedAt: getGeneratedAt(),
+        borough: { name: b.name, slug: b.slug },
+        median: s.index_median,
+        cityMedian: median,
+        menus: c.menus,
+        cheapest: topTied(rankMenus(restaurants, cheapestList).rows),
+        priciest: topTied(rankMenus(restaurants, priciestList).rows),
+        neighborhoods: ranked.map((n) => ({ name: n.name, href: `/neighborhoods/${n.slug}`, median: n.index_median as number })),
+        ranking: { cheapest: cheapestList, priciest: priciestList },
+      })
+    : [];
 
   return (
     <>
@@ -153,7 +171,16 @@ export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug
         {cheapest.length ? (
           <section className="section" aria-labelledby="ends">
             <SectionHeading id="ends" kicker="Catch of the day" icon={Net} title={cheapest.length >= MENU_ENDS_SPLIT ? `The cheapest and priciest in ${where}.` : `Every priced menu in ${where}.`} />
-            <MenuEnds cheapest={cheapest} priciest={priciest} median={median} chainCount={{ noun: `${b.name} location` }} />
+            <MenuEnds
+              cheapest={cheapest}
+              priciest={priciest}
+              median={median}
+              chainCount={{ noun: `${b.name} location` }}
+              seeAll={{
+                cheapest: { href: rankingPath(cheapestList), what: rankingNameInSentence(cheapestList) },
+                priciest: { href: rankingPath(priciestList), what: rankingNameInSentence(priciestList) },
+              }}
+            />
             <p className="mt-6">
               <Link href={`/burgers?borough=${b.slug}`} className="btn btn-secondary">
                 Every burger in {where}
@@ -162,6 +189,8 @@ export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug
             </p>
           </section>
         ) : null}
+
+        <QandA items={faq} />
       </div>
     </>
   );
