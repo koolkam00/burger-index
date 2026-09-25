@@ -17,12 +17,13 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
 from . import config, corrections
 from .api import Api, CreditLedger, DiskCache, estimate_credits, last_known_balance, lifetime_spend, looks_like_pdf
-from .build import assemble, write_dataset
+from .build import dataset, restaurant_rows, write_dataset
 from .chains import build_targets, select_targets
 from .context_client import scrape_request
 from .discover import OFFICIAL, OVERRIDE_ORIGIN, candidate_category
@@ -204,32 +205,28 @@ def cmd_plan(args) -> int:
     return 0
 
 
-def _build(targets, meta, *, output: Path, report: dict | None = None) -> dict:
+def _build(targets, *, output: Path) -> dict:
     api = Api(DiskCache(config.CACHE_DIR), offline=True)
     results, pending = replay(targets, api, history=transient_history(config.RUN_LOG_PATH))
-    dataset = assemble(targets, results, meta=meta, n_pending_restaurants=sum(len(t.members) for t in pending),
-                       corrections=corrections.load(), report=report)
-    write_dataset(dataset, output, config.CONTRACT_PATH)
-    s = dataset["stats"]
-    summary = {
+    rows = restaurant_rows(targets, results, corrections=corrections.load())
+    data = dataset(rows)
+    write_dataset(data, output, config.CONTRACT_PATH)
+    return {
         "written": str(output),
-        "restaurants": s["restaurants_scanned"],
-        "restaurants_priced": s["restaurants_priced"],
-        "burgers_priced": s["burgers"],
-        "index_median": s["index_median"],
+        "restaurants": len(rows),
+        "restaurants_priced": data["stats"]["restaurants_priced"],
+        "index_median": data["stats"]["index_median"],
+        "hand_checked": sum(1 for r in rows if r["hand_check"]),
         "targets_built": len(results),
         "targets_not_yet_scraped": len(pending),
-        "statuses": {},
+        "statuses": dict(Counter(r["status"] for r in rows)),
     }
-    for r in dataset["restaurants"]:
-        summary["statuses"][r["status"]] = summary["statuses"].get(r["status"], 0) + 1
-    return summary
 
 
 def cmd_build(args) -> int:
-    restaurants, report, meta = _scope(args, offline=True)
+    restaurants, _, _ = _scope(args, offline=True)
     targets = build_targets(restaurants)
-    summary = _build(targets, meta, output=Path(args.output) if args.output else config.OUTPUT_PATH, report=report)
+    summary = _build(targets, output=Path(args.output) if args.output else config.OUTPUT_PATH)
     log(f"build: {summary['restaurants']} restaurants ({summary['restaurants_priced']} priced) -> {summary['written']}; "
         f"{summary['targets_not_yet_scraped']} targets not yet scraped")
     _print(summary)
@@ -237,7 +234,7 @@ def cmd_build(args) -> int:
 
 
 def cmd_run(args) -> int:
-    restaurants, report, meta = _scope(args)
+    restaurants, _, _ = _scope(args)
     targets = build_targets(restaurants)
     selected = select_targets(targets, only=args.only, limit=args.limit)
     if not selected:
@@ -257,7 +254,7 @@ def cmd_run(args) -> int:
     if summary["capped"]:
         log(f"run: stopped at --max-credits {args.max_credits}; finished targets are cached and kept")
     if not args.no_build:
-        summary["build"] = _build(targets, meta, output=config.OUTPUT_PATH, report=report)
+        summary["build"] = _build(targets, output=config.OUTPUT_PATH)
     _print(summary)
     return 1 if summary["fatal"] else 0
 

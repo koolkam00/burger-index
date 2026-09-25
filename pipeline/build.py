@@ -1,4 +1,10 @@
-"""Assemble data/burger_index.json from target results, validate it against the contract."""
+"""Assemble data/burger_index.json from target results, validate it against the contract.
+
+Two steps: `restaurant_rows` turns the scraped (and hand-corrected) results into one row per
+restaurant location, with the pipeline's own status next to everything the dataset publishes;
+`dataset` computes the stats and area summaries from those rows and publishes each row in the
+contract's shape (a priced restaurant in full, an unpriced one as a name the site lists).
+"""
 
 from __future__ import annotations
 
@@ -8,50 +14,46 @@ import os
 import statistics
 import threading
 from collections import Counter, defaultdict
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable
 from datetime import datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
+from typing import TypedDict
 
 from . import config, extract
 from . import corrections as corrections_mod
 from .chains import Target, is_airport
-from .discover import host_of
-from .models import AreaSummary, Burger, BurgerIndex, Restaurant, Stats
+from .models import AreaSummary, Burger, BurgerIndex, HandCheck, PriceSource, Restaurant, Stats
 from .names import slugify
-from .sources import NTA_DISPLAY_OVERRIDES
 
-INDEX_PRICE_RULE = (
-    "Each restaurant is represented by one burger: its highest-priced beef burger, and that burger's price is "
-    "the restaurant's index price. It is one burger for one person, by itself (no combo or meal deal, no drink, "
-    "no add-ons), at its listed dinner or all-day menu price; doubles, triples, specialty burgers and burger clubs "
-    "count. Lunch, brunch or late-night prices count only when no beef burger on the menu has a dinner or all-day "
-    "price; happy-hour prices are left out. Group platters and items for several people, combos (a drink or beer "
-    "included), eating challenges, kids' items, diners' bunless diet plates and hot dogs never count; a Deluxe or "
-    "with-fries version counts at the plain burger's price when the menu lists both; plates of sliders or twin "
-    "burgers count only when the menu has no other beef burger. When the only price found is a delivery-app or "
-    "online-ordering price, that price is used, although it usually runs above the in-store price. "
-    "The Burger Index is the median index price across distinct menus: every independent "
-    "restaurant counts once and each chain counts once, however many locations it has (they share one scraped "
-    "menu). Borough and neighborhood figures count a chain at most once per area."
-)
-# methodology.sources: our list first, then what each dataset supplies (sources() words DOHMH's part
-# from the scope: with the list only, DOHMH adds no restaurants).
-LIST_SOURCE = "The Burger Index restaurant list: a curated list of NYC burger restaurants."
-DOHMH_SOURCE = "NYC DOHMH Restaurant Inspection Results (NYC Open Data 43nn-pn8j)"
-DOHMH_MATCHED = "addresses, coordinates, neighborhoods and cuisine for the restaurants on our list that match its records"
-NTA_SOURCE = (
-    "2010 Neighborhood Tabulation Areas (NYC Open Data 8ius-dhrr): neighborhood names, a few relabeled to current "
-    "usage (" + ", ".join(f"{code} as {name}" for code, name in NTA_DISPLAY_OVERRIDES.items()) + ")."
-)
-MENU_SOURCE = (
-    "Menu prices from each restaurant's own site or menu PDF, online-ordering pages, menu aggregators and "
-    "delivery apps, read with Context.dev web scraping."
-)
-NO_SINGLE_BURGER_NOTE = ("Its priced beef burgers are all group platters or combo meals, so it has no single-burger "
-                         "price for the index.")
-# How many excluded national chains coverage_note names (most locations on the list first).
-NATIONAL_EXAMPLES = 4
+# The contract's two restaurant shapes (models.PricedRestaurant, models.UnpricedRestaurant), in field order.
+PRICED_FIELDS = ("id", "name", "chain", "address", "borough", "neighborhood", "neighborhood_slug", "lat", "lng",
+                 "website", "menu_url", "price_source", "index_price", "burger", "hand_check")
+UNPRICED_FIELDS = ("id", "name", "address", "neighborhood_slug", "index_price", "burger")
+
+
+class Row(TypedDict):
+    """One restaurant location as the build sees it: the published fields plus the pipeline's own
+    `key` (data/restaurants.json) and `status` (process.py's, after corrections and the one-burger
+    pick; the CLI counts them)."""
+
+    key: str
+    status: str
+    id: str
+    name: str
+    chain: str | None
+    address: str | None
+    borough: str
+    neighborhood: str | None
+    neighborhood_slug: str | None
+    lat: float | None
+    lng: float | None
+    website: str | None
+    menu_url: str | None
+    price_source: PriceSource | None
+    index_price: float | None
+    burger: Burger | None
+    hand_check: HandCheck | None
 
 
 class DatasetInvalid(RuntimeError):
@@ -106,24 +108,16 @@ def assign_restaurant_ids(rows: list[tuple[dict, str]]) -> list[str]:
     return final
 
 
-def make_burgers(restaurant_id: str, burgers: list[dict], priced: bool) -> tuple[list[Burger], float | None]:
+def top_burger(burgers: list[dict], priced: bool) -> tuple[Burger | None, float | None]:
     """One burger per restaurant (user decision, 2026-09-24): the restaurant's highest-priced eligible
-    beef burger (extract.top_item), which is also its index item and sets its index price. Nothing else
-    on the menu is published, and a restaurant without a priced eligible beef burger publishes none.
+    beef burger (extract.top_item), whose price is the restaurant's index price. Nothing else on the
+    menu is published, and a restaurant without a priced eligible beef burger publishes none.
     Happy-hour rows and items that are not burgers (a hot dog, a pet patty) are never picked."""
     idx = extract.top_item(burgers) if priced else None
     if idx is None:
-        return [], None
+        return None, None
     b = burgers[idx]
-    price = money(b["price"])
-    return [{
-        "id": f"{restaurant_id}--{slugify(b['name']) or 'burger'}",
-        "name": b["name"],
-        "price": price,
-        "description": b.get("description"),
-        "protein": b["protein"],
-        "is_index_item": True,
-    }], price
+    return {"name": b["name"], "description": b.get("description")}, money(b["price"])
 
 
 def drop_template_placeholders(res: dict) -> dict:
@@ -134,65 +128,41 @@ def drop_template_placeholders(res: dict) -> dict:
     keep = [b for b in burgers if not extract.is_template_placeholder(b)]
     if len(keep) == len(burgers):
         return res
-    n = len(burgers) - len(keep)
-    host = host_of(res["menu_url"]) if res.get("menu_url") else "unknown"
     if not keep:
-        return {**res, "status": "no_menu_found", "burgers": [], "menu_url": None, "price_source": None,
-                "scraped_at": None,
-                "status_detail": f"The page found ({host}) is an unedited website template: its {n} items are "
-                                 "placeholders ('This is an item on your menu'), so it is not a menu."}
+        return {**res, "status": "no_menu_found", "burgers": [], "menu_url": None, "price_source": None}
     kind = extract.classify_menu({"burgers": keep, "is_menu": True})
     status = res["status"] if res["status"] != "priced" or kind == "priced" else corrections_mod.STATUS_OF_KIND[kind]
-    note = f"{n} website-template placeholder item{'s' if n != 1 else ''} left out."
-    return {**res, "status": status, "burgers": keep,
-            "status_detail": " ".join(x for x in (res.get("status_detail"), note) if x)}
+    return {**res, "status": status, "burgers": keep}
 
 
-def menu_index_prices(restaurants: Iterable[Restaurant]) -> list[float]:
+def menu_index_prices(rows: Iterable[Row]) -> list[float]:
     """One index price per distinct menu, sorted: each chain once (its locations share one scraped
     menu), every other restaurant once. The index and every area median are computed over these."""
     per_menu: dict[str, float] = {}
-    for r in restaurants:
+    for r in rows:
         if r["index_price"] is not None:
             per_menu.setdefault(f"chain:{r['chain']}" if r["chain"] else r["id"], r["index_price"])
     return sorted(per_menu.values())
 
 
-def compute_stats(restaurants: list[Restaurant], menu_sources: set[str] | None = None) -> Stats:
-    """menu_sources: ids of the rows whose burgers stand for a distinct scraped menu (a chain's
-    source location, every other restaurant). The cheapest / priciest burger and the all-burgers
-    median are taken over them, so a chain's copied menu is counted once. Every restaurant publishes
-    at most one burger (make_burgers), so burgers == beef_burgers == restaurants_priced and the
-    all-burgers median equals the index median."""
-    idx_prices = menu_index_prices(restaurants)
-    priced_burgers = [(b["price"], b["id"]) for r in restaurants for b in r["burgers"] if b["price"] is not None]
-    beef = [p for r in restaurants for b in r["burgers"] if b["price"] is not None and b["protein"] == "beef"
-            for p in [b["price"]]]
-    distinct = [(b["price"], b["id"]) for r in restaurants if menu_sources is None or r["id"] in menu_sources
-                for b in r["burgers"] if b["price"] is not None] or priced_burgers
-    all_prices = sorted(p for p, _ in distinct)
-    cheapest = min(distinct, key=lambda t: (t[0], t[1]))[1] if distinct else None
-    priciest = min(distinct, key=lambda t: (-t[0], t[1]))[1] if distinct else None
+def compute_stats(rows: list[Row]) -> Stats:
+    """The Burger Index (median index price over distinct menus), its 10th and 90th percentiles, and
+    how many locations are priced."""
+    idx_prices = menu_index_prices(rows)
     return {
-        "restaurants_scanned": len(restaurants),
-        "restaurants_priced": sum(1 for r in restaurants if r["index_price"] is not None),
-        "burgers": len(priced_burgers),
-        "beef_burgers": len(beef),
+        "restaurants_priced": sum(1 for r in rows if r["index_price"] is not None),
         "index_median": money(statistics.median(idx_prices)) if idx_prices else None,
-        "index_mean": money(statistics.fmean(idx_prices)) if idx_prices else None,
         "index_p10": money(percentile(idx_prices, 0.10)),
         "index_p90": money(percentile(idx_prices, 0.90)),
-        "all_burgers_median": money(statistics.median(all_prices)) if all_prices else None,
-        "cheapest_burger_id": cheapest,
-        "priciest_burger_id": priciest,
     }
 
 
-def area_summaries(restaurants: list[Restaurant], level: str) -> list[AreaSummary]:
-    """level: 'borough' | 'neighborhood'. Only areas with >= 1 restaurant appear."""
-    groups: dict[str, list[Restaurant]] = defaultdict(list)
+def area_summaries(rows: list[Row], level: str) -> list[AreaSummary]:
+    """level: 'borough' | 'neighborhood'. Only areas with >= 1 restaurant appear, priced or not (the
+    site lists a neighborhood with nothing priced by name)."""
+    groups: dict[str, list[Row]] = defaultdict(list)
     names: dict[str, str] = {}
-    for r in restaurants:
+    for r in rows:
         if level == "borough":
             slug, name = slugify(r["borough"]), r["borough"]
         else:
@@ -209,9 +179,7 @@ def area_summaries(restaurants: list[Restaurant], level: str) -> list[AreaSummar
             "slug": slug,
             "name": names[slug],
             "borough": borough,
-            "restaurants": len(rs),
             "restaurants_priced": sum(1 for r in rs if r["index_price"] is not None),
-            "burgers": sum(1 for r in rs for b in r["burgers"] if b["price"] is not None),
             "index_median": money(statistics.median(prices)) if prices else None,
             "index_min": money(min(prices)) if prices else None,
             "index_max": money(max(prices)) if prices else None,
@@ -220,108 +188,24 @@ def area_summaries(restaurants: list[Restaurant], level: str) -> list[AreaSummar
     return out
 
 
-def _cuisines(meta: dict) -> list[str]:
-    """DOHMH cuisines added to the list (meta['cuisines']; [] = the list only)."""
-    return list(meta["cuisines"]) if isinstance(meta.get("cuisines"), list) else list(config.DEFAULT_CUISINES)
-
-
-def sources(meta: dict) -> list[str]:
-    """methodology.sources for this scope: the curated list first, then DOHMH, which only matches the
-    list's rows (address, coordinates, neighborhood, cuisine) unless --cuisines adds its restaurants."""
-    cuisines = _cuisines(meta)
-    if cuisines:
-        since = meta.get("min_inspection_date") or config.DEFAULT_MIN_INSPECTION
-        dohmh = (f"{DOHMH_SOURCE}: every restaurant it lists under '{', '.join(cuisines)}' with an inspection since "
-                 f"{since} (or not yet inspected), and {DOHMH_MATCHED}.")
-    else:
-        dohmh = f"{DOHMH_SOURCE}: {DOHMH_MATCHED}."
-    return [LIST_SOURCE, dohmh, NTA_SOURCE, MENU_SOURCE]
-
-
-def national_chain_examples(excluded: Mapping[str, int] | None, n: int = NATIONAL_EXAMPLES) -> str | None:
-    """'Shake Shack, Five Guys, McDonald's, White Castle and the like': the n national chains with the
-    most locations left out (report.national_chains_excluded: display name -> locations), or None."""
-    ranked = sorted((excluded or {}).items(), key=lambda kv: (-kv[1], kv[0].casefold()))
-    # web/src/lib/scope.ts reads the examples back as the text inside one pair of parentheses
-    names = [name for name, _ in ranked if "(" not in name and ")" not in name][:n]
-    return f"{', '.join(names)} and the like" if names else None
-
-
-def coverage_note(meta: dict, n_restaurants: int, n_pending: int, n_airport: int = 0, *,
-                  national_excluded: Mapping[str, int] | None = None, matched: int | None = None) -> str:
-    """n_restaurants: rows in the dataset; n_pending: restaurants in scope but not yet scraped;
-    national_excluded: report.national_chains_excluded (named as examples); matched: restaurants in
-    scope with a DOHMH record (said for the list-only scope, where every restaurant is a list row).
-
-    web/src/lib/scope.ts parses this note (its LIST_ONLY, WITH_CUISINES, NATIONAL and PENDING
-    patterns and the leading count): keep those phrases when rewording it."""
-    cuisines = ", ".join(_cuisines(meta))
-    in_scope = n_restaurants + n_pending
-    note = f"{in_scope} restaurant{'s' if in_scope != 1 else ''}{' in scope' if n_pending else ''}: "
-    if cuisines:
-        note += (f"our curated restaurant list plus every restaurant NYC DOHMH lists under '{cuisines}' with an "
-                 f"inspection since {meta.get('min_inspection_date') or config.DEFAULT_MIN_INSPECTION} "
-                 "(or not yet inspected)")
-    else:
-        note += ("our curated list of NYC burger restaurants, matched to NYC DOHMH inspection records for address "
-                 "and location where possible")
-        if matched is not None:
-            note += f" ({matched} of {in_scope})"
-    if (meta.get("national_chains") or config.DEFAULT_NATIONAL_CHAINS) == "exclude":
-        examples = national_chain_examples(national_excluded)
-        note += (", except national fast-food chains" + (f" ({examples})" if examples else "")
-                 + ". NYC's own small chains stay in. ")
-    else:
-        note += ". "
-    if n_pending:
-        note += f"{n_restaurants} of them are in this dataset; the other {n_pending} are not yet scraped. "
-    note += ("Chain locations share one menu price scraped from a single NYC location. "
-             "Delivery-app prices usually run above in-store prices.")
-    if n_airport:
-        note += (f" {n_airport} airport chain location{'s are' if n_airport != 1 else ' is'} listed without the "
-                 "chain's street price.")
-    return note
-
-
-def possessive(name: str) -> str:
-    """McDonald's -> McDonald's, Five Guys -> Five Guys', Checkers -> Checkers', Shake Shack -> Shake Shack's."""
-    if name.endswith("'s"):
-        return name
-    return f"{name}'" if name.endswith("s") else f"{name}'s"
-
-
-def airport_result(t: Target, res: dict) -> dict:
+def airport_result(res: dict) -> dict:
     """An airport location of a chain: concession prices differ, so the chain's menu is not copied."""
-    return {
-        "status": "no_menu_found",
-        "status_detail": f"Airport location: {possessive(t.name)} prices from its street locations are not applied here, "
-                         "and no airport menu has been read.",
-        "menu_url": None, "price_source": None, "website": res.get("website"), "scraped_at": None, "burgers": [],
-    }
+    return {"status": "no_menu_found", "menu_url": None, "price_source": None, "website": res.get("website"),
+            "burgers": []}
 
 
-def assemble(
-    targets: Iterable[Target],
-    results: dict[str, dict],
-    *,
-    meta: dict | None = None,
-    generated_at: str | None = None,
-    n_pending_restaurants: int = 0,
-    corrections: list[dict] | None = None,
-    report: dict | None = None,
-) -> BurgerIndex:
-    """corrections: hand-checked fixes (pipeline/corrections.py) applied on top of the scraped
-    results; the CLI passes pipeline/data/corrections.json, tests pass their own.
-    report: the match report from data/restaurants.json (national_chains_excluded names the chains
-    the coverage note gives as examples)."""
+def restaurant_rows(targets: Iterable[Target], results: dict[str, dict], *,
+                    corrections: list[dict] | None = None) -> list[Row]:
+    """One row per restaurant location with a result, sorted by id. corrections: hand-checked fixes
+    (pipeline/corrections.py) applied on top of the scraped results; the CLI passes
+    pipeline/data/corrections.json, tests pass their own."""
     results = {k: drop_template_placeholders(r) for k, r in corrections_mod.apply(results, corrections or []).items()}
     # Ids are assigned over every restaurant in scope, scraped or not, so an id does not change
-    # when a namesake in the same neighborhood gets scraped later (/restaurants/<id> permalinks).
+    # when a namesake in the same neighborhood gets scraped later (/restaurants/<id> permalinks,
+    # People's Price answers).
     everyone = [(m, t.name if t.chain else m["name"], t) for t in targets for m in t.members]
     all_ids = assign_restaurant_ids([(m, name) for m, name, _ in everyone])
-    restaurants: list[Restaurant] = []
-    menu_sources: set[str] = set()
-    n_airport = 0
+    rows: list[Row] = []
     for (m, name, t), rid in zip(everyone, all_ids, strict=True):
         res = results.get(t.key)
         if res is None:
@@ -329,91 +213,82 @@ def assemble(
         # the chain location whose menu was read (process.source_member); older results: the rep
         is_source = m["key"] == res["source_key"] if res.get("source_key") else m is t.rep
         if t.chain and not is_source and is_airport(m):
-            res = airport_result(t, res)
-            n_airport += 1
-        elif not t.chain or is_source:
-            menu_sources.add(rid)
-        status, detail = res["status"], res.get("status_detail")
-        burgers, index_price = make_burgers(rid, res["burgers"], priced=status == "priced")
+            res = airport_result(res)
+        status = res["status"]
+        burger, index_price = top_burger(res["burgers"], priced=status == "priced")
         if status == "priced" and index_price is None:
             # the page prices a beef burger (process.py), but only as a group platter or a combo
             status = "no_prices"
-            detail = " ".join(x for x in (detail, NO_SINGLE_BURGER_NOTE) if x)
         nb = m.get("neighborhood")
-        restaurants.append({
+        rows.append({
+            "key": m["key"],
+            "status": status,
             "id": rid,
-            "camis": m.get("camis"),
             "name": name,
             "chain": t.chain,
             "address": m.get("address"),
             "borough": m["borough"],
             "neighborhood": nb,
             "neighborhood_slug": (slugify(nb) or None) if nb else None,
-            "zipcode": m.get("zipcode"),
             "lat": m.get("lat"),
             "lng": m.get("lng"),
-            "cuisine": m.get("cuisine"),
             "website": m.get("website") or res.get("website"),
             "menu_url": res.get("menu_url"),
             "price_source": res.get("price_source"),
-            "status": status,
-            "status_detail": detail,
-            "scraped_at": res.get("scraped_at"),
             "index_price": index_price,
-            "burgers": burgers,
+            "burger": burger,
+            "hand_check": res.get("hand_check") if index_price is not None else None,
         })
-    restaurants.sort(key=lambda r: r["id"])
+    rows.sort(key=lambda r: r["id"])
+    return rows
+
+
+def publish(row: Row) -> Restaurant:
+    """A row in the contract's shape: a priced restaurant in full; an unpriced one only as the name the
+    site lists on its neighborhood's page."""
+    return {k: row[k] for k in (PRICED_FIELDS if row["index_price"] is not None else UNPRICED_FIELDS)}  # type: ignore[return-value]
+
+
+def dataset(rows: list[Row], *, generated_at: str | None = None) -> BurgerIndex:
+    """The contract's dataset: stats and area summaries over every row, and each row in its published shape."""
     generated_at = generated_at or datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
-    meta = meta or {}
-    note = coverage_note(meta, len(restaurants), n_pending_restaurants, n_airport,
-                         national_excluded=(report or {}).get("national_chains_excluded"),
-                         matched=sum(1 for m, _, _ in everyone if m.get("camis")))
     return {
-        "version": 1,
+        "version": 2,
         "generated_at": generated_at,
-        "currency": "USD",
-        "methodology": {
-            "index_price_rule": INDEX_PRICE_RULE,
-            "sources": sources(meta),
-            "coverage_note": note,
-        },
-        "stats": compute_stats(restaurants, menu_sources),
-        "boroughs": area_summaries(restaurants, "borough"),
-        "neighborhoods": area_summaries(restaurants, "neighborhood"),
-        "restaurants": restaurants,
+        "stats": compute_stats(rows),
+        "boroughs": area_summaries(rows, "borough"),
+        "neighborhoods": area_summaries(rows, "neighborhood"),
+        "restaurants": [publish(r) for r in rows],
     }
 
 
-def validate(dataset: dict, schema_path: Path = config.CONTRACT_PATH) -> None:
+def assemble(targets: Iterable[Target], results: dict[str, dict], *, generated_at: str | None = None,
+             corrections: list[dict] | None = None) -> BurgerIndex:
+    """The dataset for these targets' results (restaurant_rows, then dataset)."""
+    return dataset(restaurant_rows(targets, results, corrections=corrections), generated_at=generated_at)
+
+
+def validate(data: dict, schema_path: Path = config.CONTRACT_PATH) -> None:
     """Raise DatasetInvalid listing every contract violation (JSON Schema 2020-12 + formats)."""
     import jsonschema
 
     schema = json.loads(Path(schema_path).read_text())
     validator = jsonschema.Draft202012Validator(schema, format_checker=jsonschema.Draft202012Validator.FORMAT_CHECKER)
-    errors = sorted(validator.iter_errors(dataset), key=lambda e: list(e.absolute_path))
-    ids = [r["id"] for r in dataset.get("restaurants", [])]
-    burger_ids = [b["id"] for r in dataset.get("restaurants", []) for b in r["burgers"]]
+    errors = sorted(validator.iter_errors(data), key=lambda e: list(e.absolute_path))
     problems = [f"{'/'.join(map(str, e.absolute_path)) or '<root>'}: {e.message}" for e in errors[:25]]
+    ids = [r["id"] for r in data.get("restaurants", []) if isinstance(r, dict) and "id" in r]
     if len(set(ids)) != len(ids):
         problems.append("restaurant ids are not unique")
-    if len(set(burger_ids)) != len(burger_ids):
-        problems.append("burger ids are not unique")
-    for r in dataset.get("restaurants", []):
-        n_index = sum(1 for b in r["burgers"] if b["is_index_item"])
-        if (r["index_price"] is not None) != (n_index == 1) or n_index > 1:
-            problems.append(f"{r['id']}: index_price/is_index_item mismatch")
-        if r["index_price"] is not None and r["status"] != "priced":
-            problems.append(f"{r['id']}: index_price set but status is {r['status']}")
     if problems:
         more = f" (+{len(errors) - 25} more)" if len(errors) > 25 else ""
         raise DatasetInvalid("dataset violates the contract:\n  " + "\n  ".join(problems) + more)
 
 
-def write_dataset(dataset: dict, path: Path = config.OUTPUT_PATH, schema_path: Path = config.CONTRACT_PATH) -> Path:
-    validate(dataset, schema_path)
+def write_dataset(data: dict, path: Path = config.OUTPUT_PATH, schema_path: Path = config.CONTRACT_PATH) -> Path:
+    validate(data, schema_path)
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(f".{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
-    tmp.write_text(json.dumps(dataset, indent=1, ensure_ascii=False) + "\n")
+    tmp.write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n")
     os.replace(tmp, path)
     return path

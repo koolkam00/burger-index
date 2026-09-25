@@ -5,7 +5,7 @@ import { MapShell } from "@/components/map/MapShell";
 import { RestaurantTable } from "@/components/RestaurantBits";
 import { CompassRose } from "@/components/icons/nautical";
 import { PageHeader, PriceChip, SectionHeading } from "@/components/ui";
-import { getIndexBurger, getPricedRestaurants, getStats } from "@/lib/data";
+import { getPricedRestaurants, getStats } from "@/lib/data";
 import { formatCount, pluralize } from "@/lib/format";
 import { pageMetadata } from "@/lib/metadata";
 import { binFor } from "@/lib/price-bins";
@@ -29,8 +29,8 @@ export default function MapPage() {
     id: r.id,
     name: r.name,
     where: r.neighborhood ? `${r.neighborhood}, ${r.borough}` : r.borough,
-    burger: getIndexBurger(r)?.name ?? "",
-    price: r.index_price as number,
+    burger: r.burger.name,
+    price: r.index_price,
     lat: r.lat as number,
     lng: r.lng as number,
     delivery: r.price_source === "delivery_app",

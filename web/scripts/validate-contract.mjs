@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Validates a Burger Index dataset against contract/burger_index.schema.json (JSON Schema 2020-12,
-// with formats) plus the invariants pipeline/build.py enforces (unique ids, one index item per
-// priced restaurant). The zod schema in src/lib/schema.ts checks the same shape again at build.
+// with formats) plus the invariant pipeline/build.py enforces beyond the schema (unique restaurant
+// ids). The zod schema in src/lib/schema.ts checks the same shape again at build.
 //
 //   node scripts/validate-contract.mjs [path/to/dataset.json]   (default: ../data/burger_index.json)
 
@@ -29,13 +29,6 @@ export function validateDataset(dataset) {
   }
   const ids = dataset.restaurants.map((r) => r.id);
   if (new Set(ids).size !== ids.length) problems.push("restaurant ids are not unique");
-  const burgerIds = dataset.restaurants.flatMap((r) => r.burgers.map((b) => b.id));
-  if (new Set(burgerIds).size !== burgerIds.length) problems.push("burger ids are not unique");
-  for (const r of dataset.restaurants) {
-    const nIndex = r.burgers.filter((b) => b.is_index_item).length;
-    if ((r.index_price !== null) !== (nIndex === 1) || nIndex > 1) problems.push(`${r.id}: index_price/is_index_item mismatch`);
-    if (r.index_price !== null && r.status !== "priced") problems.push(`${r.id}: index_price set but status is ${r.status}`);
-  }
   return problems;
 }
 

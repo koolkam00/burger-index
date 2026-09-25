@@ -1,7 +1,7 @@
 import { Scales } from "@/components/icons/nautical";
 import { PageHeader } from "@/components/ui";
 import { PeoplesPriceBoard } from "@/components/worth/PeoplesPriceBoard";
-import { getMenuCounts, getRestaurants, getStats } from "@/lib/data";
+import { getMenuCounts, getPricedRestaurants, getStats } from "@/lib/data";
 import { pageMetadata } from "@/lib/metadata";
 import { worthMenus } from "@/lib/worth";
 
@@ -17,7 +17,7 @@ export const metadata = pageMetadata({
  * answers in the browser.
  */
 export default function PeoplesPricePage() {
-  const menus = worthMenus(getRestaurants());
+  const menus = worthMenus(getPricedRestaurants());
   return (
     <>
       <PageHeader

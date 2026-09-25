@@ -5,7 +5,16 @@ The price of every burger at NYC restaurants. Two halves joined by one JSON file
 - **`pipeline/`** (Python 3.12 venv at `.venv/`; `.venv/bin/pip install -r requirements.txt`) writes
   **`data/burger_index.json`**, which must validate against **`contract/burger_index.schema.json`** (the output
   contract; `additionalProperties: false` everywhere — do not change it casually; `pipeline/models.py` and
-  `web/src/lib/schema.ts` (zod) mirror it, so a contract change means updating all three).
+  `web/src/lib/schema.ts` (zod) mirror it, so a contract change means updating all three). **Version 2
+  (2026-09-25) carries only what the site reads:** `version`, `generated_at`, `stats` (`restaurants_priced`,
+  `index_median`, `index_p10`, `index_p90`), `boroughs`/`neighborhoods` (`slug`, `name`, `borough`,
+  `restaurants_priced`, `index_median`/`min`/`max`; every area with a restaurant, priced or not) and `restaurants`
+  in two shapes picked by `index_price`: a **priced** restaurant (`id`, `name`, `chain`, `address`, `borough`,
+  `neighborhood`, `neighborhood_slug`, `lat`, `lng`, `website`, `menu_url`, `price_source`, `index_price`,
+  `burger: {name, description}`, `hand_check: {checked_on} | null`) and an **unpriced** one, a name the site lists on
+  its neighborhood's page (`id`, `name`, `address`, `neighborhood_slug`, `index_price: null`, `burger: null`). Status,
+  scrape notes, DOHMH ids, cuisine and the like stay in the pipeline (`data/restaurants.json`,
+  `data/run_log.jsonl`).
 - **`web/`** (Next.js 16 static export, Node ≥ 20.9) copies that file in at build time and renders it to plain
   HTML in `web/out/`. No server code, no API keys. See "Website" below and `web/README.md`.
 
@@ -51,8 +60,8 @@ cancelled, in-flight ones make no further live call (exit 130, no build); finish
 | `api.py` | disk cache, credit ledger, `--max-credits`, rate gate around `context_client` |
 | `extract.py` | post-processing of the JSON extraction |
 | `process.py` | per-target workflow + ThreadPoolExecutor runner + `data/run_log.jsonl` |
-| `corrections.py` | hand-checked fixes from `pipeline/data/corrections.json` (per `target`: `set` / `drop` / `add` burgers, `price_source`, `withhold`; each with `source_url`, `reason`, `checked_at`), applied by `build` on top of the scraped results (cache untouched) — free, no API calls. Strict: `build` fails if one names a target or burger no longer in the scrape. A correction that publishes prices from another page (another host or `price_source`) replaces the scrape's `Prices from …` note (and its caveats) in `status_detail` with one naming that page, so it agrees with `menu_url`/`price_source`; a chain keeps its `Chain-level prices from one NYC location (…)` sentence |
-| `build.py` | ids, stats, area summaries, methodology, JSON-Schema validation |
+| `corrections.py` | hand-checked fixes from `pipeline/data/corrections.json` (per `target`: `set` / `drop` / `add` burgers, `price_source`, `withhold`; each with `source_url`, `reason`, `checked_at`), applied by `build` on top of the scraped results (cache untouched) — free, no API calls. Strict: `build` fails if one names a target or burger no longer in the scrape. The correction's `source_url` becomes `menu_url` (and its `price_source` the price source); a correction that leaves the restaurant priced records `hand_check: {checked_on: checked_at}`, published on every priced location it applies to (the site's "Prices corrected by hand" slip); a withheld one records none (the restaurant is unpriced). The `reason` is never published |
+| `build.py` | `restaurant_rows` (corrections, template rule, airport rule, the one burger, ids; each row keeps the pipeline's `status` for the CLI summary), then `dataset`: stats, area summaries and each row published in its contract shape (`publish`), JSON-Schema validation |
 | `cli.py` | `python -m pipeline …` |
 
 Per target: CSV `menu_url`, then CSV `website` (website first when the menu_url is a special menu: brunch,
@@ -78,15 +87,16 @@ burger alone; market price → null; single/standard size; no combo/meal upgrade
 sliders only when sold as a burger; kids' items dropped; prices < $2 or > $150 dropped as suspect (noted);
 names cleaned (trailing prices, emoji, ®); duplicates collapsed. **Lunch vs dinner:** a burger on several menus
 keeps its dinner/all-day price; late-night, lunch, brunch, then happy-hour prices are used only when it is not on
-the dinner menu. Status: `priced` (≥1 index-eligible beef burger) | `no_prices` | `no_burgers` (incl. only non-beef) |
-`no_menu_found` | `error`. Restaurant ids are assigned over every restaurant in scope (scraped or not), so they stay
-stable as more targets are scraped.
+the dinner menu. Status (pipeline only: `run_log.jsonl`, `plan`, the `build` summary; not in the dataset):
+`priced` (≥1 index-eligible beef burger) | `no_prices` | `no_burgers` (incl. only non-beef) | `no_menu_found` |
+`error`. Restaurant ids are assigned over every restaurant in scope (scraped or not), so they stay stable as more
+targets are scraped (People's Price answers are keyed on them).
 
 **One burger per restaurant: its highest-priced burger (user decision, 2026-09-24).** Every restaurant publishes
 exactly one burger, `extract.top_item` (build only): its highest-priced eligible beef burger with a dinner/all-day
 price; only if none has one, the highest from the next period (late-night, lunch, brunch, other); **never a
-happy-hour price**; ties → first on the menu. That burger is the whole `burgers` list, has `is_index_item: true`,
-and its price is `index_price`. Eligible = one burger for one person at its listed price: doubles, triples,
+happy-hour price**; ties → first on the menu. That burger is the restaurant's `burger` (`name`, `description`) and
+its price is `index_price`. Eligible = one burger for one person at its listed price: doubles, triples,
 specialty/wagyu burgers and a burger plated with fries (`Burger Platter`, `Burger & Fries`) count, and so does **a
 burger club** (user decision, 2026-09-25: `Cheeseburger Club`, `Bacon Burger Club`, a triple-decker `Cheeseburger Club
 Sandwich`; nothing treats `club` as a plate, group item or sides mark, and a scrape that missed a club section is
@@ -107,10 +117,8 @@ with sides next to its plain twin** (`extract.is_sides_twin`: `BBQ Burger Deluxe
 burger, since the extra is the sides (a menu that lists only the Deluxe/Platter form keeps it); **plates of several
 burgers** (`extract.is_multi_burger_plate`: slider plates, "Three sliders per order", a `Twin Burger` of two burgers
 on two buns, a count of 2–5 like `Smash Burger (2)`) only when the menu has no other eligible beef burger. A page `process` found priced only through
-group platters or combos builds as `no_prices` (`build.NO_SINGLE_BURGER_NOTE`). Unpriced restaurants publish no
-burgers, so `stats.burgers` = `beef_burgers` = `restaurants_priced` and `all_burgers_median` = `index_median`;
-`cheapest_burger_id`/`priciest_burger_id` are the cheapest/priciest of these picks among distinct menus (a chain's
-source location, not its copies). `extract.index_item` (the cheapest beef burger) is unchanged: `process.py` uses it,
+group platters or combos builds as `no_prices`. An unpriced restaurant publishes no burger (`burger: null`,
+`index_price: null`) and only its name fields. `extract.index_item` (the cheapest beef burger) is unchanged: `process.py` uses it,
 through `classify_menu`, to decide whether a page is priced and whether to keep searching, so the cache replays
 exactly; don't switch process to `top_item` without planning a re-scrape. Corrections apply to the full scraped
 menu before the pick. The 2026-09-25 corrections come from a review of these picks: another city's menu (Carnegie
@@ -130,12 +138,11 @@ removes these rows, because `corrections.json` names them and `process` counts t
 - **Not burgers** (`extract.is_not_a_burger`: a hot dog or sausage whose name lacks `burger`, such as `The Frank`, and pet items such as `The Pup Patty (Patty for Puppy)`) never set the index, never make a page `priced` and are never published.
 - **Site-builder template placeholders** (`extract.is_template_placeholder`: "This is an item on your menu…", every item $9) are dropped by `build.drop_template_placeholders` after corrections. A page with nothing else becomes `no_menu_found`.
 
-**Chains count once (product decision, 2026-09-23).** The Burger Index (`index_median`/mean/p10/p90), the
-`all_burgers_median` and every borough/neighborhood median/min/max are computed over **distinct menus**
-(`build.menu_index_prices`): each independent restaurant once, each chain once citywide and at most once per area
-— otherwise one 7th Street Burger menu would count 22 times, once per location. Location counts
-(`restaurants_priced`, `burgers` (one per priced location), area `restaurants`) still count every location, since
-each has its own page and table rows.
+**Chains count once (product decision, 2026-09-23).** The Burger Index (`index_median`/p10/p90) and every
+borough/neighborhood median/min/max are computed over **distinct menus** (`build.menu_index_prices`): each
+independent restaurant once, each chain once citywide and at most once per area — otherwise one 7th Street Burger
+menu would count 22 times, once per location. Location counts (`restaurants_priced`, citywide and per area) still
+count every location, since each has its own page and table rows.
 
 **National chains are out (product decision, 2026-09-23).** McDonald's, Burger King, Wendy's, White Castle,
 Checkers, Sonic, Five Guys, Smashburger and Shake Shack (the user chose to remove Shake Shack too), plus the other
@@ -151,7 +158,7 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
 
 ## Data files
 
-- `data/burger_index.json` — THE dataset (contract above). `build` validates before writing and fails loudly.
+- `data/burger_index.json` — THE dataset (contract v2 above). `build` validates before writing and fails loudly.
 - `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,101 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, and the 2026-09-25 deletions, see `data/list_changes_2026-09-23.md`: `name, neighborhood,
   borough, website, menu_url, notes, source` where `source` is `pilot-100|uptown|downtown|outer`). It's the user's data:
   don't edit it without their approval; report duplicates (`report.csv_duplicate_matches`), unmatched rows (`report.csv_unmatched`),
@@ -191,16 +198,17 @@ npm run validate:data    # ajv check against the contract (default ../data/burge
   `data/burger_index.json` fails `dev` and `build` with a message (it is committed; `pipeline build` rewrites it from the
   cache). The web tests read the same file (`test/dataset.ts`) or small inline rows.
 - **Reading data:** `src/lib/data.ts` is `server-only`: it parses the file once with the zod mirror
-  (`src/lib/schema.ts`), re-checks the invariants, and exposes typed selectors (`getStats()`, `getRestaurant(id)`, …).
+  (`src/lib/schema.ts`), checks that ids are unique, and exposes typed selectors (`getStats()`,
+  `getPricedRestaurants()`, `getPricedRestaurant(id)`, `isPriced`/`isUnpriced`, …). Only priced restaurants
+  (`PricedRestaurant`) get a page; unpriced ones (`UnpricedRestaurant`) are names on their neighborhood's page.
   Client components import enum lists from `src/lib/enums.ts` and only `import type` from `schema.ts`, which keeps zod
   out of the browser bundle.
 - **Next 16** has breaking changes versus older docs: read `web/AGENTS.md` and `web/node_modules/next/dist/docs/`
   before writing Next code. `output: "export"`: every route is static (`generateStaticParams`); the only route
-  handlers are force-static files (`/data/burger_index.json`, `/og.png`, sitemap, robots).
+  handlers are force-static files (`/og.png`, sitemap, robots); there is no data download.
 - **Counting:** the site counts distinct menus through `src/lib/menus.ts` (menu key = chain, else restaurant id), the same
   rule as `build.menu_index_prices`: histograms, typical range, rankings, cheapest/priciest lists and the `MIN_RANKED` /
-  `MIN_HISTOGRAM` thresholds are per menu; map pins, restaurant pages and table rows are per location. Areas with priced chain
-  menus but no priced independent are labelled "Chain prices only" (`isChainOnly`) and kept out of like-for-like copy.
+  `MIN_HISTOGRAM` thresholds are per menu; map pins, restaurant pages and table rows are per location.
   `test/menus.test.ts` checks the web's per-menu medians against the pipeline's in `data/burger_index.json`.
 - Price colors (Steal → Splurge) are always measured against the citywide median (`src/lib/price-bins.ts`), never a
   filtered subset. Fonts load through `next/font/google` (the build needs network); the OG image reads `@fontsource`.
@@ -229,7 +237,7 @@ npm run validate:data    # ajv check against the contract (default ../data/burge
   instructions, not timeouts/tags/maxAge). Re-runs spend **0 credits** unless `--refresh` (re-fetch once per run,
   `maxAgeMs=0`). Changing `BURGER_MENU_SCHEMA`/`BURGER_INSTRUCTIONS` changes every scrape key → a full re-spend.
 - `build` and `plan` replay the per-target workflow offline from the cache (a miss = "not yet scraped", left out
-  of the dataset and counted in `coverage_note`). So `extract.py`/`build.py` changes apply for free on the next
+  of the dataset and counted in the `build` summary's `targets_not_yet_scraped`). So `extract.py`/`build.py` changes apply for free on the next
   `build`; changes to `discover.py`/`process.py` may make replays hit uncached calls — `run` again (only new calls
   are billed).
 - Live calls **reserve** their worst-case cost before sending (PDFs: all 10 OCR pages), so `--max-credits` is a hard

@@ -31,37 +31,8 @@ import {
   worthMenus,
   type Hist,
 } from "../src/lib/worth";
-import type { Borough, Restaurant } from "../src/lib/schema";
-
-let seq = 0;
-/** A restaurant row with one burger (the dataset lists one per restaurant: its index burger). */
-function place(opts: { id?: string; name?: string; chain?: string | null; price: number | null; burger?: string; borough?: Borough; hood?: string | null }): Restaurant {
-  seq += 1;
-  const id = opts.id ?? `${opts.chain ?? "place"}-${seq}`;
-  const burger = opts.burger ?? "Cheeseburger";
-  return {
-    id,
-    camis: null,
-    name: opts.name ?? (opts.chain ? opts.chain.toUpperCase() : id),
-    chain: opts.chain ?? null,
-    address: `${seq} Test Street`,
-    borough: opts.borough ?? "Manhattan",
-    neighborhood: opts.hood ?? null,
-    neighborhood_slug: opts.hood ?? null,
-    zipcode: null,
-    lat: null,
-    lng: null,
-    cuisine: null,
-    website: null,
-    menu_url: null,
-    price_source: opts.price === null ? null : "official_site",
-    status: opts.price === null ? "no_prices" : "priced",
-    status_detail: null,
-    scraped_at: null,
-    index_price: opts.price,
-    burgers: opts.price === null ? [] : [{ id: `${id}--b`, name: burger, price: opts.price, description: null, protein: "beef", is_index_item: true }],
-  };
-}
+import type { Borough } from "../src/lib/schema";
+import { place } from "./places";
 
 /** A histogram from a list of answers: h(20, 20, 30) = {20: 2, 30: 1}. */
 function h(...answers: number[]): Map<number, number> {

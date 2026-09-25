@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { parseHandCheck } from "../src/lib/hand-checks";
 import {
   hasOtherMenus,
   isRankable,
@@ -17,37 +16,9 @@ import {
 } from "../src/lib/menus";
 import { MIN_HISTOGRAM, MIN_RANKED } from "../src/lib/site";
 import { median, percentile } from "../src/lib/stats";
-import type { Borough, BurgerIndex, Restaurant } from "../src/lib/schema";
+import type { Borough, BurgerIndex, PricedRestaurant } from "../src/lib/schema";
 import { loadDataset } from "./dataset";
-
-let seq = 0;
-/** A restaurant row with only the fields the menu helpers read filled in meaningfully. */
-function place(opts: { id?: string; name?: string; chain?: string | null; price: number | null; borough?: Borough; hood?: string | null }): Restaurant {
-  seq += 1;
-  const id = opts.id ?? `${opts.chain ?? "place"}-${seq}`;
-  return {
-    id,
-    camis: null,
-    name: opts.name ?? (opts.chain ? opts.chain.toUpperCase() : id),
-    chain: opts.chain ?? null,
-    address: `${seq} Test Street`,
-    borough: opts.borough ?? "Manhattan",
-    neighborhood: opts.hood ?? null,
-    neighborhood_slug: opts.hood ?? null,
-    zipcode: null,
-    lat: null,
-    lng: null,
-    cuisine: null,
-    website: null,
-    menu_url: null,
-    price_source: opts.price === null ? null : "official_site",
-    status: opts.price === null ? "no_prices" : "priced",
-    status_detail: null,
-    scraped_at: null,
-    index_price: opts.price,
-    burgers: [],
-  };
-}
+import { place } from "./places";
 
 const mcd = (hood: string, borough: Borough = "Manhattan") => place({ chain: "mcdonalds", name: "McDonald's", price: 4.39, hood, borough });
 
@@ -129,22 +100,11 @@ test("menu breakdown copy reads right for every mix", () => {
   assert.equal(joinList([]), "");
 });
 
-test("hand checks: corrected and withheld notes are found after the scrape note", () => {
-  const corrected = parseHandCheck(
-    "Prices from the restaurant's own site (x.com). Prices corrected by hand after re-checking the menu on 2026-09-23: the $32 burger is the lunch price; dinner lists it at $34.",
-  );
-  assert.deepEqual(corrected, { kind: "corrected", checkedOn: "2026-09-23" });
-  const withheld = parseHandCheck("Prices withheld after re-checking the menu on 2026-09-23: the aggregator copy looks years out of date.");
-  assert.deepEqual(withheld, { kind: "withheld", checkedOn: "2026-09-23" });
-  assert.equal(parseHandCheck("Prices from a delivery app (grubhub.com)."), null);
-  assert.equal(parseHandCheck(null), null);
-});
-
-test("unpriced chain rows never borrow a chain price", () => {
-  const unpricedRow = { ...place({ chain: "mcdonalds", name: "McDonald's", price: null }), status: "no_menu_found" as const };
+test("unpriced rows never count as a menu or a location", () => {
+  const unpricedRow = place({ chain: "mcdonalds", name: "McDonald's", price: null });
   const rows = [unpricedRow, mcd("a"), mcd("b")];
   assert.equal(pricedMenus(rows)[0].locations, 2, "the chain's menu counts only its priced locations");
-  const bk = Array.from({ length: 3 }, () => ({ ...place({ chain: "burger-king", price: null }), status: "no_menu_found" as const }));
+  const bk = Array.from({ length: 3 }, () => place({ chain: "burger-king", price: null }));
   assert.equal(pricedMenus(bk).length, 0, "an unpriced chain isn't in the index");
   // Priced menus leave the unpriced chain and restaurant out.
   assert.deepEqual(menuCounts([...rows, ...bk, place({ price: 12 }), place({ price: null })]), { menus: 2, independents: 1, chains: 1, locations: 3 });
@@ -176,21 +136,18 @@ function assertMatchesPipeline(label: string, data: BurgerIndex) {
     if (a === null || b === null) return assert.equal(a, b, `${label}: ${what}`);
     assert.ok(Math.abs(a - b) <= 0.005 + 1e-9, `${label}: ${what} web ${a} vs pipeline ${b}`);
   };
+  const priced = data.restaurants.filter((r): r is PricedRestaurant => r.index_price !== null);
   const city = menuIndexPrices(data.restaurants);
   close(median(city), data.stats.index_median, "index_median");
   close(percentile(city, 0.1), data.stats.index_p10, "index_p10");
   close(percentile(city, 0.9), data.stats.index_p90, "index_p90");
-  assert.equal(
-    data.restaurants.filter((r) => r.index_price !== null).length,
-    data.stats.restaurants_priced,
-    `${label}: restaurants_priced counts locations`,
-  );
+  assert.equal(priced.length, data.stats.restaurants_priced, `${label}: restaurants_priced counts locations`);
   for (const [kind, areas, inArea] of [
-    ["borough", data.boroughs, (r: Restaurant, slug: string) => r.borough.toLowerCase().replace(/ /g, "-") === slug],
-    ["neighborhood", data.neighborhoods, (r: Restaurant, slug: string) => r.neighborhood_slug === slug],
+    ["borough", data.boroughs, (r: PricedRestaurant, slug: string) => r.borough.toLowerCase().replace(/ /g, "-") === slug],
+    ["neighborhood", data.neighborhoods, (r: PricedRestaurant, slug: string) => r.neighborhood_slug === slug],
   ] as const) {
     for (const a of areas) {
-      const list = data.restaurants.filter((r) => inArea(r, a.slug));
+      const list = priced.filter((r) => inArea(r, a.slug));
       const prices = menuIndexPrices(list);
       close(median(prices), a.index_median, `${kind} ${a.slug} index_median`);
       close(prices.length ? prices[0] : null, a.index_min, `${kind} ${a.slug} index_min`);

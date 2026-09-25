@@ -1,4 +1,4 @@
-import { ClipboardCheck, ExternalLink, EyeOff, MapPin } from "lucide-react";
+import { ClipboardCheck, ExternalLink, MapPin } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -9,7 +9,6 @@ import { DetailOverline, Money, PageHeader, PriceChip, SectionHeading, SourceBad
 import { boroughSlug } from "@/lib/boroughs";
 import {
   getChainLocations,
-  getIndexBurger,
   getNeighborhood,
   getPricedRestaurant,
   getPricedRestaurants,
@@ -18,10 +17,8 @@ import {
   neighborhoodMenuCounts,
 } from "@/lib/data";
 import { formatDate, formatDelta, formatPrice, hostname, safeHttpUrl } from "@/lib/format";
-import { parseHandCheck, type HandCheck } from "@/lib/hand-checks";
 import { hasOtherMenus, menuKey, menusByIndexPrice } from "@/lib/menus";
 import { pageMetadata } from "@/lib/metadata";
-import type { Restaurant } from "@/lib/schema";
 import { atLeastOneParam, BOROUGHS_HREF, PLACEHOLDER_PARAM } from "@/lib/site";
 import { WORTH_ANCHOR } from "@/lib/worth";
 
@@ -35,10 +32,9 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<"/restaurants/[id]">): Promise<Metadata> {
   const { id } = await params;
   const r = getPricedRestaurant(id);
-  const b = r ? getIndexBurger(r) : undefined;
-  if (!r || !b) return {};
+  if (!r) return {};
   const where = r.neighborhood ? `${r.neighborhood}, ${r.borough}` : r.borough;
-  const description = `${r.name} (${where}): ${b.name}, ${formatPrice(r.index_price, { cents: "always" })}.`;
+  const description = `${r.name} (${where}): ${r.burger.name}, ${formatPrice(r.index_price, { cents: "always" })}.`;
   return pageMetadata({ title: `${r.name}, ${r.neighborhood ?? r.borough}`, description, path: `/restaurants/${r.id}` });
 }
 
@@ -53,23 +49,22 @@ function ExternalA({ href, children }: { href: string; children: React.ReactNode
 }
 
 /**
- * The label a hand check leaves (pipeline/corrections.py): shown as its own slip, because it changes
- * the price the page shows. A label only, so a paragraph rather than a heading: nothing sits under it.
+ * The label a hand check leaves (the dataset's hand_check, from pipeline/corrections.py): shown as its
+ * own slip, because it changes the price the page shows. A label only, so a paragraph rather than a
+ * heading: nothing sits under it.
  */
-function HandCheckNote({ check }: { check: HandCheck }) {
-  const corrected = check.kind === "corrected";
-  const Icon = corrected ? ClipboardCheck : EyeOff;
+function HandCheckNote({ checkedOn }: { checkedOn: string }) {
   // "The cook's correction slip": a ruled guest check with a torn top; its text sits on the rules.
   return (
     <div className="slip mt-8">
       <p className="t-label slip-line muted flex items-start gap-2">
-        <Icon className="mt-[6px] size-4 flex-none" strokeWidth={2} aria-hidden="true" />
+        <ClipboardCheck className="mt-[6px] size-4 flex-none" strokeWidth={2} aria-hidden="true" />
         <span className="min-w-0">
           {/* A no-break space binds the "·" to the words before it, so a wrap puts the date (which never
               wraps) on the next line without a stray leading dot. */}
-          {corrected ? "Prices corrected by hand" : "Prices withheld after a hand check"}
+          Prices corrected by hand
           {"\u00a0· "}
-          <span className="whitespace-nowrap">{formatDate(check.checkedOn)}</span>
+          <span className="whitespace-nowrap">{formatDate(checkedOn)}</span>
         </span>
       </p>
     </div>
@@ -90,9 +85,8 @@ function Versus({ label, value, sub }: { label: string; value: string; sub: stri
 export default async function RestaurantPage({ params }: PageProps<"/restaurants/[id]">) {
   const { id } = await params;
   const r = getPricedRestaurant(id);
-  const burger = r ? getIndexBurger(r) : undefined;
-  if (!r || !burger || r.index_price === null) notFound();
-  const price = r.index_price;
+  if (!r) notFound();
+  const { burger, index_price: price } = r;
 
   const median = getStats().index_median;
   const hood = r.neighborhood_slug ? getNeighborhood(r.neighborhood_slug) : undefined;
@@ -111,12 +105,11 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
     median !== null ? { label: "vs NYC", value: formatDelta(price, median), sub: `NYC median ${formatPrice(median, { cents: "always" })}` } : null,
   ].filter((v) => v !== null);
   // A chain's other priced locations (an unpriced one has no page).
-  const chainOthers: Restaurant[] = getChainLocations(r);
+  const chainOthers = getChainLocations(r);
   const neighborRepeats = repeatedNames(
     neighbors.map((m) => m.restaurant),
     [r],
   );
-  const check = parseHandCheck(r.status_detail);
 
   const crumbs = [
     { href: BOROUGHS_HREF, label: "Boroughs" },
@@ -181,7 +174,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
           </ul>
         </section>
 
-        {check ? <HandCheckNote check={check} /> : null}
+        {r.hand_check ? <HandCheckNote checkedOn={r.hand_check.checked_on} /> : null}
 
         {/* "What's it worth?": visitors name their price for the menu's burger (a chain's locations
             share one menu, so one People's Price). The board links here by the section's id. */}
@@ -203,7 +196,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
                       {n.name}
                     </Link>
                     <span className="t-ui-s muted block break-anywhere">
-                      {[getIndexBurger(n)?.name, n.chain && locations > 1 ? `chain, ${locations} locations here` : neighborRepeats.has(n.name) ? n.address : null].filter(Boolean).join(" · ")}
+                      {[n.burger.name, n.chain && locations > 1 ? `chain, ${locations} locations here` : neighborRepeats.has(n.name) ? n.address : null].filter(Boolean).join(" · ")}
                     </span>
                   </span>
                   <PriceChip price={n.index_price} median={median} delta={false} />

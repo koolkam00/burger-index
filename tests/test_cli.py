@@ -70,9 +70,10 @@ def test_sources_plan_run_build(data_dir, fake, capsys):
     assert out["done"] == 3 and out["credits_spent"] == 5 + (1 + 5) + 1
     d = json.loads(config.OUTPUT_PATH.read_text())
     build.validate(d)
-    assert d["stats"]["restaurants_scanned"] == 5 and d["stats"]["restaurants_priced"] == 4
+    assert len(d["restaurants"]) == 5 and d["stats"]["restaurants_priced"] == 4
     ha = next(r for r in d["restaurants"] if r["name"] == "Hamburger America")
-    assert ha["status"] == "no_menu_found"
+    assert ha["index_price"] is None and ha["burger"] is None
+    assert out["build"]["statuses"] == {"priced": 4, "no_menu_found": 1} and out["build"]["restaurants"] == 5
 
     # re-run and build: zero new calls, zero credits
     n = len(f.calls)

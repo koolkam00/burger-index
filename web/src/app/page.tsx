@@ -8,7 +8,7 @@ import { Letterboard } from "@/components/Letterboard";
 import { MenuEnds } from "@/components/RestaurantBits";
 import { Buoy, Net, Scales, ShipWheel, Spatula, Spyglass } from "@/components/icons/nautical";
 import { BoroughDot, Bubbles, Caustics, ChartEmpty, KickerTicket, SectionHeading, WaveEdge } from "@/components/ui";
-import { getBoroughs, getGeneratedAt, getMenuCounts, getRestaurants, getStats, rankedNeighborhoods } from "@/lib/data";
+import { getBoroughs, getGeneratedAt, getMenuCounts, getPricedRestaurants, getStats, rankedNeighborhoods } from "@/lib/data";
 import { formatCount, formatDate, formatPrice, pluralize, spreadEnds } from "@/lib/format";
 import { menuIndexPrices, menusByIndexPrice, menusByIndexPriceDesc } from "@/lib/menus";
 import { pageMetadata } from "@/lib/metadata";
@@ -32,7 +32,7 @@ export default function HomePage() {
   const counts = getMenuCounts();
   const median = stats.index_median;
   const generated = getGeneratedAt();
-  const restaurants = getRestaurants();
+  const restaurants = getPricedRestaurants();
   // Every chart, range and list below counts distinct menus: a chain once, however many locations.
   const prices = menuIndexPrices(restaurants);
   const cheapest = menusByIndexPrice(restaurants);

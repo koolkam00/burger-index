@@ -1,5 +1,4 @@
 import copy
-import re
 
 import pytest
 from conftest import rec
@@ -24,9 +23,11 @@ def b(name, price, protein="beef"):
     return {"name": name, "price": price, "description": None, "protein": protein, "menu_period": None}
 
 
-def dataset(targets, results):
-    return build.assemble(targets, results, meta={"cuisines": ["Hamburgers"], "min_inspection_date": "2023-01-01"},
-                          generated_at="2026-09-23T12:00:00Z")
+def dataset(targets, results, **kw):
+    return build.assemble(targets, results, generated_at="2026-09-23T12:00:00Z", **kw)
+
+
+UNPRICED = {"id", "name", "address", "neighborhood_slug", "index_price", "burger"}
 
 
 def test_percentile_and_stats_math():
@@ -40,41 +41,42 @@ def test_percentile_and_stats_math():
     results = {
         ts[0].key: result(burgers=[b("Classic", 10), b("Veggie", 8, "veggie"), b("Double", 14)]),
         ts[1].key: result(burgers=[b("Smash", 20)]),
-        ts[2].key: result(burgers=[b("Big", 30), b("Big", 30)]),  # dup names get -2 ids
+        ts[2].key: result(burgers=[b("Big", 30), b("Big", 30)]),
         ts[3].key: result("no_prices", burgers=[b("Mystery", None)]),
     }
     d = dataset(ts, results)
-    s = d["stats"]
     # one burger per restaurant, its highest-priced beef burger: A -> Double 14, B -> 20, C -> 30
-    assert s["restaurants_scanned"] == 4 and s["restaurants_priced"] == 3
-    assert s["burgers"] == 3 and s["beef_burgers"] == 3
-    assert s["index_median"] == 20 and s["index_mean"] == 21.33
-    assert s["index_p10"] == 15.2 and s["index_p90"] == 28
-    assert s["all_burgers_median"] == 20  # the published burgers: one per menu, so the index median
-    assert s["cheapest_burger_id"].endswith("--double")
-    assert s["priciest_burger_id"].endswith("--big")
+    assert d["version"] == 2 and set(d) == {"version", "generated_at", "stats", "boroughs", "neighborhoods",
+                                            "restaurants"}
+    assert d["stats"] == {"restaurants_priced": 3, "index_median": 20, "index_p10": 15.2, "index_p90": 28}
     a = next(r for r in d["restaurants"] if r["name"] == "A")
-    assert a["index_price"] == 14
-    assert [(x["name"], x["price"], x["is_index_item"]) for x in a["burgers"]] == [("Double", 14, True)]
-    c = next(r for r in d["restaurants"] if r["name"] == "C")
-    assert [x["id"].split("--")[1] for x in c["burgers"]] == ["big"]
-    assert next(r for r in d["restaurants"] if r["name"] == "D")["burgers"] == []  # no price: nothing published
+    assert a["index_price"] == 14 and a["burger"] == {"name": "Double", "description": None}
+    assert list(a) == list(build.PRICED_FIELDS) and a["hand_check"] is None
+    assert next(r for r in d["restaurants"] if r["name"] == "C")["burger"]["name"] == "Big"
+    # no price: nothing published but the name the site lists on its neighborhood's page
+    unpriced = next(r for r in d["restaurants"] if r["name"] == "D")
+    assert set(unpriced) == UNPRICED and (unpriced["index_price"], unpriced["burger"]) == (None, None)
+    assert unpriced["neighborhood_slug"] == "west-village"
     build.validate(d)
 
 
 def test_empty_and_all_null_stats_are_null():
     d = dataset([], {})
-    assert d["stats"]["index_median"] is None and d["stats"]["restaurants_scanned"] == 0
-    assert d["boroughs"] == [] and d["neighborhoods"] == []
+    assert d["stats"] == {"restaurants_priced": 0, "index_median": None, "index_p10": None, "index_p90": None}
+    assert d["boroughs"] == [] and d["neighborhoods"] == [] and d["restaurants"] == []
     build.validate(d)
 
     ts = build_targets([rec("A", camis="1"), rec("B", camis="2")])
-    d = dataset(ts, {ts[0].key: result("no_menu_found"), ts[1].key: result("no_prices", burgers=[b("X", None)])})
-    s = d["stats"]
-    assert s["restaurants_priced"] == 0 and s["burgers"] == 0
-    assert all(s[k] is None for k in ("index_median", "index_mean", "index_p10", "index_p90", "all_burgers_median",
-                                      "cheapest_burger_id", "priciest_burger_id"))
-    assert d["boroughs"][0]["index_median"] is None and d["boroughs"][0]["restaurants"] == 2
+    results = {ts[0].key: result("no_menu_found"), ts[1].key: result("no_prices", burgers=[b("X", None)])}
+    d = dataset(ts, results)
+    assert d["stats"] == {"restaurants_priced": 0, "index_median": None, "index_p10": None, "index_p90": None}
+    # an area with nothing priced is still listed (the site shows it as a plain name)
+    assert d["boroughs"] == [{"slug": "manhattan", "name": "Manhattan", "borough": "Manhattan", "restaurants_priced": 0,
+                              "index_median": None, "index_min": None, "index_max": None}]
+    assert [a["slug"] for a in d["neighborhoods"]] == ["west-village"]
+    assert all(set(r) == UNPRICED for r in d["restaurants"])
+    # the pipeline's own statuses stay on the build rows (the CLI counts them), not in the dataset
+    assert [r["status"] for r in build.restaurant_rows(ts, results)] == ["no_menu_found", "no_prices"]
     build.validate(d)
 
 
@@ -99,14 +101,14 @@ def test_chain_applies_burgers_to_every_location_and_areas():
     results = {chain.key: result(burgers=[b("ShackBurger", 9.49)], price_source="delivery_app"),
                ts[1].key: result("no_menu_found")}
     d = dataset(ts, results)
-    locs = [r for r in d["restaurants"] if r["chain"] == "shake-shack"]
-    assert len(locs) == 3 and all(r["index_price"] == 9.49 for r in locs)
-    burger_ids = [x["id"] for r in d["restaurants"] for x in r["burgers"]]
-    assert len(burger_ids) == len(set(burger_ids)) == 3
+    locs = [r for r in d["restaurants"] if r.get("chain") == "shake-shack"]
+    assert len(locs) == 3 and all(r["index_price"] == 9.49 and r["burger"]["name"] == "ShackBurger" for r in locs)
     assert [a["name"] for a in d["boroughs"]] == ["Manhattan", "Brooklyn"]
     nb = {a["slug"]: a for a in d["neighborhoods"]}
     assert set(nb) == {"west-village", "brooklyn-heights-cobble-hill"}  # 'Solo' has no neighborhood
-    assert nb["west-village"]["restaurants"] == 2 and nb["west-village"]["index_median"] == 9.49
+    assert nb["west-village"]["restaurants_priced"] == 2 and nb["west-village"]["index_median"] == 9.49
+    solo = next(r for r in d["restaurants"] if r["name"] == "Solo")
+    assert set(solo) == UNPRICED and solo["neighborhood_slug"] is None
     build.validate(d)
 
 
@@ -124,11 +126,10 @@ def test_chain_counts_once_in_index_and_once_per_area():
     s = d["stats"]
     # the chain's one burger is its priciest, the $7 Big Mac; per location the median would be $7 (5 of 7
     # rows are McDonald's), per menu it is median(7, 15, 20)
-    assert s["index_median"] == 15 and s["index_mean"] == 14
-    assert s["restaurants_priced"] == 7 and s["burgers"] == 7  # locations and table rows still count each one
-    assert s["all_burgers_median"] == 15  # median(7, 15, 20): the chain's menu once
+    assert s["index_median"] == 15
+    assert s["restaurants_priced"] == 7  # locations and table rows still count each one
     nb = {a["slug"]: a for a in d["neighborhoods"]}
-    assert nb["west-village"]["restaurants_priced"] == 6 and nb["west-village"]["burgers"] == 6
+    assert nb["west-village"]["restaurants_priced"] == 6
     assert (nb["west-village"]["index_median"], nb["west-village"]["index_min"]) == (15, 7)
     assert nb["brooklyn-heights-cobble-hill"]["index_median"] == 7
     build.validate(d)
@@ -142,17 +143,32 @@ def test_validate_rejects_contract_violations():
     with pytest.raises(build.DatasetInvalid, match="Additional properties"):
         build.validate(bad)
     bad = copy.deepcopy(d)
-    bad["restaurants"][0]["burgers"][0]["protein"] = "tofu"
-    with pytest.raises(build.DatasetInvalid):
+    bad["restaurants"][0]["burger"]["price"] = 10  # the price is the restaurant's index_price
+    with pytest.raises(build.DatasetInvalid, match="Additional properties"):
         build.validate(bad)
     bad = copy.deepcopy(d)
     bad["generated_at"] = "yesterday"
     with pytest.raises(build.DatasetInvalid, match="date-time"):
         build.validate(bad)
     bad = copy.deepcopy(d)
-    bad["restaurants"][0]["burgers"][0]["is_index_item"] = False
-    with pytest.raises(build.DatasetInvalid, match="is_index_item"):
+    bad["version"] = 1
+    with pytest.raises(build.DatasetInvalid, match="version"):
         build.validate(bad)
+    bad = copy.deepcopy(d)
+    bad["restaurants"][0]["burger"] = None  # a priced restaurant publishes its burger
+    with pytest.raises(build.DatasetInvalid, match="restaurants/0/burger"):
+        build.validate(bad)
+    bad = copy.deepcopy(d)
+    bad["restaurants"][0]["hand_check"] = {"checked_on": "Sep 24"}
+    with pytest.raises(build.DatasetInvalid, match="hand_check"):
+        build.validate(bad)
+    unpriced = {"id": "b-west-village", "name": "B", "address": None, "neighborhood_slug": "west-village",
+                "index_price": None, "burger": None}
+    build.validate({**d, "restaurants": d["restaurants"] + [unpriced]})
+    with pytest.raises(build.DatasetInvalid, match="Additional properties"):  # an unpriced row is a name only
+        build.validate({**d, "restaurants": d["restaurants"] + [{**unpriced, "menu_url": "https://b.example"}]})
+    with pytest.raises(build.DatasetInvalid, match="not unique"):
+        build.validate({**d, "restaurants": d["restaurants"] + [{**unpriced, "id": d["restaurants"][0]["id"]}]})
 
 
 def test_restaurant_ids_do_not_change_when_a_namesake_is_scraped():
@@ -175,13 +191,13 @@ def test_airport_chain_locations_do_not_copy_the_street_price():
     d = dataset(ts, {ts[0].key: result(burgers=[b("Cheeseburger", 4.19), b("Big Mac", 8.39)],
                                        price_source="delivery_app")})
     build.validate(d)
-    by_camis = {r["camis"]: r for r in d["restaurants"]}
-    assert by_camis["2"]["index_price"] is None and by_camis["2"]["status"] == "no_menu_found"
-    assert by_camis["2"]["burgers"] == [] and "Airport" in by_camis["2"]["status_detail"]
-    assert by_camis["1"]["index_price"] == by_camis["3"]["index_price"] == 8.39  # the chain's priciest burger
-    # the cheapest burger points at the location the chain menu was scraped from
-    assert d["stats"]["cheapest_burger_id"] == f"{by_camis['1']['id']}--big-mac"
-    assert "1 airport chain location is listed" in d["methodology"]["coverage_note"]
+    rows = {r["key"]: r for r in build.restaurant_rows(ts, {ts[0].key: result(burgers=[b("Big Mac", 8.39)])})}
+    assert rows["camis:2"]["index_price"] is None and rows["camis:2"]["status"] == "no_menu_found"
+    assert rows["camis:2"]["menu_url"] is None and rows["camis:2"]["burger"] is None
+    by_address = {r["address"]: r for r in d["restaurants"]}
+    assert set(by_address["Terminal 1"]) == UNPRICED
+    assert by_address["4040 Broadway"]["index_price"] == by_address["1 Fulton Street"]["index_price"] == 8.39
+    assert d["stats"]["index_median"] == 8.39  # the chain's priciest burger, its one menu
 
 
 def test_happy_hour_prices_are_not_published():
@@ -189,104 +205,13 @@ def test_happy_hour_prices_are_not_published():
     menu = [b("Spaniard Burger", 18) | {"menu_period": "dinner"}, b("Little Spaniard", 12) | {"menu_period": "happy_hour"}]
     d = dataset(ts, {ts[0].key: result(burgers=menu)})
     r = d["restaurants"][0]
-    assert [x["name"] for x in r["burgers"]] == ["Spaniard Burger"] and r["index_price"] == 18
+    assert r["burger"]["name"] == "Spaniard Burger" and r["index_price"] == 18
     build.validate(d)
 
 
-def test_money_rounds_half_cents_up_and_possessives():
+def test_money_rounds_half_cents_up():
     assert build.money(13.125) == 13.13 and build.money(9.745) == 9.75 and build.money(4.39) == 4.39
     assert build.money(None) is None and build.money(7) == 7.0
-    assert build.possessive("McDonald's") == "McDonald's" and build.possessive("Five Guys") == "Five Guys'"
-    assert build.possessive("Shake Shack") == "Shake Shack's"
-
-
-def test_coverage_note_counts_the_whole_scope_and_names_the_exclusion():
-    meta = {"cuisines": ["Hamburgers"], "min_inspection_date": "2023-01-01", "national_chains": "exclude"}
-    note = build.coverage_note(meta, 129, 113)
-    assert note.startswith("242 restaurants in scope: our curated restaurant list plus every restaurant NYC DOHMH lists "
-                           "under 'Hamburgers' with an inspection since 2023-01-01 (or not yet inspected), except "
-                           "national fast-food chains")
-    assert "NYC's own small chains stay in." in note
-    assert "129 of them are in this dataset; the other 113 are not yet scraped." in note
-    done = build.coverage_note({**meta, "national_chains": "include"}, 129, 0)
-    assert done.startswith("129 restaurants: our curated restaurant list") and "except" not in done
-    assert "not yet scraped" not in done and "in scope" not in done
-    listed = build.coverage_note({**meta, "cuisines": []}, 77, 589)
-    assert listed.startswith("666 restaurants in scope: our curated list of NYC burger restaurants, matched to NYC "
-                             "DOHMH inspection records for address and location where possible, except national "
-                             "fast-food chains. NYC's own small chains stay in.")
-    assert "DOHMH lists under" not in listed
-
-
-# web/src/lib/scope.ts reads methodology.coverage_note and methodology.sources back with these patterns
-# (ported as written there); the notes build writes must stay in a phrasing they recognize.
-WEB_LIST_ONLY = re.compile(r"\bour curated list of NYC burger restaurants\b", re.IGNORECASE)
-WEB_WITH_CUISINES = re.compile(r"\bour curated restaurant list plus every restaurant NYC DOHMH lists under '([^']+)'"
-                               r"(?: with an inspection since (\d{4}-\d{2}-\d{2}))?", re.IGNORECASE)
-WEB_NATIONAL = re.compile(r"\bexcept national (?:[a-z-]+ (?:and [a-z-]+ )?)?chains\b(?: \(([^)]+)\))?", re.IGNORECASE)
-WEB_PENDING = re.compile(r"\bthe other ([\d,]+) (?:are|is) not yet scraped\b", re.IGNORECASE)
-WEB_LEAD = re.compile(r"^([\d,]+) restaurants?\b")
-WEB_DOHMH_AS_LIST = re.compile(r"^(NYC DOHMH Restaurant Inspection Results\b[^:]*):\s*restaurant list\b", re.IGNORECASE)
-WEB_CURATED_LIST = re.compile(r"\brestaurant list: a curated list\b", re.IGNORECASE)
-
-EXCLUDED = {"Shake Shack": 12, "Five Guys": 3, "McDonald's": 2, "White Castle": 2, "Tex's Chicken & Burgers": 2,
-            "Applebee's": 1, "PLNT Burger": 1}
-
-
-def test_coverage_note_names_the_excluded_chains_and_how_many_rows_matched():
-    listed = {"cuisines": [], "min_inspection_date": "2023-01-01", "national_chains": "exclude"}
-    rs = [rec("Corner Burger", camis="1", csv=True), rec("Ruby's", camis="2", csv=True),
-          rec("Nowhere Burgers", csv=True), rec("Side Street", csv=True)]
-    ts = build_targets(rs)
-    d = build.assemble(ts, {ts[0].key: result(burgers=[b("Burger", 12)])}, meta=listed, n_pending_restaurants=3,
-                       report={"national_chains_excluded": EXCLUDED}, generated_at="2026-09-23T12:00:00Z")
-    build.validate(d)
-    note = d["methodology"]["coverage_note"]
-    assert note.startswith(
-        "4 restaurants in scope: our curated list of NYC burger restaurants, matched to NYC DOHMH inspection records "
-        "for address and location where possible (2 of 4), except national fast-food chains (Shake Shack, Five Guys, "
-        "McDonald's, Tex's Chicken & Burgers and the like). NYC's own small chains stay in. 1 of them are in this "
-        "dataset; the other 3 are not yet scraped.")
-    assert "Burger King" not in note and "Wendy's" not in note  # named from the report, not hard-coded
-    # the web reads it back: list-only scope, 4 in scope (1 + 3 pending), the chains as examples
-    assert WEB_LIST_ONLY.search(note) and not WEB_WITH_CUISINES.search(note)
-    assert WEB_LEAD.match(note)[1] == "4" and WEB_PENDING.search(note)[1] == "3"
-    assert WEB_NATIONAL.search(note)[1] == "Shake Shack, Five Guys, McDonald's, Tex's Chicken & Burgers and the like"
-    # no report (or no national chain on the list): the rule without examples, still recognized
-    bare = build.coverage_note(listed, 4, 0, matched=4)
-    assert "(4 of 4), except national fast-food chains. NYC's own small chains stay in." in bare
-    assert WEB_NATIONAL.search(bare) and WEB_NATIONAL.search(bare)[1] is None
-    assert build.national_chain_examples({"Odd (Name)": 9, "Five Guys": 1}) == "Five Guys and the like"
-    assert build.national_chain_examples({}) is None
-    # national chains included: no exclusion clause; with cuisines the note keeps its own phrasing
-    assert "except" not in build.coverage_note({**listed, "national_chains": "include"}, 4, 0,
-                                               national_excluded=EXCLUDED, matched=2)
-    wide = build.coverage_note({**listed, "cuisines": ["Hamburgers"]}, 129, 113, national_excluded=EXCLUDED,
-                               matched=200)
-    assert WEB_WITH_CUISINES.search(wide).groups() == ("Hamburgers", "2023-01-01") and "(200 of" not in wide
-    assert WEB_NATIONAL.search(wide)[1].startswith("Shake Shack, Five Guys")
-
-
-def test_sources_say_what_dohmh_supplies_for_the_scope():
-    rs = [rec("Corner Burger", camis="1", csv=True)]
-    ts = build_targets(rs)
-    listed = build.assemble(ts, {}, meta={"cuisines": [], "national_chains": "exclude"}, n_pending_restaurants=1,
-                            generated_at="2026-09-23T12:00:00Z")["methodology"]["sources"]
-    # our list first; DOHMH only matches it (addresses, coordinates, neighborhoods, cuisine), never is it
-    assert listed[0] == build.LIST_SOURCE and WEB_CURATED_LIST.search(listed[0])
-    assert listed[1] == ("NYC DOHMH Restaurant Inspection Results (NYC Open Data 43nn-pn8j): addresses, coordinates, "
-                         "neighborhoods and cuisine for the restaurants on our list that match its records.")
-    assert not any(WEB_DOHMH_AS_LIST.search(s) for s in listed)
-    assert "restaurant list" not in listed[1] and "every restaurant" not in listed[1]
-    assert listed[2].startswith("2010 Neighborhood Tabulation Areas") and listed[3].startswith("Menu prices")
-    wide = build.sources({"cuisines": ["Hamburgers", "American"], "min_inspection_date": "2024-01-01"})
-    assert wide[0] == build.LIST_SOURCE
-    assert wide[1] == ("NYC DOHMH Restaurant Inspection Results (NYC Open Data 43nn-pn8j): every restaurant it lists "
-                       "under 'Hamburgers, American' with an inspection since 2024-01-01 (or not yet inspected), and "
-                       "addresses, coordinates, neighborhoods and cuisine for the restaurants on our list that match "
-                       "its records.")
-    assert not WEB_DOHMH_AS_LIST.search(wide[1])
-    assert build.sources({}) == listed  # no scope saved: the default, the list only
 
 
 def test_items_that_are_not_burgers_and_slider_plates_are_not_the_published_burger():
@@ -296,12 +221,10 @@ def test_items_that_are_not_burgers_and_slider_plates_are_not_the_published_burg
     torst = [b("Burger Sliders", 24), b("Smash Burger", 18.9)]  # a pricier slider plate
     d = dataset(ts, {ts[0].key: result(burgers=smack), ts[1].key: result(burgers=torst)})
     by = {r["name"]: r for r in d["restaurants"]}
-    assert [x["name"] for x in by["Smacking Burger"]["burgers"]] == ["The Classic"]
-    assert by["Smacking Burger"]["index_price"] == 7.49
+    assert by["Smacking Burger"]["burger"]["name"] == "The Classic" and by["Smacking Burger"]["index_price"] == 7.49
     # a slider plate is not one burger: the Smash Burger is Tørst's one published burger
-    assert [(x["name"], x["price"], x["is_index_item"]) for x in by["Torst"]["burgers"]] == [
-        ("Smash Burger", 18.9, True)]
-    assert d["stats"]["cheapest_burger_id"].endswith("--the-classic")  # not the $4 dog patty
+    assert (by["Torst"]["burger"]["name"], by["Torst"]["index_price"]) == ("Smash Burger", 18.9)
+    assert d["stats"]["index_p10"] == 8.63  # from $7.49 (not the $4 dog patty) and $18.90
     build.validate(d)
 
 
@@ -321,27 +244,23 @@ def test_one_burger_per_restaurant_its_highest_priced_eligible_beef_burger():
                      ts[3].key: result("no_prices", burgers=[b("Burger", None)])})
     build.validate(d)
     by = {r["name"]: r for r in d["restaurants"]}
-    assert [(x["name"], x["price"], x["is_index_item"]) for x in by["Tavern"]["burgers"]] == [
-        ("Double Wagyu Burger", 26, True)]
-    assert by["Tavern"]["index_price"] == 26
-    assert [x["name"] for x in by["Diner"]["burgers"]] == ["Burger Platter"] and by["Diner"]["index_price"] == 16
+    assert (by["Tavern"]["burger"]["name"], by["Tavern"]["index_price"]) == ("Double Wagyu Burger", 26)
+    assert by["Diner"]["burger"] == {"name": "Burger Platter", "description": "served with french fries, lettuce and tomato"}
+    assert by["Diner"]["index_price"] == 16
     # no eligible beef burger priced: nothing is published (a veggie-only menu, a menu without prices)
-    assert by["Veg Spot"]["burgers"] == [] and by["Unpriced"]["burgers"] == []
-    s = d["stats"]
-    assert s["burgers"] == s["beef_burgers"] == s["restaurants_priced"] == 2
-    assert (s["cheapest_burger_id"], s["priciest_burger_id"]) == (by["Diner"]["burgers"][0]["id"],
-                                                                  by["Tavern"]["burgers"][0]["id"])
-    assert "highest-priced beef burger" in d["methodology"]["index_price_rule"]
+    assert set(by["Veg Spot"]) == set(by["Unpriced"]) == UNPRICED
+    assert d["stats"]["restaurants_priced"] == 2 and d["stats"]["index_median"] == 21
 
 
 def test_a_page_priced_only_through_group_platters_or_combos_has_no_index_price():
     ts = build_targets([rec("Cubby's", camis="1")])
     platter = b("Cub's Pub Platter", 120) | {"description": "10 double patty swiss cheeseburgers, caramelized onions"}
-    d = dataset(ts, {ts[0].key: result(burgers=[platter, b("Bx Cheeseburger Meal", 23.07)], detail="read it")})
+    results = {ts[0].key: result(burgers=[platter, b("Bx Cheeseburger Meal", 23.07)])}
+    d = dataset(ts, results)
     build.validate(d)
-    r = d["restaurants"][0]
-    assert (r["status"], r["index_price"], r["burgers"]) == ("no_prices", None, [])
-    assert r["status_detail"] == f"read it {build.NO_SINGLE_BURGER_NOTE}"
+    assert set(d["restaurants"][0]) == UNPRICED
+    (row,) = build.restaurant_rows(ts, results)
+    assert (row["status"], row["index_price"], row["burger"]) == ("no_prices", None, None)
     assert d["stats"]["restaurants_priced"] == 0 and d["stats"]["index_median"] is None
 
 
@@ -352,12 +271,43 @@ def test_corrections_apply_before_the_one_burger_is_chosen():
               "reason": "the $40 row is a catering tray", "drop": ["Big Burger"]},
              {"target": ts[1].key, "checked_at": "2026-09-24", "source_url": "https://example.com/b",
               "reason": "dinner price", "set": {"Classic": 45}}]
-    d = build.assemble(ts, {t.key: result(burgers=menu) for t in ts}, corrections=fixes,
-                       generated_at="2026-09-23T12:00:00Z")
+    d = dataset(ts, {t.key: result(burgers=menu) for t in ts}, corrections=fixes)
     build.validate(d)
     by = {r["name"]: r for r in d["restaurants"]}
-    assert [(x["name"], x["price"]) for x in by["A"]["burgers"]] == [("Classic", 12)]
-    assert [(x["name"], x["price"]) for x in by["B"]["burgers"]] == [("Classic", 45)]
+    assert (by["A"]["burger"]["name"], by["A"]["index_price"]) == ("Classic", 12)
+    assert (by["B"]["burger"]["name"], by["B"]["index_price"]) == ("Classic", 45)
+    # the hand check is published with the corrected prices, the correction's page as the menu page
+    assert by["A"]["hand_check"] == by["B"]["hand_check"] == {"checked_on": "2026-09-24"}
+    assert (by["A"]["menu_url"], by["B"]["menu_url"]) == ("https://example.com/a", "https://example.com/b")
+
+
+def test_hand_check_is_published_only_on_restaurants_that_stay_priced():
+    rs = [rec("Plain", camis="1"), rec("Withheld", camis="2"), rec("Emptied", camis="3"),
+          rec("Jackson Hole", camis="4", dba="JACKSON HOLE", address="1 Main Street"),
+          rec("Jackson Hole", camis="5", dba="JACKSON HOLE", address="2 Main Street"),
+          rec("Jackson Hole", camis="6", dba="JACKSON HOLE", address="Terminal 4", borough="Queens", nta="QN98",
+              neighborhood="Airport", zipcode="11430")]
+    ts = build_targets(rs)
+    by_name = {t.name: t for t in ts}
+    chain = by_name["Jackson Hole"]
+    assert chain.chain and chain.rep["camis"] == "4"
+    fix = {"checked_at": "2026-09-24", "source_url": "https://example.com/menu", "reason": "x"}
+    fixes = [fix | {"target": by_name["Withheld"].key, "withhold": True},
+             fix | {"target": by_name["Emptied"].key, "drop": ["Burger"]},
+             fix | {"target": chain.key, "set": {"Burger": 19}}]
+    results = {t.key: result(burgers=[b("Burger", 15)]) for t in ts}
+    d = dataset(ts, results, corrections=fixes)
+    build.validate(d)
+    by_address = {(r["name"], r["address"]): r for r in d["restaurants"]}
+    assert by_address[("Plain", None)]["hand_check"] is None  # no correction
+    assert set(by_address[("Withheld", None)]) == set(by_address[("Emptied", None)]) == UNPRICED
+    # every chain location the corrected menu is copied to shows the check, except the airport counter
+    assert by_address[("Jackson Hole", "1 Main Street")]["hand_check"] == {"checked_on": "2026-09-24"}
+    assert by_address[("Jackson Hole", "2 Main Street")]["hand_check"] == {"checked_on": "2026-09-24"}
+    assert by_address[("Jackson Hole", "2 Main Street")]["index_price"] == 19
+    assert set(by_address[("Jackson Hole", "Terminal 4")]) == UNPRICED
+    rows = {r["key"]: r for r in build.restaurant_rows(ts, results, corrections=fixes)}
+    assert [rows[k]["hand_check"] for k in ("camis:2", "camis:3", "camis:6")] == [None, None, None]
 
 
 WIX = "This is an item on your menu. Give your item a brief description"
@@ -370,12 +320,14 @@ def test_template_placeholder_page_is_not_a_menu():
     d = dataset(ts, {ts[0].key: result(burgers=template, menu_url="https://www.hairylemonnyc.com/menu?menu=menu"),
                      ts[1].key: result(burgers=half)})
     by = {r["name"]: r for r in d["restaurants"]}
-    r = by["The Hairy Lemon"]
-    assert (r["status"], r["burgers"], r["index_price"], r["menu_url"]) == ("no_menu_found", [], None, None)
-    assert "hairylemonnyc.com" in r["status_detail"] and "template" in r["status_detail"]
+    assert set(by["The Hairy Lemon"]) == UNPRICED
+    rows = {r["name"]: r for r in build.restaurant_rows(ts, {
+        ts[0].key: result(burgers=template, menu_url="https://www.hairylemonnyc.com/menu?menu=menu"),
+        ts[1].key: result(burgers=half)})}
+    r = rows["The Hairy Lemon"]
+    assert (r["status"], r["burger"], r["index_price"], r["menu_url"]) == ("no_menu_found", None, None, None)
     r = by["Half Template"]
-    assert [x["name"] for x in r["burgers"]] == ["Lemon Burger"] and r["index_price"] == 17
-    assert r["status_detail"].endswith("1 website-template placeholder item left out.")
+    assert r["burger"]["name"] == "Lemon Burger" and r["index_price"] == 17
     build.validate(d)
     # only placeholders priced: the page keeps its status only if a real burger is still priced
     res = build.drop_template_placeholders(result(burgers=[b("Beef Burger", 9) | {"description": WIX},
@@ -391,6 +343,7 @@ def test_template_rule_runs_after_corrections_that_name_the_placeholder_rows():
     fix = {"target": ts[0].key, "checked_at": "2026-09-24", "source_url": "https://www.hairylemonnyc.com/menu-1",
            "reason": "template page", "drop": ["Beef Burger", "Vegetarian Burger"],
            "add": [{"name": "Classic Burger", "price": 17.53, "protein": "beef"}]}
-    d = build.assemble(ts, {ts[0].key: result(burgers=template)}, corrections=[fix], generated_at="2026-09-23T12:00:00Z")
+    d = dataset(ts, {ts[0].key: result(burgers=template)}, corrections=[fix])
     r = d["restaurants"][0]
-    assert r["status"] == "priced" and r["index_price"] == 17.53 and "template-placeholder" not in r["status_detail"]
+    assert r["burger"]["name"] == "Classic Burger" and r["index_price"] == 17.53
+    assert r["hand_check"] == {"checked_on": "2026-09-24"}

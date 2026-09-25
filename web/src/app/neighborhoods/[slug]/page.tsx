@@ -16,6 +16,7 @@ import {
   getStats,
   hasNeighborhoodPage,
   isPriced,
+  isUnpriced,
   neighborhoodMenuCounts,
   withMenuCounts,
 } from "@/lib/data";
@@ -98,7 +99,7 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
           <div className="mt-6">
             <RestaurantTable
               restaurants={restaurants.filter(isPriced)}
-              unpriced={restaurants.filter((r) => !isPriced(r))}
+              unpriced={restaurants.filter(isUnpriced)}
               median={median}
               showNeighborhood={false}
               caption={`Restaurants in ${n.name}`}

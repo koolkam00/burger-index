@@ -10,10 +10,10 @@
 // Client-safe and pure: types only from ./schema, so zod stays out of the browser bundle, and every
 // function takes the list it counts, so the same call gives citywide or per-area answers.
 import { formatCount, pluralize } from "./format";
-import type { AreaSummary, Restaurant } from "./schema";
+import type { AreaSummary, PricedRestaurant, Restaurant } from "./schema";
 import { MIN_RANKED } from "./site";
 
-type MenuFields = Pick<Restaurant, "id" | "chain">;
+type MenuFields = Pick<PricedRestaurant, "id" | "chain">;
 
 /**
  * The menu a restaurant's prices come from: its chain, else the restaurant itself. Chains get a
@@ -26,7 +26,7 @@ export function menuKey(r: MenuFields): string {
 export type Menu = {
   key: string;
   /** The row that stands for the menu: the restaurant itself, or the chain's first priced location in the list. */
-  restaurant: Restaurant;
+  restaurant: PricedRestaurant;
   /** Chain slug, or null for an independent restaurant. */
   chain: string | null;
   indexPrice: number;
@@ -35,9 +35,9 @@ export type Menu = {
 };
 
 /**
- * One entry per distinct priced menu in `list`, in the order each menu first appears. A chain takes
- * the index price of its first priced location, exactly like the pipeline (its locations share one
- * menu, so they share one price).
+ * One entry per distinct priced menu in `list`, in the order each menu first appears; unpriced rows are
+ * skipped. A chain takes the index price of its first priced location, exactly like the pipeline (its
+ * locations share one menu, so they share one price).
  */
 export function pricedMenus(list: readonly Restaurant[]): Menu[] {
   const byKey = new Map<string, Menu>();

@@ -2,7 +2,7 @@ import json
 
 from conftest import menu, rec
 
-from pipeline import build, config, corrections
+from pipeline import build, config
 from pipeline.api import Api, CreditLedger, DiskCache
 from pipeline.chains import build_targets
 from pipeline.process import process_target, replay, run_targets
@@ -125,11 +125,11 @@ def test_chain_scraped_once_and_replayed_offline(tmp_path, fake):
                {x: live[x] for x in ("status", "menu_url", "burgers", "status_detail")}
     d = build.assemble(targets, results, generated_at="2026-09-23T12:00:00Z")
     build.validate(d)
-    mc = [r for r in d["restaurants"] if r["chain"] == "mcdonalds"]
+    mc = [r for r in d["restaurants"] if r.get("chain") == "mcdonalds"]
     # the scrape looked for the cheapest burger (index_item); build publishes the priciest one (top_item)
     assert len(mc) == 4 and {r["index_price"] for r in mc} == {7.49}
-    assert all([b["name"] for b in r["burgers"]] == ["Big Mac"] for r in mc)
-    assert all(r["price_source"] == "delivery_app" and "may vary by location" in r["status_detail"] for r in mc)
+    assert all(r["burger"]["name"] == "Big Mac" and r["price_source"] == "delivery_app" for r in mc)
+    assert all("may vary by location" in results[k]["status_detail"] for k in results if k.startswith("chain:"))
     # McDonald's counts once, not four times: median(7.49, 11)
     assert d["stats"]["index_median"] == 9.25 and d["stats"]["restaurants_priced"] == 5
 
@@ -145,11 +145,10 @@ def test_max_credits_stop_keeps_finished_targets(tmp_path, fake):
 
     results, pending = replay(targets, Api(DiskCache(tmp_path / "cache"), offline=True))
     assert len(results) == 2 and len(pending) == 4
-    d = build.assemble(targets, results, n_pending_restaurants=4, generated_at="2026-09-23T12:00:00Z")
+    d = build.assemble(targets, results, generated_at="2026-09-23T12:00:00Z")
     build.validate(d)
-    note = d["methodology"]["coverage_note"]
-    assert d["stats"]["restaurants_scanned"] == 2 and note.startswith("6 restaurants in scope: ")
-    assert "2 of them are in this dataset; the other 4 are not yet scraped." in note
+    # not yet scraped: left out of the dataset until a run reaches them
+    assert len(d["restaurants"]) == 2 and d["stats"]["restaurants_priced"] == 2
 
     # the next run resumes: cached targets are free, the rest get scraped
     api2 = api_for(tmp_path, max_credits=100)
@@ -174,8 +173,8 @@ def test_unmapped_homepage_searches_first_and_tries_marketplaces_before_it(tmp_p
     assert f.count("scrape") == 1 and res["website"] == home
     # Grubhub is a delivery marketplace: delivery prices, labeled as such
     assert res["price_source"] == "delivery_app" and "Delivery-app prices" in res["status_detail"]
-    # a hand correction naming another page words its source note the same way (corrections.scrape_note)
-    assert res["status_detail"] == corrections.source_note("delivery_app", gh)
+    assert res["status_detail"] == ("Prices from a delivery app (grubhub.com). Delivery-app prices usually run above "
+                                    "in-store prices.")
 
 
 def test_ctrl_c_stops_queued_targets_and_live_calls(tmp_path, fake, monkeypatch):
@@ -326,9 +325,9 @@ def test_chain_note_names_the_location_whose_menu_was_read(tmp_path, fake):
         res = process_target(t, api_for(tmp_path / str(i)))
         assert res["status"] == "priced" and res["source_key"] == source
         assert f"Chain-level prices from one NYC location ({where})" in res["status_detail"]
+        # every location gets the menu read at the source location
         d = build.assemble([t], {t.key: res}, generated_at="2026-09-23T12:00:00Z")
-        src = next(r for r in d["restaurants"] if f"camis:{r['camis']}" == source)
-        assert d["stats"]["cheapest_burger_id"] == f"{src['id']}--hamburger"
+        assert [r["index_price"] for r in d["restaurants"]] == [13.96, 13.96, 13.96]
 
 
 def test_menu_url_override_is_scraped_as_the_menu_and_trusted(tmp_path, fake):

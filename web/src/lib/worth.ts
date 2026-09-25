@@ -254,26 +254,19 @@ export type WorthMenu = {
 
 /**
  * Every distinct priced menu in `list`, once each (a chain once, however many locations), with the
- * burger visitors price: the menu's index burger (the dataset lists one burger per restaurant).
+ * burger visitors price: the restaurant's one burger, whose price is its index price.
  */
 export function worthMenus(list: readonly Restaurant[]): WorthMenu[] {
-  const out: WorthMenu[] = [];
-  for (const m of pricedMenus(list)) {
-    const r = m.restaurant;
-    const b = r.burgers.find((x) => x.is_index_item) ?? r.burgers[0];
-    if (!b) continue;
-    out.push({
-      key: m.key,
-      id: r.id,
-      name: r.name,
-      burger: b.name,
-      price: m.indexPrice,
-      neighborhood: m.chain ? null : r.neighborhood,
-      borough: r.borough,
-      locations: m.locations,
-    });
-  }
-  return out;
+  return pricedMenus(list).map(({ key, restaurant: r, chain, indexPrice, locations }) => ({
+    key,
+    id: r.id,
+    name: r.name,
+    burger: r.burger.name,
+    price: indexPrice,
+    neighborhood: chain ? null : r.neighborhood,
+    borough: r.borough,
+    locations,
+  }));
 }
 
 /** The link from a board row to the restaurant page, straight to its "What would you pay?" section. */

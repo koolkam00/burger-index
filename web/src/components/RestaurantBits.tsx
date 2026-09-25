@@ -2,18 +2,16 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { formatCount, pluralize } from "@/lib/format";
 import type { Menu } from "@/lib/menus";
-import type { Restaurant } from "@/lib/schema";
+import type { PricedRestaurant, UnpricedRestaurant } from "@/lib/schema";
 import { Kicker, PriceChip, SourceBadge } from "./ui";
 
-function indexBurger(r: Restaurant) {
-  return r.burgers.find((b) => b.is_index_item);
-}
+type Named = { name: string };
 
 /**
  * Names that occur more than once across `list` (and `alongside`, e.g. the page's own restaurant):
  * chain locations, which need their street address to tell the rows apart.
  */
-export function repeatedNames(list: readonly Restaurant[], alongside: readonly Restaurant[] = []): Set<string> {
+export function repeatedNames(list: readonly Named[], alongside: readonly Named[] = []): Set<string> {
   const counts = new Map<string, number>();
   for (const r of [...list, ...alongside]) counts.set(r.name, (counts.get(r.name) ?? 0) + 1);
   return new Set([...counts].filter(([, n]) => n > 1).map(([name]) => name));
@@ -24,22 +22,16 @@ export function RestaurantCard({
   restaurant: r,
   median,
   kicker,
-  burgerName,
-  price,
   where,
   headingLevel = 3,
 }: {
-  restaurant: Restaurant;
+  restaurant: PricedRestaurant;
   median: number | null;
   kicker?: ReactNode;
-  burgerName?: string;
-  price?: number | null;
   where?: string;
   /** 4 when the card sits under a group heading (h3) of its own. */
   headingLevel?: 3 | 4;
 }) {
-  const b = indexBurger(r);
-  const shownPrice = price !== undefined ? price : r.index_price;
   const Heading = headingLevel === 4 ? "h4" : "h3";
   return (
     <article className="card flex h-full flex-col">
@@ -50,10 +42,10 @@ export function RestaurantCard({
         </Link>
       </Heading>
       <p className="t-ui-s muted mt-1 break-anywhere">
-        {burgerName ?? b?.name ?? "No priced burger"} · {where ?? r.neighborhood ?? r.borough}
+        {r.burger.name} · {where ?? r.neighborhood ?? r.borough}
       </p>
       <div className="mt-auto flex flex-wrap items-center gap-2 pt-3">
-        <PriceChip price={shownPrice} median={median} />
+        <PriceChip price={r.index_price} median={median} />
         <SourceBadge source={r.price_source} />
       </div>
     </article>
@@ -151,18 +143,16 @@ export function RestaurantTable({
   showNeighborhood = true,
   caption,
 }: {
-  restaurants: Restaurant[];
-  unpriced?: Restaurant[];
+  restaurants: readonly PricedRestaurant[];
+  unpriced?: readonly UnpricedRestaurant[];
   median: number | null;
   showNeighborhood?: boolean;
   caption?: string;
 }) {
-  const priced = restaurants
-    .filter((r) => r.index_price !== null)
-    .sort((a, b) => (a.index_price as number) - (b.index_price as number) || a.name.localeCompare(b.name));
+  const priced = [...restaurants].sort((a, b) => a.index_price - b.index_price || a.name.localeCompare(b.name));
   const names = [...unpriced].sort((a, b) => a.name.localeCompare(b.name));
   const repeated = repeatedNames([...priced, ...names]);
-  const address = (r: Restaurant) => (repeated.has(r.name) && r.address ? r.address : null);
+  const address = (r: PricedRestaurant | UnpricedRestaurant) => (repeated.has(r.name) && r.address ? r.address : null);
   return (
     <div>
       <div className="table-shell">
@@ -185,29 +175,26 @@ export function RestaurantTable({
           </tr>
         </thead>
         <tbody>
-          {priced.map((r) => {
-            const b = indexBurger(r);
-            return (
-              <tr key={r.id}>
-                <th scope="row" className="min-w-0">
-                  <Link href={`/restaurants/${r.id}`} className="ui-link break-anywhere font-semibold">
-                    {r.name}
-                  </Link>
-                  <span className="t-ui-s muted block break-anywhere">
-                    {[b?.name, address(r)].filter(Boolean).join(" · ")}
-                    {showNeighborhood ? <span className="md:hidden"> · {r.neighborhood ?? r.borough}</span> : null}
-                  </span>
-                </th>
-                {showNeighborhood ? <td className="t-ui-s hidden break-anywhere md:table-cell">{r.neighborhood ?? r.borough}</td> : null}
-                <td className="hidden sm:table-cell">
-                  <SourceBadge source={r.price_source} />
-                </td>
-                <td className="num">
-                  <PriceChip price={r.index_price} median={median} delta={false} />
-                </td>
-              </tr>
-            );
-          })}
+          {priced.map((r) => (
+            <tr key={r.id}>
+              <th scope="row" className="min-w-0">
+                <Link href={`/restaurants/${r.id}`} className="ui-link break-anywhere font-semibold">
+                  {r.name}
+                </Link>
+                <span className="t-ui-s muted block break-anywhere">
+                  {[r.burger.name, address(r)].filter(Boolean).join(" · ")}
+                  {showNeighborhood ? <span className="md:hidden"> · {r.neighborhood ?? r.borough}</span> : null}
+                </span>
+              </th>
+              {showNeighborhood ? <td className="t-ui-s hidden break-anywhere md:table-cell">{r.neighborhood ?? r.borough}</td> : null}
+              <td className="hidden sm:table-cell">
+                <SourceBadge source={r.price_source} />
+              </td>
+              <td className="num">
+                <PriceChip price={r.index_price} median={median} delta={false} />
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
       </div>

@@ -16,7 +16,7 @@ import {
   getBorough,
   getGeneratedAt,
   getNeighborhoodsInBorough,
-  getRestaurantsInBorough,
+  getPricedRestaurantsInBorough,
   getStats,
   hasNeighborhoodPage,
   rankedNeighborhoods,
@@ -53,7 +53,7 @@ export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug
   const s = b.summary;
   const c = b.menuCounts;
   const median = getStats().index_median;
-  const restaurants = getRestaurantsInBorough(b.name);
+  const restaurants = getPricedRestaurantsInBorough(b.name);
   // Per menu, within the borough (menus.ts).
   const prices = menuIndexPrices(restaurants);
   const cheapest = menusByIndexPrice(restaurants);

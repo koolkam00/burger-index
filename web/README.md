@@ -19,10 +19,15 @@ pipeline (Python) ──> ../data/burger_index.json ──> npm run sync-data �
    `src/data/`. There is no sample data: if that file is missing, `dev` and `build` stop with a message saying how to get it back
    (`.venv/bin/python -m pipeline build` from the repo root rewrites it from the scrape cache).
 2. The same script validates the file against the JSON Schema contract (ajv, draft 2020-12 with formats). Invalid data stops the build.
-3. `src/lib/data.ts` (server-only) parses it again with the zod mirror in `src/lib/schema.ts` and checks the invariants (unique ids,
-   exactly one index burger per priced restaurant at the restaurant's index price, every published burger priced and its
-   restaurant's price source set). All pages read data through its typed selectors: `getStats()`, `getPricedRestaurants()`,
+3. `src/lib/data.ts` (server-only) parses it again with the zod mirror in `src/lib/schema.ts` and checks that restaurant ids
+   are unique. All pages read data through its typed selectors: `getStats()`, `getPricedRestaurants()`,
    `getPricedRestaurant(id)`, `getNeighborhoodPages()`, `getNeighborhood(slug)`, `getBorough(slug)`, and others.
+
+The dataset (contract version 2) carries only what the site reads. A restaurant comes in one of two shapes, picked by
+`index_price`: a `PricedRestaurant` (a page: address, coordinates, links, price source, `index_price`, its one `burger`
+`{name, description}` and `hand_check` `{checked_on}` or null) or an `UnpricedRestaurant` (a name on its neighborhood's
+page: `id`, `name`, `address`, `neighborhood_slug`, with `index_price` and `burger` null). `isPriced` / `isUnpriced` in
+`data.ts` tell them apart.
 
 `src/data/` and `public/vendor/` are generated; both are gitignored.
 
@@ -145,8 +150,9 @@ Notes:
 
 ## Notes for maintainers
 
-- **Types:** the contract is the source of truth. If it changes, update `src/lib/schema.ts` (zod) to match; `npm run typecheck` then shows
-  every page that needs attention.
+- **Types:** the contract is the source of truth. If it changes, update `src/lib/schema.ts` (zod) and `pipeline/models.py` to
+  match; `npm run typecheck` then shows every page that needs attention. Components that show a restaurant take a
+  `PricedRestaurant`, so an unpriced one can't reach a page, a card or a map pin by accident.
 - **Pages only for priced places (user decision 2026-09-25):** a restaurant without a price has no page, no sitemap URL and no
   row in the explorer, the map lists or a chain list; it shows up only as a plain name on its neighborhood's page. A neighborhood
   gets a page only when something there is priced; the others are plain names on `/neighborhoods`. Their old URLs are 404s.
@@ -157,8 +163,8 @@ Notes:
   `MIN_RANKED` / `MIN_HISTOGRAM` thresholds, "N menus" copy) goes through `src/lib/menus.ts` (`menuKey`, `pricedMenus`,
   `menuIndexPrices`, `menuCounts`, `isRankable`). Location counts (`restaurants_priced`, map pins, table rows) stay per
   location. An area priced only from chain menus is treated like any other area (the "Chain prices only" label was removed
-  on 2026-09-25). Hand corrections (`status_detail` "Prices corrected by hand after re-checking…") are parsed by
-  `src/lib/hand-checks.ts`.
+  on 2026-09-25). A hand correction is the restaurant's `hand_check` (`{checked_on}`, set by `pipeline/corrections.py`
+  only on restaurants that stay priced), shown as the "Prices corrected by hand" slip on its page.
 - **Explorer payload:** `src/lib/explorer-data.ts` sends one row per priced restaurant (`{id, name, burger, price, nb, nbSlug,
   borough, source}`, `ExRow` in `src/lib/explorer.ts`); `filterRows()` there does the filtering and sorting, tested in
   `test/explorer.test.ts`. Old `protein`, `source`, `hide` and `index` URL parameters are ignored.
