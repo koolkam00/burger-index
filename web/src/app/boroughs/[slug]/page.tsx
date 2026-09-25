@@ -95,7 +95,7 @@ export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug
       <div className="wrap">
         {priced ? (
           <>
-            <AreaStats median={s.index_median} cityMedian={median} min={s.index_min} max={s.index_max} menus={c.menus} withMedian={!showBoard} />
+            <AreaStats median={s.index_median} cityMedian={median} min={s.index_min} max={s.index_max} menus={c.menus} withMedian={!showBoard} range={false} />
 
             <section className="section" aria-labelledby="spread">
               <SectionHeading id="spread" kicker="Fresh off the grill" icon={Spatula} title={`How ${b.name} prices spread.`} />

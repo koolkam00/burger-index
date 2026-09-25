@@ -91,7 +91,7 @@ export function PeoplesPriceBoard({ menus, burgerIndex, menuCount }: { menus: Wo
       <section className="mt-2" aria-label="The People's Burger Index" aria-busy={loading}>
         <p className="worth-meta t-ui-s muted">
           {live ? (
-            <span className="badge badge-status badge-live">
+            <span className="badge badge-live">
               <span className="live-dot" aria-hidden="true" />
               Live
             </span>

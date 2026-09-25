@@ -2531,6 +2531,9 @@
   }
   .badge-live {
     background: var(--ok-bg);
+    color: var(--ink);
+    font-weight: 600;
+    border-color: transparent;
   }
   .live-dot {
     width: 8px;

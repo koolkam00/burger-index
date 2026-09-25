@@ -55,7 +55,8 @@ export default function HomePage() {
   return (
     <>
       {/* The view through the front window: sea water, surface ripples, bubbles in the gutters. The
-          kicker ticket, H1 and lede sit here, and the Order Board hangs in columns 6–12 at lg. */}
+          kicker ticket and H1 sit here (a lede only when nothing is priced), and the Order Board hangs in
+          columns 6–12 at lg. */}
       <section className="hero atmo" aria-labelledby="hero-title">
         <Caustics id="caustic-hero" />
         <Bubbles />
@@ -99,8 +100,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="section" aria-labelledby="boroughs">
-        <SectionHeading id="boroughs" kicker="Five boroughs, one counter" icon={ShipWheel} title={boroughTitle} />
+      <section id="boroughs" className="section" aria-labelledby="boroughs-title">
+        <SectionHeading id="boroughs-title" kicker="Five boroughs, one counter" icon={ShipWheel} title={boroughTitle} />
         <div className="mt-8">
           {pricedBoroughs.length ? (
             <ChartFigure
