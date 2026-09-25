@@ -189,7 +189,9 @@ npm run typecheck        # next typegen && tsc --noEmit
 npm test                 # node:test over test/*.test.ts (no extra deps; reads ../data/burger_index.json)
 npm run build            # sync-data, then static export to web/out/
 npm run preview          # serve out/ at http://localhost:4173
+npm run check:seo        # after a build: titles, descriptions, canonicals, JSON-LD, sitemap, robots, llms.txt, CSV, links
 npm run validate:data    # ajv check against the contract (default ../data/burger_index.json; pass a path for another)
+npm run indexnow         # after a production deploy: submit the live sitemap to IndexNow (SITE_URL=https://… or --site)
 ```
 
 - **Data in:** `scripts/sync-data.mjs` (runs as `predev`/`prebuild`) copies `../data/burger_index.json` to
@@ -205,7 +207,23 @@ npm run validate:data    # ajv check against the contract (default ../data/burge
   out of the browser bundle.
 - **Next 16** has breaking changes versus older docs: read `web/AGENTS.md` and `web/node_modules/next/dist/docs/`
   before writing Next code. `output: "export"`: every route is static (`generateStaticParams`); the only route
-  handlers are force-static files (`/og.png`, sitemap, robots); there is no data download.
+  handlers are force-static files (`/og.png`, `/llms.txt`, `/data/burger-prices.csv`, sitemap, robots).
+- **SEO / AEO / GEO (user decisions 2026-09-25):** the origin comes from `src/lib/site-url.ts`: `NEXT_PUBLIC_SITE_URL`,
+  else `https://$VERCEL_PROJECT_PRODUCTION_URL` (the free `*.vercel.app` address), else `http://localhost:4173` with a
+  build warning (never a domain the user doesn't own). Titles and meta descriptions for every page type are built in
+  `src/lib/seo.ts` from the real numbers and the month (titles ≤ 60 characters where possible, " · The Burger Index" only
+  when it fits; descriptions ≤ 160; `pageMetadata` in `src/lib/metadata.ts` applies them); `sourceLine()` there is the one
+  plain source/date line. JSON-LD: builders in `src/lib/jsonld.ts` (pure; `serializeJsonLd` escapes `<`, `>`, `&`),
+  rendered by `components/JsonLd.tsx` as a native `<script type="application/ld+json">`: WebSite, Organization and Dataset
+  (the CSV; no license until the user picks one) plus ItemLists of the cheapest/priciest cards on home, Restaurant →
+  Menu → MenuItem → Offer on restaurant pages, BreadcrumbList on every page below home (the visible crumbs where shown),
+  ItemList for the `/neighborhoods` ranking and each neighborhood's restaurant table. Never mark up the People's Price
+  as Review, Rating or AggregateRating. `robots.ts` (`src/lib/robots.ts`) allows every crawler, names the AI search and
+  training bots, and disallows only the `/ingest/` analytics proxy. `/llms.txt` (`src/lib/llms.ts`) and
+  `/data/burger-prices.csv` (`src/lib/csv.ts`: one row per priced location; restaurant, neighborhood, borough, burger,
+  price_usd, source badge label, page_url, checked; linked once from the footer) are force-static. IndexNow: the key
+  file is `public/<key>.txt` (public by design) and `scripts/indexnow.mjs` submits the live sitemap. `npm run check:seo`
+  verifies a build end to end (`-- --site https://…` also asserts the origin).
 - **Counting:** the site counts distinct menus through `src/lib/menus.ts` (menu key = chain, else restaurant id), the same
   rule as `build.menu_index_prices`: histograms, typical range, rankings, cheapest/priciest lists and the `MIN_RANKED` /
   `MIN_HISTOGRAM` thresholds are per menu; map pins, restaurant pages and table rows are per location.
@@ -228,12 +246,14 @@ npm run validate:data    # ajv check against the contract (default ../data/burge
 - **Deploy (Vercel):** project Root Directory `web`, build `npm run build`, output `out`, and keep "Include files
   outside the root directory" on (the build reads `../data` and `../contract`). CLI deploys run **from the repo
   root** (`npx vercel link` once, then `npx vercel --prod`); the root `.vercelignore` is an allowlist so `.env`,
-  `.venv/` and `data/cache/` are never uploaded. Set `NEXT_PUBLIC_SITE_URL` for canonical/OG URLs, the two Supabase
-  variables, and `NEXT_PUBLIC_POSTHOG_KEY` (`NEXT_PUBLIC_POSTHOG_HOST` stays unset: the default `/ingest` is proxied to
-  PostHog by the rewrites in `web/vercel.json`, which Vercel reads from the Root Directory; Next's own `rewrites` don't
-  work with `output: "export"`). The site has no Content-Security-Policy.
+  `.venv/` and `data/cache/` are never uploaded. Set the two Supabase variables and `NEXT_PUBLIC_POSTHOG_KEY`
+  (`NEXT_PUBLIC_POSTHOG_HOST` stays unset: the default `/ingest` is proxied to PostHog by the rewrites in
+  `web/vercel.json`, which Vercel reads from the Root Directory; Next's own `rewrites` don't work with
+  `output: "export"`). Set `NEXT_PUBLIC_SITE_URL` only once there is a custom domain: until then the build uses the
+  `VERCEL_PROJECT_PRODUCTION_URL` Vercel provides (the site launches on its `*.vercel.app` address). The site has no
+  Content-Security-Policy.
 - **Refresh the live site:** `pipeline run` (spends credits) → `pipeline build` → commit `data/burger_index.json` →
-  deploy.
+  deploy → `cd web && SITE_URL=https://<production host> npm run indexnow` (tells Bing and the other IndexNow engines).
 
 ## Context.dev (web data)
 

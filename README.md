@@ -83,6 +83,8 @@ Design rules are in [`DESIGN.md`](DESIGN.md). More in [`web/README.md`](web/READ
 Vercel project settings: **Root Directory** `web`, **Build Command** `npm run build`, **Output Directory** `out`,
 "Include files outside the root directory" on. Either import the Git repo on Vercel, or deploy from the **repo
 root** with the CLI (`npx vercel link` once, then `npx vercel --prod`). The root `.vercelignore` limits the upload to
-what the build needs, so `.env` never leaves your machine. Set `NEXT_PUBLIC_SITE_URL` to your domain.
+what the build needs, so `.env` never leaves your machine. The site launches on its `*.vercel.app` address, which the
+build picks up from Vercel; set `NEXT_PUBLIC_SITE_URL` only once there is a custom domain.
 
-To publish new prices: `pipeline run`, then `pipeline build`, commit `data/burger_index.json`, and deploy.
+To publish new prices: `pipeline run`, then `pipeline build`, commit `data/burger_index.json`, deploy, then tell the
+search engines: `cd web && SITE_URL=https://<production host> npm run indexnow`.

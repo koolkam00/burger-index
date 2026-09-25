@@ -66,6 +66,8 @@ Other scripts:
 |---|---|
 | `npm run sync-data` | Copy and validate the dataset (runs before dev and build) |
 | `npm run validate:data [file]` | Validate a dataset against the contract (defaults to `../data/burger_index.json`) |
+| `npm run check:seo [-- --site https://…]` | After a build: check `out/` (titles, descriptions, canonicals, JSON-LD, sitemap, robots, llms.txt, CSV, internal links); see "Search engines and AI assistants" |
+| `npm run indexnow [-- --dry-run] [-- --site https://…]` | After a production deploy: submit the live sitemap to IndexNow |
 
 ## What's it worth? (Supabase)
 
@@ -163,6 +165,42 @@ there is no banner, and surveys, product tours and the conversations widget are 
 - **Tests:** `test/analytics.test.ts` (off without a key, loading and queueing, property shaping, URL masking, the debounce) and
   the `onSaved` cases in `test/worth-store.test.ts`.
 
+## Search engines and AI assistants
+
+User decisions of 2026-09-25 (SEO, answer engines and generative search). Everything is static and built from the dataset.
+
+- **Titles and descriptions:** `src/lib/seo.ts` builds them for every page type from the real numbers and the month
+  ("Allswell: $22 burger in Williamsburg", "Burger prices in Astoria: $17.25 median"); pages pass the numbers in and
+  `pageMetadata()` (`src/lib/metadata.ts`) adds " · The Burger Index" only when the title stays within 60 characters.
+  Descriptions are sentences assembled to at most 160 characters. Every title and description is unique (restaurant titles
+  that would repeat, such as chain locations, name the street address: `sharedTitleIds`). `sourceLine()` is the one plain
+  source/date line ("Prices from restaurant menus and ordering pages, checked September 2026.").
+- **JSON-LD:** pure builders in `src/lib/jsonld.ts`, rendered by `components/JsonLd.tsx` as a native
+  `<script type="application/ld+json">` (Next 16 guide "JSON-LD"); `serializeJsonLd` escapes `<`, `>` and `&` so data can
+  never close the tag. Home: WebSite, Organization, Dataset (the CSV as a `DataDownload`; no license until one is chosen) and
+  an ItemList per cheapest/priciest card list (`menuEndsLists`, the same lists `MenuEnds` draws). Restaurant pages:
+  Restaurant (PostalAddress, GeoCoordinates, `sameAs` the restaurant's site) → Menu → MenuItem → Offer (price, USD).
+  Every page below home: BreadcrumbList (the visible breadcrumbs where the page shows them). `/neighborhoods`: an ItemList of
+  the ranking; neighborhood pages: an ItemList of the restaurant table (`byIndexPrice`). The People's Price is never marked
+  up as a Review, Rating or AggregateRating.
+- **robots.txt** (`src/lib/robots.ts`): every crawler is allowed, AI search and training bots are named (OAI-SearchBot,
+  ChatGPT-User, PerplexityBot, Perplexity-User, Claude-SearchBot, Claude-User, GPTBot, ClaudeBot, Google-Extended,
+  Applebot-Extended, CCBot), and only the analytics proxy `/ingest/` is disallowed.
+- **`/llms.txt`** (`src/lib/llms.ts`) and **`/data/burger-prices.csv`** (`src/lib/csv.ts`: `restaurant, neighborhood, borough,
+  burger, price_usd, source, page_url, checked`; RFC 4180 quoting, CRLF, UTF-8, formula-looking text cells prefixed with `'`)
+  are force-static route handlers.
+- **IndexNow:** `public/<key>.txt` holds the key (public by design: IndexNow fetches it to check we control the host). After
+  each production deploy, from `web/`: `SITE_URL=https://<production host> npm run indexnow` (or `-- --site https://…`). It
+  checks that the live site serves the key file, reads the live sitemap, refuses URLs on another host, and POSTs them to
+  `https://api.indexnow.org/indexnow` (Bing, Yandex, Seznam, Naver and the others that share it). `-- --dry-run` checks
+  and prints without sending; `-- --sitemap out/sitemap.xml` reads a local build's sitemap instead.
+- **Check a build:** `npm run check:seo` reads `out/` and the dataset: one `<title>`, a description, an absolute
+  self-referencing canonical and one `<h1>` per page, no skipped heading levels, JSON-LD that parses, has the expected types
+  and matches the page (names, prices, breadcrumbs, list order), unique titles and descriptions (with a length summary), the
+  sitemap equal to the pages, robots.txt, every llms.txt link, the CSV against the dataset, and no broken or orphaned
+  internal links. `-- --site https://…` also asserts the origin. Tests: `test/seo.test.ts`, `test/jsonld.test.ts`,
+  `test/csv.test.ts`, `test/site.test.ts` (origin, titles, robots) and `test/indexnow.test.ts`.
+
 ## Deploy to Vercel
 
 The Vercel project uses **Root Directory** `web`, **Build Command** `npm run build`, **Output Directory** `out`. Either:
@@ -186,15 +224,21 @@ Notes:
   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the Supabase **publishable** key, `sb_publishable_…` (also in `web/.env.local`) | answers stay closed |
   | `NEXT_PUBLIC_POSTHOG_KEY` | `phc_soMqVLQsk4hmuZYyWwGDrjjPQwRng7a6bK4i9E9vpBQ9` (the PostHog project's public token; **Vercel only**, never in `web/.env.local`) | no analytics |
   | `NEXT_PUBLIC_POSTHOG_HOST` | optional; leave unset for the `/ingest` proxy in `web/vercel.json` | `/ingest` |
-  | `NEXT_PUBLIC_SITE_URL` | for example `https://burgerindex.nyc` | Vercel's production URL, then `https://burgerindex.nyc` |
+  | `NEXT_PUBLIC_SITE_URL` | only for a custom domain, once there is one (`https://…`) | Vercel's production URL (`https://$VERCEL_PROJECT_PRODUCTION_URL`, the `*.vercel.app` address), else `http://localhost:4173` with a build warning |
 
-  `NEXT_PUBLIC_SITE_URL` sets canonical URLs, the sitemap and Open Graph tags. `NEXT_PUBLIC_POSTHOG_HOST` is only for a build
-  served somewhere without the proxy (for example `https://us.i.posthog.com` for a local check).
+  The origin (`src/lib/site-url.ts`) sets canonical URLs, the sitemap, robots.txt, llms.txt, JSON-LD, the CSV's `page_url` and
+  Open Graph tags. The site launches on its free `*.vercel.app` address (user decision 2026-09-25), which Vercel passes to every
+  build as `VERCEL_PROJECT_PRODUCTION_URL`, so nothing needs setting until a custom domain arrives. A build with neither
+  variable (a local one) uses the preview origin and says so; it never names a domain we don't own.
+  `NEXT_PUBLIC_POSTHOG_HOST` is only for a build served somewhere without the proxy (for example `https://us.i.posthog.com`
+  for a local check).
 - `web/vercel.json` (read from the Root Directory, and uploaded by the `.vercelignore` allowlist) holds the PostHog `/ingest`
   rewrites. Vercel applies rewrites to external origins for every framework, this Next.js static export included; Next's own
   `rewrites` don't work with `output: "export"`. After a deploy, the browser's network tab should show `/ingest/e/` (or
   `/ingest/i/v0/e/`) answering 200. PostHog accepts its endpoints with or without the trailing slash, so a trailing-slash
   redirect on the way doesn't lose events.
+- After a production deploy, submit the pages to IndexNow: `SITE_URL=https://<production host> npm run indexnow` (see
+  "Search engines and AI assistants").
 - Any static host works: upload `out/`. Routes are emitted as `name.html` files, so the host needs clean URLs (`/map` → `map.html`),
   which Vercel, Netlify and `serve` handle by default.
 
@@ -209,7 +253,10 @@ Notes:
 | `/neighborhoods`, `/neighborhoods/[slug]` | Sortable ranking (areas with at least 5 distinct priced menus; a chain counts once) and a page for every neighborhood with a priced restaurant (its unpriced restaurants listed as plain names); neighborhoods with nothing priced are plain names on `/neighborhoods` |
 | `/boroughs/[slug]` | The five borough pages (there is no `/boroughs` index) |
 | `/map` | MapLibre GL map of the priced restaurants, pins colored by price level, legend, list view, priced restaurants without coordinates |
-| `/og.png`, `/sitemap.xml`, `/robots.txt` | Open Graph image (the Order Board), sitemap, robots |
+| `/og.png`, `/sitemap.xml`, `/robots.txt` | Open Graph image (the Order Board), sitemap (every page), robots (every crawler welcome, AI bots named, only `/ingest/` disallowed) |
+| `/llms.txt` | Plain summary for AI assistants: the headline numbers and date, links to the main pages and the CSV |
+| `/data/burger-prices.csv` | The public price list, one row per priced restaurant location (linked from the footer) |
+| `/<key>.txt` | The IndexNow key file (`public/`, public by design) |
 
 ## Notes for maintainers
 
