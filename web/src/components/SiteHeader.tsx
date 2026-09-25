@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type ComponentType } from "react";
 import { NAV } from "@/lib/site";
-import { Buoy, CompassRose, LifeRing, Pennant, ShipWheel, Spyglass, type IconProps } from "./icons/nautical";
+import { Buoy, CompassRose, LifeRing, Scales, ShipWheel, Spyglass, type IconProps } from "./icons/nautical";
 import { ThemeToggle } from "./theme";
 import { Wordmark } from "./Wordmark";
 
@@ -18,7 +18,7 @@ function isActive(pathname: string, href: string): boolean {
 const SHEET_ICON: Record<string, ComponentType<IconProps>> = {
   "/": LifeRing,
   "/burgers": Spyglass,
-  "/best-burgers": Pennant,
+  "/peoples-price": Scales,
   "/map": CompassRose,
   "/neighborhoods": Buoy,
   "/boroughs": ShipWheel,

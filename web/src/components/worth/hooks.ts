@@ -1,18 +1,18 @@
 "use client";
 
-// React bindings for the vote store (lib/vote-store). Prerendered HTML and the first client render
+// React bindings for the worth store (lib/worth-store). Prerendered HTML and the first client render
 // both use the store's "nothing loaded yet" snapshots, so hydration always matches.
 import { useSyncExternalStore } from "react";
-import { voteStore, type MineSnapshot, type ScoresSnapshot } from "@/lib/vote-store";
+import { worthStore, type HistSnapshot, type MineSnapshot } from "@/lib/worth-store";
 
-/** This browser's votes: what each picker shows, what is saving, saved or failed. */
-export function useMyVotes(): MineSnapshot {
-  return useSyncExternalStore(voteStore.subscribe, voteStore.getMine, voteStore.getServerMine);
+/** This browser's answers: what each picker shows, what is saving, saved or failed. */
+export function useMyWorth(): MineSnapshot {
+  return useSyncExternalStore(worthStore.subscribe, worthStore.getMine, worthStore.getServerMine);
 }
 
-/** The public totals loaded so far (menu key -> votes, total). */
-export function useScores(): ScoresSnapshot {
-  return useSyncExternalStore(voteStore.subscribe, voteStore.getScores, voteStore.getServerScores);
+/** The public histograms loaded so far (menu key -> dollars -> answers). */
+export function useHists(): HistSnapshot {
+  return useSyncExternalStore(worthStore.subscribe, worthStore.getHists, worthStore.getServerHists);
 }
 
 /** Whether the visitor asked for reduced motion (false while prerendering). */

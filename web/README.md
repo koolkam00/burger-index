@@ -3,8 +3,8 @@
 The public site for the NYC Burger Index: the median index price across the New York menus we have priced, from
 the restaurants in the pipeline's scope (by default our curated list of burger restaurants; see "Restaurant scope" below).
 It is a fully static Next.js site (App Router, TypeScript strict, Tailwind v4, zod). There is no server code and no secret key: the Python
-pipeline writes one JSON file, and `next build` turns it into plain HTML in `out/`. The one live part, visitor voting, talks to
-Supabase straight from the browser with a public key (see "Visitor votes" below).
+pipeline writes one JSON file, and `next build` turns it into plain HTML in `out/`. The one live part, "What's it worth?", talks to
+Supabase straight from the browser with a public key (see "What's it worth? (Supabase)" below).
 
 Design rules live in [`../DESIGN.md`](../DESIGN.md) (fonts, color tokens, components, voice). Read it before changing anything visual.
 
@@ -61,11 +61,18 @@ Other scripts:
 | `npm run validate:data [file]` | Validate a dataset against the contract (defaults to the fixture) |
 | `npm run fixture` | Regenerate `fixtures/burger_index.sample.json` (deterministic, fictional restaurants on `.example` domains) and validate it |
 
-## Visitor votes (Supabase)
+## What's it worth? (Supabase)
 
-Visitors rate each menu's burger 1–10 (whole numbers, one vote per device, changeable) on every priced restaurant page and on
-`/best-burgers`, a live ranking. The backend is the Supabase project `burger-index`; its schema, API (`cast_vote`, `my_votes`,
-the public `burger_scores` table and its realtime feed), rate limit and security notes are in
+On every priced restaurant page, visitors say what they would pay for the menu's burger, in whole dollars from $5 to $75 (a
+native range slider starting at their saved answer, else $40, and an "Order up!" button; one answer per device, changeable).
+Once they have answered, the card shows the crowd's median, **the People's Price** (rounded to whole dollars), next to the
+menu price and their own answer, the answer count, a verdict ("A bargain by 7%", "Overpriced by 43%", "Right on the money"; only
+from 3 answers) and the answer distribution in $5 ranges. `/peoples-price` shows the People's Burger Index (the median People's
+Price over burgers with a verdict) beside the real Burger Index, and live boards: biggest bargains, most overpriced, most
+answered, plus the burgers that need a few more answers. It replaced a 1–10 rating on 2026-09-25 (that never shipped).
+
+The backend is the Supabase project `burger-index`; its schema, API (`cast_worth`, `my_worth`, the public `burger_worth_hist`
+table and its realtime feed), rate limit (60 answers per hour per IP) and security notes are in
 [`../supabase/README.md`](../supabase/README.md) and `../supabase/migrations/`.
 
 The site needs two public build-time variables, in `web/.env.local` locally (gitignored) **and on Vercel** (Project → Settings →
@@ -77,16 +84,33 @@ Environment Variables, for Production and Preview):
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the project's **publishable** key (`sb_publishable_…`), never the secret / `service_role` key |
 
 Both are inlined into the JavaScript at build time (so a change needs a rebuild) and are public by design: the database only lets
-that key call `cast_vote` / `my_votes` and read `burger_scores`. Without them the site still builds; every vote picker is disabled
-and says "Voting opens soon."
+that key call `cast_worth` / `my_worth` and read `burger_worth_hist`. Without them the site still builds; the slider and button
+are disabled and say "Answers open soon.", and `/peoples-price` shows the same.
 
-Code map: `src/lib/vote-config.ts` (the two variables), `src/lib/voter.ts` (the anonymous voter id: a `crypto.randomUUID()` in
-`localStorage` under `burger-index-voter`, in memory when storage is blocked), `src/lib/vote-api.ts` (the only module that talks to
-Supabase; `@supabase/supabase-js` is imported lazily, so it is its own chunk and loads only where a vote component asks for it),
-`src/lib/vote-store.ts` (optimistic votes and live totals shared by every picker on a page), `src/lib/votes.ts` (pure helpers: score
-checks, the weighted ranking, search; tested in `test/votes.test.ts`), and `src/components/votes/` (the picker, the restaurant
-card and the `/best-burgers` board). The ranking is a weighted average (`(5·m + total) / (5 + votes)`, m = mean of all votes)
-over menus with at least 3 votes; like every rule behind the numbers, it is never explained on the site.
+Code map:
+
+- `src/lib/vote-config.ts`: the two variables (`VOTING_ENABLED`).
+- `src/lib/voter.ts`: the anonymous voter id, a `crypto.randomUUID()` in `localStorage` under `burger-index-voter` (in memory when
+  storage is blocked). Tested in `test/voter.test.ts`.
+- `src/lib/worth-api.ts`: the only module that talks to Supabase. `@supabase/supabase-js` is imported lazily on the first call, so
+  it is its own chunk and loads only on pages that mount the slider or the boards (restaurant pages, `/peoples-price`), and there
+  only once the slider is near the viewport. Histograms are fetched by menu key (100 keys per request), never the whole table:
+  `cast_worth` accepts any well-formed key, so rows for keys the dataset doesn't know are never downloaded.
+- `src/lib/worth-store.ts`: this browser's answers and the public histograms, shared by every component on a page. Answers are
+  optimistic and serialized per burger; while one is on its way the burger's histogram is frozen and shown with the visitor's answer
+  moved by hand, realtime events for it are held back, and a fresh fetch after the save replaces it, so the visitor's own answer
+  is never counted twice. Tested with a fake backend in `test/worth-store.test.ts`.
+- `src/lib/worth.ts`: pure helpers: answer validation, the median from a histogram, the People's Price (half up), verdicts, $5
+  buckets, the People's Burger Index, board ordering and ties, search, error copy. Tested in `test/worth.test.ts`.
+- `src/components/worth/`: `WorthPicker` (the restaurant card: "Order up!" waits for a returning visitor's saved answer unless
+  the slider was moved; once the People's Price shows, it refreshes every 30 seconds while the tab is visible, a poll rather than
+  a realtime channel per page view), `AnswerSpread` (the distribution), `PeoplesPriceBoard` (the page body: tiles, boards,
+  search; loads the dataset's menus only, realtime on `burger_worth_hist` filtered to those menus, with a 30-second polling
+  fallback while the channel is down).
+
+The rules behind the numbers (the People's Price is the median answer; a verdict needs 3 answers; "Right on the money" is a gap
+under 5%, measured from the smaller of the two prices; the People's Burger Index counts each burger with a verdict once, a chain
+once) are never explained on the site.
 
 ## Deploy to Vercel
 
@@ -102,7 +126,7 @@ Notes:
   keep Vercel's "Include files outside the root directory in the Build Step" setting on (the default for new projects).
 - The repo-root `.vercelignore` is an allowlist (`web/`, `contract/`, `data/burger_index.json`, `DESIGN.md`). Vercel does not read
   `.gitignore`, so without it a CLI deploy from the root would upload `.env` (the Context.dev key), `.venv/` and the scrape cache.
-- Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (see "Visitor votes"), or voting stays closed on the live site.
+- Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (see "What's it worth?"), or answers stay closed on the live site.
 - Set `NEXT_PUBLIC_SITE_URL` (for example `https://burgerindex.nyc`) so canonical URLs, the sitemap and Open Graph tags point at your
   domain. When it is unset, Vercel's production URL is used, then `https://burgerindex.nyc`.
 - Any static host works: upload `out/`. Routes are emitted as `name.html` files, so the host needs clean URLs (`/map` → `map.html`),
@@ -114,8 +138,8 @@ Notes:
 |---|---|
 | `/` | The headline index on the Order Board, typical range, counts, price histogram, borough bars, cheapest and priciest, neighborhood ranking |
 | `/burgers` | Every burger: search, filters (borough, neighborhood, price, protein, price source, index-only), sort, all synced to the URL |
-| `/best-burgers` | Visitors' live ranking (loads the votes in the browser), burgers that need more votes, and a search to rate any burger |
-| `/restaurants/[id]` | Menu board, index price vs neighborhood and NYC, the visitor rating and vote picker, price source, menu link, menu date, hand-check label, other chain locations, locator map |
+| `/peoples-price` | The People's Price: the People's Burger Index beside the Burger Index, live boards (biggest bargains, most overpriced, most answered), burgers that need a few more answers, and a search that links to any burger's slider (all loaded in the browser) |
+| `/restaurants/[id]` | Menu board, index price vs neighborhood and NYC, "What would you pay?" (the slider, then the People's Price), price source, menu link, menu date, hand-check label, other chain locations, locator map |
 | `/neighborhoods`, `/neighborhoods/[slug]` | Sortable ranking (areas with at least 5 distinct priced menus; a chain counts once) and area pages |
 | `/boroughs`, `/boroughs/[slug]` | Borough comparison and borough pages |
 | `/map` | MapLibre GL map, pins colored by price level, legend, list view, restaurants without coordinates |

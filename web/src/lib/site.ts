@@ -8,7 +8,7 @@ export type NavItem = { href: string; label: string };
 export const NAV: readonly NavItem[] = [
   { href: "/", label: "Index" },
   { href: "/burgers", label: "Burgers" },
-  { href: "/best-burgers", label: "Best burgers" },
+  { href: "/peoples-price", label: "People's Price" },
   { href: "/map", label: "Map" },
   { href: "/neighborhoods", label: "Neighborhoods" },
   { href: "/boroughs", label: "Boroughs" },

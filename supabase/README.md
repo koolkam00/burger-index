@@ -1,41 +1,58 @@
-# Burger votes (Supabase)
+# "What's it worth?" (Supabase)
 
-Visitors rate each burger 1–10 (whole numbers), one vote per visitor per burger (changeable); the
-site shows a live ranking. The site stays a static export: the browser talks to Supabase directly
+Visitors say what they'd pay for each burger ("What's it worth?"); the site shows the crowd's
+People's Price live. The site stays a static export: the browser talks to Supabase directly
 with the project's **publishable** key, and the database decides what it may do.
 
 **Project:** `burger-index` — ref `wtbtivqubzymhbmijnri`, region `us-east-1`, org "koolkam00's Org"
 (free plan). URL `https://wtbtivqubzymhbmijnri.supabase.co`. Set up 2026-09-25 with the Supabase
-connector; schema in `migrations/20260925000000_burger_votes.sql` (applied as migration
-`burger_votes`).
+connector. Schema: `migrations/20260925010000_whats_it_worth.sql` plus
+`migrations/20260925020000_worth_one_per_connection.sql` (applied as migrations `whats_it_worth`,
+`whats_it_worth_range_5_45`, `whats_it_worth_range_5_75` and `worth_one_per_connection`).
+`20260925000000_burger_votes.sql` (the retired 1-10 rating) now only supplies `burger_vote_rate`.
 
-## How voting works (no sign-in)
+## How it works: "What's it worth?" (no sign-in)
 
-- The browser makes a random voter id (UUID in `localStorage`) the first time it votes.
-- `rpc/cast_vote(p_menu_key, p_voter, p_score)` is the only write path: checks the score is a whole
-  number 1–10 and the key looks like a menu key, allows 60 votes per hour per client IP (stored as
-  an md5 hash in `burger_vote_rate`), then inserts or updates the one `(menu_key, voter)` vote and
-  returns the burger's new totals.
-- `rpc/my_votes(p_voter)` returns that browser's own votes (to pre-fill the picker).
-- `burger_scores` (menu_key, votes, total) is public, read-only, kept in sync by a trigger, and in
-  the `supabase_realtime` publication for live updates. `burger_votes` and `burger_vote_rate` are
-  private (RLS on, no policies, no grants).
-- `menu_key` is the dataset's menu key (restaurant id, or `chain:<slug>`), so a vote follows the
-  restaurant's menu even when its featured burger changes, and a chain's locations share an entry.
+Visitors say, in whole dollars from **$5 to $75**, what they'd pay for a restaurant's burger; the
+crowd's median is **the People's Price**, shown next to the menu price. (This replaced a 1-10
+rating on 2026-09-25; the old objects were dropped — migration `20260925010000_whats_it_worth.sql`.)
 
-Tested end to end with the publishable key on 2026-09-25 (vote, change vote, reject 11 and 7.5,
-read totals, read own votes, direct reads/writes of private tables denied); test rows deleted.
-Supabase's security advisor flags the two public `SECURITY DEFINER` functions and the two
-policy-less private tables — both intended.
+- The browser makes a random voter id (UUID in `localStorage`) the first time it answers.
+- `rpc/cast_worth(p_menu_key, p_voter, p_dollars)` is the only write path: checks a whole number
+  5-75 and the key format, allows 60 answers per hour per client IP (md5 hash in
+  `burger_vote_rate`), then inserts or updates the one `(menu_key, voter)` answer and returns the
+  burger's answer count and median.
+- **One answer per connection per burger** (`worth_one_per_connection`): each answer stores the
+  same IP hash, unique per `(menu_key, ip_hash)`. An answer from a connection that already
+  answered that burger replaces the earlier one, even from another browser, so fresh voter ids
+  can't stack answers onto a burger. A household or office on one network shares one answer per
+  burger. Answers from before the migration carry `legacy:<voter>` and count on their own.
+- `rpc/my_worth(p_voter)` returns that browser's own answers (to pre-fill the slider).
+- `burger_worth_hist` (menu_key, dollars, votes) is public, read-only, kept in sync by a trigger,
+  and in the `supabase_realtime` publication: the site computes medians and draws distributions
+  from it. `burger_worth` and `burger_vote_rate` are private (RLS on, no policies, no grants).
+- `menu_key` is the dataset's menu key (restaurant id, or `chain:<slug>`).
+
+Tested end to end with the publishable key on 2026-09-25 (answers, changed answer, median, bounds
+$4/$76 rejected, $19.50 rejected, distribution readable, private table and forged writes denied).
+The one-per-connection rule was tested in a rolled-back transaction (same connection, two
+browsers: one answer; second connection: two; a browser moving to the other connection replaces
+its answer there). The security advisor flags the two public `SECURITY DEFINER` functions and the
+two policy-less private tables — both intended.
+
+`cast_worth` accepts any key in the right format, not only the dataset's: the site asks for and
+shows only the dataset's menus, and an allowlist would have to be refreshed on every data update.
 
 ## Site configuration
 
 `web/.env.local` (gitignored) holds `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 (the `sb_publishable_…` key). On Vercel, add the same two variables under Project → Settings →
 Environment Variables. Never put the `service_role` / secret key anywhere in this repo or the site.
-Without the variables the site still builds; the voting section says voting isn't open yet.
+Without the variables the site still builds; the slider says "Answers open soon."
 
-## If spam shows up
+## Before launch, and if spam shows up
 
-Lower the per-IP budget in `cast_vote`, or add Cloudflare Turnstile in front of voting. To reset a
-burger: `delete from public.burger_votes where menu_key = '…'` (the trigger updates the totals).
+Delete test answers before launch (SQL editor): `delete from public.burger_worth; delete from
+public.burger_vote_rate;` — the trigger empties `burger_worth_hist` to match. To reset one burger:
+`delete from public.burger_worth where menu_key = '…';`. If spam still gets through, lower the
+per-IP budget in `cast_worth`, or add Cloudflare Turnstile in front of answering.

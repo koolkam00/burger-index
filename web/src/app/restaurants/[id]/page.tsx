@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MiniMap } from "@/components/map/MiniMap";
-import { RestaurantVote } from "@/components/votes/RestaurantVote";
+import { WorthPicker } from "@/components/worth/WorthPicker";
 import { repeatedNames } from "@/components/RestaurantBits";
-import { Anchor, Pennant, Spatula } from "@/components/icons/nautical";
+import { Anchor, Scales, Spatula } from "@/components/icons/nautical";
 import { BoroughName, DetailOverline, EmptyState, IndexTag, Money, PageHeader, PriceChip, SectionHeading, SourceBadge, StatGrid, StatTile, StatusBadge } from "@/components/ui";
 import { boroughSlug } from "@/lib/boroughs";
 import {
@@ -26,6 +26,7 @@ import { pageMetadata } from "@/lib/metadata";
 import { binFor } from "@/lib/price-bins";
 import type { Restaurant } from "@/lib/schema";
 import { atLeastOneParam, PLACEHOLDER_PARAM } from "@/lib/site";
+import { WORTH_ANCHOR } from "@/lib/worth";
 
 export const dynamicParams = false;
 
@@ -247,12 +248,13 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
         )}
       </section>
 
-      {/* Visitors rate the menu's burger (a chain's locations share one menu, so one rating). */}
+      {/* "What's it worth?": visitors name their price for the menu's burger (a chain's locations
+          share one menu, so one People's Price). The board links here by the section's id. */}
       {priced && indexBurger ? (
-        <section className="section" aria-labelledby="rate">
-          <SectionHeading id="rate" kicker="Comment card" icon={Pennant} title="Rate this burger." />
+        <section id={WORTH_ANCHOR} className="section" aria-labelledby="worth-title">
+          <SectionHeading id="worth-title" kicker="What's it worth?" icon={Scales} title="What would you pay?" />
           <div className="mt-6 max-w-3xl">
-            <RestaurantVote menuKey={menuKey(r)} burger={indexBurger.name} restaurant={r.name} />
+            <WorthPicker menuKey={menuKey(r)} burger={indexBurger.name} price={r.index_price as number} />
           </div>
         </section>
       ) : null}

@@ -222,16 +222,19 @@ export function Buoy(props: IconProps) {
 }
 
 /**
- * A burgee: the triangular club pennant flown from a mast, with a ball truck on top and a short
- * foot. Marks the visitors' ranking ("Best burgers" menu row, its kickers and ticket).
+ * The galley scales: a hanging balance, a post with a knob on top, a level beam and two pans on
+ * cords, on a flat foot. Marks "What's it worth?" (the People's Price menu row, its ticket and the
+ * "What's it worth?" kickers).
  */
-export function Pennant(props: IconProps) {
+export function Scales(props: IconProps) {
   return (
     <Svg {...props}>
-      <circle cx="6" cy="2.8" r="1.3" strokeWidth={1.5} />
-      <path d="M6 4.1V21.5" />
-      <path d="M6 5.5l13.5 4.25L6 14z" />
-      <path d="M3.5 21.5h5" />
+      <circle cx="12" cy="3.4" r="1.3" strokeWidth={1.5} />
+      <path d="M12 4.7V20.5" />
+      <path d="M8 20.5h8" />
+      <path d="M4.5 7.5h15" />
+      <path d="M4.5 7.5L2.2 13.5M4.5 7.5l2.3 6M19.5 7.5l-2.3 6M19.5 7.5l2.3 6" strokeWidth={1.5} />
+      <path d="M1.8 13.5h5.4a2.7 2.7 0 0 1-5.4 0zM16.8 13.5h5.4a2.7 2.7 0 0 1-5.4 0z" />
     </Svg>
   );
 }

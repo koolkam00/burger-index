@@ -7,7 +7,7 @@ import { AreaTable, RangePlot } from "@/components/charts/RangePlot";
 import { Letterboard } from "@/components/Letterboard";
 import { SoleRanked } from "@/components/AreaList";
 import { MenuEnds } from "@/components/RestaurantBits";
-import { Anchor, Buoy, LobsterTrap, Net, OrderBell, Pennant, ShipWheel, Spatula, Spyglass } from "@/components/icons/nautical";
+import { Anchor, Buoy, LobsterTrap, Net, OrderBell, Scales, ShipWheel, Spatula, Spyglass } from "@/components/icons/nautical";
 import { Bubbles, Caustics, ChartEmpty, KickerTicket, Money, MoneyRange, SectionHeading, StatGrid, StatTile, WaveEdge } from "@/components/ui";
 import { boroughInProse } from "@/lib/boroughs";
 import { allBurgers, getBoroughs, getBurger, getGeneratedAt, getMenuCounts, getRestaurants, getScope, getStats, rankedNeighborhoods } from "@/lib/data";
@@ -264,12 +264,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Visitor voting: a link only, so the home page never loads the vote client. */}
-      <section className="section" aria-labelledby="rate">
-        <SectionHeading id="rate" kicker="Comment cards" icon={Pennant} title="The best burgers, by your votes." />
+      {/* "What's it worth?": a link only, so the home page never loads the Supabase client. */}
+      <section className="section" aria-labelledby="worth">
+        <SectionHeading id="worth" kicker="What's it worth?" icon={Scales} title="What would you pay for a burger?">
+          Name your price for any burger, then see what everyone else would pay.
+        </SectionHeading>
         <p className="mt-6">
-          <Link href="/best-burgers" className="btn btn-primary btn-lg">
-            Rate a burger
+          <Link href="/peoples-price" className="btn btn-primary btn-lg">
+            See the People&apos;s Price
             <ArrowRight strokeWidth={2} aria-hidden="true" />
           </Link>
         </p>
