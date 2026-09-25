@@ -571,3 +571,7 @@ Row numbers are rows of the list after the web check.
 - **1010** Qdoba Mexican Grill (, Queens): deleted. Why: no beef burger on its menu — Qdoba's own location page puts QDOBA JFK Airport Plaza at JFK Travel Plaza, 147th St, Bldg. 125 (matching DOHMH's '125'), Jamaica 11430. On Grubhub, 'QDOBA Mexican Eats 147th St' has only Mexican categories (bowls, burri
 - **1119** The Point Tavern (West New Brighton-New Brighton-St. George, Staten Island): deleted. Why: no beef burger on its menu — The official site (879 Forest Ave) has a /menu page with no items in its HTML and a JavaScript-only ordering app at order.thepointtavernstatenisland.com. The Grubhub store is active at 879 Forest Ave. Its full menu (appe
 - Muscle Maker Grill (2 rows) stays on the list but is now excluded as a national fast-food chain (pipeline/chains.py), like Chipotle and Qdoba.
+
+## Corrections retired (2026-09-25)
+
+- `chain:jimbos-hamburger-palace`: the 2026-09-23 hand correction (Postmates "Deluxe" platters replaced by Grubhub plain-burger prices) is retired. The expansion re-scrape reads a full Grubhub menu for the 2027 Lexington Ave store that lists the plain burgers itself (Beef Burger $7.80, Super Beef Burger $7.50), so the correction no longer matched and is no longer needed.
