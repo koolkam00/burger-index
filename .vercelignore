@@ -5,7 +5,6 @@
 !web
 !data
 !contract
-!DESIGN.md
 data/*
 !data/burger_index.json
 web/node_modules

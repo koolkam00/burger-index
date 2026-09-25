@@ -124,7 +124,7 @@ Notes:
 
 - The build reads `../data/burger_index.json` and `../contract/burger_index.schema.json`, both outside `web/`. Commit the dataset, and
   keep Vercel's "Include files outside the root directory in the Build Step" setting on (the default for new projects).
-- The repo-root `.vercelignore` is an allowlist (`web/`, `contract/`, `data/burger_index.json`, `DESIGN.md`). Vercel does not read
+- The repo-root `.vercelignore` is an allowlist (`web/`, `contract/`, `data/burger_index.json`). Vercel does not read
   `.gitignore`, so without it a CLI deploy from the root would upload `.env` (the Context.dev key), `.venv/` and the scrape cache.
 - Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (see "What's it worth?"), or answers stay closed on the live site.
 - Set `NEXT_PUBLIC_SITE_URL` (for example `https://burgerindex.nyc`) so canonical URLs, the sitemap and Open Graph tags point at your

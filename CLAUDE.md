@@ -157,7 +157,7 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
   don't edit it without their approval; report duplicates (`report.csv_duplicate_matches`), unmatched rows (`report.csv_unmatched`),
   ambiguous rows (`report.csv_ambiguous`) and closed places (`report.csv_address_now_other_business`,
   `report.csv_stale_matches`; e.g. "Guy Fieri's American Kitchen & Bar", Times Square, closed 2017) for the user to fix.
-  `burger pilot list.csv` — the original 100-row pilot, now the `pilot-100` rows of the master list (kept for history).
+  The original 100-row pilot list is its `pilot-100` rows (the pilot CSV itself was deleted on 2026-09-25; git history has it).
 - `data/restaurants.json` — resolved restaurant universe + match report (`build` reuses it; pass scope flags to re-derive).
 - `pipeline/data/dohmh_overrides.json` — per-CAMIS fixes for typos in DOHMH records (e.g. Rosemary's `1820` → `18`
   Greenwich Ave with real coordinates), applied by `sources`; `report.dohmh_overrides_applied` lists them and an unused
@@ -165,8 +165,10 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
 - `pipeline/data/menu_urls.json` — hand-checked menu pages per restaurant key (`camis:…`/`csv:…` → `menu_url`, `checked_at`,
   `reason`), applied by `sources` (CSV untouched; `report.menu_url_overrides_applied`/`_unused`): scraped first, as is, and
   trusted as that restaurant's page. Each new one is a re-scrape on the next `run` (credits); never also correct that target.
-- `data/run_log.jsonl` — one line per target per run: status, urls tried, attempts, credits.
-- `data/credit_ledger.jsonl` — one line per **billed** live call: estimate, actual, run total, account balance, rate-limit headers.
+- `data/run_log.jsonl` (gitignored, local only) — one line per target per run: status, urls tried, attempts, credits.
+  **Never delete it:** `plan` and `build` replay from it (retry_pending, transient acceptance), so it changes what is published.
+- `data/credit_ledger.jsonl` (gitignored, local only) — one line per **billed** live call: estimate, actual, run total,
+  account balance, rate-limit headers.
 - `data/cache/` (gitignored) — `socrata/` DOHMH snapshot; `search/`, `map/`, `scrape/` Context.dev responses at
   `data/cache/<endpoint>/<sha1(canonical request)>.json`.
 
