@@ -74,6 +74,7 @@ test("rankMenus: one row per menu (a chain once, with its locations), capped at 
   ]);
   const city = rankMenus(list, cheapestSpec());
   assert.equal(city.total, 33, "30 + Alpha + Beta + the chain once");
+  assert.equal(city.spots, 35, "burger spots count the chain's every location");
   assert.equal(city.rows.length, 16, "at most half of 33 menus");
   assert.deepEqual(
     city.rows.slice(0, 3).map((m) => [m.rank, m.restaurant.name, m.locations]),
@@ -86,6 +87,7 @@ test("rankMenus: one row per menu (a chain once, with its locations), capped at 
   assert.equal(city.rows[3].rank, 4, "competition ranking: 1, 2, 2, 4");
   const bk = rankMenus(list, cheapestSpec(brooklyn));
   assert.equal(bk.total, 3);
+  assert.equal(bk.spots, 4, "Alpha, Beta and the chain's two Brooklyn locations");
   assert.deepEqual(
     bk.rows.map((m) => m.restaurant.name),
     ["Alpha"],
@@ -132,6 +134,9 @@ test("rankMenus under $N: strictly below, every row, cheapest first", () => {
     [6, 14.99],
   );
   assert.equal(r.total, 2);
+  assert.equal(r.spots, 2);
+  const withChain = rankMenus(priced([place({ price: 6 }), place({ chain: "c", name: "C", price: 10 }), place({ chain: "c", name: "C", price: 10 }), place({ price: 16 })]), underSpec(15));
+  assert.deepEqual([withChain.total, withChain.spots], [2, 3], "2 menus under $15 at 3 burger spots");
   const many = priced(Array.from({ length: 40 }, (_, i) => place({ price: 5 + i * 0.1 })));
   assert.equal(rankMenus(many, underSpec(15)).rows.length, 40, "under-$N lists are not capped");
 });
@@ -193,6 +198,12 @@ test("endSentence: answer first, one, two or several on the end price; the cheap
     segmentsText(endSentence("cheapest", "in the Bronx", [c, a, b], MONTH, whereInBorough("Bronx"))),
     "3 spots tie for the lowest top-burger price in the Bronx at $6.00 (September 2026), among them Cal's.",
   );
+  // "Spots" counts locations: a chain's two locations are two of the spots that tie.
+  const pair = menusByIndexPrice(priced([place({ id: "j1", chain: "j", name: "Jimbo's", price: 6, borough: "Bronx" }), place({ id: "j2", chain: "j", name: "Jimbo's", price: 6, borough: "Bronx" })]))[0];
+  assert.equal(
+    segmentsText(endSentence("cheapest", "in the Bronx", [c, pair, b], MONTH)),
+    "4 spots tie for the lowest top-burger price in the Bronx at $6.00 (September 2026), among them Cal's.",
+  );
   assert.equal(segmentsText(endSentence("priciest", "in the Bronx", [c, a, b], MONTH, whereInBorough("Bronx"))), "3 burgers tie for the most expensive in the Bronx at $6.00 (September 2026), among them the Burger at Cal's.");
   assert.deepEqual(endSentence("cheapest", "in NYC", [], MONTH), []);
   // Never the overclaim: the cheap end is a spot's priciest burger, not "the cheapest burger".
@@ -223,6 +234,16 @@ test("underSentence: how many spots have a priciest burger under $N, and the two
   assert.equal(segmentsText(underSentence(15, "in NYC", rows.slice(0, 1), MONTH)), "One burger spot in NYC has a priciest burger under $15 (September 2026): X, at $6.00.");
   assert.equal(segmentsText(underSentence(15, "in NYC", [], MONTH)), "No burger spot in NYC has a priciest burger under $15 (September 2026).");
   for (const r of [rows, rows.slice(0, 1), []]) assert.ok(!/burgers? in NYC costs? under|different burgers/i.test(segmentsText(underSentence(15, "in NYC", r, MONTH))));
+  // Burger spots are locations: a chain's 3 locations are 3 spots, though the list has it once.
+  const chain = (id: string) => place({ id, chain: "seventh", name: "7th Street Burger", price: 10 });
+  const withChain = menusByIndexPrice(priced([place({ id: "x", name: "X", price: 6 }), chain("s1"), chain("s2"), chain("s3"), place({ id: "y", name: "Y", price: 14.99 })]));
+  assert.equal(withChain.length, 3);
+  assert.equal(segmentsText(underSentence(15, "in NYC", withChain, MONTH)), "At 5 burger spots in NYC, the priciest burger is under $15 (September 2026), from $6.00 at X to $14.99 at Y.");
+  const onlyChain = menusByIndexPrice(priced([chain("s1"), chain("s2"), chain("s3")]));
+  assert.equal(
+    segmentsText(underSentence(15, "in NYC", onlyChain, MONTH)),
+    "3 burger spots in NYC have a priciest burger under $15 (September 2026): the 3 locations of 7th Street Burger, at $10.00.",
+  );
 });
 
 test("cityFaq on the real dataset: live numbers, links to the pages they name", () => {
@@ -330,7 +351,7 @@ test("rankingSeo on the real dataset: unique titles within 60 where they fit, de
   const data = loadDataset();
   const list = data.restaurants.filter((r) => r.index_price !== null) as PricedRestaurant[];
   const seos = rankingSpecs(list).map((spec) => {
-    const { rows, total } = rankMenus(list, spec);
+    const { rows, total, spots } = rankMenus(list, spec);
     return rankingSeo({
       kind: spec.kind,
       name: rankingName(spec),
@@ -338,6 +359,7 @@ test("rankingSeo on the real dataset: unique titles within 60 where they fit, de
       under: spec.under,
       rows: rows.map((m) => ({ restaurant: m.restaurant.name, burger: m.restaurant.burger.name, price: m.indexPrice })),
       total,
+      spots,
       generatedAt: data.generated_at,
     });
   });
@@ -350,9 +372,26 @@ test("rankingSeo on the real dataset: unique titles within 60 where they fit, de
   }
   // The search words stay (cheapest, burger, NYC, the borough); nothing claims "the cheapest burgers" or "burgers under $15".
   for (const s of seos) assert.ok(!/cheapest burgers|burgers under|cheapest burger in/i.test(`${s.title} ${s.description}`), `${s.title} | ${s.description}`);
-  const cheap = rankingSeo({ kind: "cheapest", name: "Cheapest burger spots in NYC", place: "NYC", under: null, rows: [{ restaurant: "Joe's", burger: "Cheeseburger", price: 6 }], total: 1, generatedAt: GEN });
+  // Every ranking title keeps the month (a long place takes the shorter form).
+  for (const s of seos) assert.match(s.title, /\(Sep 2026\)$/, s.title);
+  const cheap = rankingSeo({ kind: "cheapest", name: "Cheapest burger spots in NYC", place: "NYC", under: null, rows: [{ restaurant: "Joe's", burger: "Cheeseburger", price: 6 }], total: 1, spots: 1, generatedAt: GEN });
   assert.equal(cheap.title, "Cheapest burger spots in NYC: from $6 (Sep 2026)");
-  assert.equal(cheap.description, "The 1 cheapest burger spot in NYC, ranked by their priciest burger (September 2026). Joe's tops the list at $6.00.");
+  assert.equal(cheap.description, "Cheapest burger spots in NYC: the 1 menu with the lowest top-burger price (September 2026). Joe's tops the list at $6.00.");
+  const staten = rankingSeo({
+    kind: "cheapest",
+    name: "Cheapest burger spots in Staten Island",
+    place: "Staten Island",
+    under: null,
+    rows: [
+      { restaurant: "Saucy", burger: "Burger", price: 8.89 },
+      { restaurant: "Joe's", burger: "Burger", price: 9.5 },
+    ],
+    total: 35,
+    spots: 36,
+    generatedAt: GEN,
+  });
+  assert.equal(staten.title, "Cheapest burger spots, Staten Island: from $8.89 (Sep 2026)");
+  assert.match(staten.description, /^Cheapest burger spots in Staten Island: the 2 menus with the lowest top-burger price \(September 2026\)\. Saucy tops the list at \$8\.89\./);
   const under = rankingSeo({
     kind: "under",
     name: "Burger spots in NYC where the priciest burger is under $15",
@@ -363,9 +402,10 @@ test("rankingSeo on the real dataset: unique titles within 60 where they fit, de
       { restaurant: "Bob's", burger: "Burger", price: 14.99 },
     ],
     total: 90,
+    spots: 96,
     generatedAt: GEN,
   });
-  // "…where the priciest burger is under $15" fits the title only for a one-digit count.
-  assert.equal(under.title, "90 burger spots in NYC with a priciest burger under $15");
-  assert.match(under.description, /^90 burger spots in NYC where the priciest burger is under \$15, cheapest first \(September 2026\)\. From \$6\.00 at Joe's to \$14\.99 at Bob's\./);
+  // "Burger spots" counts locations (96), not the list's 90 menus.
+  assert.equal(under.title, "96 NYC burger spots, priciest burger under $15 (Sep 2026)");
+  assert.match(under.description, /^96 burger spots in NYC where the priciest burger is under \$15, cheapest first \(September 2026\)\. From \$6\.00 at Joe's to \$14\.99 at Bob's\./);
 });

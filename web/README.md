@@ -207,7 +207,9 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   **Honest wording (user decision 2026-09-25):** each restaurant publishes only its priciest burger, so the cheapest and
   under-$N lists rank burger spots by it and say so: "Cheapest burger spots in NYC.", "Burger spots in NYC where the priciest
   burger is under $15.", "The priciest burger at Johnny's Reef is $6.00, the lowest top-burger price of any spot in NYC
-  (September 2026).", counts in "burger spots", and the Q&A "Where are burgers cheapest in NYC?". Nothing says "the cheapest
+  (September 2026).", and the Q&A "Where are burgers cheapest in NYC?". Each count matches its noun: "burger spots" counts
+  locations ("At 96 burger spots in NYC, …", `rankMenus(…).spots`), the ranked rows are "menus", a chain once ("The 25
+  cheapest of 531 menus in NYC.", `.total`); `check:seo` checks both. Nothing says "the cheapest
   burger in …", "cheapest burgers in …" or "burgers under $15" (`check:seo` fails on those phrases anywhere in the build). The
   most expensive lists keep "Most expensive burgers" (each row is the priciest burger at its spot). Sentences place things "on
   the Upper East Side / Upper West Side / Lower East Side" and "in" everywhere else (`inNeighborhood`, `inNeighborhoodPlace` in

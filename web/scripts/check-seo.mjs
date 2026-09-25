@@ -16,7 +16,9 @@
 // checked, and so is every internal link (no broken targets, no page without an inbound link).
 // Honest wording (user decision 2026-09-25): each spot publishes its priciest burger, so no page text,
 // title, description, JSON-LD, llms.txt or CSV may claim "the cheapest burger in …", "cheapest burgers
-// in …" or "burgers under $15"; the cheapest lists name burger spots and their priciest burger.
+// in …" or "burgers under $15"; the cheapest lists name burger spots and their priciest burger. Every
+// count matches its noun: "N burger spots" counts locations (a chain's every one), "N menus" distinct
+// menus (a chain once).
 // Exit 1 on any error; warnings are printed and don't fail.
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -131,6 +133,7 @@ function expectedRanking(path) {
   let menus = distinctMenus(scope).sort((a, b) => (desc ? b.price - a.price : a.price - b.price) || a.r.name.localeCompare(b.r.name) || byKeyOrder(a, b));
   if (under) menus = menus.filter((x) => cents(x.price) < +under * 100);
   const total = menus.length;
+  const spots = menus.reduce((n, x) => n + x.locations, 0);
   let rank = 0;
   menus.forEach((x, i) => {
     if (i === 0 || cents(x.price) !== cents(menus[i - 1].price)) rank = i + 1;
@@ -140,9 +143,10 @@ function expectedRanking(path) {
   // every menu tied with the last of them; under $N: every row.
   const cap = Math.max(1, Math.min(25, Math.floor(total / 2)));
   const rows = under || menus.length <= cap ? menus : menus.filter((x) => x.rank <= menus[cap - 1].rank);
-  return { rows, total, desc };
+  return { rows, total, spots, desc };
 }
 
+const count = (v) => v.toLocaleString("en-US");
 const month = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "long", year: "numeric" }).format(new Date(data.generated_at));
 const SOURCE_LINE = `Prices from restaurant menus and ordering pages, checked ${month}.`;
 const LICENSE_URL = "https://creativecommons.org/licenses/by/4.0/";
@@ -385,13 +389,21 @@ for (const p of pages) {
       if (!/burger spots/i.test(h1)) err(`${path}: h1 "${h1}" does not name burger spots`);
       if (top && !lede.includes("priciest burger")) err(`${path}: lede "${lede}" does not say it is each spot's priciest burger`);
     }
-    // How many there are, under the table ("The 25 cheapest of 531 burger spots in NYC.", "All 90 burger spots on this list, cheapest first.").
-    const n = (v) => v.toLocaleString("en-US");
+    // How many there are, under the table: the rows are menus ("The 25 cheapest of 531 menus in NYC.",
+    // "All 90 menus on this list, cheapest first.").
     const countLine = text(/<\/table>\s*<\/div>\s*<p class="t-ui-s muted mt-3">(.*?)<\/p>/s.exec(html)?.[1] ?? "");
     const wantCount = /under/.test(path)
-      ? `All ${n(ranking.rows.length)} burger spots on this list, cheapest first.`
-      : `The ${n(ranking.rows.length)} ${ranking.desc ? "most expensive" : "cheapest"} of ${n(ranking.total)} burger spots in`;
+      ? `All ${count(ranking.rows.length)} menus on this list, cheapest first.`
+      : `The ${count(ranking.rows.length)} ${ranking.desc ? "most expensive" : "cheapest"} of ${count(ranking.total)} menus in`;
     if (ranking.rows.length > 1 && !countLine.startsWith(wantCount)) err(`${path}: count line "${countLine}", expected "${wantCount} …"`);
+    // "Burger spots" are locations: the under-$N lede counts them ("At 96 burger spots in NYC, …"), and
+    // any "N burger spots" in the page, its title or description is the list's location count.
+    if (/under/.test(path) && ranking.rows.length > 1 && !lede.startsWith(`At ${count(ranking.spots)} burger spots `)) err(`${path}: lede "${lede}" does not count ${count(ranking.spots)} burger spots`);
+    for (const [where, str] of [["page", text(html.replace(/<script\b[^>]*>.*?<\/script>/gs, " "))], ["<title>", p.title], ["description", p.description]]) {
+      for (const m of str.matchAll(/\b(\d[\d,]*) (?:NYC )?burger spots?\b/g)) {
+        if (m[1] !== count(ranking.spots)) err(`${path} ${where}: "${m[0]}", but the list covers ${count(ranking.spots)} burger spots (${count(ranking.total)} menus)`);
+      }
+    }
     p.rankingRows = trs.length;
   }
 
@@ -481,6 +493,13 @@ if (disallows.some((d) => d !== "/ingest/")) err(`robots.txt disallows more than
 const llms = readFileSync(join(OUT, "llms.txt"), "utf8");
 overclaims("llms.txt", llms);
 if (!new RegExp(`\\[Burger prices \\(CSV\\)\\]\\(${site}/data/burger-prices\\.csv\\):[^\\n]*License: CC BY 4\\.0 \\(${LICENSE_URL.replace(/[./]/g, "\\$&")}\\)`).test(llms)) err("llms.txt: the CSV link does not name its license (CC BY 4.0)");
+// The ranking notes count like the pages: burger spots are locations, menus count a chain once.
+for (const path of CITY_RANKING_PATHS) {
+  const r = expectedRanking(path);
+  const line = llms.split("\n").find((l) => l.includes(`](${site}${path})`)) ?? "";
+  const want = /under/.test(path) ? `: ${count(r.spots)} burger spots, ` : ` of ${count(r.total)} menus`;
+  if (!line.includes(want)) err(`llms.txt: the ${path} line "${line}" lacks "${want}"`);
+}
 const llmsLinks = [...llms.matchAll(/\]\((https?:\/\/[^)\s]+)\)/g)].map((m) => m[1]);
 for (const l of llmsLinks) {
   if (!l.startsWith(site)) err(`llms.txt links off-site: ${l}`);

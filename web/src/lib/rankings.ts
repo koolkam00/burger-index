@@ -105,8 +105,10 @@ export type RankedMenu = Menu & {
 export type Ranking = {
   /** The rows the page shows: the top rankingCap for cheapest and priciest plus every menu tied with the last of them; every row under $N. */
   rows: RankedMenu[];
-  /** Distinct menus the list covers before the cap (every priced menu in the place, or every one under $N). */
+  /** Distinct menus the list covers before the cap (every priced menu in the place, or every one under $N): "531 menus". */
   total: number;
+  /** Priced locations those menus cover (a chain's every location): "96 burger spots". */
+  spots: number;
 };
 
 const cents = (v: number) => Math.round(v * 100);
@@ -126,11 +128,12 @@ export function rankMenus(restaurants: readonly PricedRestaurant[], spec: Rankin
   const ordered = spec.kind === "priciest" ? menusByIndexPriceDesc(scope) : menusByIndexPrice(scope);
   const matching = spec.kind === "under" ? ordered.filter((m) => cents(m.indexPrice) < (spec.under as number) * 100) : ordered;
   const ranked = withRanks(matching);
-  if (spec.kind === "under") return { rows: ranked, total: matching.length };
+  const spots = matching.reduce((n, m) => n + m.locations, 0);
+  if (spec.kind === "under") return { rows: ranked, total: matching.length, spots };
   // A cut never splits equal prices: menus tied with the last row shown stay (they share its rank).
   const cap = rankingCap(matching.length);
   const cut = ranked.length > cap ? ranked[cap - 1].rank : Infinity;
-  return { rows: ranked.filter((m) => m.rank <= cut), total: matching.length };
+  return { rows: ranked.filter((m) => m.rank <= cut), total: matching.length, spots };
 }
 
 /** The rows that share first place (the cheapest or the most expensive, to the cent). */

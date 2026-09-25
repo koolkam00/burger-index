@@ -51,6 +51,8 @@ export const whereInBorough =
 export const whereInNeighborhood: Where = (m) => (m.chain && m.locations > 1 ? ` (${pluralize(m.locations, "location")} here)` : "");
 
 const restaurantLink = (m: Menu): Segment => ({ text: m.restaurant.name, href: `/restaurants/${m.restaurant.id}` });
+/** The burger spots (priced locations) a list of menus covers: a chain counts each location. "Spots" always counts these, never menus. */
+const spotCount = (menus: readonly Menu[]) => menus.reduce((n, m) => n + m.locations, 0);
 
 /**
  * One end of a place's list, answer first. `inPlace` is the place with its preposition ("in NYC",
@@ -75,21 +77,27 @@ export function endSentence(kind: "cheapest" | "priciest", inPlace: string, tied
   const spot = (m: Menu): Segment[] => [restaurantLink(m), midClause(where(m))];
   if (tied.length === 1) return ["The priciest burger at ", ...spot(tied[0]), ` is ${price}, ${lowest}.`];
   if (tied.length === 2) return ["The priciest burgers at ", restaurantLink(tied[0]), where(tied[0]), " and ", ...spot(tied[1]), ` are ${price} each, ${lowest}.`];
-  return [`${tied.length} spots tie for the lowest top-burger price ${midClause(inPlace)} at ${price} (${month}), among them `, restaurantLink(tied[0]), where(tied[0]), "."];
+  return [`${spotCount(tied)} spots tie for the lowest top-burger price ${midClause(inPlace)} at ${price} (${month}), among them `, restaurantLink(tied[0]), where(tied[0]), "."];
 }
 
 /**
- * "At 90 burger spots in NYC, the priciest burger is under $15 (September 2026), from $6.00 at Johnny's
- * Reef to $14.99 at …" (`inPlace` as in endSentence).
+ * "At 96 burger spots in NYC, the priciest burger is under $15 (September 2026), from $6.00 at Johnny's
+ * Reef to $14.99 at …" (`inPlace` as in endSentence). The count is of spots (a chain's 5 locations are
+ * 5 spots, as on /burgers), though the rows are menus.
  */
 export function underSentence(under: number, inPlace: string, rows: readonly Menu[], month: string): Segment[] {
   const limit = formatPrice(under);
   if (!rows.length) return [`No burger spot ${inPlace} has a priciest burger under ${limit} (${month}).`];
   const first = rows[0];
-  if (rows.length === 1) return [`One burger spot ${inPlace} has a priciest burger under ${limit} (${month}): `, restaurantLink(first), `, at ${money(first.indexPrice)}.`];
+  const spots = spotCount(rows);
+  if (rows.length === 1) {
+    return spots === 1
+      ? [`One burger spot ${inPlace} has a priciest burger under ${limit} (${month}): `, restaurantLink(first), `, at ${money(first.indexPrice)}.`]
+      : [`${spots} burger spots ${inPlace} have a priciest burger under ${limit} (${month}): the ${spots} locations of `, restaurantLink(first), `, at ${money(first.indexPrice)}.`];
+  }
   const last = rows[rows.length - 1];
   return [
-    `At ${pluralize(rows.length, "burger spot")} ${inPlace}, the priciest burger is under ${limit} (${month}), from ${money(first.indexPrice)} at `,
+    `At ${pluralize(spots, "burger spot")} ${inPlace}, the priciest burger is under ${limit} (${month}), from ${money(first.indexPrice)} at `,
     restaurantLink(first),
     ` to ${money(last.indexPrice)} at `,
     restaurantLink(last),

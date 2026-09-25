@@ -33,7 +33,7 @@ function crumbsFor(spec: RankingSpec): Crumb[] {
 }
 
 export function rankingMetadata(spec: RankingSpec): Metadata {
-  const { rows, total } = rankMenus(getPricedRestaurants(), spec);
+  const { rows, total, spots } = rankMenus(getPricedRestaurants(), spec);
   const seo = rankingSeo({
     kind: spec.kind,
     name: rankingName(spec),
@@ -41,6 +41,7 @@ export function rankingMetadata(spec: RankingSpec): Metadata {
     under: spec.under,
     rows: rows.map((m) => ({ restaurant: m.restaurant.name, burger: m.restaurant.burger.name, price: m.indexPrice })),
     total,
+    spots,
     generatedAt: getGeneratedAt(),
   });
   return pageMetadata({ ...seo, path: rankingPath(spec) });
@@ -58,11 +59,12 @@ export function RankingPage({ spec }: { spec: RankingSpec }) {
   const answer = segmentsText(
     spec.kind === "under" ? underSentence(spec.under as number, `in ${place}`, rows, month) : endSentence(spec.kind, `in ${place}`, topTied(rows), month),
   );
-  // "Burger spots" counts distinct menus (a chain once), never the locations /burgers counts.
+  // The rows are distinct menus (a chain once), so they are counted as "menus"; "burger spots" always
+  // counts locations (the lede's "At 96 burger spots", as /burgers counts them).
   const count =
     spec.kind === "under"
-      ? `All ${formatCount(rows.length)} burger spots on this list, cheapest first.`
-      : `The ${formatCount(rows.length)} ${spec.kind === "cheapest" ? "cheapest" : "most expensive"} of ${formatCount(total)} burger spots in ${place}.`;
+      ? `All ${formatCount(rows.length)} menus on this list, cheapest first.`
+      : `The ${formatCount(rows.length)} ${spec.kind === "cheapest" ? "cheapest" : "most expensive"} of ${formatCount(total)} menus in ${place}.`;
   const ticket = TICKET[spec.kind];
 
   return (

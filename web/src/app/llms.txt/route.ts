@@ -17,17 +17,18 @@ function end(m: Menu | undefined) {
 }
 
 /**
- * "the 25 cheapest of 531 burger spots by their priciest burger, from $6.00 at Johnny's Reef", "the 25
- * most expensive of 531 burger spots, up to $75.00 at …", "90 burger spots, priciest burgers $6.00 to $14.99".
+ * "the 25 cheapest of 531 menus by their priciest burger, from $6.00 at Johnny's Reef", "the 25 most
+ * expensive of 531 menus, up to $75.00 at …", "96 burger spots, priciest burgers $6.00 to $14.99"
+ * (menus count a chain once; burger spots count its every location).
  */
 function rankingNote(spec: RankingSpec, restaurants: Parameters<typeof rankMenus>[0]): string | undefined {
-  const { rows, total } = rankMenus(restaurants, spec);
+  const { rows, total, spots } = rankMenus(restaurants, spec);
   if (!rows.length) return undefined;
   const money = (v: number) => formatPrice(v, { cents: "always" });
   const first = rows[0];
-  if (spec.kind === "under") return `${formatCount(total)} burger spots, priciest burgers ${money(first.indexPrice)} to ${money(rows[rows.length - 1].indexPrice)}`;
-  if (spec.kind === "cheapest") return `the ${rows.length} cheapest of ${formatCount(total)} burger spots by their priciest burger, from ${money(first.indexPrice)} at ${first.restaurant.name}`;
-  return `the ${rows.length} most expensive of ${formatCount(total)} burger spots, up to ${money(first.indexPrice)} at ${first.restaurant.name}`;
+  if (spec.kind === "under") return `${formatCount(spots)} burger spots, priciest burgers ${money(first.indexPrice)} to ${money(rows[rows.length - 1].indexPrice)}`;
+  if (spec.kind === "cheapest") return `the ${rows.length} cheapest of ${formatCount(total)} menus by their priciest burger, from ${money(first.indexPrice)} at ${first.restaurant.name}`;
+  return `the ${rows.length} most expensive of ${formatCount(total)} menus, up to ${money(first.indexPrice)} at ${first.restaurant.name}`;
 }
 
 export function GET() {

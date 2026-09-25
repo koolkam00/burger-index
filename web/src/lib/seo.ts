@@ -7,6 +7,7 @@
 // Titles aim at 60 characters or fewer, descriptions at 150–160 (DESCRIPTION_MAX is a hard cap).
 import { boroughInProse, inNeighborhoodPlace, neighborhoodInProse, neighborhoodPreposition } from "./boroughs";
 import { formatCount, formatMonthYear, formatPrice, pctDiff, pluralize, theBurger } from "./format";
+import { rankingShortName } from "./rankings";
 import type { Borough } from "./schema";
 
 export const DESCRIPTION_MAX = 160;
@@ -250,28 +251,37 @@ export type RankingSeoInput = {
   under: number | null;
   /** The rows the page shows, in order. */
   rows: ReadonlyArray<{ restaurant: string; burger: string; price: number }>;
-  /** Burger spots (distinct menus) the list covers before the cap. */
+  /** Distinct menus the list covers before the cap (a chain once): "Out of 531 menus". */
   total: number;
+  /** Priced locations those menus cover (a chain's every location): the under-$N lists' "96 burger spots". */
+  spots: number;
   generatedAt: string;
 };
 
 /**
  * "Cheapest burger spots in NYC: from $6 (Sep 2026)", "Most expensive burgers in Brooklyn: up to $34
- * (Sep 2026)", "90 burger spots in NYC with a priciest burger under $15". Each spot publishes its
+ * (Sep 2026)", "96 NYC burger spots, priciest burger under $15 (Sep 2026)". Each spot publishes its
  * priciest burger, so the cheapest and under-$N lists rank spots by it and say so, and never claim "the
- * cheapest burgers" or "burgers under $15" (user decision 2026-09-25). The description names the first rows.
+ * cheapest burgers" or "burgers under $15" (user decision 2026-09-25). Each number matches its noun:
+ * "burger spots" counts locations, "menus" distinct menus (a chain once). The description names the first rows.
  */
 export function rankingSeo(d: RankingSeoInput): Seo {
   const mon = formatMonthYear(d.generatedAt, { short: true });
   const month = formatMonthYear(d.generatedAt);
   const [first, second, third] = d.rows;
   if (!first) return { title: d.name, description: `${d.name}: no priced burgers yet.` };
-  const spots = pluralize(d.total, "burger spot");
+  const menus = pluralize(d.total, "menu");
   if (d.kind === "under") {
+    const spots = pluralize(d.spots, "burger spot");
     const last = d.rows[d.rows.length - 1];
     const limit = short(d.under as number);
     return {
-      title: pickTitle([`${spots} in ${d.place} where the priciest burger is under ${limit}`, `${spots} in ${d.place} with a priciest burger under ${limit}`, d.name]),
+      title: pickTitle([
+        `${pluralize(d.spots, `${d.place} burger spot`)}, priciest burger under ${limit} (${mon})`,
+        `${spots} in ${d.place} where the priciest burger is under ${limit}`,
+        `${spots} in ${d.place} with a priciest burger under ${limit}`,
+        d.name,
+      ]),
       description: assemble(`${spots} in ${d.place} where the priciest burger is under ${limit}, cheapest first (${month}).`, [
         d.rows.length > 1 ? `From ${money(first.price)} at ${first.restaurant} to ${money(last.price)} at ${last.restaurant}.` : `${first.restaurant}, at ${money(first.price)}.`,
         "With each restaurant's neighborhood and price.",
@@ -284,16 +294,18 @@ export function rankingSeo(d: RankingSeoInput): Seo {
     second && third ? `Then ${second.restaurant} at ${money(second.price)} and ${third.restaurant} at ${money(third.price)}.` : null,
     second ? `Then ${second.restaurant} at ${money(second.price)}.` : null,
   ].filter((s): s is string => Boolean(s));
+  // A long place ("Staten Island") keeps the month with the shorter "Cheapest burger spots, Staten Island".
+  const shortName = rankingShortName({ kind: d.kind, borough: null, under: d.under });
   return {
-    title: pickTitle([`${d.name}: ${edge} (${mon})`, `${d.name}: ${edge}`, d.name]),
+    title: pickTitle([`${d.name}: ${edge} (${mon})`, `${shortName}, ${d.place}: ${edge} (${mon})`, `${d.name}: ${edge}`, d.name]),
     description: assemble(
       cheapest
-        ? `The ${pluralize(d.rows.length, "cheapest burger spot")} in ${d.place}, ranked by their priciest burger (${month}).`
+        ? `${d.name}: the ${pluralize(d.rows.length, "menu")} with the lowest top-burger price (${month}).`
         : `The ${pluralize(d.rows.length, "most expensive burger")} in ${d.place}, ranked by price (${month}).`,
       [
         cheapest ? `${first.restaurant} tops the list at ${money(first.price)}.` : `${cap(theBurger(first.burger))} at ${first.restaurant} tops the list at ${money(first.price)}.`,
         then.length ? then : null,
-        d.total > d.rows.length ? `Out of ${spots} in ${d.place}.` : null,
+        d.total > d.rows.length ? `Out of ${menus} in ${d.place}.` : null,
       ],
     ),
   };
