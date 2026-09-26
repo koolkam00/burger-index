@@ -43,6 +43,9 @@ def test_set_drop_add_recompute_index_and_record_the_hand_check():
     # Boeuf & Bun: Uber Eats scraped; its own ordering page's prices set by hand
     ("delivery_app", {"source_url": "https://boeufbun.orders2me.com/order-now", "price_source": "online_ordering",
                       "set": {"Classic": 32}}, "online_ordering"),
+    # BK Jani: its Sauce ordering page was read as the own site; a price-source-only entry relabels it
+    ("official_site", {"source_url": "https://www.getsauce.com/order/bk-jani-grand-st-brooklyn/menu",
+                       "price_source": "online_ordering"}, "online_ordering"),
     # another page of the same kind, no price_source given (Pipin's Pub: Uber Eats scraped, Postmates read)
     ("delivery_app", {"source_url": "https://postmates.com/store/pipins-pub/y",
                       "add": [{"name": "Beef Burger", "price": 18.95, "protein": "beef"}]}, "delivery_app"),
@@ -98,4 +101,6 @@ def test_committed_corrections_file_is_well_formed():
         assert not (c.get("withhold") and (c.get("set") or c.get("add"))), c["target"]  # withheld: no hand prices
         for a in c.get("add", []):
             assert a["protein"] in ("beef", "chicken", "turkey", "fish", "veggie", "lamb", "pork", "other")
+        if "getsauce.com" in c["source_url"]:  # Sauce is an ordering platform, never the restaurant's own site
+            assert c.get("price_source") == "online_ordering", c["target"]
     json.dumps(entries)
