@@ -189,6 +189,16 @@ test("what the card says about a saved list", () => {
   assert.equal(savedStatusText({ status: "active", countsFrom: "2026-09-20", inBoard: true }, today), "Counted in the People's Top 10.");
   assert.equal(savedStatusText({ status: "replaced", countsFrom: null, inBoard: false }, today), "Not counted: a newer list was saved from this connection. Save again to count this one.");
   assert.equal(savedStatusText({ status: "void", countsFrom: null, inBoard: false }, today), "Not counted.");
+  // a burger on it left the Burger Index: a replaced list asks for an edit ("Save again" isn't offered), the rest add it
+  assert.equal(
+    savedStatusText({ status: "replaced", countsFrom: null, inBoard: false }, today, true),
+    "Not counted: a newer list was saved from this connection. Some burgers on it are no longer on the Burger Index: edit your list to replace them, then save.",
+  );
+  assert.equal(
+    savedStatusText({ status: "active", countsFrom: "2026-09-20", inBoard: true }, today, true),
+    "Counted in the People's Top 10. Some burgers on it are no longer on the Burger Index: edit your list to replace them.",
+  );
+  assert.equal(savedStatusText({ status: "void", countsFrom: null, inBoard: false }, today, true), "Not counted. Some burgers on it are no longer on the Burger Index: edit your list to replace them.");
   assert.match(nyToday(new Date("2026-09-27T03:30:00Z")), /^2026-09-26$/, "New York's day, not UTC's");
 });
 

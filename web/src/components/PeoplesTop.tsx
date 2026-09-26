@@ -43,7 +43,7 @@ export function PeoplesTopList({ entries, median, label }: { entries: readonly T
           <li key={e.key} className="ptop-row">
             <span className="ptop-rank">
               {e.closeToAbove ? (
-                <span className="ptop-close" title="Too close to call with the burger above">
+                <span className="ptop-close" title="Too close to call with the burger above" aria-hidden="true">
                   ≈
                 </span>
               ) : null}

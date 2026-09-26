@@ -2450,6 +2450,20 @@
   .ranker-add {
     grid-area: add;
   }
+  /* A burger already on the list: a readable label ("#3 on your list" with a check, --ink-muted at full
+     strength, no underline), not a faded control. It stays aria-disabled, so focus stays on it after adding. */
+  .ranker-add.ranker-added[aria-disabled="true"] {
+    opacity: 1;
+    text-decoration: none;
+    cursor: default;
+  }
+  .ranker-add.ranker-added:hover {
+    color: var(--ink-muted);
+  }
+  /* The search box's 36px clear button: a 44px hit area (36px + 2 × 4px), clear of the input's edge. */
+  .ranker-clear::before {
+    inset: -4px;
+  }
   @media (min-width: 480px) {
     .ranker-hit {
       grid-template-columns: minmax(0, 1fr) auto auto;
@@ -2535,6 +2549,10 @@
     height: 40px;
     border: 1.5px solid var(--line-strong);
     background: var(--surface);
+  }
+  /* A 44px hit area: the extender sits on the padding box, inside the 1.5px border (37px + 2 × 3.5px). */
+  .ranker-ctl::before {
+    inset: -3.5px;
   }
   .ranker-ctl[aria-disabled="true"] {
     opacity: 0.35;
@@ -2670,7 +2688,7 @@
   .best-list :is(a, button, input, select, [tabindex]) {
     scroll-margin-top: 54px;
   }
-  /* Phone: the place, then the menu price and the People's Price side by side, then the lists. From
+  /* Phone: the place, then the menu price and the People's rank side by side, then the lists. From
      1024px the prices sit beside the place and the lists run under all three. */
   .best-row {
     display: grid;

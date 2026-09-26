@@ -153,9 +153,13 @@ export function seatsHeading(n: number): string {
   return n === 1 ? "The top burger so far." : `The top ${formatCount(n)} so far.`;
 }
 
-/** "The ladder starts when burgers are on 5 lists each (12 lists so far)." (nothing ranked yet) */
-export function ladderStartText(gate: number, totalLists: number): string {
-  return `The ladder starts when burgers are on ${formatCount(gate)} lists each (${pluralize(totalLists, "list")} so far).`;
+/**
+ * "The ladder starts when burgers are on 5 lists each (12 lists so far)." (nothing ranked yet). Before the first
+ * board (`totalLists` null: no lists have been published yet, though some may be saved) it leaves the count out.
+ */
+export function ladderStartText(gate: number, totalLists: number | null): string {
+  const start = `The ladder starts when burgers are on ${formatCount(gate)} lists each`;
+  return totalLists === null ? `${start}.` : `${start} (${pluralize(totalLists, "list")} so far).`;
 }
 
 /** "As of Sep 27, 2026" (the last day of lists the board counts), or null before the first board. */
@@ -168,7 +172,7 @@ export function asOfText(asOf: string | null): string | null {
  * ranked: when the ladder starts.
  */
 export function boardCountLine(view: Pick<PeoplesTopView<unknown>, "seats" | "totalLists" | "gate" | "asOf">): string {
-  if (!view.seats.length) return ladderStartText(view.gate, view.totalLists);
+  if (!view.seats.length) return ladderStartText(view.gate, view.asOf ? view.totalLists : null);
   return `From ${pluralize(view.totalLists, "list")}${view.asOf ? `, as of ${formatDate(view.asOf)}` : ""}.`;
 }
 

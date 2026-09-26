@@ -98,13 +98,16 @@ test("the words: rows, headings, the ladder's start, the count line and the lede
   assert.equal(seatsHeading(1), "The top burger so far.");
   assert.equal(ladderStartText(5, 12), "The ladder starts when burgers are on 5 lists each (12 lists so far).");
   assert.equal(ladderStartText(5, 1), "The ladder starts when burgers are on 5 lists each (1 list so far).");
+  assert.equal(ladderStartText(5, null), "The ladder starts when burgers are on 5 lists each.", "before the first board: no count");
   assert.equal(asOfText("2026-10-01"), "As of Oct 1, 2026");
   assert.equal(asOfText(null), null);
   assert.equal(FLAG_TEXT.held, "Under review");
   assert.equal(FLAG_TEXT.surge, "Checking a surge of lists");
   const v = peoplesTopView(board(), everything);
   assert.equal(boardCountLine(v), "From 640 lists, as of Oct 1, 2026.");
-  assert.equal(boardCountLine(peoplesTopView(EMPTY_BOARD, everything)), "The ladder starts when burgers are on 5 lists each (0 lists so far).");
+  // before the first board (no lists published yet, though some may be saved): no "(0 lists so far)"
+  assert.equal(boardCountLine(peoplesTopView(EMPTY_BOARD, everything)), "The ladder starts when burgers are on 5 lists each.");
+  assert.equal(boardCountLine({ seats: [], totalLists: 12, gate: 5, asOf: "2026-10-01" }), "The ladder starts when burgers are on 5 lists each (12 lists so far).");
   assert.equal(peoplesTopLede({ name: "Emily", lists: 143, firsts: 27 }, "2026-10-01"), "Emily tops the People's Top 10: on 143 lists, #1 on 27 of them (as of Oct 1, 2026).");
   assert.equal(peoplesTopLede({ name: "Emily", lists: 5, firsts: 0 }, null), "Emily tops the People's Top 10: on 5 lists.");
   assert.equal(peoplesTopLede(null, null), "The burgers visitors rank highest, from their own lists.");

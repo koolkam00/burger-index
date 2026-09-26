@@ -165,7 +165,7 @@ export function peoplesTopSeo(d: { leaders: readonly string[]; lists: number; as
   return {
     title: pickTitle(["The People's Top 10: the burgers NYC visitors rank highest", "The People's Top 10: NYC burgers visitors rank highest", "The People's Top 10"]),
     description: assemble(lead, [
-      top.length ? [`${top.join(", ")}.`, `${top.slice(0, 2).join(", ")}.`, `${top[0]}.`] : "Updated daily.",
+      top.length ? [`${top.join(", ")}.`, `${top.slice(0, 2).join(", ")}.`, `${top[0]}.`] : null,
       d.asOf ? `As of ${formatDate(d.asOf)}.` : null,
       "Add your own top 10.",
     ]),

@@ -6,7 +6,7 @@
 // `?r=` other than the example, or a search), so the page's HTML carries one badge.
 import { Search, TriangleAlert, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { badgeSpots, searchBadgeSpots, type BadgeSpot } from "@/lib/badge";
 import { formatCount, pluralize } from "@/lib/format";
 import { MENU_LIST_PATH, parseMenuList } from "@/lib/menu-list";
@@ -21,6 +21,7 @@ export function BadgeFinder({ example, context }: { example: BadgeSpot; context:
   const [picked, setPicked] = useState<string | null>(null);
   const wanted = picked ?? fromUrl ?? example.id;
   const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
   const [list, setList] = useState<List | null>(null);
   const needList = wanted !== example.id || query.trim().length > 0;
   const uid = useId();
@@ -79,6 +80,7 @@ export function BadgeFinder({ example, context }: { example: BadgeSpot; context:
         <div className="relative">
           <Search className="muted pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2" strokeWidth={2} aria-hidden="true" />
           <input
+            ref={inputRef}
             id={`${uid}-q`}
             type="search"
             className="input input-search pr-12 pl-11 [&::-webkit-search-cancel-button]:hidden"
@@ -96,7 +98,16 @@ export function BadgeFinder({ example, context }: { example: BadgeSpot; context:
             }}
           />
           {query ? (
-            <button type="button" className="icon-btn absolute top-1/2 right-1 size-9 -translate-y-1/2" aria-label="Clear search" onClick={() => setQuery("")}>
+            <button
+              type="button"
+              className="icon-btn absolute top-1/2 right-1 size-9 -translate-y-1/2"
+              aria-label="Clear search"
+              onClick={() => {
+                setQuery("");
+                // the button goes away with the query: keep focus in the search box, not on the page
+                inputRef.current?.focus();
+              }}
+            >
               <X strokeWidth={2} aria-hidden="true" />
             </button>
           ) : null}

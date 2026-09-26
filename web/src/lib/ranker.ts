@@ -160,6 +160,9 @@ export function nyToday(now: Date = new Date()): string {
   return formatIsoDay(now.toISOString());
 }
 
+/** Added when a saved list holds a burger that left the Burger Index (it can't be saved until it is replaced). */
+const GONE_TEXT = "Some burgers on it are no longer on the Burger Index: edit your list to replace them";
+
 /**
  * What the card says about the saved list (DESIGN.md "The ranker hero": Saved):
  * - void: "Not counted." (nothing to add: a void list stays void);
@@ -167,14 +170,26 @@ export function nyToday(now: Date = new Date()): string {
  * - counted in the last published board: "Counted in the People's Top 10.";
  * - saved, counting from a later day: "Saved. It counts from Sep 27, 2026.";
  * - saved and counting, not yet in a published board: "Saved. It joins the People's Top 10 at its next update."
+ * `gone`: a burger on it left the Burger Index. A replaced list then asks for an edit instead of "Save again" (which
+ * isn't offered: the list can't be saved as it is); the others add the same request.
  */
-export function savedStatusText(saved: Pick<SavedRanking, "status" | "countsFrom" | "inBoard">, today: string): string {
-  if (saved.status === "void") return "Not counted.";
-  if (saved.status === "replaced") return "Not counted: a newer list was saved from this connection. Save again to count this one.";
-  if (saved.status === "deleted") return "Deleted.";
-  if (saved.inBoard) return "Counted in the People's Top 10.";
-  if (saved.countsFrom && saved.countsFrom > today) return `Saved. It counts from ${formatDate(saved.countsFrom)}.`;
-  return "Saved. It joins the People's Top 10 at its next update.";
+export function savedStatusText(saved: Pick<SavedRanking, "status" | "countsFrom" | "inBoard">, today: string, gone = false): string {
+  if (saved.status === "replaced") {
+    return gone
+      ? `Not counted: a newer list was saved from this connection. ${GONE_TEXT}, then save.`
+      : "Not counted: a newer list was saved from this connection. Save again to count this one.";
+  }
+  const text =
+    saved.status === "void"
+      ? "Not counted."
+      : saved.status === "deleted"
+        ? "Deleted."
+        : saved.inBoard
+          ? "Counted in the People's Top 10."
+          : saved.countsFrom && saved.countsFrom > today
+            ? `Saved. It counts from ${formatDate(saved.countsFrom)}.`
+            : "Saved. It joins the People's Top 10 at its next update.";
+  return gone ? `${text} ${GONE_TEXT}.` : text;
 }
 
 /** The line under the list: how many, and what's still needed to save. */
@@ -204,6 +219,7 @@ export type RankerErrorKind =
   | "duplicate"
   | "invalid"
   | "network"
+  | "not_deleted"
   | "disabled"
   | "unknown";
 
@@ -247,6 +263,7 @@ export const RANKER_ERROR_COPY: Record<RankerErrorKind, string> = {
   duplicate: "Each burger can be on your list only once.",
   invalid: "That list doesn't look right. Reload the page and try again.",
   network: "Couldn't reach the counter. Check your connection and try again.",
+  not_deleted: "This list can't be deleted.",
   disabled: "Lists open soon.",
   unknown: "Something went wrong. Try again.",
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowRight, ArrowUp, Plus, Search, TriangleAlert, X } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, Check, Plus, Search, TriangleAlert, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useMediaQuery } from "@/components/charts/hooks";
@@ -151,6 +151,9 @@ export function Ranker({ median }: { median: number | null }) {
     const result = await rankerStore.save();
     if (!result.ok) return;
     track("ranking_saved", { length: result.length, edited: result.edited });
+    // The saved view's status line arrives with its words already in it, which screen readers skip: say them.
+    const now = rankerStore.getSnapshot().saved;
+    say(now ? (now.status === "active" ? savedStatusText(now, nyToday()) : `List saved. ${savedStatusText(now, nyToday())}`) : "List saved.");
     focusAfter({ kind: "heading" });
   };
   const edit = () => {
@@ -171,13 +174,23 @@ export function Ranker({ median }: { median: number | null }) {
   };
   const confirmDelete = async () => {
     const length = await rankerStore.deleteList();
-    if (length === null) return;
+    if (length === null) {
+      // Nothing was withdrawn (a void list): back to the saved list, whose status line says so.
+      if (rankerStore.getSnapshot().failure?.kind === "not_deleted") focusAfter({ kind: "heading" });
+      return;
+    }
     track("ranking_deleted", { length });
+    say("Your list was deleted.");
     focusAfter({ kind: "heading" });
   };
   const retryMine = () => {
     pendingFocus.current = { kind: "heading" };
     void rankerStore.loadMine();
+  };
+  /** "Try again" after the burgers failed to load: focus goes to the heading (saved list) or the search box. */
+  const retryMenus = (target: FocusTarget) => {
+    pendingFocus.current = target;
+    void rankerStore.loadMenus();
   };
 
   let body: ReactNode;
@@ -199,9 +212,22 @@ export function Ranker({ median }: { median: number | null }) {
       </>
     );
   } else if (snap.view === "saved" && snap.saved) {
-    body = <SavedView snap={snap} onEdit={edit} onSave={save} onAskDelete={askDelete} onKeep={keep} onDelete={confirmDelete} />;
+    body = (
+      <SavedView snap={snap} onEdit={edit} onSave={save} onAskDelete={askDelete} onKeep={keep} onDelete={confirmDelete} onRetryMenus={() => retryMenus({ kind: "heading" })} />
+    );
   } else {
-    body = <Builder snap={snap} median={median} onAdd={add} onMove={move} onRemove={remove} onSave={save} onCancel={cancel} />;
+    body = (
+      <Builder
+        snap={snap}
+        median={median}
+        onAdd={add}
+        onMove={move}
+        onRemove={remove}
+        onSave={save}
+        onCancel={cancel}
+        onRetryMenus={() => retryMenus({ kind: "search" })}
+      />
+    );
   }
 
   return (
@@ -260,6 +286,23 @@ function Alert({ children }: { children: ReactNode }) {
   );
 }
 
+/** The burgers (/data/menus.json) didn't load: said at once, in the saved list and while building one, with "Try again". */
+function MenusFailed({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="mt-3">
+      <p className="t-ui-m" role="alert">
+        <Alert>{RANKER_ERROR_COPY.network}</Alert>
+      </p>
+      <button type="button" className="btn btn-secondary btn-sm mt-3" onClick={onRetry}>
+        Try again
+      </button>
+    </div>
+  );
+}
+
+/** The burgers are on their way (a row shows a skeleton); after a failure a row says so instead. */
+const menusPending = (snap: RankerSnapshot) => snap.menus === "idle" || snap.menus === "loading";
+
 /** The saved list: its rows, what it counts for, and "Edit my list" / "Delete my list". */
 function SavedView({
   snap,
@@ -268,6 +311,7 @@ function SavedView({
   onAskDelete,
   onKeep,
   onDelete,
+  onRetryMenus,
 }: {
   snap: RankerSnapshot;
   onEdit: () => void;
@@ -275,14 +319,17 @@ function SavedView({
   onAskDelete: () => void;
   onKeep: () => void;
   onDelete: () => void;
+  onRetryMenus: () => void;
 }) {
   const saved = snap.saved!;
-  const status = savedStatusText(saved, nyToday());
+  // A burger that left the Burger Index: the visitor replaces it by editing (a save can't carry it).
+  const gone = snap.menus === "ready" && saved.items.some((k) => !snap.burgers.has(k));
+  const status = savedStatusText(saved, nyToday(), gone);
   const failure = snap.failure ? RANKER_ERROR_COPY[snap.failure.kind] : null;
   const busyText = snap.busy === "saving" ? "Saving your list…" : snap.busy === "deleting" ? "Deleting your list…" : null;
   const held = snap.busy !== null;
-  // A burger that left the Burger Index: the visitor replaces it by editing (a save can't carry it).
-  const gone = snap.menus === "ready" && saved.items.some((k) => !snap.burgers.has(k));
+  // A voided list stays void and can't be withdrawn (the backend keeps it): no "Delete my list" for it.
+  const canDelete = saved.status !== "void";
   return (
     <>
       <h3 tabIndex={-1} data-ranker-heading="" className="t-display-m ranker-title">
@@ -290,17 +337,17 @@ function SavedView({
       </h3>
       <p className="t-ui-m ranker-saved-status mt-1" role="status">
         {status}
-        {gone ? " Some burgers on it are no longer on the Burger Index: edit your list to replace them." : null}
       </p>
+      {snap.menus === "error" ? <MenusFailed onRetry={onRetryMenus} /> : null}
       <ol className="ranker-list is-saved mt-4" aria-label="Your list">
         {saved.items.map((key, i) => (
-          <SavedRow key={key} rank={i + 1} burger={snap.burgers.get(key)} loading={snap.menus !== "ready"} />
+          <SavedRow key={key} rank={i + 1} burger={snap.burgers.get(key)} menus={snap.menus} />
         ))}
       </ol>
-      {snap.confirmDelete ? (
+      {snap.confirmDelete && canDelete ? (
         <div className="ranker-confirm mt-5" role="group" aria-labelledby="ranker-confirm-q">
           <p id="ranker-confirm-q" className="t-ui-m font-semibold">
-            Delete your list? It stops counting at the next update.
+            {saved.status === "active" ? "Delete your list? It stops counting at the next update." : "Delete your list?"}
           </p>
           <div className="ranker-actions mt-3">
             <button type="button" className="btn btn-primary" data-ranker-button="delete" aria-disabled={held || undefined} onClick={() => !held && onDelete()}>
@@ -321,9 +368,11 @@ function SavedView({
           <button type="button" className="btn btn-secondary btn-lg" data-ranker-button="edit" aria-disabled={held || undefined} onClick={() => !held && onEdit()}>
             Edit my list
           </button>
-          <button type="button" className="btn btn-ghost" data-ranker-button="delete" aria-disabled={held || undefined} onClick={() => !held && onAskDelete()}>
-            Delete my list
-          </button>
+          {canDelete ? (
+            <button type="button" className="btn btn-ghost" data-ranker-button="delete" aria-disabled={held || undefined} onClick={() => !held && onAskDelete()}>
+              Delete my list
+            </button>
+          ) : null}
         </div>
       )}
       <p className="t-ui-s ranker-status mt-3" aria-live="polite">
@@ -333,7 +382,7 @@ function SavedView({
   );
 }
 
-function SavedRow({ rank, burger, loading }: { rank: number; burger: RankerBurger | undefined; loading: boolean }) {
+function SavedRow({ rank, burger, menus }: { rank: number; burger: RankerBurger | undefined; menus: RankerSnapshot["menus"] }) {
   return (
     <li className={`ranker-row${rank === TOP_N + 1 ? " is-first-extra" : ""}`}>
       {rank === TOP_N + 1 ? <ExtraRule /> : null}
@@ -349,8 +398,10 @@ function SavedRow({ rank, burger, loading }: { rank: number; burger: RankerBurge
             </Link>
             <p className="t-ui-s muted break-anywhere">{`${burger.burger} · ${burger.where}`}</p>
           </>
-        ) : loading ? (
+        ) : menus === "idle" || menus === "loading" ? (
           <span className="skel block h-5 w-40 max-w-full" aria-hidden="true" />
+        ) : menus === "error" ? (
+          <p className="t-ui-m muted">Couldn&apos;t load this burger</p>
         ) : (
           <p className="t-ui-m muted">No longer on the Burger Index</p>
         )}
@@ -377,6 +428,7 @@ function Builder({
   onRemove,
   onSave,
   onCancel,
+  onRetryMenus,
 }: {
   snap: RankerSnapshot;
   median: number | null;
@@ -385,11 +437,15 @@ function Builder({
   onRemove: (key: string) => void;
   onSave: () => void;
   onCancel: () => void;
+  onRetryMenus: () => void;
 }) {
   const uid = useId();
-  const [tried, setTried] = useState(false);
+  // The list as it was when "Save" was last pressed (null: not yet): "No changes to save." holds only until it changes.
+  const [triedWith, setTriedWith] = useState<readonly string[] | null>(null);
+  const tried = triedWith !== null;
   const draft = snap.draft;
   const ready = snap.menus === "ready";
+  const pending = menusPending(snap);
   const problem = listProblem(draft, (k) => !ready || snap.burgers.has(k));
   const held = snap.busy !== null;
   const editing = snap.saved !== null;
@@ -402,6 +458,8 @@ function Builder({
       <Alert>{RANKER_ERROR_COPY[snap.failure.kind]}</Alert>
     ) : problem && (tried || problem === "gone") ? (
       <Alert>{PROBLEM_COPY[problem]}</Alert>
+    ) : editing && !snap.dirty && triedWith === draft ? (
+      "No changes to save."
     ) : snap.notice === "deleted" ? (
       "Your list was deleted."
     ) : (
@@ -415,7 +473,7 @@ function Builder({
       </h3>
       <p className="t-ui-m muted mt-1">Pick the burgers you like best, your favorite first: at least 3, up to 25.</p>
 
-      <BurgerSearch snap={snap} median={median} onAdd={onAdd} />
+      <BurgerSearch snap={snap} median={median} onAdd={onAdd} onRetryMenus={onRetryMenus} />
 
       <p id={`${uid}-list`} className="t-label muted mt-6">
         Your list
@@ -424,7 +482,7 @@ function Builder({
         <ol className="ranker-list mt-2" aria-labelledby={`${uid}-list`}>
           {draft.map((key, i) => {
             const b = snap.burgers.get(key);
-            const name = b ? b.label : ready ? "A burger no longer on the Burger Index" : "Loading";
+            const name = b ? b.label : ready ? "A burger no longer on the Burger Index" : "this burger";
             return (
               <li key={key} data-row={key} className={`ranker-row${i === TOP_N ? " is-first-extra" : ""}`}>
                 {i === TOP_N ? <ExtraRule /> : null}
@@ -440,8 +498,10 @@ function Builder({
                     </>
                   ) : ready ? (
                     <p className="t-ui-m muted">No longer on the Burger Index</p>
-                  ) : (
+                  ) : pending ? (
                     <span className="skel block h-5 w-40 max-w-full" aria-hidden="true" />
+                  ) : (
+                    <p className="t-ui-m muted">Couldn&apos;t load this burger</p>
                   )}
                 </div>
                 <div className="ranker-ctls">
@@ -485,7 +545,7 @@ function Builder({
           data-ranker-button="save"
           aria-disabled={!canSave || undefined}
           onClick={() => {
-            setTried(true);
+            setTriedWith(draft);
             if (canSave) onSave();
           }}
         >
@@ -505,8 +565,9 @@ function Builder({
 }
 
 /** "Find a burger": the priced burgers whose restaurant, burger or neighborhood match, each with "Add". */
-function BurgerSearch({ snap, median, onAdd }: { snap: RankerSnapshot; median: number | null; onAdd: (b: RankerBurger) => void }) {
+function BurgerSearch({ snap, median, onAdd, onRetryMenus }: { snap: RankerSnapshot; median: number | null; onAdd: (b: RankerBurger) => void; onRetryMenus: () => void }) {
   const uid = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const searching = query.trim().length > 0;
   const hits = useMemo(() => (snap.menus === "ready" && searching ? searchBurgers(snap.burgers.values(), query) : []), [snap.menus, snap.burgers, searching, query]);
@@ -522,6 +583,7 @@ function BurgerSearch({ snap, median, onAdd }: { snap: RankerSnapshot; median: n
       <div className="relative max-w-xl">
         <Search className="muted pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2" strokeWidth={2} aria-hidden="true" />
         <input
+          ref={inputRef}
           id={`${uid}-q`}
           type="search"
           data-ranker-search=""
@@ -541,25 +603,36 @@ function BurgerSearch({ snap, median, onAdd }: { snap: RankerSnapshot; median: n
           }}
         />
         {query ? (
-          <button type="button" className="icon-btn absolute top-1/2 right-1 size-9 -translate-y-1/2" aria-label="Clear search" onClick={() => setQuery("")}>
+          <button
+            type="button"
+            className="icon-btn ranker-clear absolute top-1/2 right-1 size-9 -translate-y-1/2"
+            aria-label="Clear search"
+            onClick={() => {
+              setQuery("");
+              // the button goes away with the query: keep focus in the search box, not on the page
+              inputRef.current?.focus();
+            }}
+          >
             <X strokeWidth={2} aria-hidden="true" />
           </button>
         ) : null}
       </div>
-      {/* Always mounted, so screen readers hear the match count (the no-match sentence is visible below). */}
+      {/* Always mounted, so screen readers hear the match count, or that nothing matched (without the query: the
+          visible no-match sentence below is masked in replays). */}
       <p className="t-ui-s muted mt-2" role="status">
-        {!searching || snap.menus === "error" ? "" : snap.menus !== "ready" ? "Loading burgers…" : hits.length ? `Showing ${formatCount(Math.min(MAX_HITS, hits.length))} of ${pluralize(hits.length, "match", "matches")}` : ""}
+        {!searching || snap.menus === "error" ? (
+          ""
+        ) : snap.menus !== "ready" ? (
+          "Loading burgers…"
+        ) : hits.length ? (
+          `Showing ${formatCount(Math.min(MAX_HITS, hits.length))} of ${pluralize(hits.length, "match", "matches")}`
+        ) : (
+          <span className="sr-only">No burgers match. Try another name.</span>
+        )}
       </p>
-      {!searching ? null : snap.menus === "error" ? (
-        <div className="mt-2">
-          <p className="t-ui-m" role="alert">
-            <Alert>Couldn&apos;t reach the counter. Check your connection and try again.</Alert>
-          </p>
-          <button type="button" className="btn btn-secondary btn-sm mt-3" onClick={() => void rankerStore.loadMenus()}>
-            Try again
-          </button>
-        </div>
-      ) : snap.menus !== "ready" ? null : hits.length ? (
+      {snap.menus === "error" ? (
+        <MenusFailed onRetry={onRetryMenus} />
+      ) : !searching || snap.menus !== "ready" ? null : hits.length ? (
         <ul className="ranker-hits mt-1" aria-label="Matches">
           {hits.slice(0, MAX_HITS).map((b) => {
             const at = snap.draft.indexOf(b.key);
@@ -573,13 +646,16 @@ function BurgerSearch({ snap, median, onAdd }: { snap: RankerSnapshot; median: n
                 <PriceChip price={b.price} median={median} delta={false} />
                 <button
                   type="button"
-                  className={`btn btn-sm ${at >= 0 ? "btn-ghost" : "btn-secondary"} ranker-add`}
+                  className={`btn btn-sm ${at >= 0 ? "btn-ghost ranker-added" : "btn-secondary"} ranker-add`}
                   aria-disabled={off || undefined}
                   aria-label={at >= 0 ? `${b.label}: number ${at + 1} on your list` : full ? `${b.label}: your list is full` : `Add ${b.label} to your list`}
                   onClick={() => !off && onAdd(b)}
                 >
                   {at >= 0 ? (
-                    `#${at + 1} on your list`
+                    <>
+                      <Check strokeWidth={2} aria-hidden="true" />
+                      {`#${at + 1} on your list`}
+                    </>
                   ) : full ? (
                     "List full"
                   ) : (

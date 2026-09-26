@@ -9,7 +9,7 @@ fast-food chains (Shake Shack, Five Guys, McDonald's, White Castle, Tex's Chicke
 out. NYC's own small chains, such as 7th Street Burger, Bareburger and Black Tap, stay in, and so do national
 sit-down restaurants such as Del Frisco's, Smith & Wollensky, STK, Hillstone and Burger & Lobster. The website shows
 that number by borough, neighborhood and restaurant, with a searchable list of every priced burger, a map, and the
-People's Price (what visitors say each burger is worth).
+People's Top 10 (the burgers visitors rank highest).
 
 The full rules live in [`CLAUDE.md`](CLAUDE.md), the design in [`DESIGN.md`](DESIGN.md) and the website in
 [`web/README.md`](web/README.md).

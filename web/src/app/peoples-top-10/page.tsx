@@ -86,7 +86,7 @@ export default function PeoplesTopPage() {
                   </Link>
                 }
               >
-                No burger is ranked yet. {ladderStartText(top.gate, top.totalLists)}
+                No burger is ranked yet. {ladderStartText(top.gate, top.asOf ? top.totalLists : null)}
               </EmptyState>
             )}
           </div>

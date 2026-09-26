@@ -690,7 +690,10 @@ for (const p of pages) {
     const n = topView.seats.length;
     const wantTitle = n >= 10 ? "The top 10." : n === 1 ? "The top burger so far." : n ? `The top ${n} so far.` : "The top 10.";
     if (seatsTitle !== wantTitle) err(`${path}: the seats' heading "${seatsTitle}", expected "${wantTitle}"`);
-    if (!n && !body.includes(`The ladder starts when burgers are on ${count(board?.gate ?? 5)} lists each (${count(board?.totalLists ?? 0)} ${(board?.totalLists ?? 0) === 1 ? "list" : "lists"} so far).`)) err(`${path}: nothing ranked, but no ladder-start sentence`);
+    // Before the first board (asOf null) the sentence has no count: lists may be saved but none is published yet.
+    const soFar = board?.asOf ? ` (${count(board.totalLists)} ${board.totalLists === 1 ? "list" : "lists"} so far)` : "";
+    if (!n && !body.includes(`The ladder starts when burgers are on ${count(board?.gate ?? 5)} lists each${soFar}.`)) err(`${path}: nothing ranked, but no ladder-start sentence`);
+    if (!board?.asOf && /\b0 lists so far\b|updated daily/i.test(`${body} ${p.description}`)) err(`${path}: before the first board, a list count or "updated daily"`);
     const list = ofType(p, "ItemList")[0];
     if (wantRanked.length) {
       checkItemList(p, list, wantRanked, "People's Top 10");
@@ -769,7 +772,7 @@ for (const gone of ["/peoples-price", "/best-value-burgers", "/data/pricer.json"
 }
 for (const p of pages) {
   const words = `${text(p.html.replace(/<script\b[^>]*>.*?<\/script>/gs, " "))} ${p.title} ${p.description} ${JSON.stringify(p.ld)}`;
-  if (/People's Price|What's it worth|Price a burger/i.test(words)) err(`${p.path}: still mentions crowd pricing ("People's Price", "What's it worth" or "Price a burger")`);
+  if (/People[’']s Price|What[’']s it worth|Price a burger/i.test(words)) err(`${p.path}: still mentions crowd pricing ("People's Price", "What's it worth" or "Price a burger")`);
 }
 const home = pages.find((p) => p.path === "/");
 if (home && !/<div id="rank" role="region" aria-labelledby="rank-title"/.test(home.html)) err("/: no ranker region (#rank)");
@@ -1008,7 +1011,8 @@ if (disallows.some((d) => d !== "/ingest/")) err(`robots.txt disallows more than
 
 const llms = readFileSync(join(OUT, "llms.txt"), "utf8");
 overclaims("llms.txt", llms);
-if (/People's Price|What's it worth/i.test(llms)) err("llms.txt still mentions the People's Price");
+if (/People[’']s Price|What[’']s it worth/i.test(llms)) err("llms.txt still mentions the People's Price");
+if (!board?.asOf && /updated daily|\b0 lists so far\b/i.test(llms)) err('llms.txt: before the first board, a list count or "updated daily"');
 if (!new RegExp(`\\[Burger prices \\(CSV\\)\\]\\(${site}/data/burger-prices\\.csv\\):[^\\n]*License: CC BY 4\\.0 \\(${LICENSE_URL.replace(/[./]/g, "\\$&")}\\)`).test(llms)) err("llms.txt: the CSV link does not name its license (CC BY 4.0)");
 // The ranking notes count like the pages: burger spots are locations, menus count a chain once.
 for (const path of CITY_RANKING_PATHS) {

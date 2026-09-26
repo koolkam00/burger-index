@@ -103,7 +103,7 @@ export type RankerStore = {
   save(): Promise<SaveResult>;
   askDelete(): void;
   keepList(): void;
-  /** Withdraw the saved list; resolves to how many burgers it had (null when it failed). */
+  /** Withdraw the saved list; resolves to how many burgers it had (null when it failed, or nothing was withdrawn: a void list). */
   deleteList(): Promise<number | null>;
 };
 
@@ -351,7 +351,24 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
       failure = null;
       emit();
       try {
-        if (voter) await deps.api.del(voter);
+        const withdrawn = voter ? await deps.api.del(voter) : true;
+        if (!withdrawn && voter) {
+          // Nothing was withdrawn: a voided list can't be (it stays void and never counted), or the list changed
+          // elsewhere. Show what the backend holds now instead of saying it was deleted.
+          const now = await deps.api.get(voter);
+          if (now && now.status !== "deleted") {
+            saved = now;
+            draft = [...now.items];
+            busy = null;
+            view = "saved";
+            confirmDelete = false;
+            failure = { action: "delete", kind: "not_deleted" };
+            persistFlag();
+            persistDraft();
+            emit();
+            return null;
+          }
+        }
         saved = null;
         draft = [];
         busy = null;

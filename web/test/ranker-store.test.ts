@@ -37,12 +37,14 @@ function fakeApi(seed: Record<string, SavedRanking | null> = {}) {
       if (fail.get) throw fail.get;
       return lists.get(voter) ?? null;
     },
+    // like delete_ranking: only an active or replaced list is withdrawn (a void one stays void)
     async del(voter) {
       calls.push(`del ${voter}`);
       if (fail.del) throw fail.del;
-      const had = lists.has(voter);
-      lists.delete(voter);
-      return had;
+      const list = lists.get(voter);
+      if (!list || (list.status !== "active" && list.status !== "replaced")) return false;
+      lists.set(voter, { ...list, status: "deleted", countsFrom: null, inBoard: false });
+      return true;
     },
   };
   return { api, calls, fail, lists };
@@ -208,6 +210,33 @@ test("delete asks first, then withdraws the list and starts an empty one", async
   assert.equal(s.notice, "deleted");
   assert.equal(local.data.has(RANKER_SAVED_KEY), false);
   assert.deepEqual(backend.calls, ["get v1", "del v1", "del v1"]);
+});
+
+test("a voided list can't be deleted: the card keeps showing it and says so, never 'Your list was deleted.'", async () => {
+  const saved: SavedRanking = { items: ["a", "b", "c"], status: "void", savedOn: "2026-09-20", countsFrom: null, inBoard: false };
+  const { store, backend, local } = setup({ voter: "v1", saved });
+  await started(store);
+  assert.equal(store.getSnapshot().saved?.status, "void");
+  store.askDelete();
+  assert.equal(await store.deleteList(), null, "nothing was withdrawn");
+  const s = store.getSnapshot();
+  assert.equal(s.saved?.status, "void");
+  assert.deepEqual(s.saved?.items, ["a", "b", "c"]);
+  assert.equal(s.view, "saved");
+  assert.equal(s.busy, null);
+  assert.equal(s.confirmDelete, false);
+  assert.notEqual(s.notice, "deleted");
+  assert.deepEqual(s.failure, { action: "delete", kind: "not_deleted" });
+  assert.equal(local.data.get(RANKER_SAVED_KEY), "1", "the next visit still shows it");
+  assert.deepEqual(backend.calls, ["get v1", "del v1", "get v1"]);
+
+  // a list deleted elsewhere meanwhile (another tab): there is nothing left, so it is gone here too
+  const other = setup({ voter: "v2", saved: { ...saved, status: "active" } });
+  await started(other.store);
+  other.backend.lists.set("v2", { ...saved, status: "deleted" });
+  assert.equal(await other.store.deleteList(), 3);
+  assert.equal(other.store.getSnapshot().notice, "deleted");
+  assert.equal(other.store.getSnapshot().saved, null);
 });
 
 test("a list replaced from this connection shows as saved, and 'Save again' sends it again", async () => {
