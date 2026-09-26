@@ -2,16 +2,17 @@
 // publication count, most first ("Named by 10 publications" … "Named by 1 publication", each group's heading a
 // sticky bar, like the ticket rail's header), a data zone. Each row: the place (linked to its restaurant page
 // when it has a price) and its neighborhood; the menu price and burger (linked to the page's burger block) or
-// "Not priced"; the People's Price (the daily snapshot's, prerendered, then live and read-only in the
-// browser); and every list that names it, with its publisher and date. The lists' own words are never
-// shown: titles, names and dates only. Server-safe: the page passes the ranked entries
-// (lib/best-burgers-data.ts).
+// "Not priced"; its place in the People's Top 10 ranking when it has one (the daily board); and every list
+// that names it, with its publisher and date. The lists' own words are never shown: titles, names and dates
+// only. Server-safe: the page passes the ranked entries (lib/best-burgers-data.ts).
 import Link from "next/link";
 import { formatListDate, groupBestBurgers, type BestEntry, type BestList } from "@/lib/best-burgers";
 import { pluralize } from "@/lib/format";
-import type { PeoplesPriceFigures } from "@/lib/peoples-price";
-import { PeoplesPriceFact, PeoplesPriceLoader } from "./worth/PeoplesPriceFact";
+import { PEOPLES_TOP_PATH } from "@/lib/site";
 import { PriceChip } from "./ui";
+
+/** A menu's place in the People's Top 10 ranking (lib/peoples-top-data getPeoplesRank), by menu key. */
+export type PeoplesRanks = Readonly<Record<string, { rank: number; lists: number } | null>>;
 
 function SourceLine({ list, burger }: { list: BestList; burger: string | null }) {
   return (
@@ -30,8 +31,9 @@ function SourceLine({ list, burger }: { list: BestList; burger: string | null })
   );
 }
 
-function BestRow({ e, median, peoples }: { e: BestEntry; median: number | null; peoples: Readonly<Record<string, PeoplesPriceFigures | null>> }) {
+function BestRow({ e, median, ranks }: { e: BestEntry; median: number | null; ranks: PeoplesRanks }) {
   const r = e.restaurant;
+  const people = e.menuKey ? (ranks[e.menuKey] ?? null) : null;
   const where = e.neighborhood ? `${e.neighborhood.name} · ${e.neighborhood.borough}` : null;
   return (
     <li className="best-row">
@@ -60,9 +62,17 @@ function BestRow({ e, median, peoples }: { e: BestEntry; median: number | null; 
           <p className="t-ui-s muted mt-1">Not priced</p>
         )}
       </div>
-      {r && e.menuKey ? (
+      {people ? (
         <div className="best-people min-w-0">
-          <PeoplesPriceFact menuKey={e.menuKey} restaurantId={r.id} labelId={`people-${e.key}`} snapshot={peoples[e.menuKey] ?? null} />
+          <p id={`people-${e.key}`} className="t-label muted">
+            People&apos;s rank
+          </p>
+          <p className="mt-0.5">
+            <Link href={PEOPLES_TOP_PATH} className="ui-link t-num-m" aria-describedby={`people-${e.key}`}>
+              #{people.rank}
+            </Link>{" "}
+            <span className="t-num-s muted">on {pluralize(people.lists, "list")}</span>
+          </p>
         </div>
       ) : null}
       <div className="best-sources min-w-0">
@@ -79,14 +89,12 @@ function BestRow({ e, median, peoples }: { e: BestEntry; median: number | null; 
 
 /**
  * The places in groups of one publication count, most first, each group under a sticky heading ("Named by 10
- * publications", "1 place") and its places by name. `peoples` holds each priced place's People's Price figures
- * from the daily snapshot (by menu key; none without a snapshot): prerendered, then replaced by the live numbers.
+ * publications", "1 place") and its places by name. `ranks` holds each priced place's place in the People's Top 10
+ * ranking (by menu key; null when it isn't ranked).
  */
-export function BestBurgerList({ entries, median, peoples }: { entries: readonly BestEntry[]; median: number | null; peoples: Readonly<Record<string, PeoplesPriceFigures | null>> }) {
-  const keys = [...new Set(entries.flatMap((e) => (e.menuKey ? [e.menuKey] : [])))];
+export function BestBurgerList({ entries, median, ranks }: { entries: readonly BestEntry[]; median: number | null; ranks: PeoplesRanks }) {
   return (
     <div className="best-shell">
-      <PeoplesPriceLoader keys={keys} />
       {groupBestBurgers(entries).map((g) => (
         <section key={g.id} className="best-group" aria-labelledby={g.id}>
           <div className="best-group-head">
@@ -97,7 +105,7 @@ export function BestBurgerList({ entries, median, peoples }: { entries: readonly
           </div>
           <ol className="best-list">
             {g.entries.map((e) => (
-              <BestRow key={e.key} e={e} median={median} peoples={peoples} />
+              <BestRow key={e.key} e={e} median={median} ranks={ranks} />
             ))}
           </ol>
         </section>

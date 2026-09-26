@@ -9,6 +9,7 @@ import {
   DESCRIPTION_MAX,
   homeSeo,
   neighborhoodSeo,
+  peoplesTopSeo,
   pickTitle,
   restaurantSeo,
   restaurantTitle,
@@ -199,4 +200,13 @@ test("llmsTxt: headline numbers, the date, links to pages and the CSV, all on th
   const links = [...txt.matchAll(/\]\(([^)]+)\)/g)].map((m) => m[1]);
   assert.ok(links.length > 5);
   for (const l of links) assert.ok(l === site || l.startsWith(`${site}/`), l);
+});
+
+test("the People's Top 10 description: the leaders and the day once there is a board; before it, no promise of daily change", () => {
+  const empty = peoplesTopSeo({ leaders: [], lists: 0, asOf: null });
+  assert.equal(empty.description, "The NYC burgers visitors rank highest on The Burger Index, from their own top-10 lists. Add your own top 10.");
+  assert.doesNotMatch(empty.description, /daily|\b0 lists/i);
+  const full = peoplesTopSeo({ leaders: ["Emily", "Au Cheval", "J.G. Melon"], lists: 1284, asOf: "2026-10-01" });
+  assert.equal(full.description, "The NYC burgers visitors rank highest on The Burger Index, from 1,284 lists. #1 Emily, #2 Au Cheval, #3 J.G. Melon. As of Oct 1, 2026. Add your own top 10.");
+  assert.ok(full.description.length <= DESCRIPTION_MAX);
 });

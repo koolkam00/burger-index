@@ -1,0 +1,76 @@
+# The People's Top 10: once a day, read the Patty Ladder's public aggregates (rpc/ranker_board_inputs, a read-only
+# GET with the publishable key; the database rebuilds them each night at 00:20 New York), compute the day's board
+# with yesterday's committed board (web/scripts/snapshot-peoples-top.mjs, src/lib/ladder.mjs), and commit
+# data/peoples_top.json to main when it changed. The push to main is what redeploys the site on Vercel
+# (CLAUDE.md "People's Top 10 snapshot"). No secrets: the Supabase URL and publishable key are public values, built
+# into the script; the job only needs to push to this repository.
+name: People's Top 10
+
+on:
+  schedule:
+    - cron: "0 10 * * *" # 10:00 UTC, 6 am in New York: after the nightly refresh (04:20 or 05:20 UTC)
+  workflow_dispatch:
+    inputs:
+      allow_drop:
+        description: "The lists really fell by more than 20% (a reset or a mass removal): publish anyway (otherwise the job refuses and keeps yesterday's board)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: peoples-top-snapshot
+  cancel-in-progress: false
+
+jobs:
+  board:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Node built-ins only (fetch, fs, crypto): no npm install. Exits non-zero, writing nothing and keeping yesterday's
+      # board, on a failed or odd read, aggregates older than the board (or none after one), lists down by more than
+      # 20% beyond the owner's logged voids (unless run by hand with allow_drop), or a fit that did not converge.
+      # Aggregates as of the board's own day (a quiet day: the database publishes once 20 lists changed) change nothing.
+      - name: Compute the People's Top 10
+        run: node web/scripts/snapshot-peoples-top.mjs --inputs-out "$RUNNER_TEMP/ranker-board-inputs.json" ${{ inputs.allow_drop && '--allow-drop' || '' }}
+
+      # The exact aggregates the board was computed from (their SHA-256 is the board's inputsSha256), kept for audits;
+      # also kept when the job refused to publish. Public numbers only: no voter data is in them.
+      - name: Keep the aggregates read
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ranker-board-inputs
+          path: ${{ runner.temp }}/ranker-board-inputs.json
+          retention-days: 90
+          if-no-files-found: ignore
+
+      - name: Commit and push if the board changed
+        run: |
+          if [ -z "$(git status --porcelain -- data/peoples_top.json)" ]; then
+            echo "No change in the People's Top 10."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/peoples_top.json
+          git commit -m "Update People's Top 10"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "main moved on; rebasing onto it and trying again ($attempt)."
+            git pull --rebase origin main
+          done
+          exit 1

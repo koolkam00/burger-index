@@ -36,7 +36,7 @@ function load(): BurgerIndex {
   }
   const data = parsed.data;
   // The contract makes a priced restaurant carry its burger and price source; ids (page URLs and
-  // People's Price keys) must also be unique.
+  // People's Top 10 menu keys) must also be unique.
   const problems: string[] = [];
   const ids = new Set<string>();
   for (const r of data.restaurants) {

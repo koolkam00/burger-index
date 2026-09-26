@@ -16,7 +16,7 @@ import { OG_IMAGE, pageMetadata, SITE_URL } from "@/lib/metadata";
 import { menusByIndexPrice, menusByIndexPriceDesc } from "@/lib/menus";
 import { pressCitation, PRESS_PATH } from "@/lib/press";
 import { pressSeo, sourceLine } from "@/lib/seo";
-import { SITE_NAME } from "@/lib/site";
+import { PEOPLES_TOP_PATH, SITE_NAME } from "@/lib/site";
 
 const generatedAt = getGeneratedAt();
 const stats = getStats();
@@ -193,7 +193,11 @@ export default function PressPage() {
           <div className="t-body prose-width mt-6 grid gap-4">
             <p>
               The Burger Index is what a burger costs in New York City, {month}: the NYC median, prices by borough and neighborhood, a page for every priced
-              restaurant, rankings and a map. Visitors can say what they would pay for any burger; together their answers make the People&rsquo;s Price.
+              restaurant, rankings and a map. Visitors rank the burgers they like best; together their lists make{" "}
+              <Link href={PEOPLES_TOP_PATH} className="link">
+                the People&rsquo;s Top 10
+              </Link>
+              .
             </p>
             <p>We index prices, not quality. It is an independent project, not affiliated with any restaurant.</p>
             <p>

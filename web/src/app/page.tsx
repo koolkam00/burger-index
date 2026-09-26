@@ -8,7 +8,8 @@ import { JsonLd } from "@/components/JsonLd";
 import { Letterboard } from "@/components/Letterboard";
 import { QandA } from "@/components/QandA";
 import { MenuEnds, menuEndsLists } from "@/components/RestaurantBits";
-import { Pricer } from "@/components/worth/Pricer";
+import { PeoplesTopLink } from "@/components/ranker/PeoplesTopLink";
+import { Ranker } from "@/components/ranker/Ranker";
 import { Buoy, Net, ShipWheel, Spatula, Spyglass } from "@/components/icons/nautical";
 import { BoroughDot, Bubbles, Caustics, ChartEmpty, KickerTicket, SectionHeading, WaveEdge } from "@/components/ui";
 import { cityFaq, medianClause } from "@/lib/answers";
@@ -20,8 +21,7 @@ import { formatCount, formatDate, formatIsoDay, formatMonthYear, formatPrice, pl
 import { datasetNode, itemListNode, organizationNode, websiteNode } from "@/lib/jsonld";
 import { menuIndexPrices, menusByIndexPrice, menusByIndexPriceDesc, type Menu } from "@/lib/menus";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
-import { pricerHoods } from "@/lib/pricer";
-import { PRICER_ANCHOR, PRICER_TITLE_ID } from "@/lib/site";
+import { RANKER_ANCHOR, RANKER_TITLE_ID } from "@/lib/site";
 import { cheapestSpec, priciestSpec, rankingNameInSentence, rankingPath, rankMenus, topTied } from "@/lib/rankings";
 import { homeSeo, sourceLine, type NamedPrice } from "@/lib/seo";
 
@@ -96,7 +96,7 @@ export default function HomePage() {
       <JsonLd nodes={jsonLd} />
       {/* The view through the front window: sea water, surface ripples, bubbles in the gutters. A compact
           band (kicker ticket, H1, the median as a plain sentence and the source line) sits beside the
-          burger pricer at lg and above it on a phone; the Order Board hangs below them. */}
+          burger ranker at lg and above it on a phone; the Order Board hangs below them. */}
       <section className="hero hero-home atmo" aria-labelledby="hero-title">
         <Caustics id="caustic-hero" />
         <Bubbles />
@@ -120,10 +120,10 @@ export default function HomePage() {
               )}
             </div>
             {median !== null ? (
-              // The burger pricer: the first thing to do here (user decision 2026-09-25). Client-rendered;
-              // the header's "Price a burger" links to /#price.
-              <div id={PRICER_ANCHOR} role="region" aria-labelledby={PRICER_TITLE_ID} className="pricer-slot min-w-0 lg:col-span-7">
-                <Pricer hoods={pricerHoods(restaurants)} boroughs={boroughs.filter((b) => b.menuCounts.menus > 0).map((b) => b.slug)} />
+              // The burger ranker: the first thing to do here (user decisions 2026-09-25/26). Client-rendered;
+              // the header's "Rank your burgers" links to /#rank.
+              <div id={RANKER_ANCHOR} role="region" aria-labelledby={RANKER_TITLE_ID} className="ranker-slot min-w-0 lg:col-span-7">
+                <Ranker median={median} />
               </div>
             ) : null}
           </div>
@@ -133,13 +133,13 @@ export default function HomePage() {
               price={median}
               line={[pluralize(counts.menus, "menu"), `Updated ${formatDate(generated)}`]}
             />
-            {/* Under the board (user decisions 2026-09-25): the People's Price boards (the pricer above feeds
-                them; this replaced the "What's it worth?" section) and the most-recommended burgers. */}
+            {/* Under the board: the People's Top 10 (the ranker above feeds it; user decision 2026-09-26) and the
+                most-recommended burgers. */}
             <p className="hero-links">
-              <Link href="/peoples-price" className="btn btn-secondary">
-                See the People&apos;s Price
+              <PeoplesTopLink surface="home" className="btn btn-secondary">
+                See the People&apos;s Top 10
                 <ArrowRight strokeWidth={2} aria-hidden="true" />
-              </Link>
+              </PeoplesTopLink>
               <Link href={BEST_BURGERS_PATH} className="btn btn-secondary">
                 Most-recommended burgers
                 <ArrowRight strokeWidth={2} aria-hidden="true" />

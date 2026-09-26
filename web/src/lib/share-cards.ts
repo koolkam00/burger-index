@@ -1,6 +1,6 @@
 // Server-only: every page's share card (lib/share-images.ts), built once per build worker from the
 // dataset. The pages ask shareImage(path) for their og:image; app/og/[...path]/route.tsx draws each card
-// to /og/<page path>.png. A page without a card (home, the map, the People's Price, …) keeps /og.png.
+// to /og/<page path>.png. A page without a card (home, the map, /burgers, …) keeps /og.png.
 import "server-only";
 
 import { BEST_BURGERS_NAME, BEST_BURGERS_PATH, BEST_BURGERS_TICKET, bestBurgersCountLine, namedByHeading } from "./best-burgers";
@@ -8,8 +8,11 @@ import { getBestBurgers } from "./best-burgers-data";
 import { BOROUGH_META } from "./boroughs";
 import { getBorough, getGeneratedAt, getNeighborhoodPages, getPricedRestaurants, getStats, neighborhoodMenuCounts } from "./data";
 import { formatDate, pluralize } from "./format";
+import { boardCountLine, PEOPLES_TOP_TICKET } from "./peoples-top";
+import { getPeoplesTop } from "./peoples-top-data";
 import { RANKING_TICKETS, rankingCountLine, rankingName, rankingPath, rankingSpecs, rankMenus } from "./rankings";
 import { areaCard, listCard, restaurantCard, SHARE_IMAGE_HEIGHT, SHARE_IMAGE_WIDTH, shareImagePath, type ShareCard } from "./share-images";
+import { PEOPLES_TOP_NAME, PEOPLES_TOP_PATH } from "./site";
 
 function build(): Map<string, ShareCard> {
   const cards = new Map<string, ShareCard>();
@@ -53,6 +56,16 @@ function build(): Map<string, ShareCard> {
       title: BEST_BURGERS_NAME,
       rows: best.map((e) => ({ rank: e.rank, name: e.name, detail: namedByHeading(e.publishers.length), price: e.restaurant?.index_price ?? null })),
       count: best.length ? bestBurgersCountLine(best.length) : null,
+    }),
+  );
+  const top = getPeoplesTop();
+  cards.set(
+    PEOPLES_TOP_PATH,
+    listCard({
+      ticket: PEOPLES_TOP_TICKET,
+      title: PEOPLES_TOP_NAME,
+      rows: top.seats.map((e) => ({ rank: e.rank, name: e.menu.restaurant.name, detail: e.menu.restaurant.burger.name, price: e.menu.indexPrice })),
+      count: boardCountLine(top),
     }),
   );
   return cards;

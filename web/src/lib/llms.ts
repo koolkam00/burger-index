@@ -83,7 +83,6 @@ export function llmsTxt(d: LlmsInput): string {
           : `${formatCount(d.pins)} of the ${pluralize(d.locations, "priced restaurant")} on a map, colored by price (the rest are listed below it)`,
     },
     { title: "Neighborhoods", path: "/neighborhoods", note: `${pluralize(d.neighborhoods.pages, "neighborhood")} with prices, ${d.neighborhoods.ranked} ranked by median` },
-    { title: "The People's Price", path: "/peoples-price", note: "what visitors would pay for each burger, next to the menu price" },
     { title: "Press kit", path: "/press", note: "the headline numbers, the price list (CSV) and how to credit it, and the share image" },
     ...d.boroughs.map((b) => ({ title: `${b.name} burger prices`, path: `/boroughs/${b.slug}` })),
   ];

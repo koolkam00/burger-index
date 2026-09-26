@@ -7,7 +7,7 @@ export type NavItem = { href: string; label: string };
 export const NAV: readonly NavItem[] = [
   { href: "/", label: "Index" },
   { href: "/burgers", label: "Burgers" },
-  { href: "/peoples-price", label: "People's Price" },
+  { href: "/peoples-top-10", label: "People's Top 10" },
   { href: "/map", label: "Map" },
   { href: "/neighborhoods", label: "Neighborhoods" },
 ];
@@ -17,15 +17,19 @@ export function isRankingPath(pathname: string): boolean {
   return /^\/(cheapest-burgers|most-expensive-burgers|burgers-under-\d+)(\/|$)/.test(pathname);
 }
 
+/** The People's Top 10 (lib/peoples-top.ts): the crowd's ranking, made daily from the visitors' lists. */
+export const PEOPLES_TOP_PATH = "/peoples-top-10";
+export const PEOPLES_TOP_NAME = "The People's Top 10";
+
 /**
- * The home page's burger pricer (lib/pricer): its anchor and the id of the heading that labels it, the header's "Price
- * a burger" link to it, and the window event that scrolls to and focuses it when the visitor is already on the home
- * page. Here, not in lib/pricer, so the header (on every page) doesn't pull the pricer's code in.
+ * The home page's burger ranker (lib/ranker): its anchor and the id of the heading that labels it, the header's "Rank
+ * your burgers" link to it, and the window event that scrolls to and focuses it when the visitor is already on the
+ * home page. Here, not in lib/ranker, so the header (on every page) doesn't pull the ranker's code in.
  */
-export const PRICER_ANCHOR = "price";
-export const PRICER_TITLE_ID = "price-title";
-export const PRICER_HREF = `/#${PRICER_ANCHOR}`;
-export const PRICER_FOCUS_EVENT = "burger-index:price-a-burger";
+export const RANKER_ANCHOR = "rank";
+export const RANKER_TITLE_ID = "rank-title";
+export const RANKER_HREF = `/#${RANKER_ANCHOR}`;
+export const RANKER_FOCUS_EVENT = "burger-index:rank-your-burgers";
 
 /** Where the borough comparison lives since /boroughs was folded into the home page (breadcrumbs). */
 export const BOROUGHS_HREF = "/#boroughs";

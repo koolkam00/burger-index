@@ -91,7 +91,7 @@ keeps its dinner/all-day price; late-night, lunch, brunch, then happy-hour price
 the dinner menu. Status (pipeline only: `run_log.jsonl`, `plan`, the `build` summary; not in the dataset):
 `priced` (≥1 index-eligible beef burger) | `no_prices` | `no_burgers` (incl. only non-beef) | `no_menu_found` |
 `error`. Restaurant ids are assigned over every restaurant in scope (scraped or not), so they stay stable as more
-targets are scraped (People's Price answers are keyed on them).
+targets are scraped (People's Top 10 lists are keyed on them).
 
 **One burger per restaurant: its highest-priced burger (user decision, 2026-09-24).** Every restaurant publishes
 exactly one burger, `extract.top_item` (build only): its highest-priced eligible beef burger with a dinner/all-day
@@ -181,9 +181,10 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
   publications" … "Named by 1 publication"). The web build (`web/src/lib/best-burgers-data.ts`) fails if an id, list or
   neighborhood is missing or a rule is broken. Not a pipeline output: `pipeline build` never touches it, but a dataset
   change that drops a `restaurant_id` breaks the web build until the file is fixed.
-- `data/peoples_price.json` — **the People's Price snapshot** (user decision 2026-09-25: crawlers must see the crowd's
-  numbers). **Owned by the daily workflow on `main`: never edit, regenerate or commit it on a branch** (see "People's
-  Price snapshot" under "Website"). Not a pipeline output; `pipeline build` never touches it.
+- `data/peoples_top.json` — **the People's Top 10 board** (the Patty Ladder's daily board, user decisions 2026-09-25/26).
+  **Owned by the daily workflow on `main` once merged: never edit, regenerate or commit it on a branch**, and never
+  hand-edit it anywhere: it is the ladder's only memory (yesterday's scores, tiers and seats). See "People's Top 10
+  snapshot" under "Website". Not a pipeline output; `pipeline build` never touches it.
 - `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,127 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, the 2026-09-25 deletions and the 2026-09-25 best-burger-list additions (two rounds), see `data/list_changes_2026-09-23.md`: `name, neighborhood,
   borough, website, menu_url, notes, source` where `source` is `pilot-100|uptown|downtown|outer|dohmh-diner-pub|dohmh-hamburgers|best-lists-2026-09`). It's the user's data:
   don't edit it without their approval; report duplicates (`report.csv_duplicate_matches`), unmatched rows (`report.csv_unmatched`),
@@ -221,7 +222,7 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
 
 - **Data in:** `scripts/sync-data.mjs` (runs as `predev`/`prebuild`) copies `../data/burger_index.json` to
   `src/data/`, validates it against the contract with ajv (invalid data fails the build), copies
-  `../data/best_burgers.json` and `../data/peoples_price.json` (the People's Price snapshot: an empty one when missing) and
+  `../data/best_burgers.json` and `../data/peoples_top.json` (the People's Top 10 board: the empty early board when missing or broken) and
   copies the MapLibre worker to `public/vendor/maplibre/`; all outputs are generated and gitignored. There is no sample data: a missing
   `data/burger_index.json` fails `dev` and `build` with a message (it is committed; `pipeline build` rewrites it from the
   cache). The web tests read the same file (`test/dataset.ts`) or small inline rows.
@@ -233,21 +234,39 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   out of the browser bundle.
 - **Next 16** has breaking changes versus older docs: read `web/AGENTS.md` and `web/node_modules/next/dist/docs/`
   before writing Next code. `output: "export"`: every route is static (`generateStaticParams`); the only route
-  handlers are force-static files (`/og.png`, `/llms.txt`, `/data/burger-prices.csv`, `/data/pricer.json`, sitemap, robots).
-- **The burger pricer (user decision 2026-09-25)** is the home page's first screen (`#price`; DESIGN.md "The pricer hero"):
-  pick an area (anywhere, a borough, a neighborhood with a priced menu; remembered in `localStorage` `bi-pricer-area`), then
-  one burger at a time with its menu price hidden (the WorthPicker's slider, "Order up!", "Skip"), then the reveal (menu
-  price, answer, difference, People's Price) and "Next burger". `components/worth/Pricer.tsx` (UI; shares `WorthForm` with
-  `WorthPicker`), `src/lib/pricer-store.ts` (state as an external store; served menus in `sessionStorage`) and
-  `src/lib/pricer.ts` (pure: data shape, areas, queue, difference), tested in `test/pricer.test.ts`. It serves distinct
-  menus (a chain once, at its location in the area) in random order, never one this browser answered (`my_worth`, filtered
-  as it arrives) or already served this session. The burgers come from the force-static `/data/pricer.json`, fetched when
-  the pricer mounts, so the home HTML holds no menus or prices beyond the H1 band's median sentence and source line (the
-  card is `data-nosnippet`); answers go through the worth store (`cast_worth`, same pool, 150 per hour per IP). The header's
-  "Price a burger" (and the menu sheet's) links to `/#price` from every page; on home it scrolls to the pricer and
-  focuses it; the search icon button sits next to it at every width (user decision 2026-09-25). Under the home board:
-  "See the People's Price" and "Most-recommended burgers" (they replaced the old "What's it worth?" section). Menu keys
-  and restaurant ids must never change (answers are keyed on them).
+  handlers are force-static files (`/og.png`, `/llms.txt`, `/data/burger-prices.csv`, `/data/menus.json`, sitemap, robots).
+- **The burger ranker (user decisions 2026-09-25/26; it replaced all crowd pricing)** is the home page's first screen
+  (`#rank`; DESIGN.md "The ranker hero"): search the priced burgers (distinct menus, a chain once), add 3 to 25 best first
+  ("your top 10", room for more), move them with up/down buttons, remove them, save; a returning browser sees its saved
+  list and can edit or delete it. `components/ranker/Ranker.tsx` (UI), `src/lib/ranker-store.ts` (state as an external
+  store; an unsaved list in `sessionStorage` `bi-ranker-draft`, `localStorage` `bi-ranker-saved` = this browser has a saved
+  list, which the `<head>` script turns into `html.ranker-saved`: a skeleton instead of an empty list until it loads),
+  `src/lib/ranker.ts` (pure: limits, edits, search, the backend's replies, status and error copy) and
+  `src/lib/ranker-api.ts` (the three RPCs, `save_ranking` / `get_my_ranking` / `delete_ranking`, supabase-js imported
+  lazily: a returning browser's saved list on mount, else the first save), tested in `test/ranker.test.ts` and
+  `test/ranker-store.test.ts`. The voter id is `src/lib/voter.ts` (`localStorage` `burger-index-voter`, the name the old
+  worth store gave it). The burgers come from the force-static `/data/menus.json` (`src/lib/menu-list.ts`: every distinct
+  priced menu with its priced locations and the neighborhoods' names; the badge finder reads it too), fetched when the
+  ranker mounts, so the home HTML holds no menus. Without the Supabase settings the card says "Lists open soon." and
+  fetches nothing. The header's "Rank your burgers" (and the menu sheet's) links to `/#rank` from every page; on home it
+  scrolls to the ranker and focuses it; the search icon button sits next to it at every width. Under the home board:
+  "See the People's Top 10" and "Most-recommended burgers". Menu keys and restaurant ids must never change (lists are
+  keyed on them). "What's it worth?" is gone from the site: no pricer, no WorthPicker, no `/peoples-price` (Vercel
+  redirects it to `/peoples-top-10`, `web/vercel.json`), no `/best-value-burgers`, no People's Price anywhere; the old
+  answers stay stored in Supabase, hidden, and none are accepted (`supabase/README.md`).
+- **The People's Top 10 (`/peoples-top-10`, user decisions 2026-09-25/26)** shows the daily board
+  (`data/peoples_top.json`, see "People's Top 10 snapshot"), read at build by `src/lib/peoples-top-data.ts` (server-only;
+  checked by the zod mirror in `src/lib/peoples-top-schema.ts`; a board that doesn't check out is the empty one, with a
+  warning) and joined to the dataset's menus by `src/lib/peoples-top.ts` (pure: only burgers the dataset has, numbered,
+  seats first; a seat whose burger left the dataset goes to the best ranked burger not under review; "≈" only between
+  rows that are neighbors on the board too). The page: the 10 seats ("The top 3 so far." early on), the rest of the
+  ranking, Rising ("On 7 lists · needs 3 more lists"), "Early results" under 500 lists, "Under review" (an owner hold) and
+  "Checking a surge of lists" (the surge review bar), the one-liner as the only method line, an empty state before
+  anything is ranked ("The ladder starts when burgers are on 5 lists each (12 lists so far)."), ItemList JSON-LD only
+  (never Review, Rating or AggregateRating), its own share image, the sitemap (dated by the board) and llms.txt; linked
+  from the nav ("People's Top 10", replacing "People's Price"), the footer, "More burger rankings." and under the home
+  board. `/best-burgers` rows show a ranked menu's People's rank ("#3 on 143 lists"). Tested in
+  `test/peoples-top.test.ts`; `check:seo` recomputes the page from the board file.
 - **SEO / AEO / GEO (user decisions 2026-09-25):** the origin comes from `src/lib/site-url.ts`: `NEXT_PUBLIC_SITE_URL`,
   else `https://$VERCEL_PROJECT_PRODUCTION_URL` (the free `*.vercel.app` address), else `http://localhost:4173` with a
   build warning (never a domain the user doesn't own). Titles and meta descriptions for every page type are built in
@@ -269,15 +288,15 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   most-recommended burgers (`/best-burgers`, user decisions 2026-09-25):** places ranked by how many distinct publishers named
   them on a best-burger list of 2024-2026 (one publisher is enough), from `data/best_burgers.json` (see "Data files"),
   grouped under sticky bars by publication count ("Named by 10 publications" … "Named by 1 publication"), each with every
-  list linked (publisher, title, date), our menu price and the People's Price; one ranking-note line, the lists' own words
+  list linked (publisher, title, date), our menu price and, where it is ranked, its People's rank; one ranking-note line, the lists' own words
   never quoted, ItemList JSON-LD (no Review or Rating). **Honest wording (user
   decision 2026-09-25):** each restaurant publishes only its priciest burger, so the cheapest and under-$N lists rank
   burger spots by their priciest burger and say so ("Cheapest burger spots in NYC.", "Burger spots in NYC where the priciest
   burger is under $15.", "The priciest burger at Johnny's Reef is $6.00, the lowest top-burger price of any spot in NYC", the Q&A
   "Where are burgers cheapest in NYC?"); no copy, title, JSON-LD, llms.txt or CSV says "the cheapest burger in …", "cheapest
   burgers in …" or "burgers under $15" (`check:seo` fails on them). The most expensive lists keep "Most expensive burgers".
-  Sentences say "on the Upper East Side / Upper West Side / Lower East Side" (`inNeighborhood` in `src/lib/boroughs.ts`). Never mark up the People's Price
-  as Review, Rating or AggregateRating. `robots.ts` (`src/lib/robots.ts`) allows every crawler, names the AI search and
+  Sentences say "on the Upper East Side / Upper West Side / Lower East Side" (`inNeighborhood` in `src/lib/boroughs.ts`). Never mark up the People's Top 10
+  as Review, Rating or AggregateRating (ItemList only). `robots.ts` (`src/lib/robots.ts`) allows every crawler, names the AI search and
   training bots, and disallows only the `/ingest/` analytics proxy. `/llms.txt` (`src/lib/llms.ts`) and
   `/data/burger-prices.csv` (`src/lib/csv.ts`: one row per priced location; restaurant, neighborhood, borough, burger,
   price_usd, source badge label, page_url, checked; linked once from the footer) are force-static. IndexNow: the key
@@ -292,7 +311,7 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   `/badge/<id>.svg` for every priced restaurant (`src/lib/badge.ts`, `app/badge/[file]/route.tsx`: drawn with `satori`
   (a dependency pinned to the version next/og bundles) so the text is outlines, paths compacted by `src/lib/svg-path.ts`;
   not pages, never in the sitemap) and the `/badge` page (`components/badge/`: the badge of `?r=<id>` or an example, a finder
-  over the pricer's `/data/pricer.json`, copyable HTML and image address), linked from the foot of every restaurant page.
+  over `/data/menus.json`, copyable HTML and image address), linked from the foot of every restaurant page.
   Honest text only: "$22 burger", "10% above the $20.00 NYC median", "THE BURGER INDEX · SEP 2026". **Press kit** `/press`
   (live numbers, the source line, the CSV and its license, a credit line to copy (`src/lib/press.ts`), the share image, a
   short description; the contact is the GitHub issues page, `src/lib/contact.ts`: never publish an email address, `check:seo`
@@ -314,11 +333,11 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   off: analytics must not change what visitors see). `src/instrumentation-client.ts` calls `initAnalytics()` before hydration; posthog-js loads as its own chunk and only
   when `NEXT_PUBLIC_POSTHOG_KEY` was set at build time. That key lives **only in the Vercel project settings, never in
   `web/.env.local`**, so dev and local builds send nothing. Components call `track()` in event handlers; nothing in server
-  components (the restaurant page's links are the client `components/RestaurantLinks.tsx`). `worth_answered` comes from
-  `worthStore.onSaved` (after Supabase saved the answer) with `surface` (`restaurant` / `home_pricer`) and `price_hidden`;
-  the pricer also sends `pricer_area_selected`, `pricer_skipped`, `pricer_next_clicked` and `pricer_exhausted`, and the
-  header `price_a_burger_clicked` (`from_path`: the path only), and the badge page's and press kit's "Copy" buttons
-  `snippet_copied` (`surface`, `what`, the badge's `restaurant_id`). No personal data: never the voter id, and no free text in events
+  components (the restaurant page's links are the client `components/RestaurantLinks.tsx`). The ranker sends
+  `ranking_started` (`edited`), `ranking_item_added` (`menu_key`, `position`), `ranking_saved` (`length`, `edited`, once
+  Supabase saved it) and `ranking_deleted` (`length`); links to the People's Top 10 send `peoples_top_clicked` (`surface`:
+  `nav` / `menu_sheet` / `ranker` / `home`, `from_path`: the path only); the badge page's and press kit's "Copy" buttons
+  `snippet_copied` (`surface`, `what`, the badge's `restaurant_id`). The worth and pricer events are gone. No personal data: never the voter id, and no free text in events
   but the search query (trimmed, lowercased, 60 characters); replays mask inputs and the query echoed in the "No burgers
   match" messages (`ph-mask`). Events and properties are listed in `web/README.md` "Analytics
   (PostHog)"; tests in `test/analytics.test.ts`. posthog-js drops headless/webdriver browsers, so browser checks see no
@@ -329,46 +348,67 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   itself; setting it to `out` failed with `NEXT_NO_ROUTES_MANIFEST`), Node.js 22.x, and "Include files outside the root
   directory in the Build Step" on (the build reads `../data` and `../contract`). CLI deploys run **from the repo
   root** (`npx vercel link` once, then `npx vercel --prod`); the root `.vercelignore` is an allowlist so `.env`,
-  `.venv/` and `data/cache/` are never uploaded (it lets through `data/burger_index.json`, `data/best_burgers.json` and
-  `data/peoples_price.json`: a new data file the build reads must be added there). Environment variables: `NEXT_PUBLIC_SUPABASE_URL` and
+  `.venv/` and `data/cache/` are never uploaded (it lets through `data/burger_index.json`, `data/best_burgers.json`,
+  and `data/peoples_top.json`: a new data file the build reads must be added there). Environment variables: `NEXT_PUBLIC_SUPABASE_URL` and
   `NEXT_PUBLIC_SUPABASE_ANON_KEY` on Production and Preview, `NEXT_PUBLIC_POSTHOG_KEY` on Production only
   (`NEXT_PUBLIC_POSTHOG_HOST` stays unset: the default `/ingest` is proxied to PostHog by the rewrites in
   `web/vercel.json`, which Vercel reads from the Root Directory; Next's own `rewrites` don't work with
   `output: "export"`). Set `NEXT_PUBLIC_SITE_URL` only once there is a custom domain: until then the build uses the
   `VERCEL_PROJECT_PRODUCTION_URL` Vercel provides (the site launches on its `*.vercel.app` address). The site has no
   Content-Security-Policy.
-- **Refresh the live site:** `pipeline run` (spends credits) → `pipeline build` → commit `data/burger_index.json` →
-  deploy → `cd web && SITE_URL=https://<production host> npm run indexnow` (tells Bing and the other IndexNow engines).
-- **People's Price snapshot (user decision 2026-09-25: crawlers must see the crowd's numbers).** The answers live in
-  Supabase and load in the browser, so the static HTML carries a daily copy: `data/peoples_price.json`
-  (`{version: 1, generated_at, menus: {<menu key>: {answers, median, hist: {<dollars>: <answers>}}}}`, answered menus of
-  the dataset only, keys sorted, two-space JSON). `web/scripts/snapshot-peoples-price.mjs` writes it: read-only GETs of
-  the public `burger_worth_hist` table over the Supabase REST API with the **publishable** key (`NEXT_PUBLIC_SUPABASE_URL`
-  / `NEXT_PUBLIC_SUPABASE_ANON_KEY`, else the public defaults in the script; it refuses a secret or service_role key),
-  100 menu keys per request; deterministic, and it rewrites the file only when the numbers change (an unchanged run
-  keeps the old `generated_at`); a failed read, or a reply with a row that doesn't check out (a changed column type or
-  policy), exits 1 and writes nothing; so does a read that finds no answers at all after a snapshot that had some
-  (refusing to wipe it unless run with `--allow-empty`, the workflow's manual `allow_empty` input). **`.github/workflows/peoples-price.yml`** runs
-  it every day at 09:00 UTC (and on `workflow_dispatch`): checks out `main`, Node 22, no npm install, no secrets
-  (`permissions: contents: write`), and if the file changed commits "Update People's Price snapshot" as
-  `github-actions[bot]` and pushes to `main`, which triggers the Vercel production deploy. Scheduled workflows run only
-  from the default branch, so it starts working once merged. The repo is public, so **GitHub disables this scheduled
-  workflow after 60 days without repository activity** (its own runs don't count, and it commits only on a change); re-enable
-  it from the repo's Actions tab (People's Price snapshot → Enable workflow) or with `gh workflow enable peoples-price.yml`. **After that merge the file belongs to the workflow:** the
-  build branch never edits, regenerates or commits `data/peoples_price.json` again (merge `main` into the branch to
-  pick up its updates; nothing in `sync-data`, `build` or `pipeline build` writes it). To refresh by hand, run the
-  workflow from the Actions tab rather than committing the file. `sync-data` copies it into `src/data/` (a missing or
-  broken file writes an empty snapshot with a warning: it never fails the build); `src/lib/peoples-price-data.ts` reads
-  it (entries that don't check out are dropped with a warning); the rules are in `src/lib/peoples-price.ts`: a menu with
-  3+ answers gets "People's Price $22 from 14 answers, as of Sep 25, 2026." under its restaurant page's slider card and
-  in its `/best-burgers` row (fewer answers keep the existing wording), `/peoples-price` prerenders its tiles and boards
-  dated "As of Sep 25, 2026", and the live code replaces them in the browser. **Best value burgers**
-  (`/best-value-burgers`, user decision 2026-09-25): the menus whose People's Price is 10% or more above the menu price
-  (as the verdict rounds it), ranked like the bargains board; the page, its sitemap entry, llms.txt line and links
-  (footer Rankings, "More burger rankings.", under the People's Price bargains board) exist only once 10 menus have a
-  verdict (3+ answers). Until then its optional catch-all route builds only the `/_none` 404 placeholder. `check:seo`
-  recomputes all of this from the snapshot. Vercel must be able to deploy the bot's commits: if a bot-authored commit
-  is ever blocked there, that is a Vercel project setting for the user to change.
+- **Refresh the live site:** `pipeline run` (spends credits) → `pipeline build` → when the priced menus changed,
+  `node web/scripts/ranker-keys-migration.mjs --write` (a new `supabase/migrations/<version>_ranker_keys.sql` setting the
+  ranker's allowed keys to the dataset's menu keys; `web/test/ranker-keys.test.ts` fails until it is written) and apply
+  it to the live project (the Supabase connector's `apply_migration`, name `ranker_keys`: no secret key) → commit
+  `data/burger_index.json` and the migration → deploy → `cd web && SITE_URL=https://<production host> npm run indexnow`
+  (tells Bing and the other IndexNow engines). Until the sync is applied, visitors can't save the new burgers.
+- **People's Top 10 snapshot (the force ranker, user decisions 2026-09-25/26).** Visitors
+  save one ranked list of 3-25 burgers (Supabase, `supabase/README.md`); the crowd's ranking is **the Patty Ladder**
+  (the ranker design's `FINAL.md`, with its reference `ladder.mjs` and simulator `sim.py`), computed once a day from
+  the public aggregates the database rebuilds each night at 00:20 New York, never live in the browser (the board is
+  path-dependent by design). `web/src/lib/ladder.mjs` is the method (a port of the reference; plain JS, no imports):
+  `computeBoard(inputs, yesterday)` (weights 0.8^(p-1)/(k-1), the anchored Bradley-Terry fit, the cautious score
+  θ - max(0, sd - 0.2), the 0.25-a-day step, the freeze while surging or held, the gate clamp(ceil(0.5% of weighted
+  lists), 5, 50) with the 80% keep band and the network floor, Rising, the seat rule: two boards running in the
+  computed ten, beat the weakest seat by 0.05, no surge review or owner hold), `refreshInputs` (the JS twin of the
+  nightly refresh, for tests and audits: surge damping from every list before the duplicate collapse, surging = a
+  factor below 1 on `asOf`, as the database and `sim.py` do) and `buildAggregates`. The file `data/peoples_top.json`
+  (`version: 1`): `method` (`patty-ladder/1`), `params` (the board's and the database's surge rule), `asOf` (the last
+  New York save day counted), `refreshedAt`, `inputsSha256`, `totalLists` (in the fit) / `countedLists` (before the
+  duplicate collapse) / `weightedLists`, `gate`, `early` (under 500 lists: "Early results"), `iterations`, `top10`,
+  `computed10`, and one row per burger in the fit that the dataset has (ranked in board order, then rising, then
+  listed: `key, tier, rank, score, theta, sd, phi, raw, lists, weighted, firsts, networks, needs, surging,
+  inconsistent, held, review, frozen, aheadP, closeToNext`); two-space JSON, one row per line. Before the first
+  publication it is the empty early board. `web/scripts/snapshot-peoples-top.mjs` writes it: a read-only GET of
+  `rpc/ranker_board_inputs` (and of `ranker_actions` when the lists fell) with the **publishable** key (the
+  `NEXT_PUBLIC_SUPABASE_*` variables, else the public defaults; it refuses a secret or service_role key), then
+  `computeBoard` with the committed file as yesterday's board. Keys the dataset no longer has (a closed restaurant;
+  saves accept only the dataset's menu keys, `ranker_private.ranker_keys`) stay in the fit and never reach the file. Deterministic (the same
+  aggregates and the same yesterday give the same bytes; no wall-clock stamp), written only on a change. It exits 1,
+  writes nothing and keeps yesterday's board on: a failed or odd read, another method's aggregates, aggregates older
+  than the board or none after one, counted lists down by more than 20% beyond the published lists the owner voided
+  since the board (each void logs how many of its lists were in the published aggregates; `--allow-drop`, the
+  workflow's manual `allow_drop` input, for a real reset), a fit that did not converge
+  (`LadderFitError`); an unreadable board file or one of another method stops it too (deleting the file restarts the
+  ladder: the next board takes its scores as they are). Aggregates as of the board's own day are a quiet day (the
+  database publishes only once 20 counted lists changed): exit 0, nothing written. Each new board also prints the
+  owner's watch as GitHub warnings (annotations on the run): "Burial watch" for a burger whose raw score fell more than
+  0.5 since the committed board, "Inconsistent record" for phi ≥ 2.5 (FINAL.md 6; no effect on the board).
+  **`.github/workflows/peoples-top.yml`**
+  runs it daily at 10:00 UTC (and on `workflow_dispatch`): checks out `main`, Node 22, no npm install, no secrets
+  (`permissions: contents: write`), keeps the aggregates it read as the `ranker-board-inputs` artifact (90 days; their
+  SHA-256 is `inputsSha256`), and if the file changed commits "Update People's Top 10" as `github-actions[bot]` and
+  pushes to `main` (three tries, rebasing), which redeploys. Vercel must be able to deploy the bot's commits (a
+  blocked bot commit is a Vercel project setting for the user to change). It runs only once merged to the default branch, GitHub disables it after 60 days without repository activity (`gh workflow enable
+  peoples-top.yml`), and **after the merge the file belongs to the workflow**: the build branch never edits,
+  regenerates or commits `data/peoples_top.json` (merge `main` in; run the workflow by hand to refresh). Owner actions
+  (hold, clear, void) reach the board only with the next publication. Tests: `test/ladder.test.ts` (weights, fit, the
+  surge rule, every guard), `test/ladder-golden-*.test.ts` (the design's four attack scenarios replayed from their
+  lists through `refreshInputs` and `computeBoard`: the simulator's surge weights bit for bit, its flags, surge support
+  and Top 10 on every one of 149 daily boards, scores within 1e-6; fixtures in `test/fixtures/patty-ladder/`, written
+  by the design's `check/dump_golden.py`), `test/peoples-top-snapshot.test.ts` (Supabase faked). Changing a parameter
+  means re-running the design's simulation gate (FINAL.md 12 B) and bumping `PARAMS.version` with the database's
+  `params_version`; the script refuses aggregates of another method.
 
 ## Context.dev (web data)
 

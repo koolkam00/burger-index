@@ -7,8 +7,8 @@ import { formatCount, formatDate, formatPrice, spreadEnds } from "@/lib/format";
 import { menusByIndexPrice, menusByIndexPriceDesc, type Menu } from "@/lib/menus";
 import { rankingName, rankingPath, rankingSpecs, rankMenus, type RankingSpec } from "@/lib/rankings";
 import { SITE_URL } from "@/lib/metadata";
-import { BEST_VALUE_MIN_GAP, BEST_VALUE_NAME, BEST_VALUE_PATH } from "@/lib/peoples-price";
-import { getBestValue } from "@/lib/peoples-price-data";
+import { getPeoplesTop } from "@/lib/peoples-top-data";
+import { PEOPLES_TOP_NAME, PEOPLES_TOP_PATH } from "@/lib/site";
 import { sourceLine } from "@/lib/seo";
 
 // Static export writes this to out/llms.txt (llmstxt.org): the headline numbers, the date and links.
@@ -46,13 +46,21 @@ function bestBurgersNote(): string {
   return `${formatCount(entries.length)} places ranked by how many publications named them on a best-burger list in ${years.from}–${years.to}, with the menu price${lead}`;
 }
 
-/** "12 burgers whose People's Price (what visitors would pay) is 10% or more above the menu price, as of Sep 25, 2026; Emily leads: People's Price $31, menu price $24.00" */
-function bestValueNote(): string | undefined {
-  const bv = getBestValue();
-  if (!bv) return undefined;
-  const top = bv.rows[0];
-  const lead = top && top.people !== null ? `; ${top.name} leads: People's Price $${formatCount(top.people)}, menu price ${formatPrice(top.price, { cents: "always" })}` : "";
-  return `${formatCount(bv.rows.length)} ${bv.rows.length === 1 ? "burger" : "burgers"} whose People's Price (what visitors would pay) is ${BEST_VALUE_MIN_GAP}% or more above the menu price, as of ${formatDate(bv.asOf)}${lead}`;
+/**
+ * "the burgers visitors rank highest, from their own lists: #1 Emily (on 143 lists), #2 …, #3 … (as of Sep 27,
+ * 2026)"; before anything is ranked, how many lists there are so far (nothing about a count before the first board).
+ */
+function peoplesTopNote(): string {
+  const top = getPeoplesTop();
+  const what = "the burgers visitors rank highest, from their own lists";
+  if (!top.seats.length) {
+    return top.asOf ? `${what}; nothing ranked yet (${formatCount(top.totalLists)} ${top.totalLists === 1 ? "list" : "lists"} so far)` : `${what}; nothing ranked yet`;
+  }
+  const first = top.seats
+    .slice(0, 3)
+    .map((e) => `#${e.rank} ${e.menu.restaurant.name} (on ${formatCount(e.lists)} ${e.lists === 1 ? "list" : "lists"})`)
+    .join(", ");
+  return `${what}: ${first}${top.asOf ? ` (as of ${formatDate(top.asOf)})` : ""}`;
 }
 
 export function GET() {
@@ -87,7 +95,7 @@ export function GET() {
         links: [
           ...rankingSpecs(restaurants).map((spec) => ({ title: rankingName(spec), path: rankingPath(spec), note: rankingNote(spec, restaurants) })),
           { title: BEST_BURGERS_NAME, path: BEST_BURGERS_PATH, note: bestBurgersNote() },
-          ...(getBestValue() ? [{ title: BEST_VALUE_NAME, path: BEST_VALUE_PATH, note: bestValueNote() }] : []),
+          { title: PEOPLES_TOP_NAME, path: PEOPLES_TOP_PATH, note: peoplesTopNote() },
         ],
       },
     ],

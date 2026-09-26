@@ -49,9 +49,9 @@ test("badge paths, the page link and the HTML snippet", () => {
 test("badgeSpots / searchBadgeSpots: every priced location by name; accents folded, names that start with the query first", () => {
   const spots = badgeSpots({
     menus: [
-      { key: "chain:x", burger: "B", description: null, price: 12.5, spots: [{ id: "x-1", name: "Xavier's", hood: "astoria", borough: "Queens" }, { id: "x-2", name: "Xavier's", hood: null, borough: "Bronx" }] },
-      { key: "cafe", burger: "B", description: null, price: 20, spots: [{ id: "cafe", name: "Café Luxembourg", hood: "uws", borough: "Manhattan" }] },
-      { key: "old", burger: "B", description: null, price: 30, spots: [{ id: "old", name: "Old Cafe", hood: null, borough: "Brooklyn" }] },
+      { key: "chain:x", burger: "B", price: 12.5, spots: [{ id: "x-1", name: "Xavier's", hood: "astoria", borough: "Queens" }, { id: "x-2", name: "Xavier's", hood: null, borough: "Bronx" }] },
+      { key: "cafe", burger: "B", price: 20, spots: [{ id: "cafe", name: "Café Luxembourg", hood: "uws", borough: "Manhattan" }] },
+      { key: "old", burger: "B", price: 30, spots: [{ id: "old", name: "Old Cafe", hood: null, borough: "Brooklyn" }] },
     ],
   });
   assert.deepEqual(

@@ -16,7 +16,6 @@ import {
   searchProps,
   searchTracker,
   track,
-  worthAnsweredProps,
 } from "../src/lib/analytics";
 import { EMPTY_FILTERS } from "../src/lib/explorer";
 
@@ -134,7 +133,6 @@ test("outside the browser init() loads nothing; a failed load drops the queue an
 test("search properties: trimmed, spaces collapsed, lowercased, cut to 60 characters; empty sends nothing", () => {
   assert.deepEqual(searchProps("burgers", "  Smash   BURGER ", 12), { surface: "burgers", query: "smash burger", results: 12 });
   assert.equal(searchProps("burgers", "   ", 0), null);
-  assert.equal(searchProps("peoples_price", "", 0), null);
   const long = "a".repeat(59) + " bbbbbbbbbb";
   assert.equal(searchProps("burgers", long, 0)?.query, "a".repeat(59), "no trailing space after the cut");
   assert.equal(searchProps("burgers", "x".repeat(120), 0)?.query.length, MAX_QUERY_CHARS);
@@ -154,89 +152,35 @@ test("filter values name what each /burgers control is set to", () => {
   assert.equal(filterValue("clear_all", { ...f, boroughs: ["bronx"] }), null);
 });
 
-test("worth_answered: first answers and changed answers, with where it was given", () => {
-  const restaurant = { surface: "restaurant", priceHidden: false } as const;
-  assert.deepEqual(worthAnsweredProps({ menuKey: "chain:7th-street-burger", restaurantId: "7th-street-burger-east-village", dollars: 14, menuPrice: 11.99, previous: null, ...restaurant }), {
-    menu_key: "chain:7th-street-burger",
-    restaurant_id: "7th-street-burger-east-village",
-    dollars: 14,
-    menu_price: 11.99,
-    first_answer: true,
-    surface: "restaurant",
-    price_hidden: false,
-  });
-  assert.deepEqual(worthAnsweredProps({ menuKey: "due-west", restaurantId: "due-west", dollars: 30, menuPrice: 24, previous: 20, ...restaurant }), {
-    menu_key: "due-west",
-    restaurant_id: "due-west",
-    dollars: 30,
-    menu_price: 24,
-    first_answer: false,
-    previous_dollars: 20,
-    surface: "restaurant",
-    price_hidden: false,
-  });
-  // The same answer again replaced one, and changed nothing.
-  assert.deepEqual(worthAnsweredProps({ menuKey: "due-west", restaurantId: "due-west", dollars: 30, menuPrice: 24, previous: 30, ...restaurant }), {
-    menu_key: "due-west",
-    restaurant_id: "due-west",
-    dollars: 30,
-    menu_price: 24,
-    first_answer: false,
-    surface: "restaurant",
-    price_hidden: false,
-  });
-  // The browser's saved answers hadn't loaded (or failed): unknown, not a first answer.
-  assert.deepEqual(worthAnsweredProps({ menuKey: "due-west", restaurantId: "due-west", dollars: 42, menuPrice: 24, previous: undefined, ...restaurant }), {
-    menu_key: "due-west",
-    restaurant_id: "due-west",
-    dollars: 42,
-    menu_price: 24,
-    first_answer: null,
-    surface: "restaurant",
-    price_hidden: false,
-  });
-  // The home pricer: the menu price was hidden, and the location shown labels the answer.
-  assert.deepEqual(
-    worthAnsweredProps({ menuKey: "chain:jackson-hole", restaurantId: "jackson-hole-bayside", dollars: 18, menuPrice: 16.95, previous: null, surface: "home_pricer", priceHidden: true }),
-    {
-      menu_key: "chain:jackson-hole",
-      restaurant_id: "jackson-hole-bayside",
-      dollars: 18,
-      menu_price: 16.95,
-      first_answer: true,
-      surface: "home_pricer",
-      price_hidden: true,
-    },
-  );
-});
-
-test("the pricer's events carry areas, keys and counts only, never a voter id or free text", async () => {
+test("the ranker's events carry lengths, positions and menu keys only, never a voter id or a list", async () => {
   const ph = fakePosthog();
   const a = createAnalytics({ key: "phc_test", apiHost: "/ingest", load: async () => ph.client as never });
   await inBrowser(async () => {
     a.init();
     await tick();
   });
-  a.track("pricer_area_selected", { area_type: "anywhere", area: "nyc" });
-  a.track("pricer_area_selected", { area_type: "neighborhood", area: "astoria" });
-  a.track("pricer_skipped", { menu_key: "due-west" });
-  a.track("pricer_next_clicked", { count_this_session: 3 });
-  a.track("pricer_exhausted", { area: "staten-island" });
-  a.track("price_a_burger_clicked", { from_path: fromPath("/restaurants/due-west") });
+  a.track("ranking_started", { edited: false });
+  a.track("ranking_item_added", { menu_key: "chain:7th-street-burger", position: 1 });
+  a.track("ranking_saved", { length: 10, edited: false });
+  a.track("ranking_started", { edited: true });
+  a.track("ranking_saved", { length: 12, edited: true });
+  a.track("ranking_deleted", { length: 12 });
+  a.track("peoples_top_clicked", { surface: "nav", from_path: fromPath("/restaurants/due-west?x=1") });
   assert.deepEqual(ph.captured, [
-    ["pricer_area_selected", { area_type: "anywhere", area: "nyc" }],
-    ["pricer_area_selected", { area_type: "neighborhood", area: "astoria" }],
-    ["pricer_skipped", { menu_key: "due-west" }],
-    ["pricer_next_clicked", { count_this_session: 3 }],
-    ["pricer_exhausted", { area: "staten-island" }],
-    ["price_a_burger_clicked", { from_path: "/restaurants/due-west" }],
+    ["ranking_started", { edited: false }],
+    ["ranking_item_added", { menu_key: "chain:7th-street-burger", position: 1 }],
+    ["ranking_saved", { length: 10, edited: false }],
+    ["ranking_started", { edited: true }],
+    ["ranking_saved", { length: 12, edited: true }],
+    ["ranking_deleted", { length: 12 }],
+    ["peoples_top_clicked", { surface: "nav", from_path: "/restaurants/due-west" }],
   ]);
   for (const [, props] of ph.captured) assert.equal(JSON.stringify(props).includes("voter"), false);
 });
 
-test("a Price a burger click reports the path only: no search text, no hash", () => {
+test("a click reports the path it came from only: no search text, no hash", () => {
   assert.equal(fromPath("/burgers?q=my%20secret&borough=bronx"), "/burgers");
-  assert.equal(fromPath("/#price"), "/");
+  assert.equal(fromPath("/#rank"), "/");
   assert.equal(fromPath("/neighborhoods/astoria"), "/neighborhoods/astoria");
   assert.equal(fromPath(""), "/");
   assert.equal(fromPath(null), "/");
@@ -292,7 +236,7 @@ test("session recordings never keep a Supabase request body (it carries the vote
   const config = posthogConfig("/ingest");
   const mask = config.session_recording?.maskCapturedNetworkRequestFn;
   assert.ok(mask);
-  const supa = mask({ name: "https://abc.supabase.co/rest/v1/rpc/cast_worth", requestBody: '{"p_voter":"8f14e45f"}', responseBody: "[]" } as never);
+  const supa = mask({ name: "https://abc.supabase.co/rest/v1/rpc/save_ranking", requestBody: '{"p_voter":"8f14e45f"}', responseBody: "[]" } as never);
   assert.equal(supa?.requestBody, undefined);
   assert.equal(supa?.responseBody, undefined);
   const other = mask({ name: "https://burgerindex.nyc/og.png", requestBody: "x" } as never);

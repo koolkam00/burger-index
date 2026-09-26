@@ -87,7 +87,7 @@ test("rankBestBurgers on the real file: most publishers first, ties share a rank
       assert.ok(a.name.localeCompare(b.name, "en", { sensitivity: "base" }) <= 0, `${a.name} before ${b.name}`);
     } else assert.equal(b.rank, i + 1);
   }
-  // A chain's People's Price key is its chain; unpriced places have no price, no page and no key.
+  // A chain's menu key (People's Top 10 lists are keyed on it) is its chain; unpriced places have no price, no page and no key.
   const byKey = new Map(entries.map((e) => [e.key, e]));
   assert.equal(byKey.get("7th-street-burger")?.menuKey, "chain:7th-street-burger");
   for (const k of ["peter-luger", "le-b"]) {

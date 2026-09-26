@@ -3,8 +3,8 @@
 The public site for the NYC Burger Index: the median index price across the New York menus we have priced, from
 the restaurants in the pipeline's scope (by default our curated list of burger restaurants).
 It is a fully static Next.js site (App Router, TypeScript strict, Tailwind v4, zod). There is no server code and no secret key: the Python
-pipeline writes one JSON file, and `next build` turns it into plain HTML in `out/`. The one live part, "What's it worth?", talks to
-Supabase straight from the browser with a public key (see "What's it worth? (Supabase)" below). Product analytics (PostHog) run in
+pipeline writes one JSON file, and `next build` turns it into plain HTML in `out/`. The one live part, the burger ranker, talks to
+Supabase straight from the browser with a public key (see "The burger ranker (Supabase)" below). Product analytics (PostHog) run in
 the browser too, only in builds that have the PostHog key (see "Analytics (PostHog)").
 
 Design rules live in [`../DESIGN.md`](../DESIGN.md) (fonts, color tokens, components, voice). Read it before changing anything visual.
@@ -69,119 +69,120 @@ Other scripts:
 | `npm run validate:data [file]` | Validate a dataset against the contract (defaults to `../data/burger_index.json`) |
 | `npm run check:seo [-- --site https://…]` | After a build: check `out/` (titles, descriptions, canonicals, JSON-LD, sitemap, robots, llms.txt, CSV, internal links); see "Search engines and AI assistants" |
 | `npm run indexnow [-- --dry-run] [-- --site https://…]` | After a production deploy: submit the live sitemap to IndexNow |
-| `node scripts/snapshot-peoples-price.mjs [--out PATH]` | Read the People's Price from Supabase (read-only GETs) into `../data/peoples_price.json`; the daily workflow runs it on `main` (see "The People's Price in the static HTML") |
+| `node scripts/snapshot-peoples-top.mjs [--out PATH] [--inputs-out PATH] [--allow-drop]` | Compute the day's People's Top 10 (the Patty Ladder) from the public aggregates in Supabase (read-only GETs) into `../data/peoples_top.json`; the daily workflow runs it on `main` (see "The People's Top 10 (daily board)") |
 
-## What's it worth? (Supabase)
+## The burger ranker (Supabase)
 
-On every priced restaurant page, visitors say what they would pay for the menu's burger, in whole dollars from $5 to $75 (a
-native range slider starting at their saved answer, else $40, and an "Order up!" button; one answer per device, changeable).
-Once they have answered, the card shows the crowd's median, **the People's Price** (rounded to whole dollars), next to the
-menu price and their own answer, the answer count, a verdict ("A bargain by 7%", "Overpriced by 43%", "Right on the money"; only
-from 3 answers) and the answer distribution in $5 ranges. `/peoples-price` shows the People's Burger Index (the median People's
-Price over burgers with a verdict) beside the real Burger Index, and live boards: biggest bargains, most overpriced, most
-answered, plus the burgers that need a few more answers. It replaced a 1–10 rating on 2026-09-25 (that never shipped). A daily
-snapshot of the answers puts the crowd's numbers in the static HTML too (see "The People's Price in the static HTML" below).
+User decisions 2026-09-25/26: the ranker replaced all crowd pricing ("What's it worth?", the home pricer, the People's Price,
+`/peoples-price` and `/best-value-burgers` are gone; the old answers stay stored in Supabase, hidden, and none are accepted).
+The home page opens on it (`#rank`; DESIGN.md "The ranker hero"): search the priced burgers (every distinct menu, a chain once),
+add 3 to 25 of them best first ("your top 10", with room for more), move them with up and down buttons, remove them, and save.
+A returning browser sees its saved list, what it counts for ("Saved. It counts from Sep 27, 2026.", "Counted in the People's
+Top 10.", "Not counted: a newer list was saved from this connection. Save again to count this one."), and can edit or delete
+it (a voided list, "Not counted.", can be edited but not deleted: the backend keeps it void). One list per browser and per
+connection: the backend keeps the latest. A burger saved in a list must be one of the dataset's menus (the database's
+`ranker_keys`, synced by `scripts/ranker-keys-migration.mjs`). The header's "Rank your burgers" links to `/#rank`
+from every page (on home it scrolls to the ranker and focuses it). The crowd's ranking is the People's Top 10 below.
 
-**The burger pricer** (user decision 2026-09-25) makes it the first thing on the home page: pick an area ("Anywhere in NYC", a
-borough, or a neighborhood with a priced menu; the last one is remembered in `localStorage` as `bi-pricer-area`), then price one
-burger at a time with its menu price hidden (the same slider from $40, "Order up!" and "Skip"), then see the menu price, your
-answer, the difference and the People's Price, and go on with "Next burger". It serves the area's distinct menus (a chain once, at
-its location in the area) in random order, never one this browser has answered (`my_worth`, filtered as it arrives) or one already
-served this session (`sessionStorage`), and says when an area runs out. Answers go into the same pool through `cast_worth`. The
-header's "Price a burger" links to `/#price` from every page (on home it scrolls to the pricer and focuses it).
+The backend is the Supabase project `burger-index`; its schema, the three RPCs (`save_ranking`, `get_my_ranking`,
+`delete_ranking`), the refusals and rate limits are in [`../supabase/README.md`](../supabase/README.md).
 
-The backend is the Supabase project `burger-index`; its schema, API (`cast_worth`, `my_worth`, the public `burger_worth_hist`
-table and its realtime feed), rate limit (150 answers per hour per IP) and security notes are in
-[`../supabase/README.md`](../supabase/README.md) and `../supabase/migrations/`.
+Configuration: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (the project's **publishable** key, `sb_publishable_…`)
+in `.env.local` (gitignored) and in the Vercel project. Both are public by design: the database lets that key call the three
+RPCs and read the public aggregates, nothing else. Without them the site still builds; the ranker says "Lists open soon." and
+fetches nothing.
 
-The site needs two public build-time variables, in `web/.env.local` locally (gitignored) **and on Vercel** (Project → Settings →
-Environment Variables, for Production and Preview):
+- `src/lib/supabase-config.ts`: the two variables (`RANKER_ENABLED`).
+- `src/lib/voter.ts`: the anonymous voter id, a `crypto.randomUUID()` in `localStorage` under `burger-index-voter` (in memory
+  when storage is blocked; the key keeps the name the old worth store gave it, so a returning browser keeps its id), made on the
+  first save. Tested in `test/voter.test.ts`.
+- `src/lib/ranker-api.ts`: the only module that talks to Supabase. `@supabase/supabase-js` is imported lazily on the first call,
+  so it is its own chunk and loads only when the ranker needs it: a returning browser's saved list on mount, else the first
+  save. Refusals come back as HTTP 400 (SQLSTATE 22023) and rate limits as 429 (PT429), each with a stable `hint` code.
+- `src/lib/ranker.ts`: pure helpers: the list's limits and edits, the burgers as the ranker shows them (a chain at its usual
+  location with "N locations"; a name two menus share gets its neighborhood), search (accents and dots folded), the replies
+  checked, the status lines and the error copy. Tested in `test/ranker.test.ts`.
+- `src/lib/ranker-store.ts`: the ranker's state as an external store (the burgers, the saved list, the list on the card, what
+  is on its way); an unsaved list is kept in `sessionStorage` (`bi-ranker-draft`), and `localStorage` `bi-ranker-saved` says
+  this browser has a saved list, which the `<head>` script turns into `html.ranker-saved` (a skeleton, not an empty list,
+  until the saved one loads). Every storage access is wrapped. Tested with a fake backend in `test/ranker-store.test.ts`.
+- `src/lib/menu-list.ts` and `src/app/data/menus.json/route.ts`: the force-static `/data/menus.json` (every distinct priced
+  menu with its priced locations, and the neighborhoods' names), fetched when the ranker mounts (and by the badge page's
+  finder), so no menu sits in the home page's HTML.
+- `src/components/ranker/`: `Ranker` (the card: search, the list with its controls, save, the saved view, edit, delete with a
+  confirmation, loading, error, rate-limit and closed states; focus follows each step and a polite live region says what
+  changed) and `PeoplesTopLink` (a link to the People's Top 10 that reports `peoples_top_clicked`).
 
-| Variable | Value |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://<project-ref>.supabase.co` |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the project's **publishable** key (`sb_publishable_…`), never the secret / `service_role` key |
+### The People's Top 10 (daily board)
 
-Both are inlined into the JavaScript at build time (so a change needs a rebuild) and are public by design: the database only lets
-that key call `cast_worth` / `my_worth` and read `burger_worth_hist`. Without them the site still builds; the slider and button
-are disabled and say "Answers open soon.", and `/peoples-price` and the home pricer show the same.
-
-Code map:
-
-- `src/lib/worth-config.ts`: the two variables (`WORTH_ENABLED`).
-- `src/lib/worth-voter.ts`: the anonymous voter id, a `crypto.randomUUID()` in `localStorage` under `burger-index-voter` (in memory
-  when storage is blocked; the key keeps that name so returning visitors keep their answers). Tested in `test/worth-voter.test.ts`.
-- `src/lib/worth-api.ts`: the only module that talks to Supabase. `@supabase/supabase-js` is imported lazily on the first call, so
-  it is its own chunk and loads only on pages that mount the slider or the boards (restaurant pages, `/peoples-price`, the home
-  pricer), and there only once it is needed: the restaurant slider near the viewport, the pricer's first burger. Histograms are fetched by menu key (100 keys per request), never the whole table:
-  `cast_worth` accepts any well-formed key, so rows for keys the dataset doesn't know are never downloaded.
-- `src/lib/worth-store.ts`: this browser's answers and the public histograms, shared by every component on a page. Answers are
-  optimistic and serialized per burger; while one is on its way the burger's histogram is frozen and shown with the visitor's answer
-  moved by hand, realtime events for it are held back, and a fresh fetch after the save replaces it, so the visitor's own answer
-  is never counted twice. Tested with a fake backend in `test/worth-store.test.ts`.
-- `src/lib/worth.ts`: pure helpers: answer validation, the median from a histogram, the People's Price (half up), verdicts, $5
-  buckets, the People's Burger Index, board ordering and ties, search, error copy. Tested in `test/worth.test.ts`.
-- `src/lib/pricer.ts` (pure: the data file's shape and checks, areas, the queue, the reveal's difference, storage keys) and
-  `src/lib/pricer-store.ts` (the pricer's state as an external store: area, burger on the counter, served this session; storage
-  wrapped). Tested in `test/pricer.test.ts` (area filtering, a chain once and at its location in the area, no repeats, answered
-  menus skipped as they arrive, exhaustion, returning visits, blocked storage).
-- `src/app/data/pricer.json/route.ts`: the force-static `/data/pricer.json` (every distinct priced menu with its priced locations,
-  about 30 KB gzipped), fetched when the pricer mounts, so no menu or price sits in the home page's HTML.
-- `src/components/worth/`: `WorthForm` (the label, readout, slider, "Order up!" and status line, shared), `WorthPicker` (the
-  restaurant card: "Order up!" waits for a returning visitor's saved answer unless the slider was moved; once the People's Price
-  shows, it refreshes every 30 seconds while the tab is visible, a poll rather than a realtime channel per page view), `Pricer`
-  (the home pricer: area picker, burger card, reveal, exhausted and closed states; a `<head>` flag, `html.pricer-saved`, shows a
-  skeleton instead of the picker to a returning visitor until it mounts), `AnswerSpread` (the distribution), `PeoplesPriceBoard`
-  (the page body: tiles, boards, search; prerendered from the snapshot, then loads the dataset's menus only, realtime on
-  `burger_worth_hist` filtered to those menus, with a 30-second polling fallback while the channel is down), `WorthRows` (the
-  board rows, server-safe: the live boards and the static best value list draw the same rows), `PeoplesPriceFact` (one menu's
-  People's Price on `/best-burgers`) and `PeoplesPriceNote` (the restaurant page's People's Price sentence).
-
-The rules behind the numbers (the People's Price is the median answer; a verdict needs 3 answers; "Right on the money" is a gap
-under 5%, measured from the smaller of the two prices; the People's Burger Index counts each burger with a verdict once, a chain
-once) are never explained on the site.
-
-### The People's Price in the static HTML (daily snapshot)
-
-User decision 2026-09-25: crawlers must see the crowd's numbers, so the build carries a copy of them, refreshed daily, with no
-secrets anywhere.
+User decisions 2026-09-25/26: each visitor saves one strict ranking of 3 to 25 burgers (the ranker above; Supabase
+`save_ranking`, one list per browser and per connection; see [`../supabase/README.md`](../supabase/README.md)), and the
+crowd's ranking is **the Patty Ladder**. In one sentence, the one the page carries as its only method line: "Every list
+turns into head-to-head wins, with your #1 counting most; a burger you left off never loses, and a burger climbs only as
+far as enough different lists back it up."
 
 ```
-Supabase burger_worth_hist ──(read-only GET, publishable key)──> scripts/snapshot-peoples-price.mjs ──> ../data/peoples_price.json
-   (.github/workflows/peoples-price.yml, 09:00 UTC daily: commits it to main when it changed ──> Vercel production deploy)
-../data/peoples_price.json ──> npm run sync-data ──> src/data/peoples_price.json ──> next build (static HTML) ──> live code in the browser
+Supabase ranker lists ──(pg_cron, 00:20 New York: surge damping, duplicate collapse, public aggregates)──> rpc/ranker_board_inputs
+rpc/ranker_board_inputs ──(read-only GET, publishable key)──> scripts/snapshot-peoples-top.mjs + src/lib/ladder.mjs ──> ../data/peoples_top.json
+   (.github/workflows/peoples-top.yml, 10:00 UTC daily: commits it to main when it changed ──> Vercel production deploy)
 ```
 
-- **The file:** `{ "version": 1, "generated_at": "2026-09-26T09:00:04Z", "menus": { "<menu key>": { "answers": 14, "median": 21.5,
-  "hist": { "18": 2, "22": 5, … } } } }`: the dataset's answered menus only, keys sorted, answers ascending, two-space JSON. The
-  writer rewrites it only when the numbers change (the same numbers keep the old `generated_at`), so the workflow commits only
-  real changes. It asks for the dataset's menu keys, 100 per request (`menu_key=in.(…)`), never the whole table; a failed or odd
-  read (including a single row that doesn't check out) exits 1 and writes nothing. URL and key: `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` when set, else the
-  public defaults in the script (the key must be publishable: it refuses a secret or service_role key). Node built-ins only. It
-  refuses to replace a snapshot that had answers with an empty one unless given `--allow-empty` (the workflow's manual
-  `allow_empty` input), since an empty read is likelier a changed table policy than every answer deleted.
-- **The workflow** (`../.github/workflows/peoples-price.yml`): daily at 09:00 UTC and on `workflow_dispatch`; checks out `main`,
-  Node 22, runs the script, and if the file changed commits "Update People's Price snapshot" as `github-actions[bot]` and pushes
-  to `main` (`permissions: contents: write`, no secrets). It runs only from the default branch. **Once merged, the file belongs to
-  it: branches never edit or commit `data/peoples_price.json`** (merge `main` in to get the latest). The repo is public, so
-  GitHub disables the schedule after 60 days without repository activity; re-enable it from the Actions tab or with
-  `gh workflow enable peoples-price.yml`.
-- **Reading it:** `sync-data` copies it into `src/data/` (missing or broken: an empty snapshot and a warning, never a failed
-  build). `src/lib/peoples-price-data.ts` (server-only) parses it once per worker against the dataset's menus (a bad entry is
-  dropped with a warning; menus that left the dataset are ignored) and serves the figures, the board's histograms and the best
-  value list. The pure rules are `src/lib/peoples-price.ts`, tested in `test/peoples-price.test.ts`; the writer is tested in
-  `test/peoples-price-snapshot.test.ts` (Supabase faked).
-- **What the pages render** (DESIGN.md "People's Price in the static HTML"): a menu with 3+ answers gets "People's Price $22 from
-  14 answers, as of Sep 25, 2026." under its restaurant page's slider card (`components/worth/PeoplesPriceNote.tsx`; it steps
-  aside once the visitor has answered, since the card then shows the People's Price) and the same words in its `/best-burgers`
-  row; fewer answers keep each page's existing wording. `/peoples-price` prerenders its tiles and boards from the snapshot with
-  "As of Sep 25, 2026" where the Live badge goes. In the browser the live numbers (the worth store) replace the snapshot's as soon
-  as they load; the date goes with them.
-- **Best value burgers** (`/best-value-burgers`, `app/best-value-burgers/[[...all]]/page.tsx`): the menus whose People's Price is
-  10% or more above the menu price (as the verdict rounds it: "A bargain by 10%" or more), ranked like the bargains board, static
-  from the snapshot and dated in its lede. It exists only once 10 menus have a verdict (3+ answers): until then the route (an
-  optional catch-all, because a static export can't build zero pages) builds only the `/_none` 404 placeholder, and the sitemap,
-  llms.txt, the footer's Rankings, "More burger rankings." and the People's Price page don't mention it (`hasBestValuePage()`).
+- **The method** (`src/lib/ladder.mjs`, a port of the ranker design's reference `ladder.mjs`; plain JS with no imports, so
+  the workflow needs no npm install): `computeBoard(inputs, yesterday)` turns each list into head-to-head matchups (the burger
+  at place p beats every burger below it with weight 0.8^(p-1)/(k-1), times the list's surge weight), fits strengths
+  (Bradley-Terry with one virtual win and one loss against an average burger; damped Newton to 1e-10, at most 100
+  iterations, else `LadderFitError`), scores each burger cautiously (θ - max(0, sd - 0.2)), moves the published score at
+  most 0.25 a day (frozen while the burger is surging or held by the owner), ranks burgers on at least
+  clamp(ceil(0.5% of weighted lists), 5, 50) weighted lists from half as many networks (80% of that to stay ranked), lists
+  the rest with 3+ as Rising ("needs N more lists"), and seats the Top 10: incumbents stay while ranked; a newcomer needs
+  two boards running in the computed ten, to beat the weakest seat by 0.05 when full, and no surge review or hold.
+  `refreshInputs(lists, {asOf, held, cleared})` is the JS twin of the nightly database refresh (for tests and audits),
+  `buildAggregates(lists)` the aggregates alone.
+- **The file** `../data/peoples_top.json`: `version`, `method` (`patty-ladder/1`), `params`, `asOf` (the last New York save
+  day counted), `refreshedAt`, `inputsSha256` (the SHA-256 of the aggregates' response body), `totalLists`, `countedLists`,
+  `weightedLists`, `gate`, `early` (fewer than 500 lists), `iterations`, `top10`, `computed10` and `rows` (one per burger in
+  the fit that the dataset has, ranked rows in board order, then rising, then listed: `key, tier, rank, score, theta, sd,
+  phi, raw, lists, weighted, firsts, networks, needs, surging, inconsistent, held, review, frozen, aheadP, closeToNext`).
+  Two-space JSON with one row per line, so a day's diff reads burger by burger. Before the first publication it is the
+  empty early board. Yesterday's file is the ladder's only memory: never edit it by hand.
+- **The writer** (`scripts/snapshot-peoples-top.mjs`): GETs `rpc/ranker_board_inputs` with the publishable key (it refuses
+  a secret or service_role key), checks the reply, runs `computeBoard` with the committed board as yesterday, keeps only the
+  dataset's menu keys in the file (other keys stay in the fit), and writes the file only when it changes (deterministic:
+  no wall-clock stamp). A quiet day (aggregates as of the board's own day: the database publishes only once 20 lists
+  changed) writes nothing. It exits 1, writes nothing and keeps yesterday's board on a failed or odd read, another method's
+  aggregates, aggregates older than the board or none after one, counted lists down by more than 20% beyond the published
+  lists the owner voided (`--allow-drop` overrides), or a fit that did not converge. `--inputs-out PATH` saves the
+  aggregates read. Each new board also prints the owner's watch as GitHub warnings: "Burial watch" (a raw score down more
+  than 0.5 since the committed board) and "Inconsistent record" (phi ≥ 2.5); they change nothing on the board.
+- **The keys** (`scripts/ranker-keys-migration.mjs`): `save_ranking` accepts only the dataset's menu keys, set in the
+  database by the latest `../supabase/migrations/<version>_ranker_keys.sql`. When the priced menus change, `--write` makes
+  the next one; apply it with the Supabase connector (`apply_migration`, name `ranker_keys`). `test/ranker-keys.test.ts`
+  fails while the latest sync differs from the dataset.
+- **The workflow** (`../.github/workflows/peoples-top.yml`): daily at 10:00 UTC and on `workflow_dispatch` (with an
+  `allow_drop` input); checks out `main`, Node 22, runs the writer, keeps the aggregates as the `ranker-board-inputs`
+  artifact for 90 days, and if the file changed commits "Update People's Top 10" as `github-actions[bot]` and pushes to
+  `main` (`permissions: contents: write`, no secrets). It runs only from the default branch. **Once merged, the file belongs
+  to it: branches never edit or commit `data/peoples_top.json`** (merge `main` in to get the latest). GitHub disables the
+  schedule after 60 days without repository activity; re-enable it with `gh workflow enable peoples-top.yml`.
+- **The page** (`/peoples-top-10`, `src/app/peoples-top-10/page.tsx`, `src/components/PeoplesTop.tsx`): `sync-data` copies the
+  file to `src/data/` (the empty early board when it is missing or broken, with a warning); `src/lib/peoples-top-data.ts`
+  (server-only) reads it once per worker, checks it with the zod mirror in `src/lib/peoples-top-schema.ts` (a board that
+  doesn't check out is the empty one, with a warning) and joins it to the dataset's menus through `src/lib/peoples-top.ts`
+  (pure): only burgers the dataset still has, numbered with the seats first (a seat whose burger left goes to the best ranked
+  burger not under review, as the method fills a seat), "≈" only between rows that are neighbors on the board too. The page
+  shows the 10 seats ("The top 3 so far." early on), the rest of the ranking, Rising ("On 7 lists · needs 3 more lists"),
+  "Early results" under 500 lists, "Under review" (an owner hold) and "Checking a surge of lists" (the surge review bar),
+  the one-liner, and before anything is ranked "The ladder starts when burgers are on 5 lists each (12 lists so far)."
+  (before the first board, with no count: the lists saved so far aren't published yet)
+  ItemList JSON-LD only; its own share image; in the sitemap (dated by the board), llms.txt, the nav, the footer and "More
+  burger rankings."; `/best-burgers` rows show a ranked menu's People's rank. Tested in `test/peoples-top.test.ts`.
+- **Tests:** `test/ladder.test.ts` (weights, the fit, the surge rule as the database applies it, the cautious score, step,
+  freeze, gate, keep band, network floor, Rising, seats, review bar, hold, early label, rounding, determinism, the refusal
+  of an unconverged fit); `test/ladder-golden-*.test.ts` replay the design's four attack scenarios (a one-day burst, a
+  trickle, the trickle then three honest weeks, a burial; seed 1000, 149 daily boards) from their lists and must match the
+  design's simulator: surge weights bit for bit, the same surge flags, surge support and Top 10 every day, scores within
+  1e-6 (fixtures in `test/fixtures/patty-ladder/`, gzipped); `test/peoples-top-snapshot.test.ts` covers the writer with
+  Supabase faked.
 
 ## Analytics (PostHog)
 
@@ -205,15 +206,13 @@ there is no banner, and surveys, product tours and the conversations widget are 
 
 | Event | Properties | Sent from |
 |---|---|---|
-| `burger_search` | `surface` (`burgers` / `peoples_price`), `query`, `results` | the /burgers search box and "Find a burger" on /peoples-price, once typing pauses for 1 s; empty and repeated queries are skipped |
+| `burger_search` | `surface` (`burgers`), `query`, `results` | the /burgers search box, once typing pauses for 1 s; empty and repeated queries are skipped (the ranker's search sends nothing) |
 | `burger_filter_changed` | `filter` (`borough`, `neighborhood`, `price`, `sort`, `clear_all`), `value`, `results` | every /burgers control: filter popovers, the mobile sheet, chips, price presets, the sort select and the column headers |
-| `worth_answered` | `menu_key`, `restaurant_id` (the location shown), `dollars`, `menu_price`, `first_answer` (`true`, `false`, or `null` when the browser's saved answers hadn't loaded or failed to), `previous_dollars` (a changed answer only), `surface` (`restaurant` / `home_pricer`), `price_hidden` (`true` in the pricer) | `WorthPicker` and `Pricer`, after Supabase has saved the answer (`worthStore.onSaved`) |
-| `pricer_area_selected` | `area_type` (`anywhere`, `borough`, `neighborhood`), `area` (`nyc`, or the borough or neighborhood slug) | an area picked in the home pricer (not a remembered one) |
-| `pricer_skipped` | `menu_key` | "Skip" in the pricer |
-| `pricer_next_clicked` | `count_this_session` (burgers answered in the pricer this session) | "Next burger" |
-| `pricer_exhausted` | `area` (as above) | the pricer ran out of burgers in an area |
-| `price_a_burger_clicked` | `from_path` (the path only: no query, no hash) | "Price a burger" in the header or the menu sheet |
-| `peoples_price_board_clicked` | `board` (`bargains`, `overpriced`, `most_answered`, `needs_answers`, `find`), `menu_key`, `restaurant_id`, `rank`, `position` | a row link on /peoples-price |
+| `ranking_started` | `edited` (the list being changed was saved before) | the first change to a list in the home ranker (a new one, or the saved one being edited) |
+| `ranking_item_added` | `menu_key`, `position` (1-based: the list's new length) | "Add" in the ranker's search |
+| `ranking_saved` | `length`, `edited` | a list saved (once Supabase saved it) |
+| `ranking_deleted` | `length` | "Delete my list", confirmed and done |
+| `peoples_top_clicked` | `surface` (`nav`, `menu_sheet`, `ranker`, `home`), `from_path` (the path only: no query, no hash) | a link to the People's Top 10 in the header nav, the menu sheet, the ranker card or under the home board |
 | `map_pin_opened` | `restaurant_id`, `source` (`pin` tapped, or `link` for `/map?r=<id>`, once per visit: a List/Map round trip reopens the popup without sending it again) | `MapCanvas` |
 | `map_popup_link_clicked` | `restaurant_id` | the restaurant link in a map popup |
 | `map_view_changed` | `view` (`map` / `list`) | the Map / List toggle |
@@ -225,14 +224,15 @@ there is no banner, and surveys, product tours and the conversations widget are 
   lowercased and cut to 60 characters. The full query in the page URL (`?q=`) is replaced by `<MASKED>` in every URL PostHog
   records (`mask_personal_data_properties` with `q`, plus a `before_send` for referrers). Session recordings mask the search
   boxes (every input) and the search text echoed in the "No burgers match “…”" messages (`ph-mask`). The voter id never
-  reaches an event, and session recordings drop Supabase request bodies (they carry it).
+  reaches an event, a ranking's events carry its length and menu keys but never the list, and session recordings drop
+  Supabase request bodies (they carry the voter id and the list).
 - **Proxy:** in production `posthog-js` talks to `/ingest` on the site itself; `web/vercel.json` rewrites `/ingest/static/*` and
   `/ingest/array/*` to `https://us-assets.i.posthog.com` and the rest of `/ingest/*` to `https://us.i.posthog.com`, so ad
   blockers that block PostHog's domains don't drop the events. The site has no Content-Security-Policy to update.
 - **Bots:** `posthog-js` drops events from automated browsers (headless Chrome, `navigator.webdriver`), so a Playwright or
   gstack check sees no events unless it poses as a normal browser.
-- **Tests:** `test/analytics.test.ts` (off without a key, loading and queueing, property shaping, URL masking, the debounce) and
-  the `onSaved` cases in `test/worth-store.test.ts`.
+- **Tests:** `test/analytics.test.ts` (off without a key, loading and queueing, property shaping, URL masking, the debounce, the
+  ranker's events).
 
 ## Search engines and AI assistants
 
@@ -265,7 +265,8 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   named them on a best-burger list published or updated in 2024-2026 (ties share a rank and go by name), shown in groups of one
   publication count ("Named by 10 publications" … "Named by 1 publication", `groupBestBurgers`), each with every list
   that names it (publisher, title linked, date, the burger it names), our menu price and burger (linked to the restaurant
-  page's burger block, or "Not priced") and the People's Price (read-only, `components/worth/PeoplesPriceFact.tsx`). The data
+  page's burger block, or "Not priced") and, where the menu is ranked, its People's rank ("#3 on 143 lists", from the daily
+  board). The data
   is `../data/best_burgers.json` (committed, curated by hand, facts only: no list text; no Upper Cut Media House lists, no
   trend features, beef burgers only, no closed places; one publisher is enough, so every open place a counted list names is
   on it), copied by `sync-data`, checked by
@@ -294,15 +295,15 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   Restaurant (PostalAddress, GeoCoordinates, `sameAs` the restaurant's site) → Menu → MenuItem → Offer (price, USD).
   Every page below home: BreadcrumbList (the visible breadcrumbs where the page shows them). `/neighborhoods`: an ItemList of
   the ranking; neighborhood pages: an ItemList of the restaurant table (`byIndexPrice`); ranking pages: an ItemList of the
-  ranked table. Home, borough and neighborhood pages: FAQPage (the Q&A block). The People's Price is never marked up as a
-  Review, Rating or AggregateRating.
+  ranked table. Home, borough and neighborhood pages: FAQPage (the Q&A block). `/peoples-top-10`: an ItemList of the ranked
+  rows. The People's Top 10 is never marked up as a Review, Rating or AggregateRating.
 - **robots.txt** (`src/lib/robots.ts`): every crawler is allowed, AI search and training bots are named (OAI-SearchBot,
   ChatGPT-User, PerplexityBot, Perplexity-User, Claude-SearchBot, Claude-User, GPTBot, ClaudeBot, Google-Extended,
   Applebot-Extended, CCBot), and only the analytics proxy `/ingest/` is disallowed.
 - **`/llms.txt`** (`src/lib/llms.ts`) and **`/data/burger-prices.csv`** (`src/lib/csv.ts`: `restaurant, neighborhood, borough,
   burger, price_usd, source, page_url, checked`; RFC 4180 quoting, CRLF, UTF-8, formula-looking text cells prefixed with `'`)
   are force-static route handlers. llms.txt lists every ranking page (neighborhood and style lists included),
-  `/best-burgers` and, once it exists, `/best-value-burgers` under "Rankings".
+  `/best-burgers` and the People's Top 10 (with its first three) under "Rankings".
 - **Share images, the price badge, the press kit (user decisions 2026-09-25, stage 4):**
   - Every restaurant, neighborhood, borough, ranking and style page and `/best-burgers` names its own 1200×630 share image,
     `/og/<page path>.png` (`og:image`, `twitter:image` and their alt text through `pageMetadata({ image })`); the rest keep
@@ -317,7 +318,7 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
     in `app/badge/[file]/route.tsx`, so the text is outlines and looks the same on any site; `src/lib/svg-path.ts` rewrites
     the outlines relative to the pen (about half the size). Files, not pages: never in the sitemap. `/badge`
     (`app/badge/page.tsx`, `components/badge/`) explains it: the badge of `?r=<id>` (each restaurant page's "Get its price
-    badge") or an example, a finder over `/data/pricer.json`, the HTML and the image address to copy, how to add it.
+    badge") or an example, a finder over `/data/menus.json`, the HTML and the image address to copy, how to add it.
   - `/press`: the headline numbers and borough medians from the dataset, the source line, the CSV and its CC BY 4.0 license
     with a credit line to copy (`src/lib/press.ts`), the share image, a short description, and the contact: GitHub issues
     (`src/lib/contact.ts`). The site publishes no email address.
@@ -337,10 +338,11 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   non-overlapping lists have them, each linked from its neighborhood page), each style list row by row (distinct menus,
   dataset prices, order, ranks, a style word in each burger, the "where the priciest burger is a …" H1), `/best-burgers`
   against `../data/best_burgers.json` (groups and their place counts, rows in order, prices, every list link, the count line, the ItemList), no "best
-  burger" in our own titles, descriptions or H1s, the People's Price snapshot in the HTML (every restaurant page whose menu has
-  3+ answers carries its exact sentence and no other page does, each `/best-burgers` row its snapshot numbers, `/peoples-price`
-  its date and its "Most answered" board, `/best-value-burgers` present exactly when 10+ menus have a verdict, row by row, and
-  the `/_none` placeholder noindex and unlisted), every page's share image (its own `/og/<path>.png` for restaurant,
+  burger" in our own titles, descriptions or H1s, `/peoples-top-10` recomputed from `../data/peoples_top.json` and the dataset
+  (seats, the rest and Rising row by row with ranks, list counts, flags and links; the ItemList; "Early results" exactly while
+  early; the one-liner; each `/best-burgers` row's People's rank), no "People's Price", "What's it worth" or "Price a burger"
+  left anywhere and `/peoples-price`, `/best-value-burgers` and `/data/pricer.json` not built, the ranker's region on home,
+  any `/_none` placeholder noindex and unlisted, every page's share image (its own `/og/<path>.png` for restaurant,
   area, ranking, style and most-recommended pages, else `/og.png`; a 1200×630 PNG that exists; an alt naming the page's
   price or H1; no image unused or shared), one badge per priced restaurant and nothing else (its title's price and comparison
   recomputed, no script) with its page's `/badge?r=<id>` link, `/badge` (the example snippet) and `/press` (median, borough
@@ -350,11 +352,11 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   one on home, every borough and every neighborhood page), the footer's source line, CSV link with its CC BY 4.0 license
   link and ranking links on every page, the Dataset's license, no overclaiming "cheapest" or "under $N" phrase in any page,
   title, description, JSON-LD, llms.txt or the CSV, unique titles and descriptions (with a length summary), the sitemap equal
-  to the pages (each `lastmod` the dataset's date, or the snapshot's where the People's Price is in the HTML), robots.txt, every llms.txt link (and the license named next to the CSV), the CSV against the dataset, and no
+  to the pages (each `lastmod` the dataset's date, or the board's where the People's Top 10 is in the HTML: `/peoples-top-10` and `/best-burgers`), robots.txt, every llms.txt link (and the license named next to the CSV), the CSV against the dataset, and no
   broken or orphaned internal links. `-- --site https://…` also asserts the origin. Tests:
   `test/seo.test.ts`, `test/jsonld.test.ts`, `test/rankings.test.ts` (ranking rows, neighborhood lists, answers, FAQ, ranking
   titles), `test/styles.test.ts` (the style classifier and lists), `test/best-burgers.test.ts` (the curated file and its ranking),
-  `test/peoples-price.test.ts` (the snapshot's rendering rules and the best value page in both states),
+  `test/peoples-top.test.ts` (the board as the page shows it, its words, the board file, a real ladder board end to end),
   `test/share-images.test.ts` (image paths, the cards, text fitting), `test/png-palette.test.ts` (every PNG row filter, the
   quantizer, the indexed encoder), `test/badge.test.ts` (badge text, snippet, finder, path compaction, the press kit's credit
   line and both pages' titles), `test/nearby.test.ts`,
@@ -419,12 +421,12 @@ Notes:
 
 | Route | Page |
 |---|---|
-| `/` | The burger pricer first (`#price`), beside the H1, the median as a sentence and the source line; then the headline index on the Order Board with "See the People's Price" and "Most-recommended burgers" under it, price histogram, borough bars with links to the five borough pages (`#boroughs`, which replaced `/boroughs`), cheapest and priciest (each with "See all"), neighborhood ranking, Q&A |
+| `/` | The burger ranker first (`#rank`), beside the H1, the median as a sentence and the source line; then the headline index on the Order Board with "See the People's Top 10" and "Most-recommended burgers" under it, price histogram, borough bars with links to the five borough pages (`#boroughs`, which replaced `/boroughs`), cheapest and priciest (each with "See all"), neighborhood ranking, Q&A |
 | `/burgers` | Every priced restaurant's burger, one row each: search, filters (borough, neighborhood, price), sort, all synced to the URL; then links to every ranking page |
 | `/cheapest-burgers`, `/most-expensive-burgers` (and `/[borough]` and `/[borough]/[neighborhood]` under each), `/burgers-under-15`, `/burgers-under-20`, `/burgers/[style]` | Ranking pages: a one-line answer and a ranked table, one row per distinct menu (top 25 or half the place's menus, ties at the cut kept; every row under $N or of the style) |
-| `/best-burgers` | The most-recommended burgers in NYC: places ranked by how many publications named them on a best-burger list in 2024-2026, each with its lists, menu price and People's Price |
-| `/peoples-price` | The People's Price: the People's Burger Index beside the Burger Index, live boards (biggest bargains, most overpriced, most answered), burgers that need a few more answers, and a search that links to any burger's slider (all loaded in the browser) |
-| `/restaurants/[id]` | Priced restaurants only: "The burger" (name, price, description, vs neighborhood and NYC, price source), menu page and website links, "See it on the map" (`/map?r=<id>`), hand-check label, "What would you pay?" (the slider, then the People's Price), nearby at a similar price, more in the neighborhood, other chain locations, and "Get its price badge" (`/badge?r=<id>`) |
+| `/best-burgers` | The most-recommended burgers in NYC: places ranked by how many publications named them on a best-burger list in 2024-2026, each with its lists, menu price and People's rank (where ranked) |
+| `/peoples-top-10` | The People's Top 10: the daily board of the burgers visitors rank highest (the 10 seats, the rest of the ranking, Rising), "Early results" under 500 lists, the one-liner, "Rank your burgers" (`/peoples-price` redirects here: `vercel.json`) |
+| `/restaurants/[id]` | Priced restaurants only: "The burger" (name, price, description, vs neighborhood and NYC, price source), menu page and website links, "See it on the map" (`/map?r=<id>`), hand-check label, nearby at a similar price, more in the neighborhood, other chain locations, and "Get its price badge" (`/badge?r=<id>`) |
 | `/neighborhoods`, `/neighborhoods/[slug]` | Sortable ranking (areas with at least 5 distinct priced menus; a chain counts once) and a page for every neighborhood with a priced restaurant (its unpriced restaurants listed as plain names, then a Q&A); neighborhoods with nothing priced are plain names on `/neighborhoods` |
 | `/boroughs/[slug]` | The five borough pages (there is no `/boroughs` index), each with "See all" links to its two ranking pages and a Q&A |
 | `/map` | MapLibre GL map of the priced restaurants, pins colored by price level, legend, list view, priced restaurants without coordinates |
@@ -434,7 +436,7 @@ Notes:
 | `/press` | Press kit: the headline numbers, the source line, the CSV and how to credit it, the share image, the contact (GitHub issues) |
 | `/llms.txt` | Plain summary for AI assistants: the headline numbers and date, links to the main pages, the ranking pages and the CSV |
 | `/data/burger-prices.csv` | The public price list, one row per priced restaurant location, licensed CC BY 4.0 (linked from the footer, the license link after it) |
-| `/data/pricer.json` | The home pricer's burgers (not linked; fetched by the pricer) |
+| `/data/menus.json` | Every distinct priced menu with its locations (not linked; fetched by the home ranker and the badge finder) |
 | `/<key>.txt` | The IndexNow key file (`public/`, public by design) |
 
 ## Notes for maintainers
@@ -445,7 +447,7 @@ Notes:
 - **Pages only for priced places (user decision 2026-09-25):** a restaurant without a price has no page, no sitemap URL and no
   row in the explorer, the map lists or a chain list; it shows up only as a plain name on its neighborhood's page. A neighborhood
   gets a page only when something there is priced; the others are plain names on `/neighborhoods`. Their old URLs are 404s.
-  Restaurant ids are still assigned over every restaurant in scope, so a priced restaurant's id (and its People's Price key)
+  Restaurant ids are still assigned over every restaurant in scope, so a priced restaurant's id (and its People's Top 10 menu key)
   never changes.
 - **Menus, not locations:** the index counts each distinct menu once (every independent restaurant, each chain once citywide
   and at most once per area). Anything the site derives itself (histograms, rankings, cheapest/priciest lists, the

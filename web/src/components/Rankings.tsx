@@ -4,7 +4,6 @@ import Link from "next/link";
 import { BEST_BURGERS_NAME, BEST_BURGERS_PATH } from "@/lib/best-burgers";
 import { BOROUGH_META } from "@/lib/boroughs";
 import { formatDelta, pluralize } from "@/lib/format";
-import { BEST_VALUE_NAME, BEST_VALUE_PATH } from "@/lib/peoples-price";
 import {
   boroughRankings,
   chainExplorerHref,
@@ -18,6 +17,7 @@ import {
   type RankingSpec,
 } from "@/lib/rankings";
 import type { Borough } from "@/lib/schema";
+import { PEOPLES_TOP_NAME, PEOPLES_TOP_PATH } from "@/lib/site";
 import { BoroughDot, PriceChip, SourceBadge } from "./ui";
 
 /**
@@ -95,8 +95,7 @@ const specLink = (s: RankingSpec) => ({ href: rankingPath(s), label: rankingName
 
 /**
  * Every ranking page, grouped: a neighborhood's own two lists first on its ranking pages, then New York
- * City (with the most-recommended burgers, and the best value burgers while that page exists: `bestValue`,
- * peoples-price-data.ts hasBestValuePage), the burger styles and each borough with its flag dot, as plain
+ * City (with the most-recommended burgers and the People's Top 10), the burger styles and each borough with its flag dot, as plain
  * list rows. `current` (this page's path) is named, not linked. `available` (rankings.ts rankingSpecs)
  * leaves out the lists of a borough with nothing priced and the styles without a list. The other
  * neighborhoods' lists are linked from their neighborhood pages.
@@ -105,12 +104,10 @@ export function RankingLinks({
   current,
   available,
   neighborhood = null,
-  bestValue = false,
 }: {
   current?: string;
   available: readonly RankingSpec[];
   neighborhood?: RankingNeighborhood | null;
-  bestValue?: boolean;
 }) {
   const paths = new Set(available.map(rankingPath));
   const has = (s: RankingSpec) => paths.has(rankingPath(s));
@@ -125,7 +122,7 @@ export function RankingLinks({
       links: [
         ...CITY_RANKINGS.filter(has).map(specLink),
         { href: BEST_BURGERS_PATH, label: BEST_BURGERS_NAME },
-        ...(bestValue ? [{ href: BEST_VALUE_PATH, label: BEST_VALUE_NAME }] : []),
+        { href: PEOPLES_TOP_PATH, label: PEOPLES_TOP_NAME },
       ],
     },
     {

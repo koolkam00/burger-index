@@ -8,7 +8,7 @@
 data/*
 !data/burger_index.json
 !data/best_burgers.json
-!data/peoples_price.json
+!data/peoples_top.json
 web/node_modules
 web/.next
 web/out

@@ -206,7 +206,7 @@ def restaurant_rows(targets: Iterable[Target], results: dict[str, dict], *,
     results = {k: drop_template_placeholders(r) for k, r in corrections_mod.apply(results, corrections or []).items()}
     # Ids are assigned over every restaurant in scope, scraped or not, so an id does not change
     # when a namesake in the same neighborhood gets scraped later (/restaurants/<id> permalinks,
-    # People's Price answers).
+    # People's Top 10 lists).
     everyone = [(m, t.name if t.chain else m["name"], t) for t in targets for m in t.members]
     all_ids = assign_restaurant_ids([(m, name) for m, name, _ in everyone])
     rows: list[Row] = []

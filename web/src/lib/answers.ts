@@ -176,7 +176,7 @@ export type CityFaqInput = {
 
 /**
  * "The median NYC burger costs $21.95 (September 2026)": the home page's plain answer, under its H1
- * (the board with the same number hangs below the pricer, so the sentence keeps the answer at the top
+ * (the board with the same number hangs below the ranker, so the sentence keeps the answer at the top
  * of the page's static HTML) and opening the first home Q&A answer.
  */
 export function medianClause(median: number, generatedAt: string): string {
