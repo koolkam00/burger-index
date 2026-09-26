@@ -1,6 +1,7 @@
 // Server-only: every page's share card (lib/share-images.ts), built once per build worker from the
-// dataset. The pages ask shareImage(path) for their og:image; app/og/[...path]/route.tsx draws each card
-// to /og/<page path>.png. A page without a card (home, the map, /burgers, …) keeps /og.png.
+// dataset (restaurants, areas, rankings, landmark pages, the most-recommended burgers, the People's Top 10).
+// The pages ask shareImage(path) for their og:image; app/og/[...path]/route.tsx draws each card to
+// /og/<page path>.png. A page without a card (home, the map, /burgers, the landmarks hub, …) keeps /og.png.
 import "server-only";
 
 import { BEST_BURGERS_NAME, BEST_BURGERS_PATH, BEST_BURGERS_TICKET, bestBurgersCountLine, namedByHeading } from "./best-burgers";
@@ -8,6 +9,7 @@ import { getBestBurgers } from "./best-burgers-data";
 import { BOROUGH_META } from "./boroughs";
 import { getBorough, getGeneratedAt, getNeighborhoodPages, getPricedRestaurants, getStats, neighborhoodMenuCounts } from "./data";
 import { formatDate, pluralize } from "./format";
+import { LANDMARKS_TICKET, landmarkCountLine, landmarkPath, landmarksWithPages, landmarkTitle, spotDistance } from "./landmarks";
 import { boardCountLine, PEOPLES_TOP_TICKET } from "./peoples-top";
 import { getPeoplesTop } from "./peoples-top-data";
 import { RANKING_TICKETS, rankingCountLine, rankingName, rankingPath, rankingSpecs, rankMenus } from "./rankings";
@@ -45,6 +47,18 @@ function build(): Map<string, ShareCard> {
         title: rankingName(spec),
         rows: ranking.rows.map((m) => ({ rank: m.rank, name: m.restaurant.name, detail: m.restaurant.burger.name, price: m.indexPrice })),
         count: ranking.rows.length > 1 ? rankingCountLine(spec, ranking) : null,
+      }),
+    );
+  }
+  // The landmark pages: their nearest spots, each with its burger and how far it is (no rank: the list is by distance).
+  for (const { landmark, spots } of landmarksWithPages(restaurants)) {
+    cards.set(
+      landmarkPath(landmark),
+      listCard({
+        ticket: LANDMARKS_TICKET,
+        title: landmarkTitle(landmark),
+        rows: spots.map((s) => ({ rank: null, name: s.restaurant.name, detail: `${s.restaurant.burger.name} · ${spotDistance(s)}`, price: s.restaurant.index_price })),
+        count: landmarkCountLine(spots.length),
       }),
     );
   }

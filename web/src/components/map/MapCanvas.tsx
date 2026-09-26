@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { track } from "@/lib/analytics";
 import { formatDelta, formatPrice } from "@/lib/format";
+import { landmarkBounds, landmarkBySlug } from "@/lib/landmarks";
 import { binFor } from "@/lib/price-bins";
 import { useResolvedTheme } from "../theme";
 import {
@@ -193,15 +194,20 @@ export default function MapCanvas({
       open(f.properties as unknown as PinProps, [lng, lat], "pin");
     });
 
-    // First load: fit the pins, or fly to ?r=<restaurant id>. (A theme switch rebuilds the map and
-    // keeps the previous camera instead.)
+    // First load: fit the pins, fly to ?r=<restaurant id>, or show a landmark's half-mile, ?near=<landmark slug>
+    // (its page's "See them on the map"). (A theme switch rebuilds the map and keeps the previous camera instead.)
     const restoring = camera.current !== null;
     map.once("load", () => {
       if (restoring) return;
       map.resize();
-      const want = new URLSearchParams(window.location.search).get("r");
+      const query = new URLSearchParams(window.location.search);
+      const want = query.get("r");
       const target = want ? features.find((f) => f.properties.id === want) : undefined;
-      if (target) {
+      const landmark = !target ? landmarkBySlug(query.get("near") ?? "") : undefined;
+      if (landmark) {
+        const pad = Math.min(48, container.clientWidth / 10);
+        map.fitBounds(landmarkBounds(landmark), { padding: { top: pad, bottom: pad, left: pad, right: pad }, duration: 0 });
+      } else if (target) {
         const [lng, lat] = target.geometry.coordinates;
         map.jumpTo({ center: [lng, lat], zoom: 15 });
         open(target.properties, [lng, lat], linkTrackedRef.current ? null : "link");

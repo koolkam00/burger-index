@@ -1706,8 +1706,9 @@
     color: var(--ink);
   }
 
-  /* Ranking pages: the rank column takes only its numbers' width. */
-  .ranking-table .rank-col {
+  /* Ranking pages: the rank column takes only its numbers' width; landmark pages: the distance column. */
+  .ranking-table .rank-col,
+  .landmark-table .dist-col {
     width: 1%;
     white-space: nowrap;
   }

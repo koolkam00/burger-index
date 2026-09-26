@@ -302,12 +302,26 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   price_usd, source badge label, page_url, checked; linked once from the footer) are force-static. IndexNow: the key
   file is `public/<key>.txt` (public by design) and `scripts/indexnow.mjs` submits the live sitemap. `npm run check:seo`
   verifies a build end to end (`-- --site https://…` also asserts the origin).
+- **Burgers near a landmark (user decision 2026-09-26, for searches like "burger near Times Square"):** `/burgers-near` (the
+  hub) and `/burgers-near/<landmark>`: every priced burger spot (location) within **half a mile** (0.804672 km as the crow
+  flies, "about a 10-minute walk") of a NYC landmark, nearest first, with its distance ("0.3 mi"), priciest burger, price chip,
+  neighborhood and source badge. The landmarks and their points (each landmark's Wikipedia coordinates, the article named in a
+  comment) are in `web/src/lib/landmarks.mjs`, plain JS that `check-seo.mjs` reads too; places that are effectively one are one
+  landmark (Penn Station and Madison Square Garden, the World Trade Center and the 9/11 Memorial, City Hall and the Brooklyn
+  Bridge, Chelsea Market and the High Line, Columbus Circle and Central Park South). A landmark has a page only with **5+
+  spots** (`landmarksWithPages` in `src/lib/landmarks.ts`: 17 today; DUMBO 2, Yankee Stadium 1, Citi Field and Coney Island
+  0 have none until the dataset has more). The lede: "36 burger spots within half a mile of Times Square, about a 10-minute
+  walk; their priciest burgers run from $12.65 at … to $34.00 at … (September 2026)."; never "the cheapest burger near …"
+  (`check:seo`). "See them on the map" opens `/map?near=<slug>`, which fits the map to the landmark's half mile. ItemList +
+  BreadcrumbList JSON-LD, its own share image (the nearest three, no rank), sitemap, llms.txt ("Burgers near landmarks"),
+  the footer's Rankings group and "More burger rankings." (so `/burgers`) link the hub; the nav marks Burgers. Slugs are URLs:
+  never rename one. Tests in `test/landmarks.test.ts`; `check:seo` recomputes every landmark page and the hub from the dataset.
 - **Sharing and link-building (user decisions 2026-09-25, stage 4):** **share images**: every restaurant, neighborhood,
-  borough, ranking and style page and `/best-burgers` has its own 1200×630 Order Board at `/og/<page path>.png`
+  borough, ranking, style and landmark page and `/best-burgers` has its own 1200×630 Order Board at `/og/<page path>.png`
   (`src/lib/share-images.ts` the cards and paths, `src/lib/share-cards.ts` server-only, builds them and gives each page its
   `og:image` through `pageMetadata({ image: shareImage(path) })`, `components/og/` the Satori markup shared with `/og.png`,
-  `app/og/[...path]/route.tsx` renders them); they are stored as 256-color PNGs (`src/lib/png-palette.ts`: 734 images,
-  ~24 MB) and make the build take about 2 minutes instead of 17 s. Other pages keep `/og.png`. **Price badge**:
+  `app/og/[...path]/route.tsx` renders them); they are stored as 256-color PNGs (`src/lib/png-palette.ts`: 786 images,
+  ~26 MB) and make the build take about 2 minutes instead of 17 s. Other pages keep `/og.png`. **Price badge**:
   `/badge/<id>.svg` for every priced restaurant (`src/lib/badge.ts`, `app/badge/[file]/route.tsx`: drawn with `satori`
   (a dependency pinned to the version next/og bundles) so the text is outlines, paths compacted by `src/lib/svg-path.ts`;
   not pages, never in the sitemap) and the `/badge` page (`components/badge/`: the badge of `?r=<id>` or an example, a finder
