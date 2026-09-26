@@ -1,4 +1,6 @@
+import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AreaListItem } from "@/components/AreaList";
 import { AreaStats } from "@/components/AreaStats";
@@ -27,8 +29,10 @@ import { formatDate, pluralize } from "@/lib/format";
 import { breadcrumbNode, itemListNode } from "@/lib/jsonld";
 import { isRankable, menuBreakdown, menusByIndexPrice, menusByIndexPriceDesc } from "@/lib/menus";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
-import { topTied, withRanks } from "@/lib/rankings";
+import { neighborhoodRankingPair } from "@/lib/ranking-routes";
+import { rankingName, rankingPath, topTied, withRanks } from "@/lib/rankings";
 import { neighborhoodSeo } from "@/lib/seo";
+import { shareImage } from "@/lib/share-cards";
 import { atLeastOneParam, PLACEHOLDER_PARAM } from "@/lib/site";
 
 export const dynamicParams = false;
@@ -64,7 +68,8 @@ export async function generateMetadata({ params }: PageProps<"/neighborhoods/[sl
     only: c.menus === 1 && cheapest[0] ? { restaurant: cheapest[0].restaurant.name, burger: cheapest[0].restaurant.burger.name } : null,
     generatedAt: getGeneratedAt(),
   });
-  return pageMetadata({ ...seo, path: `/neighborhoods/${n.slug}` });
+  const path = `/neighborhoods/${n.slug}`;
+  return pageMetadata({ ...seo, path, image: shareImage(path) });
 }
 
 export default async function NeighborhoodPage({ params }: PageProps<"/neighborhoods/[slug]">) {
@@ -86,6 +91,8 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
   ];
   const path = `/neighborhoods/${n.slug}`;
   const table = `Restaurants in ${n.name}`;
+  // Its own cheapest and most expensive lists, when it has enough menus (rankings.ts neighborhoodsWithRankings).
+  const ranking = neighborhoodRankingPair(slug);
   const faq = neighborhoodFaq({
     generatedAt: getGeneratedAt(),
     name: n.name,
@@ -95,6 +102,7 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
     menus: c.menus,
     cheapest: topTied(withRanks(menusByIndexPrice(restaurants))),
     priciest: topTied(withRanks(menusByIndexPriceDesc(restaurants))),
+    ranking: ranking ?? undefined,
   });
 
   return (
@@ -140,6 +148,18 @@ export default async function NeighborhoodPage({ params }: PageProps<"/neighborh
           <SectionHeading id="places" kicker="Cast a line" icon={Spyglass} title={`Restaurants in ${n.name}.`}>
             Sorted by index price, cheapest first.
           </SectionHeading>
+          {ranking ? (
+            <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-1" aria-label={`Rankings for ${n.name}`}>
+              {[ranking.cheapest, ranking.priciest].map((s) => (
+                <li key={rankingPath(s)}>
+                  <Link href={rankingPath(s)} className="link t-ui-m inline-flex min-h-11 items-center gap-1.5">
+                    {rankingName(s)}
+                    <ArrowRight className="size-4 flex-none" strokeWidth={2} aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : null}
           <div className="mt-6">
             <RestaurantTable
               restaurants={restaurants.filter(isPriced)}

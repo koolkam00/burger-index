@@ -1,10 +1,14 @@
+import { BEST_BURGERS_NAME, BEST_BURGERS_PATH, leaders } from "@/lib/best-burgers";
+import { getBestBurgers, getBestBurgersYears } from "@/lib/best-burgers-data";
 import { getBoroughs, getGeneratedAt, getMenuCounts, getNeighborhoodPages, getPricedRestaurants, getStats, rankedNeighborhoods } from "@/lib/data";
 import { CSV_LICENSE, CSV_PATH } from "@/lib/csv";
 import { llmsTxt } from "@/lib/llms";
-import { formatCount, formatPrice, spreadEnds } from "@/lib/format";
+import { formatCount, formatDate, formatPrice, spreadEnds } from "@/lib/format";
 import { menusByIndexPrice, menusByIndexPriceDesc, type Menu } from "@/lib/menus";
 import { rankingName, rankingPath, rankingSpecs, rankMenus, type RankingSpec } from "@/lib/rankings";
 import { SITE_URL } from "@/lib/metadata";
+import { BEST_VALUE_MIN_GAP, BEST_VALUE_NAME, BEST_VALUE_PATH } from "@/lib/peoples-price";
+import { getBestValue } from "@/lib/peoples-price-data";
 import { sourceLine } from "@/lib/seo";
 
 // Static export writes this to out/llms.txt (llmstxt.org): the headline numbers, the date and links.
@@ -18,8 +22,9 @@ function end(m: Menu | undefined) {
 
 /**
  * "the 25 cheapest of 531 menus by their priciest burger, from $6.00 at Johnny's Reef", "the 25 most
- * expensive of 531 menus, up to $75.00 at …", "96 burger spots, priciest burgers $6.00 to $14.99"
- * (menus count a chain once; burger spots count its every location).
+ * expensive of 531 menus, up to $75.00 at …", "96 burger spots, priciest burgers $6.00 to $14.99",
+ * "45 burger spots whose priciest burger is a smash burger, $9.00 to $31.00" (menus count a chain once;
+ * burger spots count its every location).
  */
 function rankingNote(spec: RankingSpec, restaurants: Parameters<typeof rankMenus>[0]): string | undefined {
   const { rows, total, spots } = rankMenus(restaurants, spec);
@@ -27,8 +32,27 @@ function rankingNote(spec: RankingSpec, restaurants: Parameters<typeof rankMenus
   const money = (v: number) => formatPrice(v, { cents: "always" });
   const first = rows[0];
   if (spec.kind === "under") return `${formatCount(spots)} burger spots, priciest burgers ${money(first.indexPrice)} to ${money(rows[rows.length - 1].indexPrice)}`;
+  if (spec.kind === "style") return `${formatCount(spots)} burger spots whose priciest burger is ${spec.style!.aBurger}, ${money(first.indexPrice)} to ${money(rows[rows.length - 1].indexPrice)}`;
   if (spec.kind === "cheapest") return `the ${rows.length} cheapest of ${formatCount(total)} menus by their priciest burger, from ${money(first.indexPrice)} at ${first.restaurant.name}`;
   return `the ${rows.length} most expensive of ${formatCount(total)} menus, up to ${money(first.indexPrice)} at ${first.restaurant.name}`;
+}
+
+/** "33 places ranked by how many publications named them on a best-burger list in 2024–2026, …" */
+function bestBurgersNote(): string {
+  const entries = getBestBurgers();
+  const years = getBestBurgersYears();
+  const top = leaders(entries);
+  const lead = top.length === 1 ? `; ${top[0].name} leads, named by ${top[0].publishers.length}` : "";
+  return `${formatCount(entries.length)} places ranked by how many publications named them on a best-burger list in ${years.from}–${years.to}, with the menu price${lead}`;
+}
+
+/** "12 burgers whose People's Price (what visitors would pay) is 10% or more above the menu price, as of Sep 25, 2026; Emily leads: People's Price $31, menu price $24.00" */
+function bestValueNote(): string | undefined {
+  const bv = getBestValue();
+  if (!bv) return undefined;
+  const top = bv.rows[0];
+  const lead = top && top.people !== null ? `; ${top.name} leads: People's Price $${formatCount(top.people)}, menu price ${formatPrice(top.price, { cents: "always" })}` : "";
+  return `${formatCount(bv.rows.length)} ${bv.rows.length === 1 ? "burger" : "burgers"} whose People's Price (what visitors would pay) is ${BEST_VALUE_MIN_GAP}% or more above the menu price, as of ${formatDate(bv.asOf)}${lead}`;
 }
 
 export function GET() {
@@ -60,7 +84,11 @@ export function GET() {
     sections: [
       {
         title: "Rankings",
-        links: rankingSpecs(restaurants).map((spec) => ({ title: rankingName(spec), path: rankingPath(spec), note: rankingNote(spec, restaurants) })),
+        links: [
+          ...rankingSpecs(restaurants).map((spec) => ({ title: rankingName(spec), path: rankingPath(spec), note: rankingNote(spec, restaurants) })),
+          { title: BEST_BURGERS_NAME, path: BEST_BURGERS_PATH, note: bestBurgersNote() },
+          ...(getBestValue() ? [{ title: BEST_VALUE_NAME, path: BEST_VALUE_PATH, note: bestValueNote() }] : []),
+        ],
       },
     ],
   });

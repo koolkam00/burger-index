@@ -16,11 +16,16 @@ import {
   RANKING_LIMIT,
   rankingCap,
   rankingName,
+  neighborhoodRankings,
+  rankingIn,
   rankingNameInSentence,
   rankingPath,
+  rankingPlace,
   rankingShortName,
   rankingSpecs,
   rankMenus,
+  neighborhoodsWithRankings,
+  stylesWithRankings,
   topTied,
   underSpec,
   withRanks,
@@ -59,7 +64,15 @@ test("ranking paths and names: 14 plain URLs and headings", () => {
 test("rankingSpecs: a borough with nothing priced has no lists", () => {
   const list = priced([place({ price: 10, borough: "Queens" })]);
   assert.deepEqual(rankingSpecs(list).map(rankingPath), [...CITY_RANKINGS.map(rankingPath), "/cheapest-burgers/queens", "/most-expensive-burgers/queens"]);
-  assert.equal(rankingSpecs(loadDataset().restaurants.filter((r) => r.index_price !== null) as PricedRestaurant[]).length, 14);
+  // The real dataset: 4 NYC lists and 10 borough lists, then each neighborhood's pair, then the styles.
+  const real = loadDataset().restaurants.filter((r) => r.index_price !== null) as PricedRestaurant[];
+  const specs = rankingSpecs(real);
+  const hoods = neighborhoodsWithRankings(real);
+  const styles = stylesWithRankings(real);
+  assert.equal(specs.length, 14 + 2 * hoods.length + styles.length);
+  assert.deepEqual(specs.slice(0, 14).map((s) => s.kind === "style" || s.neighborhood !== null), Array(14).fill(false));
+  assert.ok(hoods.length >= 10, `${hoods.length} neighborhoods with lists`);
+  assert.deepEqual(styles.map((s) => s.key), ["smash", "double", "wagyu", "dry-aged"], "patty melt has too few menus");
 });
 
 test("rankMenus: one row per menu (a chain once, with its locations), capped at half the menus, ties share a rank", () => {
@@ -355,8 +368,11 @@ test("rankingSeo on the real dataset: unique titles within 60 where they fit, de
     return rankingSeo({
       kind: spec.kind,
       name: rankingName(spec),
-      place: spec.borough ? (spec.borough.name === "Bronx" ? "the Bronx" : spec.borough.name) : "NYC",
+      place: rankingPlace(spec),
+      inPlace: rankingIn(spec),
+      shortName: rankingShortName(spec),
       under: spec.under,
+      aBurger: spec.style?.aBurger,
       rows: rows.map((m) => ({ restaurant: m.restaurant.name, burger: m.restaurant.burger.name, price: m.indexPrice })),
       total,
       spots,
@@ -366,14 +382,22 @@ test("rankingSeo on the real dataset: unique titles within 60 where they fit, de
   assert.equal(new Set(seos.map((s) => s.title)).size, seos.length);
   assert.equal(new Set(seos.map((s) => s.description)).size, seos.length);
   for (const s of seos) {
-    assert.ok(s.title.length <= TITLE_MAX, s.title);
+    // Only a neighborhood too long for even "Cheapest burger spots, <place> (Sep 2026)" runs past 60.
+    assert.ok(s.title.length <= TITLE_MAX || /^(Cheapest burger spots|Most expensive burgers), [^:]+ \(Sep 2026\)$/.test(s.title), s.title);
     assert.ok(s.description.length <= DESCRIPTION_MAX, s.description);
-    assert.match(s.title, /\$\d/, "the title carries a real number");
   }
+  // The title carries a real number wherever it fits (every NYC, borough and style list).
+  for (const [i, s] of seos.entries()) if (!rankingSpecs(list)[i].neighborhood) assert.match(s.title, /\$\d/, s.title);
   // The search words stay (cheapest, burger, NYC, the borough); nothing claims "the cheapest burgers" or "burgers under $15".
   for (const s of seos) assert.ok(!/cheapest burgers|burgers under|cheapest burger in/i.test(`${s.title} ${s.description}`), `${s.title} | ${s.description}`);
   // Every ranking title keeps the month (a long place takes the shorter form).
   for (const s of seos) assert.match(s.title, /\(Sep 2026\)$/, s.title);
+  // Every cheapest and most expensive description names its first place (a tie as a tie); "Then …" only after it.
+  for (const [i, s] of seos.entries()) {
+    if (!["cheapest", "priciest"].includes(rankingSpecs(list)[i].kind)) continue;
+    assert.match(s.description, /(tops the list|top the list|tie at the top) at \$/, s.description);
+    assert.ok(!/\(September 2026\)\. Then /.test(s.description), s.description);
+  }
   const cheap = rankingSeo({ kind: "cheapest", name: "Cheapest burger spots in NYC", place: "NYC", under: null, rows: [{ restaurant: "Joe's", burger: "Cheeseburger", price: 6 }], total: 1, spots: 1, generatedAt: GEN });
   assert.equal(cheap.title, "Cheapest burger spots in NYC: from $6 (Sep 2026)");
   assert.equal(cheap.description, "Cheapest burger spots in NYC: the 1 menu with the lowest top-burger price (September 2026). Joe's tops the list at $6.00.");
@@ -408,4 +432,137 @@ test("rankingSeo on the real dataset: unique titles within 60 where they fit, de
   // "Burger spots" counts locations (96), not the list's 90 menus.
   assert.equal(under.title, "96 NYC burger spots, priciest burger under $15 (Sep 2026)");
   assert.match(under.description, /^96 burger spots in NYC where the priciest burger is under \$15, cheapest first \(September 2026\)\. From \$6\.00 at Joe's to \$14\.99 at Bob's\./);
+});
+
+test("rankingSeo: a tie for first place names both of two and counts three or more, as the lede does", () => {
+  const base = { place: "Brooklyn", under: null, total: 40, spots: 44, generatedAt: GEN } as const;
+  const two = rankingSeo({
+    ...base,
+    kind: "priciest",
+    name: "Most expensive burgers in Brooklyn",
+    rows: [
+      { restaurant: "Red Hook Tavern", burger: "Dry-Aged Red Hook Tavern Burger", price: 34 },
+      { restaurant: "Sailor", burger: "Sailor Burger", price: 34 },
+      { restaurant: "Boeuf & Bun", burger: "Wagyu Burger", price: 32 },
+    ],
+  });
+  // Both burgers don't fit in 160 characters, so the places alone; "Then …" never runs without its leader.
+  assert.equal(two.description, "The 3 most expensive burgers in Brooklyn, ranked by price (September 2026). Red Hook Tavern and Sailor top the list at $34.00. Then Boeuf & Bun at $32.00.");
+  const twoShort = rankingSeo({ ...base, kind: "priciest", name: "Most expensive burgers in Brooklyn", rows: [{ restaurant: "A", burger: "Burger", price: 34 }, { restaurant: "B", burger: "Cheeseburger", price: 34 }] });
+  assert.match(twoShort.description, /\. The Burger at A and the Cheeseburger at B top the list at \$34\.00\./);
+  const cheapTwo = rankingSeo({
+    ...base,
+    kind: "cheapest",
+    name: "Cheapest burger spots in Brooklyn",
+    rows: [
+      { restaurant: "City Diner", burger: "Burger", price: 14.95 },
+      { restaurant: "Manhattan Diner", burger: "Burger", price: 14.95 },
+      { restaurant: "Joe's", burger: "Burger", price: 15.5 },
+      { restaurant: "Bob's", burger: "Burger", price: 16 },
+    ],
+  });
+  assert.match(cheapTwo.description, /\. City Diner and Manhattan Diner top the list at \$14\.95\.$/);
+  assert.ok(!/tops the list/.test(cheapTwo.description), cheapTwo.description);
+  const three = rankingSeo({
+    ...base,
+    kind: "cheapest",
+    name: "Cheapest burger spots in NYC",
+    place: "NYC",
+    rows: [
+      { restaurant: "A", burger: "Burger", price: 10 },
+      { restaurant: "B", burger: "Burger", price: 10 },
+      { restaurant: "C", burger: "Burger", price: 10 },
+      { restaurant: "D", burger: "Burger", price: 11 },
+    ],
+  });
+  assert.match(three.description, /\. 3 menus tie at the top at \$10\.00, among them A\. Then D at \$11\.00\./);
+  const threePricey = rankingSeo({ ...base, kind: "priciest", name: "Most expensive burgers in Brooklyn", rows: [{ restaurant: "A", burger: "Wagyu Burger", price: 40 }, { restaurant: "B", burger: "Burger", price: 40 }, { restaurant: "C", burger: "Burger", price: 40 }] });
+  assert.match(threePricey.description, /\. 3 burgers tie at the top at \$40\.00, among them the Wagyu Burger at A\.( |$)/);
+  assert.ok(!/Then/.test(threePricey.description), "no row after the tie");
+  // A long place: the opening shortens so the first place still fits (it is never left out for "Then …" or "Out of …").
+  const long = rankingSeo({
+    kind: "cheapest",
+    name: "Cheapest burger spots in Murray Hill-Kips Bay",
+    place: "Murray Hill-Kips Bay",
+    under: null,
+    rows: [
+      { restaurant: "At The Office", burger: "Burger", price: 18 },
+      { restaurant: "Black Sheep", burger: "Burger", price: 18 },
+      { restaurant: "Joe's", burger: "Burger", price: 19 },
+    ],
+    total: 15,
+    spots: 15,
+    generatedAt: GEN,
+  });
+  assert.match(long.description, /^Cheapest burger spots in Murray Hill-Kips Bay, by top-burger price \(September 2026\)\. At The Office and Black Sheep top the list at \$18\.00\./);
+  assert.ok(long.description.length <= DESCRIPTION_MAX, long.description);
+});
+
+test("neighborhood lists: 10+ distinct menus and two lists that share no menu; paths, names and prepositions", () => {
+  const hood = (slug: string, n: number, price: (i: number) => number, borough: "Manhattan" | "Queens" = "Manhattan") =>
+    Array.from({ length: n }, (_, i) => place({ name: `${slug}-${i}`, price: price(i), hood: slug, borough }));
+  // A chain's two locations in one neighborhood are one menu: 9 independents + the chain = 10 menus.
+  const chainTwice = [place({ chain: "c", price: 11, hood: "upper-west-side" }), place({ chain: "c", price: 11, hood: "upper-west-side" })];
+  const list = priced([
+    ...hood("upper-west-side", 9, (i) => 10 + i).map((r) => ({ ...r, neighborhood: "Upper West Side" })),
+    ...chainTwice.map((r) => ({ ...r, neighborhood: "Upper West Side" })),
+    ...hood("astoria", 9, (i) => 10 + i, "Queens"),
+    // Ten menus, but ties at the middle put the same menus on both lists.
+    ...hood("tied", 10, (i) => (i < 3 ? 10 : i > 6 ? 30 : 20)),
+  ]);
+  const withLists = neighborhoodsWithRankings(list);
+  assert.deepEqual(withLists.map((n) => n.slug), ["upper-west-side"], "astoria has 9 menus; tied's two lists meet");
+  const [cheap, pricey] = neighborhoodRankings(withLists[0]);
+  assert.equal(rankingPath(cheap), "/cheapest-burgers/manhattan/upper-west-side");
+  assert.equal(rankingPath(pricey), "/most-expensive-burgers/manhattan/upper-west-side");
+  assert.equal(rankingName(cheap), "Cheapest burger spots on the Upper West Side");
+  assert.equal(rankingName(pricey), "Most expensive burgers on the Upper West Side");
+  assert.equal(rankingIn(cheap), "on the Upper West Side");
+  assert.equal(rankingPlace(cheap), "Upper West Side");
+  assert.equal(rankingShortName(cheap), "Cheapest burger spots");
+  assert.ok(isRankingPath(rankingPath(cheap)));
+  assert.equal(explorerHref(pricey), "/burgers?neighborhood=upper-west-side&sort=-price");
+  const r = rankMenus(list, cheap);
+  assert.equal(r.total, 10, "the chain once");
+  assert.equal(r.spots, 11, "its two locations are two spots");
+  assert.equal(r.rows.length, 5, "half of 10");
+  assert.ok(r.rows.every((m) => m.restaurant.neighborhood_slug === "upper-west-side"));
+  const top = rankMenus(list, pricey).rows.map((m) => m.key);
+  assert.ok(!r.rows.some((m) => top.includes(m.key)), "the two lists share no menu");
+  assert.deepEqual(rankingSpecs(list).slice(-2).map(rankingPath), [rankingPath(cheap), rankingPath(pricey)]);
+});
+
+test("neighborhood Q&A points to its lists when it has them", () => {
+  const n = { slug: "west-village", name: "West Village", borough: boroughBySlug("manhattan")! };
+  const [cheapest, priciest] = neighborhoodRankings(n);
+  const menus = menusByIndexPrice(priced([place({ name: "A", price: 10, hood: "west-village" }), place({ name: "B", price: 30, hood: "west-village" })]));
+  const faq = neighborhoodFaq({ generatedAt: GEN, name: "West Village", borough: "Manhattan", median: 20, cityMedian: 20, menus: 2, cheapest: [menus[0]], priciest: [menus[1]], ranking: { cheapest, priciest } });
+  assert.match(segmentsText(faq[1].a), / See the cheapest burger spots in the West Village\.$/);
+  assert.match(segmentsText(faq[2].a), / See the most expensive burgers in the West Village\.$/);
+  assert.ok(faq[1].a.some((s) => typeof s !== "string" && s.href === "/cheapest-burgers/manhattan/west-village"));
+  const without = neighborhoodFaq({ generatedAt: GEN, name: "West Village", borough: "Manhattan", median: 20, cityMedian: 20, menus: 2, cheapest: [menus[0]], priciest: [menus[1]] });
+  assert.ok(!/See the/.test(segmentsText(without[1].a)));
+});
+
+test("rankingSeo for a neighborhood: the preposition, and the month kept when the place is long", () => {
+  const rows = [
+    { restaurant: "A", burger: "Burger", price: 10 },
+    { restaurant: "B", burger: "Burger", price: 12 },
+  ];
+  const uws = rankingSeo({ kind: "priciest", name: "Most expensive burgers on the Upper West Side", place: "Upper West Side", inPlace: "on the Upper West Side", under: null, rows, total: 11, spots: 12, generatedAt: GEN });
+  assert.equal(uws.title, "Most expensive burgers, Upper West Side (Sep 2026)");
+  assert.match(uws.description, /^The 2 most expensive burgers on the Upper West Side, ranked by price \(September 2026\)\./);
+  assert.ok(!/ in the Upper West Side/.test(uws.description));
+  const long = rankingSeo({
+    kind: "cheapest",
+    name: "Cheapest burger spots in SoHo-TriBeCa-Civic Center-Little Italy",
+    place: "SoHo-TriBeCa-Civic Center-Little Italy",
+    inPlace: "in SoHo-TriBeCa-Civic Center-Little Italy",
+    under: null,
+    rows,
+    total: 23,
+    spots: 24,
+    generatedAt: GEN,
+  });
+  assert.equal(long.title, "Cheapest burger spots, SoHo-TriBeCa-Civic Center-Little Italy (Sep 2026)");
 });

@@ -31,6 +31,7 @@ import { isRankable, menuBreakdown, menuIndexPrices, menusByIndexPrice, menusByI
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
 import { boroughRankings, rankingNameInSentence, rankingPath, rankMenus, topTied } from "@/lib/rankings";
 import { boroughSeo, type NamedPrice } from "@/lib/seo";
+import { shareImage } from "@/lib/share-cards";
 import { BOROUGHS_HREF } from "@/lib/site";
 
 export const dynamicParams = false;
@@ -54,7 +55,8 @@ export async function generateMetadata({ params }: PageProps<"/boroughs/[slug]">
     priciest: named(menusByIndexPriceDesc(restaurants)[0]),
     generatedAt: getGeneratedAt(),
   });
-  return pageMetadata({ ...seo, path: `/boroughs/${b.slug}` });
+  const path = `/boroughs/${b.slug}`;
+  return pageMetadata({ ...seo, path, image: shareImage(path) });
 }
 
 export default async function BoroughPage({ params }: PageProps<"/boroughs/[slug]">) {

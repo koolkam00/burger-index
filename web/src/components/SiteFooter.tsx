@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { BADGE_PAGE_PATH } from "@/lib/badge";
+import { BEST_BURGERS_NAME, BEST_BURGERS_PATH } from "@/lib/best-burgers";
 import { CSV_LICENSE, CSV_PATH } from "@/lib/csv";
 import { formatDate } from "@/lib/format";
+import { BEST_VALUE_NAME, BEST_VALUE_PATH } from "@/lib/peoples-price";
+import { PRESS_NAME, PRESS_PATH } from "@/lib/press";
 import { CITY_RANKINGS, rankingName, rankingPath } from "@/lib/rankings";
 import { sourceLine } from "@/lib/seo";
 import { NAV } from "@/lib/site";
@@ -9,9 +13,10 @@ import { Wordmark } from "./Wordmark";
 
 /**
  * The deck: a rope rail, then dark stained deck planks. The source line, the non-affiliation line, the
- * CSV link with its license and the NYC ranking pages ship on every page.
+ * CSV link with its license and the NYC ranking pages ship on every page (with the best value burgers while
+ * that page exists: `bestValue`).
  */
-export function SiteFooter({ generatedAt }: { generatedAt: string }) {
+export function SiteFooter({ generatedAt, bestValue = false }: { generatedAt: string; bestValue?: boolean }) {
   return (
     <footer className="site-footer atmo">
       <span className="rope rope-flat" aria-hidden="true" />
@@ -36,6 +41,17 @@ export function SiteFooter({ generatedAt }: { generatedAt: string }) {
                     </Link>
                   </li>
                 ))}
+                {/* The press kit and the restaurants' price badge (user decisions 2026-09-25, stage 4). */}
+                <li>
+                  <Link className="deck-link" href={PRESS_PATH}>
+                    {PRESS_NAME}
+                  </Link>
+                </li>
+                <li>
+                  <Link className="deck-link" href={BADGE_PAGE_PATH}>
+                    Price badge
+                  </Link>
+                </li>
                 {/* The public price list (user decision 2026-09-25), where the old JSON download sat, then its
                     license in small type (CC BY 4.0, user decision 2026-09-25). */}
                 <li className="col-span-2">
@@ -55,7 +71,8 @@ export function SiteFooter({ generatedAt }: { generatedAt: string }) {
                 </li>
               </ul>
             </nav>
-            {/* The NYC ranking pages; each borough's lists are linked from its borough page and every ranking page. */}
+            {/* The NYC ranking pages and the most-recommended burgers; each borough's lists are linked from its
+                borough page and every ranking page, each neighborhood's from its neighborhood page. */}
             <nav aria-labelledby="footer-rankings" className="mt-8">
               <h2 id="footer-rankings" className="t-label deck-muted">
                 Rankings
@@ -69,6 +86,18 @@ export function SiteFooter({ generatedAt }: { generatedAt: string }) {
                     </Link>
                   </li>
                 ))}
+                <li className="text-balance">
+                  <Link className="deck-link" href={BEST_BURGERS_PATH}>
+                    {BEST_BURGERS_NAME}
+                  </Link>
+                </li>
+                {bestValue ? (
+                  <li className="text-balance">
+                    <Link className="deck-link" href={BEST_VALUE_PATH}>
+                      {BEST_VALUE_NAME}
+                    </Link>
+                  </li>
+                ) : null}
               </ul>
             </nav>
           </div>

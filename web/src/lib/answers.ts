@@ -105,6 +105,29 @@ export function underSentence(under: number, inPlace: string, rows: readonly Men
   ];
 }
 
+/**
+ * "At 45 burger spots in NYC, the priciest burger is a smash burger (September 2026), from $9.00 at … to
+ * $31.00 at …" (`aBurger` from lib/styles.ts). Like underSentence, the count is of spots (locations).
+ */
+export function styleSentence(aBurger: string, inPlace: string, rows: readonly Menu[], month: string): Segment[] {
+  if (!rows.length) return [`No burger spot ${inPlace} has ${aBurger} as its priciest burger (${month}).`];
+  const first = rows[0];
+  const spots = spotCount(rows);
+  if (rows.length === 1) {
+    return spots === 1
+      ? [`One burger spot ${inPlace} has ${aBurger} as its priciest burger (${month}): `, restaurantLink(first), `, at ${money(first.indexPrice)}.`]
+      : [`${spots} burger spots ${inPlace} have ${aBurger} as their priciest burger (${month}): the ${spots} locations of `, restaurantLink(first), `, at ${money(first.indexPrice)}.`];
+  }
+  const last = rows[rows.length - 1];
+  return [
+    `At ${pluralize(spots, "burger spot")} ${inPlace}, the priciest burger is ${aBurger} (${month}), from ${money(first.indexPrice)} at `,
+    restaurantLink(first),
+    ` to ${money(last.indexPrice)} at `,
+    restaurantLink(last),
+    ".",
+  ];
+}
+
 /** The items on the lowest or highest value (to the cent) of a list. */
 function extremes<T>(list: readonly T[], value: (t: T) => number, end: "min" | "max"): { items: T[]; value: number } | null {
   if (!list.length) return null;
@@ -287,12 +310,18 @@ export function boroughFaq(d: BoroughFaqInput): FaqItem[] {
   return items;
 }
 
-export type NeighborhoodFaqInput = Omit<AreaFaqInput, "place" | "inPlace" | "where"> & { name: string; borough: Borough };
+export type NeighborhoodFaqInput = Omit<AreaFaqInput, "place" | "inPlace" | "where"> & {
+  name: string;
+  borough: Borough;
+  /** The neighborhood's two ranking pages, when it has them (rankings.ts neighborhoodRankings). */
+  ranking?: { cheapest: RankingSpec; priciest: RankingSpec };
+};
 
 /**
  * Each item names the borough too ("How much does a burger cost in Astoria, Queens?"), since it may be
- * read on its own; New Yorkers are "on" the Upper East and West Sides and the Lower East Side.
+ * read on its own; New Yorkers are "on" the Upper East and West Sides and the Lower East Side. A
+ * neighborhood with ranking pages points to them ("See the cheapest burger spots in the West Village.").
  */
 export function neighborhoodFaq(d: NeighborhoodFaqInput): FaqItem[] {
-  return areaFaq({ ...d, place: neighborhoodPlace(d.name, d.borough), inPlace: inNeighborhoodPlace(d.name, d.borough), where: whereInNeighborhood });
+  return areaFaq({ ...d, place: neighborhoodPlace(d.name, d.borough), inPlace: inNeighborhoodPlace(d.name, d.borough), where: whereInNeighborhood }, d.ranking);
 }

@@ -1,5 +1,5 @@
 {
-  "about": "Hand-checked corrections applied by `pipeline build` (see pipeline/corrections.py). The 2026-09-23 entries were found by re-reading the live menu during that day's price check; all but Tavern on Jane and Jimbo's Hamburger Palace were confirmed by two independent checks. Every 2026-09-24 entry was confirmed by two independent checks; where the restaurant's own current menu page can be scraped, the fix is a menu-URL override in pipeline/data/menu_urls.json instead (re-scraped on the next run). The 2026-09-25 entries come from the review of each restaurant's one published burger (its highest-priced beef burger): Boeuf & Bun and the two Carnegie Diners were re-read on their own current menu pages, and the Grubhub/Seamless entries withhold pages whose cached scrape shows only the Best Sellers / recently ordered items (the burger section never loaded). Remove one of those once a full menu for the restaurant has been scraped. A second 2026-09-25 batch records the errors two independent checks agreed on in that review: pages whose only prices are years old are withheld, and a missed or mispriced top burger is corrected from the page named in source_url. The user's decisions of 2026-09-25 then changed some entries: a price marked up for delivery or online ordering is published, labelled by its price_source, when it is the only price found (American Whiskey and Grillify-NYC are no longer withheld, and XO Burgers' entry is retired: its webshop's scraped $22.54, the price that page shows, is published; an own-site price already read, such as Boeuf & Bun's, stays); a burger club counts as a burger (Washington Square Diner, Tom's Restaurant, Murray Hill Diner and The Flame Diner gain the club their scrape missed); a diner's bunless diet plate never counts (extract.is_diet_plate, which replaces Mike's Oakwood Diner's Lo-Cal Burger entry); and the closed Abbey Tavern, Bell Book & Candle and Kelly's Tavern and True Burger at JFK were deleted from the restaurant list, with their entries. Brooklyn Diner's LaGuardia Terminal B row is withheld: its search found only the Manhattan restaurant's menu, and an airport concession never gets a street restaurant's price.",
+  "about": "Hand-checked corrections applied by `pipeline build` (see pipeline/corrections.py). The 2026-09-23 entries were found by re-reading the live menu during that day's price check; all but Tavern on Jane and Jimbo's Hamburger Palace were confirmed by two independent checks. Every 2026-09-24 entry was confirmed by two independent checks; where the restaurant's own current menu page can be scraped, the fix is a menu-URL override in pipeline/data/menu_urls.json instead (re-scraped on the next run). The 2026-09-25 entries come from the review of each restaurant's one published burger (its highest-priced beef burger): Boeuf & Bun and the two Carnegie Diners were re-read on their own current menu pages, and the Grubhub/Seamless entries withhold pages whose cached scrape shows only the Best Sellers / recently ordered items (the burger section never loaded). Remove one of those once a full menu for the restaurant has been scraped. A second 2026-09-25 batch records the errors two independent checks agreed on in that review: pages whose only prices are years old are withheld, and a missed or mispriced top burger is corrected from the page named in source_url. The user's decisions of 2026-09-25 then changed some entries: a price marked up for delivery or online ordering is published, labelled by its price_source, when it is the only price found (American Whiskey and Grillify-NYC are no longer withheld, and XO Burgers' entry is retired: its webshop's scraped $22.54, the price that page shows, is published; an own-site price already read, such as Boeuf & Bun's, stays); a burger club counts as a burger (Washington Square Diner, Tom's Restaurant, Murray Hill Diner and The Flame Diner gain the club their scrape missed); a diner's bunless diet plate never counts (extract.is_diet_plate, which replaces Mike's Oakwood Diner's Lo-Cal Burger entry); and the closed Abbey Tavern, Bell Book & Candle and Kelly's Tavern and True Burger at JFK were deleted from the restaurant list, with their entries. Brooklyn Diner's LaGuardia Terminal B row is withheld: its search found only the Manhattan restaurant's menu, and an airport concession never gets a street restaurant's price. The last 2026-09-25 batch prices places named on critics' best-burger lists that the scrape left unpriced (J.G. Melon, Raoul's, Sip & Guzzle, Lord's, Sailor, Keens, Harlem Shake, Black Tap) or read only in part (Joe Jr.'s Grubhub Best Sellers), each from the restaurant's own current menu or ordering page read by hand; where the only burger price is on the brunch or lunch menu, the entry records that period.",
   "corrections": [
     {
       "target": "camis:50054294",
@@ -1521,6 +1521,346 @@
       "source_url": "https://www.brooklyndiner.com/menus/",
       "reason": "this row is Brooklyn Diner's LaGuardia Terminal B concession (the list's notes: HH4L-332 Term B Laguardia Rd, 11371), but its search found only the Manhattan restaurant's menu (888 7th Avenue, published on its own page), and an airport concession never gets a street restaurant's price.",
       "withhold": true
+    },
+    {
+      "target": "camis:40367241",
+      "checked_at": "2026-09-25",
+      "source_url": "https://jgmelon-nyc.com/menu",
+      "price_source": "official_site",
+      "reason": "the restaurant's menu page shows its menu only as images, so the scrape found no burger; the current menu image lists Hamburger $14.25, Cheeseburger $15.25, Baconburger $15.25, Bacon Cheeseburger $16.25 and Turkey Burger $13.50 (cash only).",
+      "add": [
+        {
+          "name": "Hamburger",
+          "price": 14.25,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Cheeseburger",
+          "price": 15.25,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Baconburger",
+          "price": 15.25,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Bacon Cheeseburger",
+          "price": 16.25,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Turkey Burger",
+          "price": 13.5,
+          "protein": "turkey",
+          "menu_period": "all_day"
+        }
+      ]
+    },
+    {
+      "target": "camis:40368752",
+      "checked_at": "2026-09-25",
+      "source_url": "https://raouls.com/brunch/",
+      "price_source": "official_site",
+      "reason": "the dinner menu scraped has no burger: the Burger au Poivre is served at dinner only at the bar (12 a night, no price listed); the restaurant's brunch menu lists it at $32, the only price it publishes.",
+      "add": [
+        {
+          "name": "Raoul's Burger au Poivre",
+          "price": 32,
+          "protein": "beef",
+          "menu_period": "brunch",
+          "description": "with St André cheese, cornichon and pommes frites"
+        }
+      ]
+    },
+    {
+      "target": "camis:50145228",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.sipandguzzlenyc.com/menus",
+      "price_source": "official_site",
+      "reason": "the homepage scraped is not a menu; the Guzzle food menu PDF linked from the restaurant's menus page (Guzzle-Food-Menu-925-WKND.pdf, created 2026-09-25) lists the Tavern Burger (limited availability) at $35. Its $150 Royale with Cheese is the A5 wagyu steak sandwich on shokupan (Grub Street, 2025-10-16), not a burger.",
+      "add": [
+        {
+          "name": "Tavern Burger",
+          "price": 35,
+          "protein": "beef",
+          "menu_period": "dinner",
+          "description": "a5 wagyu, potato bun, binchotan slaw, parmesan single"
+        }
+      ]
+    },
+    {
+      "target": "camis:50126842",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.lordsenglish.com/brunch",
+      "price_source": "official_site",
+      "reason": "the dinner menu scraped has no burger; the restaurant's weekend brunch menu lists the welsh rarebit cheeseburger at $26, the only burger price it publishes.",
+      "add": [
+        {
+          "name": "Welsh Rarebit Cheeseburger",
+          "price": 26,
+          "protein": "beef",
+          "menu_period": "brunch"
+        }
+      ]
+    },
+    {
+      "target": "camis:50140490",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.sailor.nyc/lunch/",
+      "price_source": "official_site",
+      "reason": "the dinner menu scraped has no burger; the restaurant's September 2026 lunch and brunch menu PDFs (linked from sailor.nyc/lunch/ and /brunch/) list the Sailor Burger at $34 (melted onions, cheddar and fries).",
+      "add": [
+        {
+          "name": "Sailor Burger",
+          "price": 34,
+          "protein": "beef",
+          "menu_period": "lunch",
+          "description": "with melted onions, cheddar and fries"
+        }
+      ]
+    },
+    {
+      "target": "camis:50162845",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.keens.com/pub",
+      "price_source": "official_site",
+      "reason": "the pages scraped were not menus (404s and the homepage); the restaurant's pub menu lists the Hamburger with French Fries at $27.50 (the Miss Keens Burger is also $27.50; its patty is not stated, so it is not recorded).",
+      "add": [
+        {
+          "name": "Hamburger with French Fries",
+          "price": 27.5,
+          "protein": "beef",
+          "menu_period": "all_day"
+        }
+      ]
+    },
+    {
+      "target": "chain:harlem-shake",
+      "checked_at": "2026-09-25",
+      "source_url": "https://order.incentivio.com/c/harlemshake/locations/harlemshake124thandlenoxave",
+      "price_source": "online_ordering",
+      "reason": "the restaurant's own site lists its burgers without prices; its own online ordering pages (Incentivio, linked from harlemshake.com) price the beef burgers the same at 100 W 124th St and 119 5th Ave: Harlem Classic $9.00, Hot Mess $10.50, Harlem Jerk $10.00.",
+      "drop": [
+        "Harlem Jerk"
+      ],
+      "add": [
+        {
+          "name": "Harlem Classic w/ Beef",
+          "price": 9,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "Proprietary blend of Pat la Frieda Beef, homemade pickles, onions, and special sauce on a buttered and toasted Martin's Potato Roll, served with American cheese."
+        },
+        {
+          "name": "Hot Mess w/ Beef",
+          "price": 10.5,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "Two Pat la Frieda beef patties, pickled cherry pepper and bacon relish, American cheese, and smoky chipotle mayo on a toasted Martin's potato roll."
+        },
+        {
+          "name": "Harlem Jerk w/ Beef",
+          "price": 10,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "Two Pat la Frieda beef patties, American cheese, pickles, and onions, topped with jerk fries and jerk mayo."
+        }
+      ]
+    },
+    {
+      "target": "chain:black-tap",
+      "checked_at": "2026-09-25",
+      "source_url": "https://blacktap.com/restaurant-menu/soho/",
+      "price_source": "official_site",
+      "reason": "the delivery page scraped showed burgers without prices; the restaurant's own SoHo menu page prices every craft burger (the 35th St / Herald Square menu has the same burger prices). The Greg Norman is no longer on either menu.",
+      "drop": [
+        "Greg Norman"
+      ],
+      "set": {
+        "All-American Burger": {
+          "price": 22.5,
+          "menu_period": "all_day"
+        }
+      },
+      "add": [
+        {
+          "name": "The Texan Burger",
+          "price": 24,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "The Mexico City",
+          "price": 23,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Old Fashioned Burger",
+          "price": 22.5,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "The Champ",
+          "price": 25,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "The Wagyu Steakhouse Burger",
+          "price": 26.5,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "1/2 pound wagyu beef, bacon, pepper jack cheese, crispy onions, A1 sauce & roasted garlic mayo"
+        },
+        {
+          "name": "The Chili Cheese Burger",
+          "price": 23.5,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "The Black Bean Burger",
+          "price": 18.5,
+          "protein": "veggie",
+          "menu_period": "all_day"
+        }
+      ]
+    },
+    {
+      "target": "camis:50073766",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.grubhub.com/restaurant/joe-jr-167-3rd-ave-new-york/2253474",
+      "price_source": "delivery_app",
+      "reason": "the scrape read only the Grubhub page's Best Sellers; the full Burgers section of the same page (opened by hand) prices every burger plain and as a Deluxe with fries, so the $20.38 Bacon Cheeseburger Deluxe gives way to the $13 Bacon Cheeseburger, and the priciest burger without sides is the Greek Burger at $19.29. Joe Jr. publishes no menu of its own; Grubhub notes prices may be lower in-store.",
+      "add": [
+        {
+          "name": "Bacon Burger",
+          "price": 11.96,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Bacon Burger Deluxe",
+          "price": 19.34,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Bacon Cheeseburger",
+          "price": 13.0,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Swiss Burger",
+          "price": 9.88,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Swiss Burger Deluxe",
+          "price": 17.52,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Pizza Burger",
+          "price": 11.65,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Pizza Burger Deluxe",
+          "price": 19.71,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Veggie Burger",
+          "price": 9.88,
+          "protein": "veggie",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Veggie Burger Deluxe",
+          "price": 17.16,
+          "protein": "veggie",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Turkey Burger",
+          "price": 9.88,
+          "protein": "turkey",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Turkey Burger Deluxe",
+          "price": 17.16,
+          "protein": "turkey",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Turkey Cheeseburger",
+          "price": 10.92,
+          "protein": "turkey",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Turkey Cheeseburger Deluxe",
+          "price": 18.2,
+          "protein": "turkey",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Burger with Cheddar Cheese",
+          "price": 14.56,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "Served avocado, jalapenos, and fried onions."
+        },
+        {
+          "name": "Burger with Cheddar Cheese Deluxe",
+          "price": 20.75,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "Served avocado, jalapenos, and fried onions."
+        },
+        {
+          "name": "Patty Melt Burger",
+          "price": 11.54,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "Served with cheddar cheese and fried onions on toasted rye bread."
+        },
+        {
+          "name": "Greek Burger",
+          "price": 19.29,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "Served with feta cheese, olives, lettuce, tomato, and cucumbers. Add avocado for an additional charge."
+        },
+        {
+          "name": "Low Calorie Burger",
+          "price": 17.21,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "Served with cottage cheese, cucumber, lettuce, and tomato. Add avocado for an additional charge."
+        },
+        {
+          "name": "Low Calorie Cheeseburger",
+          "price": 18.25,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "Add avocado for an additional charge."
+        }
+      ]
     }
   ]
 }

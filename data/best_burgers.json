@@ -1,0 +1,959 @@
+{
+  "version": 1,
+  "updated": "2026-09-25",
+  "years": {
+    "from": 2024,
+    "to": 2026
+  },
+  "lists": [
+    {
+      "id": "michelin-6-chefs-ultimate-burger",
+      "publisher": "MICHELIN Guide",
+      "title": "How 6 MICHELIN Guide Chefs Build the Ultimate Burger",
+      "url": "https://guide.michelin.com/us/en/article/dining-out/how-6-michelin-guide-chefs-build-the-ultimate-burger",
+      "date": "2026-08-06"
+    },
+    {
+      "id": "infatuation-smashburger-power-rankings",
+      "publisher": "The Infatuation",
+      "title": "The NYC Smashburger Power Rankings",
+      "url": "https://www.theinfatuation.com/new-york/guides/best-smashburgers-nyc",
+      "date": "2026-08-03"
+    },
+    {
+      "id": "infatuation-best-burgers-nyc",
+      "publisher": "The Infatuation",
+      "title": "The 22 Best Burgers In NYC",
+      "url": "https://www.theinfatuation.com/new-york/guides/best-burger-nyc",
+      "date": "2026-08-03"
+    },
+    {
+      "id": "timeout-best-burgers-america",
+      "publisher": "Time Out",
+      "title": "The best burgers in America to sink your teeth into",
+      "url": "https://www.timeout.com/usa/restaurants/best-burgers-in-america",
+      "date": "2026-07-29"
+    },
+    {
+      "id": "infatuation-best-burgers-america",
+      "publisher": "The Infatuation",
+      "title": "The Best Burgers In America",
+      "url": "https://www.theinfatuation.com/all/guides/best-burgers-america",
+      "date": "2026-07-28"
+    },
+    {
+      "id": "eater-best-burgers-nyc",
+      "publisher": "Eater",
+      "title": "The Best Burgers in New York City, According to Eater Editors",
+      "url": "https://ny.eater.com/maps/best-burgers-nyc",
+      "date": "2026-06-25"
+    },
+    {
+      "id": "cntraveler-best-burger-nyc",
+      "publisher": "Condé Nast Traveler",
+      "title": "We Love Burgers and Live in New York—Here's Where to Get Your Fix in the City",
+      "url": "https://www.cntraveler.com/story/best-burger-nyc",
+      "date": "2026-05-28"
+    },
+    {
+      "id": "foodandwine-new-burger-spots-us-2026",
+      "publisher": "Food & Wine",
+      "title": "The Top 6 New Burger Spots in the US to Visit",
+      "url": "https://www.foodandwine.com/best-new-burger-restaurants-11949863",
+      "date": "2026-04-15"
+    },
+    {
+      "id": "michelin-7-iconic-new-york-dishes",
+      "publisher": "MICHELIN Guide",
+      "title": "7 Iconic New York Dishes and Where to Get Them",
+      "url": "https://guide.michelin.com/us/en/article/travel/7-iconic-new-york-dishes-where-to-get-them",
+      "date": "2026-03-20"
+    },
+    {
+      "id": "infatuation-limited-edition-burgers-ranked",
+      "publisher": "The Infatuation",
+      "title": "NYC's Limited Edition Burgers, Ranked",
+      "url": "https://www.theinfatuation.com/new-york/guides/limited-edition-off-menu-burgers-ranked",
+      "date": "2026-01-20"
+    },
+    {
+      "id": "gayot-best-burgers-new-york-2026",
+      "publisher": "GAYOT",
+      "title": "2026 Best Burgers in New York Area",
+      "url": "https://www.gayot.com/restaurants/best-newyork-ny-top10-burgers_1ny.html",
+      "date": "2026"
+    },
+    {
+      "id": "timeout-best-burgers-nyc",
+      "publisher": "Time Out",
+      "title": "The 16 best burgers in NYC right now",
+      "url": "https://www.timeout.com/newyork/restaurants/best-burgers-nyc",
+      "date": "2025-10-27"
+    },
+    {
+      "id": "infatuation-no-fuss-burgers-nyc",
+      "publisher": "The Infatuation",
+      "title": "Where To Get A Great, No-Fuss Burger In NYC",
+      "url": "https://www.theinfatuation.com/new-york/guides/casual-burger-nyc",
+      "date": "2025-10-20"
+    },
+    {
+      "id": "foodandwine-chefs-best-burgers-nyc",
+      "publisher": "Food & Wine",
+      "title": "The 9 Best Burgers in New York City, According to Professional Chefs",
+      "url": "https://www.foodandwine.com/chefs-favorite-burgers-new-york-city-11823875",
+      "date": "2025-10-04"
+    },
+    {
+      "id": "resy-ultimate-guide-burgers-nyc",
+      "publisher": "Resy",
+      "title": "The Ultimate Guide to Burgers (and Fries) in New York",
+      "url": "https://blog.resy.com/2025/09/best-burgers-nyc/",
+      "date": "2025-09-23"
+    },
+    {
+      "id": "infatuation-it-burgers-america",
+      "publisher": "The Infatuation",
+      "title": "The \"It\" Burgers Across The Country, Ranked From Thinnest To Thickest",
+      "url": "https://www.theinfatuation.com/all/guides/the-it-burgers-across-america",
+      "date": "2024-11-13"
+    },
+    {
+      "id": "esquire-best-tavern-style-burgers-2024",
+      "publisher": "Esquire",
+      "title": "The 7 Best Tavern-Style Burgers in America",
+      "url": "https://www.esquire.com/food-drink/food/a62543175/best-tavern-style-burgers-america/",
+      "date": "2024-10-11"
+    },
+    {
+      "id": "bkmag-brooklyn-9-best-burgers-2024",
+      "publisher": "Brooklyn Magazine",
+      "title": "Brooklyn Bites: The borough's 9 best burgers",
+      "url": "https://www.bkmag.com/2024/09/10/brooklyn-bites-the-boroughs-9-best-burgers/",
+      "date": "2024-09-10"
+    },
+    {
+      "id": "eater-best-smash-burgers-nyc",
+      "publisher": "Eater",
+      "title": "The Best Smash Burgers in New York City",
+      "url": "https://ny.eater.com/maps/best-smash-burgers-nyc",
+      "date": "2024-07-15"
+    },
+    {
+      "id": "secretnyc-best-burgers-nyc",
+      "publisher": "Secret NYC",
+      "title": "16 Places Serving The Absolute Best Burgers In NYC Right Now",
+      "url": "https://secretnyc.co/top-nyc-burgers-from-cheapest-to-most-expensive/",
+      "date": "2024-02-27"
+    },
+    {
+      "id": "michelin-burgers-101-2024",
+      "publisher": "MICHELIN Guide",
+      "title": "Burgers 101—MICHELIN Guide Chefs on the Perfect Bite",
+      "url": "https://guide.michelin.com/us/en/article/features/michelin-guide-to-the-perfect-burger",
+      "date": "2024-02-09"
+    }
+  ],
+  "places": [
+    {
+      "key": "red-hook-tavern",
+      "name": "Red Hook Tavern",
+      "restaurant_id": "red-hook-tavern-carroll-gardens",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "timeout-best-burgers-america",
+          "burger": "Dry-aged burger"
+        },
+        {
+          "list": "infatuation-best-burgers-america",
+          "burger": null
+        },
+        {
+          "list": "eater-best-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "cntraveler-best-burger-nyc",
+          "burger": null
+        },
+        {
+          "list": "gayot-best-burgers-new-york-2026",
+          "burger": null
+        },
+        {
+          "list": "timeout-best-burgers-nyc",
+          "burger": "The Dry-Aged Burger"
+        },
+        {
+          "list": "foodandwine-chefs-best-burgers-nyc",
+          "burger": "Dry-Aged Red Hook Tavern Burger"
+        },
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "esquire-best-tavern-style-burgers-2024",
+          "burger": null
+        },
+        {
+          "list": "bkmag-brooklyn-9-best-burgers-2024",
+          "burger": "Dry-aged tavern burger"
+        },
+        {
+          "list": "secretnyc-best-burgers-nyc",
+          "burger": "Dry Aged Red Hook Tavern Burger"
+        }
+      ]
+    },
+    {
+      "key": "jg-melon",
+      "name": "J.G. Melon",
+      "restaurant_id": "j-g-melon-lenox-hill",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "eater-best-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "gayot-best-burgers-new-york-2026",
+          "burger": null
+        },
+        {
+          "list": "timeout-best-burgers-nyc",
+          "burger": "Cheeseburger"
+        },
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "Hamburger"
+        },
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "secretnyc-best-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "michelin-burgers-101-2024",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "minetta",
+      "name": "Minetta Tavern",
+      "restaurant_id": "minetta-tavern-west-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": "Minetta Burger / Black Label Burger"
+        },
+        {
+          "list": "eater-best-burgers-nyc",
+          "burger": "Black Label Burger"
+        },
+        {
+          "list": "michelin-7-iconic-new-york-dishes",
+          "burger": "Black Label burger"
+        },
+        {
+          "list": "gayot-best-burgers-new-york-2026",
+          "burger": null
+        },
+        {
+          "list": "timeout-best-burgers-nyc",
+          "burger": "The Black Label Burger"
+        },
+        {
+          "list": "foodandwine-chefs-best-burgers-nyc",
+          "burger": "Black Label Burger"
+        },
+        {
+          "list": "secretnyc-best-burgers-nyc",
+          "burger": "Black Label Burger"
+        }
+      ]
+    },
+    {
+      "key": "peter-luger",
+      "name": "Peter Luger Steak House",
+      "restaurant_id": "peter-luger-steak-house-williamsburg",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "gayot-best-burgers-new-york-2026",
+          "burger": null
+        },
+        {
+          "list": "timeout-best-burgers-nyc",
+          "burger": "The Luger Burger"
+        },
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "esquire-best-tavern-style-burgers-2024",
+          "burger": null
+        },
+        {
+          "list": "bkmag-brooklyn-9-best-burgers-2024",
+          "burger": null
+        },
+        {
+          "list": "secretnyc-best-burgers-nyc",
+          "burger": "Luger-Burger"
+        }
+      ]
+    },
+    {
+      "key": "raouls",
+      "name": "Raoul's",
+      "restaurant_id": "raouls-soho",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "eater-best-burgers-nyc",
+          "burger": "Burger au Poivre"
+        },
+        {
+          "list": "cntraveler-best-burger-nyc",
+          "burger": null
+        },
+        {
+          "list": "infatuation-limited-edition-burgers-ranked",
+          "burger": "Burger Au Poivre"
+        },
+        {
+          "list": "timeout-best-burgers-nyc",
+          "burger": "The Burger au Poivre"
+        },
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": "Burger au poivre"
+        },
+        {
+          "list": "secretnyc-best-burgers-nyc",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "long-island-bar",
+      "name": "The Long Island Bar",
+      "restaurant_id": "the-long-island-bar-carroll-gardens",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "eater-best-burgers-nyc",
+          "burger": "LI Burger"
+        },
+        {
+          "list": "cntraveler-best-burger-nyc",
+          "burger": null
+        },
+        {
+          "list": "timeout-best-burgers-nyc",
+          "burger": "The L.I. Burger"
+        },
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": "Smashburger"
+        },
+        {
+          "list": "bkmag-brooklyn-9-best-burgers-2024",
+          "burger": "L.I. burger"
+        }
+      ]
+    },
+    {
+      "key": "7th-street-burger",
+      "name": "7th Street Burger",
+      "restaurant_id": "7th-street-burger-east-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-smashburger-power-rankings",
+          "burger": "Cheeseburger"
+        },
+        {
+          "list": "timeout-best-burgers-nyc",
+          "burger": "Spicy Jalapeño Cheeseburger"
+        },
+        {
+          "list": "eater-best-smash-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "secretnyc-best-burgers-nyc",
+          "burger": "Cheeseburger"
+        }
+      ]
+    },
+    {
+      "key": "cozy-royale",
+      "name": "Cozy Royale",
+      "restaurant_id": "cozy-royale-east-williamsburg",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": "Cheeseburger (single patty)"
+        },
+        {
+          "list": "eater-best-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "infatuation-limited-edition-burgers-ranked",
+          "burger": "Limited double-patty smashburger"
+        },
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "Cheeseburger"
+        },
+        {
+          "list": "foodandwine-chefs-best-burgers-nyc",
+          "burger": "The Dry-Aged Cheeseburger"
+        },
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": "Dry-aged burger"
+        }
+      ]
+    },
+    {
+      "key": "hamburger-america",
+      "name": "Hamburger America",
+      "restaurant_id": "hamburger-america-soho-soho",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-smashburger-power-rankings",
+          "burger": "Fried Onion Burger (double)"
+        },
+        {
+          "list": "timeout-best-burgers-america",
+          "burger": "Fried Onion Burger"
+        },
+        {
+          "list": "eater-best-burgers-nyc",
+          "burger": "The Chester"
+        },
+        {
+          "list": "timeout-best-burgers-nyc",
+          "burger": "The Fried Onion Burger"
+        },
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "The Classic Smash Burger"
+        },
+        {
+          "list": "foodandwine-chefs-best-burgers-nyc",
+          "burger": "George Motz's Fried Onion Burger"
+        },
+        {
+          "list": "eater-best-smash-burgers-nyc",
+          "burger": "Fried onion burger"
+        }
+      ]
+    },
+    {
+      "key": "le-b",
+      "name": "Le B.",
+      "restaurant_id": "le-b-west-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "michelin-6-chefs-ultimate-burger",
+          "burger": null
+        },
+        {
+          "list": "eater-best-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "infatuation-limited-edition-burgers-ranked",
+          "burger": "Le Burger"
+        },
+        {
+          "list": "foodandwine-chefs-best-burgers-nyc",
+          "burger": "Le Burger"
+        }
+      ]
+    },
+    {
+      "key": "little-grenjai",
+      "name": "Little Grenjai",
+      "restaurant_id": "little-grenjai-bedford",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-smashburger-power-rankings",
+          "burger": "Krapow Smashburger"
+        },
+        {
+          "list": "cntraveler-best-burger-nyc",
+          "burger": "Krapow smash burger"
+        },
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": "Krapow smash burger"
+        },
+        {
+          "list": "secretnyc-best-burgers-nyc",
+          "burger": "Krapow Smash Burger"
+        }
+      ]
+    },
+    {
+      "key": "pj-clarkes",
+      "name": "P.J. Clarke's",
+      "restaurant_id": "p-j-clarkes-turtle-bay",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "cntraveler-best-burger-nyc",
+          "burger": null
+        },
+        {
+          "list": "gayot-best-burgers-new-york-2026",
+          "burger": null
+        },
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "1884 Cheeseburger"
+        },
+        {
+          "list": "secretnyc-best-burgers-nyc",
+          "burger": "The Cadillac"
+        }
+      ]
+    },
+    {
+      "key": "rolos",
+      "name": "Rolo's",
+      "restaurant_id": "rolos-ridgewood",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-smashburger-power-rankings",
+          "burger": "Double cheeseburger"
+        },
+        {
+          "list": "eater-best-burgers-nyc",
+          "burger": "Double cheeseburger"
+        },
+        {
+          "list": "infatuation-limited-edition-burgers-ranked",
+          "burger": "Double smashburger"
+        },
+        {
+          "list": "foodandwine-chefs-best-burgers-nyc",
+          "burger": "Double Cheeseburger"
+        },
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": "Double cheeseburger"
+        }
+      ]
+    },
+    {
+      "key": "4-charles",
+      "name": "4 Charles Prime Rib",
+      "restaurant_id": "4-charles-prime-rib-west-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "cntraveler-best-burger-nyc",
+          "burger": null
+        },
+        {
+          "list": "secretnyc-best-burgers-nyc",
+          "burger": "10 oz Double Wagyu Cheeseburger"
+        }
+      ]
+    },
+    {
+      "key": "deux-luxe",
+      "name": "Deux Luxe",
+      "restaurant_id": "deux-luxe-soho",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "timeout-best-burgers-america",
+          "burger": "The Big Deux"
+        },
+        {
+          "list": "cntraveler-best-burger-nyc",
+          "burger": null
+        },
+        {
+          "list": "foodandwine-new-burger-spots-us-2026",
+          "burger": "Classic burger"
+        },
+        {
+          "list": "timeout-best-burgers-nyc",
+          "burger": "The Classic"
+        }
+      ]
+    },
+    {
+      "key": "emily",
+      "name": "Emily",
+      "restaurant_id": "emily-clinton-hill",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "cntraveler-best-burger-nyc",
+          "burger": null
+        },
+        {
+          "list": "gayot-best-burgers-new-york-2026",
+          "burger": null
+        },
+        {
+          "list": "secretnyc-best-burgers-nyc",
+          "burger": "Emmy Burger"
+        }
+      ]
+    },
+    {
+      "key": "gotham",
+      "name": "Gotham Burger Social Club",
+      "restaurant_id": "gotham-burger-social-club-chinatown",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-smashburger-power-rankings",
+          "burger": "Double Gotham Smash"
+        },
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": "Double smashburger"
+        },
+        {
+          "list": "cntraveler-best-burger-nyc",
+          "burger": null
+        },
+        {
+          "list": "infatuation-it-burgers-america",
+          "burger": "Gotham Smash"
+        },
+        {
+          "list": "eater-best-smash-burgers-nyc",
+          "burger": "Fried onion burger"
+        }
+      ]
+    },
+    {
+      "key": "harlem-shake",
+      "name": "Harlem Shake",
+      "restaurant_id": "harlem-shake-central-harlem-south",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-smashburger-power-rankings",
+          "burger": "The Hot Mess"
+        },
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": "Hot Mess"
+        },
+        {
+          "list": "eater-best-smash-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "secretnyc-best-burgers-nyc",
+          "burger": "Hot Mess"
+        }
+      ]
+    },
+    {
+      "key": "nowon",
+      "name": "Nowon",
+      "restaurant_id": "nowon-east-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-smashburger-power-rankings",
+          "burger": "The Legendary Cheeseburger"
+        },
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": "Dry-aged 8oz burger"
+        },
+        {
+          "list": "timeout-best-burgers-nyc",
+          "burger": "The Legendary Cheeseburger"
+        },
+        {
+          "list": "foodandwine-chefs-best-burgers-nyc",
+          "burger": "The Legendary Cheeseburger"
+        }
+      ]
+    },
+    {
+      "key": "smacking-burger",
+      "name": "Smacking Burger",
+      "restaurant_id": "smacking-burger-west-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-smashburger-power-rankings",
+          "burger": "The Classic"
+        },
+        {
+          "list": "eater-best-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "timeout-best-burgers-nyc",
+          "burger": "The Big Smack"
+        },
+        {
+          "list": "eater-best-smash-burgers-nyc",
+          "burger": "Big Smack"
+        }
+      ]
+    },
+    {
+      "key": "swoonys",
+      "name": "Swoony's",
+      "restaurant_id": "swoonys-carroll-gardens",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "cntraveler-best-burger-nyc",
+          "burger": null
+        },
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": "Double smash burger"
+        },
+        {
+          "list": "bkmag-brooklyn-9-best-burgers-2024",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "black-tap",
+      "name": "Black Tap Craft Burgers & Beer",
+      "restaurant_id": "black-tap-soho",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "secretnyc-best-burgers-nyc",
+          "burger": "The Greg Norman"
+        }
+      ]
+    },
+    {
+      "key": "corner-bistro",
+      "name": "Corner Bistro",
+      "restaurant_id": "corner-bistro-west-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "gayot-best-burgers-new-york-2026",
+          "burger": null
+        },
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "Cheeseburger"
+        }
+      ]
+    },
+    {
+      "key": "donovans",
+      "name": "Donovan's Pub",
+      "restaurant_id": "donovans-pub-woodside",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "gayot-best-burgers-new-york-2026",
+          "burger": null
+        },
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "Cheeseburger"
+        }
+      ]
+    },
+    {
+      "key": "eel-bar",
+      "name": "Eel Bar",
+      "restaurant_id": "eel-bar-chinatown",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "eater-best-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "cntraveler-best-burger-nyc",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "joe-jr",
+      "name": "Joe Jr.",
+      "restaurant_id": "joe-jr-gramercy",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "eater-best-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "Cheeseburger"
+        }
+      ]
+    },
+    {
+      "key": "ko-burger",
+      "name": "K.O. Burger",
+      "restaurant_id": "k-o-burger-chinatown",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-smashburger-power-rankings",
+          "burger": "Knockout Burger"
+        },
+        {
+          "list": "eater-best-smash-burgers-nyc",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "keens",
+      "name": "Keens Steakhouse",
+      "restaurant_id": "keens-midtown",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "cntraveler-best-burger-nyc",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "lovelys",
+      "name": "Lovely's Old Fashioned",
+      "restaurant_id": "lovelys-old-fashioned-clinton",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "Cheeseburger"
+        },
+        {
+          "list": "eater-best-smash-burgers-nyc",
+          "burger": "Smash burger with cheese"
+        }
+      ]
+    },
+    {
+      "key": "sailor",
+      "name": "Sailor",
+      "restaurant_id": "sailor-fort-greene",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-limited-edition-burgers-ranked",
+          "burger": null
+        },
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": "Sailor burger"
+        }
+      ]
+    },
+    {
+      "key": "sip-guzzle",
+      "name": "Sip & Guzzle",
+      "restaurant_id": "sip-and-guzzle-west-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-limited-edition-burgers-ranked",
+          "burger": "Tavern Burger"
+        },
+        {
+          "list": "timeout-best-burgers-nyc",
+          "burger": "Tavern Burger"
+        }
+      ]
+    },
+    {
+      "key": "smashed",
+      "name": "Smashed",
+      "restaurant_id": "smashed-nyc-west-village-west-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-smashburger-power-rankings",
+          "burger": "Double Classic Smashed"
+        },
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "secretnyc-best-burgers-nyc",
+          "burger": "The Big Schmacc"
+        }
+      ]
+    },
+    {
+      "key": "happiest-hour",
+      "name": "The Happiest Hour",
+      "restaurant_id": "the-happiest-hour-west-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "gayot-best-burgers-new-york-2026",
+          "burger": null
+        },
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": "Happiest burger"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+# The People's Price snapshot: once a day, read the crowd's answers (the public burger_worth_hist table, a
+# read-only GET with the publishable key) and commit data/peoples_price.json to main when the numbers changed.
+# The push to main is what redeploys the site on Vercel, so the static pages carry the new numbers
+# (CLAUDE.md "People's Price snapshot"). No secrets: the Supabase URL and publishable key are public values,
+# built into web/scripts/snapshot-peoples-price.mjs; the job only needs to push to this repository.
+name: People's Price snapshot
+
+on:
+  schedule:
+    - cron: "0 9 * * *" # 09:00 UTC, 5 am in New York
+  workflow_dispatch:
+    inputs:
+      allow_empty:
+        description: "The answers really were cleared: allow an empty snapshot (otherwise the job refuses to wipe one that had answers)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: peoples-price-snapshot
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Node built-ins only (fetch, fs): no npm install. Exits non-zero, writing nothing, if the read fails or finds
+      # no answers after a snapshot that had some (unless run by hand with allow_empty).
+      - name: Read the People's Price
+        run: node web/scripts/snapshot-peoples-price.mjs ${{ inputs.allow_empty && '--allow-empty' || '' }}
+
+      - name: Commit and push if the numbers changed
+        run: |
+          if [ -z "$(git status --porcelain -- data/peoples_price.json)" ]; then
+            echo "No change in the People's Price."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/peoples_price.json
+          git commit -m "Update People's Price snapshot"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "main moved on; rebasing onto it and trying again ($attempt)."
+            git pull --rebase origin main
+          done
+          exit 1

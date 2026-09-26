@@ -1,19 +1,19 @@
 {
  "version": 2,
- "generated_at": "2026-09-25T18:27:58Z",
+ "generated_at": "2026-09-25T23:55:32Z",
  "stats": {
-  "restaurants_priced": 547,
+  "restaurants_priced": 563,
   "index_median": 20.0,
   "index_p10": 13.0,
-  "index_p90": 28.5
+  "index_p90": 28.95
  },
  "boroughs": [
   {
    "slug": "manhattan",
    "name": "Manhattan",
    "borough": "Manhattan",
-   "restaurants_priced": 311,
-   "index_median": 21.97,
+   "restaurants_priced": 324,
+   "index_median": 22.0,
    "index_min": 7.25,
    "index_max": 39.0
   },
@@ -21,7 +21,7 @@
    "slug": "brooklyn",
    "name": "Brooklyn",
    "borough": "Brooklyn",
-   "restaurants_priced": 94,
+   "restaurants_priced": 96,
    "index_median": 18.65,
    "index_min": 7.99,
    "index_max": 34.0
@@ -30,7 +30,7 @@
    "slug": "queens",
    "name": "Queens",
    "borough": "Queens",
-   "restaurants_priced": 73,
+   "restaurants_priced": 74,
    "index_median": 18.0,
    "index_min": 7.75,
    "index_max": 75.0
@@ -77,19 +77,19 @@
    "slug": "central-harlem-south",
    "name": "Central Harlem South",
    "borough": "Manhattan",
-   "restaurants_priced": 5,
-   "index_median": 23.0,
-   "index_min": 19.0,
+   "restaurants_priced": 6,
+   "index_median": 21.0,
+   "index_min": 10.5,
    "index_max": 24.0
   },
   {
    "slug": "chinatown-lower-east-side",
    "name": "Chinatown-Lower East Side",
    "borough": "Manhattan",
-   "restaurants_priced": 16,
-   "index_median": 17.38,
+   "restaurants_priced": 17,
+   "index_median": 18.0,
    "index_min": 9.0,
-   "index_max": 21.0
+   "index_max": 28.0
   },
   {
    "slug": "clinton",
@@ -131,8 +131,8 @@
    "slug": "gramercy",
    "name": "Gramercy",
    "borough": "Manhattan",
-   "restaurants_priced": 8,
-   "index_median": 19.98,
+   "restaurants_priced": 9,
+   "index_median": 19.29,
    "index_min": 8.99,
    "index_max": 25.0
   },
@@ -149,8 +149,8 @@
    "slug": "hudson-yards-chelsea-flat-iron-union-square",
    "name": "Hudson Yards-Chelsea-Flat Iron-Union Square",
    "borough": "Manhattan",
-   "restaurants_priced": 22,
-   "index_median": 24.48,
+   "restaurants_priced": 23,
+   "index_median": 24.0,
    "index_min": 14.0,
    "index_max": 39.0
   },
@@ -158,8 +158,8 @@
    "slug": "lenox-hill-roosevelt-island",
    "name": "Lenox Hill-Roosevelt Island",
    "borough": "Manhattan",
-   "restaurants_priced": 8,
-   "index_median": 22.7,
+   "restaurants_priced": 9,
+   "index_median": 22.45,
    "index_min": 15.99,
    "index_max": 26.99
   },
@@ -203,7 +203,7 @@
    "slug": "midtown-midtown-south",
    "name": "Midtown-Midtown South",
    "borough": "Manhattan",
-   "restaurants_priced": 47,
+   "restaurants_priced": 49,
    "index_median": 23.0,
    "index_min": 14.99,
    "index_max": 38.99
@@ -230,7 +230,7 @@
    "slug": "soho-tribeca-civic-center-little-italy",
    "name": "SoHo-TriBeCa-Civic Center-Little Italy",
    "borough": "Manhattan",
-   "restaurants_priced": 20,
+   "restaurants_priced": 23,
    "index_median": 21.0,
    "index_min": 7.75,
    "index_max": 33.0
@@ -284,7 +284,7 @@
    "slug": "west-village",
    "name": "West Village",
    "borough": "Manhattan",
-   "restaurants_priced": 65,
+   "restaurants_priced": 67,
    "index_median": 24.0,
    "index_min": 7.25,
    "index_max": 38.99
@@ -293,8 +293,8 @@
    "slug": "yorkville",
    "name": "Yorkville",
    "borough": "Manhattan",
-   "restaurants_priced": 7,
-   "index_median": 22.0,
+   "restaurants_priced": 8,
+   "index_median": 22.5,
    "index_min": 18.95,
    "index_max": 28.95
   },
@@ -473,10 +473,10 @@
    "slug": "fort-greene",
    "name": "Fort Greene",
    "borough": "Brooklyn",
-   "restaurants_priced": 3,
-   "index_median": 16.99,
+   "restaurants_priced": 4,
+   "index_median": 20.49,
    "index_min": 16.0,
-   "index_max": 24.0
+   "index_max": 34.0
   },
   {
    "slug": "georgetown-marine-park-bergen-beach-mill-basin",
@@ -545,9 +545,9 @@
    "slug": "park-slope-gowanus",
    "name": "Park Slope-Gowanus",
    "borough": "Brooklyn",
-   "restaurants_priced": 10,
-   "index_median": 21.5,
-   "index_min": 13.0,
+   "restaurants_priced": 11,
+   "index_median": 21.0,
+   "index_min": 10.5,
    "index_max": 31.2
   },
   {
@@ -959,10 +959,10 @@
    "slug": "ridgewood",
    "name": "Ridgewood",
    "borough": "Queens",
-   "restaurants_priced": 4,
-   "index_median": 15.14,
+   "restaurants_priced": 5,
+   "index_median": 15.79,
    "index_min": 9.65,
-   "index_max": 18.0
+   "index_max": 20.0
   },
   {
    "slug": "south-ozone-park",
@@ -3023,18 +3023,46 @@
   {
    "id": "black-tap-midtown",
    "name": "Black Tap",
+   "chain": "black-tap",
    "address": "45 West 35 Street",
+   "borough": "Manhattan",
+   "neighborhood": "Midtown-Midtown South",
    "neighborhood_slug": "midtown-midtown-south",
-   "index_price": null,
-   "burger": null
+   "lat": 40.749781,
+   "lng": -73.985686,
+   "website": "https://blacktap.com/",
+   "menu_url": "https://blacktap.com/restaurant-menu/soho/",
+   "price_source": "official_site",
+   "index_price": 26.5,
+   "burger": {
+    "name": "The Wagyu Steakhouse Burger",
+    "description": "1/2 pound wagyu beef, bacon, pepper jack cheese, crispy onions, A1 sauce & roasted garlic mayo"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "black-tap-soho",
    "name": "Black Tap",
+   "chain": "black-tap",
    "address": "529 Broome St",
+   "borough": "Manhattan",
+   "neighborhood": "SoHo-TriBeCa-Civic Center-Little Italy",
    "neighborhood_slug": "soho-tribeca-civic-center-little-italy",
-   "index_price": null,
-   "burger": null
+   "lat": 40.723918,
+   "lng": -74.004145,
+   "website": "https://blacktap.com/location/soho/",
+   "menu_url": "https://blacktap.com/restaurant-menu/soho/",
+   "price_source": "official_site",
+   "index_price": 26.5,
+   "burger": {
+    "name": "The Wagyu Steakhouse Burger",
+    "description": "1/2 pound wagyu beef, bacon, pepper jack cheese, crispy onions, A1 sauce & roasted garlic mayo"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "black-whale-pelham-bay",
@@ -5555,6 +5583,26 @@
    "burger": null
   },
   {
+   "id": "deux-luxe-soho",
+   "name": "Deux Luxe",
+   "chain": null,
+   "address": "384 Broome Street",
+   "borough": "Manhattan",
+   "neighborhood": "SoHo-TriBeCa-Civic Center-Little Italy",
+   "neighborhood_slug": "soho-tribeca-civic-center-little-italy",
+   "lat": 40.720402,
+   "lng": -73.996573,
+   "website": "https://www.deuxluxeny.com/",
+   "menu_url": "https://www.canva.com/design/DAGvc02egOY/HhVE3JL_wQC4LrupW77ILA/view?embed",
+   "price_source": "official_site",
+   "index_price": 19.0,
+   "burger": {
+    "name": "Au Poivre Burger",
+    "description": null
+   },
+   "hand_check": null
+  },
+  {
    "id": "dillingers-pub-and-grill-astoria",
    "name": "Dillingers Pub & Grill",
    "address": "46-19 30 Avenue",
@@ -5857,6 +5905,26 @@
    "neighborhood_slug": "east-harlem-south",
    "index_price": null,
    "burger": null
+  },
+  {
+   "id": "eel-bar-chinatown",
+   "name": "Eel Bar",
+   "chain": null,
+   "address": "252 Broome Street",
+   "borough": "Manhattan",
+   "neighborhood": "Chinatown-Lower East Side",
+   "neighborhood_slug": "chinatown-lower-east-side",
+   "lat": 40.718022,
+   "lng": -73.989888,
+   "website": "https://www.eelbarnyc.com/",
+   "menu_url": "https://static1.squarespace.com/static/665a9470f4729832943d0735/t/6ab57b8b438cf47b8e958afc/1790278539622/EB+Dinner+9.24.26.pdf",
+   "price_source": "official_pdf",
+   "index_price": 28.0,
+   "burger": {
+    "name": "Grass-fed burger with boquerones and roquefort",
+    "description": null
+   },
+   "hand_check": null
   },
   {
    "id": "ejs-luncheonette-lenox-hill",
@@ -7363,18 +7431,46 @@
   {
    "id": "harlem-shake-central-harlem-south",
    "name": "Harlem Shake",
+   "chain": "harlem-shake",
    "address": "100 West 124 Street",
+   "borough": "Manhattan",
+   "neighborhood": "Central Harlem South",
    "neighborhood_slug": "central-harlem-south",
-   "index_price": null,
-   "burger": null
+   "lat": 40.807286,
+   "lng": -73.946455,
+   "website": "https://harlemshake.com",
+   "menu_url": "https://order.incentivio.com/c/harlemshake/locations/harlemshake124thandlenoxave",
+   "price_source": "online_ordering",
+   "index_price": 10.5,
+   "burger": {
+    "name": "Hot Mess w/ Beef",
+    "description": "Two Pat la Frieda beef patties, pickled cherry pepper and bacon relish, American cheese, and smoky chipotle mayo on a toasted Martin's potato roll."
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "harlem-shake-park-slope",
    "name": "Harlem Shake",
+   "chain": "harlem-shake",
    "address": "119 5 Avenue",
+   "borough": "Brooklyn",
+   "neighborhood": "Park Slope-Gowanus",
    "neighborhood_slug": "park-slope-gowanus",
-   "index_price": null,
-   "burger": null
+   "lat": 40.678941,
+   "lng": -73.978732,
+   "website": "https://harlemshake.com/harlem-shake-brooklyn/",
+   "menu_url": "https://order.incentivio.com/c/harlemshake/locations/harlemshake124thandlenoxave",
+   "price_source": "online_ordering",
+   "index_price": 10.5,
+   "burger": {
+    "name": "Hot Mess w/ Beef",
+    "description": "Two Pat la Frieda beef patties, pickled cherry pepper and bacon relish, American cheese, and smoky chipotle mayo on a toasted Martin's potato roll."
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "harlem-tavern-central-harlem-south",
@@ -8065,10 +8161,24 @@
   {
    "id": "j-g-melon-lenox-hill",
    "name": "J.G. Melon",
+   "chain": null,
    "address": "1291 3 Avenue",
+   "borough": "Manhattan",
+   "neighborhood": "Lenox Hill-Roosevelt Island",
    "neighborhood_slug": "lenox-hill-roosevelt-island",
-   "index_price": null,
-   "burger": null
+   "lat": 40.771193,
+   "lng": -73.959532,
+   "website": "https://jgmelon-nyc.com",
+   "menu_url": "https://jgmelon-nyc.com/menu",
+   "price_source": "official_site",
+   "index_price": 16.25,
+   "burger": {
+    "name": "Bacon Cheeseburger",
+    "description": null
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "jack-and-charlies-no-118-west-village",
@@ -8651,6 +8761,28 @@
    "burger": null
   },
   {
+   "id": "joe-jr-gramercy",
+   "name": "Joe Jr.",
+   "chain": null,
+   "address": "167 3 Avenue",
+   "borough": "Manhattan",
+   "neighborhood": "Gramercy",
+   "neighborhood_slug": "gramercy",
+   "lat": 40.734693,
+   "lng": -73.98614,
+   "website": null,
+   "menu_url": "https://www.grubhub.com/restaurant/joe-jr-167-3rd-ave-new-york/2253474",
+   "price_source": "delivery_app",
+   "index_price": 19.29,
+   "burger": {
+    "name": "Greek Burger",
+    "description": "Served with feta cheese, olives, lettuce, tomato, and cucumbers. Add avocado for an additional charge."
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
+  },
+  {
    "id": "joes-bar-and-grill-bensonhurst-east",
    "name": "Joe's Bar & Grill",
    "address": "257 Avenue U",
@@ -9017,10 +9149,24 @@
   {
    "id": "keens-midtown",
    "name": "Keens",
+   "chain": null,
    "address": "72 West 36 Street",
+   "borough": "Manhattan",
+   "neighborhood": "Midtown-Midtown South",
    "neighborhood_slug": "midtown-midtown-south",
-   "index_price": null,
-   "burger": null
+   "lat": 40.750753,
+   "lng": -73.986108,
+   "website": "https://keens.com/",
+   "menu_url": "https://www.keens.com/pub",
+   "price_source": "official_site",
+   "index_price": 27.5,
+   "burger": {
+    "name": "Hamburger with French Fries",
+    "description": null
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "kelloggs-diner-williamsburg",
@@ -9513,10 +9659,24 @@
   {
    "id": "lords-west-village",
    "name": "Lord's",
+   "chain": null,
    "address": "506 Laguardia Place",
+   "borough": "Manhattan",
+   "neighborhood": "West Village",
    "neighborhood_slug": "west-village",
-   "index_price": null,
-   "burger": null
+   "lat": 40.727605,
+   "lng": -73.999354,
+   "website": "http://lordsenglish.com/",
+   "menu_url": "https://www.lordsenglish.com/brunch",
+   "price_source": "official_site",
+   "index_price": 26.0,
+   "burger": {
+    "name": "Welsh Rarebit Cheeseburger",
+    "description": null
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "lorenzos-bar-and-grill-new-springville",
@@ -11077,6 +11237,26 @@
    "hand_check": null
   },
   {
+   "id": "old-town-bar-hudson-yards",
+   "name": "Old Town Bar",
+   "chain": null,
+   "address": "45 East 18 Street",
+   "borough": "Manhattan",
+   "neighborhood": "Hudson Yards-Chelsea-Flat Iron-Union Square",
+   "neighborhood_slug": "hudson-yards-chelsea-flat-iron-union-square",
+   "lat": 40.737595,
+   "lng": -73.989647,
+   "website": "https://oldtownbarnyc.com/",
+   "menu_url": "https://oldtownbarnyc.com/new-york-flatiron-the-old-town-bar-and-restaurant-food-menu",
+   "price_source": "official_site",
+   "index_price": 23.5,
+   "burger": {
+    "name": "\"Pueblo Viejo\" Burger",
+    "description": "Cheddar burger with guacamole & buffalo sauce"
+   },
+   "hand_check": null
+  },
+  {
    "id": "olympic-flame-diner-fordham-south",
    "name": "Olympic Flame Diner",
    "address": null,
@@ -11961,6 +12141,26 @@
    "burger": null
   },
   {
+   "id": "quatorze-yorkville",
+   "name": "Quatorze",
+   "chain": null,
+   "address": "1578 1 Avenue",
+   "borough": "Manhattan",
+   "neighborhood": "Yorkville",
+   "neighborhood_slug": "yorkville",
+   "lat": 40.774376,
+   "lng": -73.951182,
+   "website": "https://www.quatorze.nyc/",
+   "menu_url": "https://www.quatorze.nyc/menus/",
+   "price_source": "official_site",
+   "index_price": 28.0,
+   "burger": {
+    "name": "Le Burger",
+    "description": null
+   },
+   "hand_check": null
+  },
+  {
    "id": "queensyard-hudson-yards",
    "name": "Queensyard",
    "address": "500 West 33 Street",
@@ -12015,10 +12215,24 @@
   {
    "id": "raouls-soho",
    "name": "Raoul's",
+   "chain": null,
    "address": "180 Prince Street",
+   "borough": "Manhattan",
+   "neighborhood": "SoHo-TriBeCa-Civic Center-Little Italy",
    "neighborhood_slug": "soho-tribeca-civic-center-little-italy",
-   "index_price": null,
-   "burger": null
+   "lat": 40.72632,
+   "lng": -74.002035,
+   "website": "http://raouls.com/",
+   "menu_url": "https://raouls.com/brunch/",
+   "price_source": "official_site",
+   "index_price": 32.0,
+   "burger": {
+    "name": "Raoul's Burger au Poivre",
+    "description": "with St André cheese, cornichon and pommes frites"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "raven-pub-lenox-hill",
@@ -12243,6 +12457,26 @@
    "hand_check": null
   },
   {
+   "id": "rolos-ridgewood",
+   "name": "Rolo's",
+   "chain": null,
+   "address": "853 Onderdonk Avenue",
+   "borough": "Queens",
+   "neighborhood": "Ridgewood",
+   "neighborhood_slug": "ridgewood",
+   "lat": 40.701862,
+   "lng": -73.903625,
+   "website": "https://www.rolosnyc.com/",
+   "menu_url": "https://www.rolosnyc.com/menus/",
+   "price_source": "official_site",
+   "index_price": 20.0,
+   "burger": {
+    "name": "double cheeseburger, grilled onions, dijonnaise, pickled long hot",
+    "description": null
+   },
+   "hand_check": null
+  },
+  {
    "id": "ronnies-sandwich-shoppe-new-dorp",
    "name": "Ronnie's Sandwich Shoppe",
    "address": "2300 Hylan Boulevard",
@@ -12423,10 +12657,24 @@
   {
    "id": "sailor-fort-greene",
    "name": "Sailor",
+   "chain": null,
    "address": "228 Dekalb Avenue",
+   "borough": "Brooklyn",
+   "neighborhood": "Fort Greene",
    "neighborhood_slug": "fort-greene",
-   "index_price": null,
-   "burger": null
+   "lat": 40.689498,
+   "lng": -73.970284,
+   "website": "https://www.sailor.nyc/",
+   "menu_url": "https://www.sailor.nyc/lunch/",
+   "price_source": "official_site",
+   "index_price": 34.0,
+   "burger": {
+    "name": "Sailor Burger",
+    "description": "with melted onions, cheddar and fries"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "saperavi-gramercy",
@@ -12653,10 +12901,24 @@
   {
    "id": "sip-and-guzzle-west-village",
    "name": "Sip & Guzzle",
+   "chain": null,
    "address": "29 Cornelia Street",
+   "borough": "Manhattan",
+   "neighborhood": "West Village",
    "neighborhood_slug": "west-village",
-   "index_price": null,
-   "burger": null
+   "lat": 40.731351,
+   "lng": -74.002353,
+   "website": "http://www.sipandguzzlenyc.com/",
+   "menu_url": "https://www.sipandguzzlenyc.com/menus",
+   "price_source": "official_site",
+   "index_price": 35.0,
+   "burger": {
+    "name": "Tavern Burger",
+    "description": "a5 wagyu, potato bun, binchotan slaw, parmesan single"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "sirrah-west-village",

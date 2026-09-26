@@ -15,7 +15,7 @@ The price of every burger at NYC restaurants. Two halves joined by one JSON file
   its neighborhood's page (`id`, `name`, `address`, `neighborhood_slug`, `index_price: null`, `burger: null`). Status,
   scrape notes, DOHMH ids, cuisine and the like stay in the pipeline (`data/restaurants.json`,
   `data/run_log.jsonl`).
-- **`web/`** (Next.js 16 static export, Node ≥ 20.9) copies that file in at build time and renders it to plain
+- **`web/`** (Next.js 16 static export, Node ≥ 20.15; `npm test` needs Node ≥ 22.6) copies that file in at build time and renders it to plain
   HTML in `web/out/`. No server code, no API keys. See "Website" below and `web/README.md`.
 
 **Design system:** always read `DESIGN.md` before any visual or UI decision. Fonts, colors, spacing and aesthetic
@@ -160,8 +160,22 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
 ## Data files
 
 - `data/burger_index.json` — THE dataset (contract v2 above). `build` validates before writing and fails loudly.
-- `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,101 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, and the 2026-09-25 deletions, see `data/list_changes_2026-09-23.md`: `name, neighborhood,
-  borough, website, menu_url, notes, source` where `source` is `pilot-100|uptown|downtown|outer|dohmh-diner-pub|dohmh-hamburgers`). It's the user's data:
+- `data/best_burgers.json` — the `/best-burgers` page's lists and places, curated by hand from the 2026-09-25 research
+  (facts only: publisher, list title, link, date; place name, dataset `restaurant_id` (or a `neighborhood_slug` for a place
+  the dataset doesn't carry), the burger each list names). Decisions applied in the file: lists published or updated
+  2024-2026; no Upper Cut Media House lists (the publisher sells partnerships) and no pure trend features (Grub Street 2025,
+  and the New York Post's Aug 2025 off-menu piece, which dropped Crane Club, Lord's and Quatorze to one publisher; chef-pick
+  features count); beef burgers only (no national chains, no vegetarian/vegan or lamb picks, and a source naming only a
+  non-beef burger doesn't count: Eater's Old Town Bar entry picks no burger and mentions only a bison burger, so Old Town Bar
+  has one publisher); closed places left out (Blue Hour, Gus's Chop House); two or more distinct publishers per place
+  (33 places from 21 lists by 11 publications). The web build (`web/src/lib/best-burgers-data.ts`) fails if an id,
+  list or neighborhood is missing or a rule is broken. Not a pipeline output: `pipeline build` never touches it, but a
+  dataset change that drops a `restaurant_id` breaks the web build until the file is fixed.
+- `data/peoples_price.json` — **the People's Price snapshot** (user decision 2026-09-25: crawlers must see the crowd's
+  numbers). **Owned by the daily workflow on `main`: never edit, regenerate or commit it on a branch** (see "People's
+  Price snapshot" under "Website"). Not a pipeline output; `pipeline build` never touches it.
+- `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,108 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, the 2026-09-25 deletions and the 2026-09-25 best-burger-list additions, see `data/list_changes_2026-09-23.md`: `name, neighborhood,
+  borough, website, menu_url, notes, source` where `source` is `pilot-100|uptown|downtown|outer|dohmh-diner-pub|dohmh-hamburgers|best-lists-2026-09`). It's the user's data:
   don't edit it without their approval; report duplicates (`report.csv_duplicate_matches`), unmatched rows (`report.csv_unmatched`),
   ambiguous rows (`report.csv_ambiguous`) and closed places (`report.csv_address_now_other_business`,
   `report.csv_stale_matches`; e.g. "Guy Fieri's American Kitchen & Bar", Times Square, closed 2017) for the user to fix.
@@ -196,8 +210,9 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
 ```
 
 - **Data in:** `scripts/sync-data.mjs` (runs as `predev`/`prebuild`) copies `../data/burger_index.json` to
-  `src/data/`, validates it against the contract with ajv (invalid data fails the build) and copies the MapLibre worker to
-  `public/vendor/maplibre/`; both outputs are generated and gitignored. There is no sample data: a missing
+  `src/data/`, validates it against the contract with ajv (invalid data fails the build), copies
+  `../data/best_burgers.json` and `../data/peoples_price.json` (the People's Price snapshot: an empty one when missing) and
+  copies the MapLibre worker to `public/vendor/maplibre/`; all outputs are generated and gitignored. There is no sample data: a missing
   `data/burger_index.json` fails `dev` and `build` with a message (it is committed; `pipeline build` rewrites it from the
   cache). The web tests read the same file (`test/dataset.ts`) or small inline rows.
 - **Reading data:** `src/lib/data.ts` is `server-only`: it parses the file once with the zod mirror
@@ -220,7 +235,9 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   the pricer mounts, so the home HTML holds no menus or prices beyond the H1 band's median sentence and source line (the
   card is `data-nosnippet`); answers go through the worth store (`cast_worth`, same pool, 150 per hour per IP). The header's
   "Price a burger" (and the menu sheet's) links to `/#price` from every page; on home it scrolls to the pricer and
-  focuses it. Menu keys and restaurant ids must never change (answers are keyed on them).
+  focuses it; the search icon button sits next to it at every width (user decision 2026-09-25). Under the home board:
+  "See the People's Price" and "Most-recommended burgers" (they replaced the old "What's it worth?" section). Menu keys
+  and restaurant ids must never change (answers are keyed on them).
 - **SEO / AEO / GEO (user decisions 2026-09-25):** the origin comes from `src/lib/site-url.ts`: `NEXT_PUBLIC_SITE_URL`,
   else `https://$VERCEL_PROJECT_PRODUCTION_URL` (the free `*.vercel.app` address), else `http://localhost:4173` with a
   build warning (never a domain the user doesn't own). Titles and meta descriptions for every page type are built in
@@ -233,8 +250,16 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   Menu → MenuItem → Offer on restaurant pages, BreadcrumbList on every page below home (the visible crumbs where shown),
   ItemList for the `/neighborhoods` ranking, each neighborhood's restaurant table and each ranking page, FAQPage for the Q&A
   blocks (home, borough and neighborhood pages; `src/lib/answers.ts` + `components/QandA.tsx`, visible text = markup text).
-  The 14 ranking pages (`/cheapest-burgers[/<borough>]`, `/most-expensive-burgers[/<borough>]`, `/burgers-under-15|20`;
-  `src/lib/rankings.ts`, `components/RankingPage.tsx`) are per distinct menu and stay out of the nav. **Honest wording (user
+  The ranking pages (`/cheapest-burgers[/<borough>[/<neighborhood>]]`, `/most-expensive-burgers[/<borough>[/<neighborhood>]]`,
+  `/burgers-under-15|20`, `/burgers/<style>`; `src/lib/rankings.ts`, `components/RankingPage.tsx`) are per distinct menu
+  and stay out of the nav: a neighborhood has its two lists only with 10+ distinct priced menus and lists that share no menu
+  (`neighborhoodsWithRankings`), linked from its page; a burger style (`src/lib/styles.ts`: smash, double, wagyu, dry-aged,
+  patty melt; a conservative classifier on the published burger's name and description, add-ons dropped) has a list only
+  with 10+ menus, titled for what it is: "Burger spots in NYC where the priciest burger is a smash burger." **The
+  most-recommended burgers (`/best-burgers`, user decisions 2026-09-25):** places ranked by how many distinct publishers named
+  them on a best-burger list of 2024-2026, from `data/best_burgers.json` (see "Data files"), each with every list linked
+  (publisher, title, date), our menu price and the People's Price; one ranking-note line, the lists' own words never quoted,
+  ItemList JSON-LD (no Review or Rating). **Honest wording (user
   decision 2026-09-25):** each restaurant publishes only its priciest burger, so the cheapest and under-$N lists rank
   burger spots by their priciest burger and say so ("Cheapest burger spots in NYC.", "Burger spots in NYC where the priciest
   burger is under $15.", "The priciest burger at Johnny's Reef is $6.00, the lowest top-burger price of any spot in NYC", the Q&A
@@ -247,6 +272,24 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   price_usd, source badge label, page_url, checked; linked once from the footer) are force-static. IndexNow: the key
   file is `public/<key>.txt` (public by design) and `scripts/indexnow.mjs` submits the live sitemap. `npm run check:seo`
   verifies a build end to end (`-- --site https://…` also asserts the origin).
+- **Sharing and link-building (user decisions 2026-09-25, stage 4):** **share images**: every restaurant, neighborhood,
+  borough, ranking and style page and `/best-burgers` has its own 1200×630 Order Board at `/og/<page path>.png`
+  (`src/lib/share-images.ts` the cards and paths, `src/lib/share-cards.ts` server-only, builds them and gives each page its
+  `og:image` through `pageMetadata({ image: shareImage(path) })`, `components/og/` the Satori markup shared with `/og.png`,
+  `app/og/[...path]/route.tsx` renders them); they are stored as 256-color PNGs (`src/lib/png-palette.ts`: 734 images,
+  ~24 MB) and make the build take about 2 minutes instead of 17 s. Other pages keep `/og.png`. **Price badge**:
+  `/badge/<id>.svg` for every priced restaurant (`src/lib/badge.ts`, `app/badge/[file]/route.tsx`: drawn with `satori`
+  (a dependency pinned to the version next/og bundles) so the text is outlines, paths compacted by `src/lib/svg-path.ts`;
+  not pages, never in the sitemap) and the `/badge` page (`components/badge/`: the badge of `?r=<id>` or an example, a finder
+  over the pricer's `/data/pricer.json`, copyable HTML and image address), linked from the foot of every restaurant page.
+  Honest text only: "$22 burger", "10% above the $20.00 NYC median", "THE BURGER INDEX · SEP 2026". **Press kit** `/press`
+  (live numbers, the source line, the CSV and its license, a credit line to copy (`src/lib/press.ts`), the share image, a
+  short description; the contact is the GitHub issues page, `src/lib/contact.ts`: never publish an email address, `check:seo`
+  fails on one). **"Nearby at a similar price"** on restaurant pages (`src/lib/nearby.ts`): up to 4 other priced spots
+  within 1.5 km and $4, nearest first, a menu once and never its own chain, then the same neighborhood by price; "More in …"
+  leaves those out. `/press` and `/badge` are in the footer, the sitemap and llms.txt; `check:seo` checks every share
+  image (one per page, a 1200×630 PNG, its alt naming the page's price or H1), every badge (one per priced restaurant, its
+  title's price and comparison), both pages, no email anywhere, and each nearby list recomputed from the dataset.
 - **Counting:** the site counts distinct menus through `src/lib/menus.ts` (menu key = chain, else restaurant id), the same
   rule as `build.menu_index_prices`: histograms, typical range, rankings, cheapest/priciest lists and the `MIN_RANKED` /
   `MIN_HISTOGRAM` thresholds are per menu; map pins, restaurant pages and table rows are per location.
@@ -263,7 +306,8 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   components (the restaurant page's links are the client `components/RestaurantLinks.tsx`). `worth_answered` comes from
   `worthStore.onSaved` (after Supabase saved the answer) with `surface` (`restaurant` / `home_pricer`) and `price_hidden`;
   the pricer also sends `pricer_area_selected`, `pricer_skipped`, `pricer_next_clicked` and `pricer_exhausted`, and the
-  header `price_a_burger_clicked` (`from_path`: the path only). No personal data: never the voter id, and no free text in events
+  header `price_a_burger_clicked` (`from_path`: the path only), and the badge page's and press kit's "Copy" buttons
+  `snippet_copied` (`surface`, `what`, the badge's `restaurant_id`). No personal data: never the voter id, and no free text in events
   but the search query (trimmed, lowercased, 60 characters); replays mask inputs and the query echoed in the "No burgers
   match" messages (`ph-mask`). Events and properties are listed in `web/README.md` "Analytics
   (PostHog)"; tests in `test/analytics.test.ts`. posthog-js drops headless/webdriver browsers, so browser checks see no
@@ -274,7 +318,8 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   itself; setting it to `out` failed with `NEXT_NO_ROUTES_MANIFEST`), Node.js 22.x, and "Include files outside the root
   directory in the Build Step" on (the build reads `../data` and `../contract`). CLI deploys run **from the repo
   root** (`npx vercel link` once, then `npx vercel --prod`); the root `.vercelignore` is an allowlist so `.env`,
-  `.venv/` and `data/cache/` are never uploaded. Environment variables: `NEXT_PUBLIC_SUPABASE_URL` and
+  `.venv/` and `data/cache/` are never uploaded (it lets through `data/burger_index.json`, `data/best_burgers.json` and
+  `data/peoples_price.json`: a new data file the build reads must be added there). Environment variables: `NEXT_PUBLIC_SUPABASE_URL` and
   `NEXT_PUBLIC_SUPABASE_ANON_KEY` on Production and Preview, `NEXT_PUBLIC_POSTHOG_KEY` on Production only
   (`NEXT_PUBLIC_POSTHOG_HOST` stays unset: the default `/ingest` is proxied to PostHog by the rewrites in
   `web/vercel.json`, which Vercel reads from the Root Directory; Next's own `rewrites` don't work with
@@ -283,6 +328,36 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   Content-Security-Policy.
 - **Refresh the live site:** `pipeline run` (spends credits) → `pipeline build` → commit `data/burger_index.json` →
   deploy → `cd web && SITE_URL=https://<production host> npm run indexnow` (tells Bing and the other IndexNow engines).
+- **People's Price snapshot (user decision 2026-09-25: crawlers must see the crowd's numbers).** The answers live in
+  Supabase and load in the browser, so the static HTML carries a daily copy: `data/peoples_price.json`
+  (`{version: 1, generated_at, menus: {<menu key>: {answers, median, hist: {<dollars>: <answers>}}}}`, answered menus of
+  the dataset only, keys sorted, two-space JSON). `web/scripts/snapshot-peoples-price.mjs` writes it: read-only GETs of
+  the public `burger_worth_hist` table over the Supabase REST API with the **publishable** key (`NEXT_PUBLIC_SUPABASE_URL`
+  / `NEXT_PUBLIC_SUPABASE_ANON_KEY`, else the public defaults in the script; it refuses a secret or service_role key),
+  100 menu keys per request; deterministic, and it rewrites the file only when the numbers change (an unchanged run
+  keeps the old `generated_at`); a failed read, or a reply with a row that doesn't check out (a changed column type or
+  policy), exits 1 and writes nothing; so does a read that finds no answers at all after a snapshot that had some
+  (refusing to wipe it unless run with `--allow-empty`, the workflow's manual `allow_empty` input). **`.github/workflows/peoples-price.yml`** runs
+  it every day at 09:00 UTC (and on `workflow_dispatch`): checks out `main`, Node 22, no npm install, no secrets
+  (`permissions: contents: write`), and if the file changed commits "Update People's Price snapshot" as
+  `github-actions[bot]` and pushes to `main`, which triggers the Vercel production deploy. Scheduled workflows run only
+  from the default branch, so it starts working once merged. The repo is public, so **GitHub disables this scheduled
+  workflow after 60 days without repository activity** (its own runs don't count, and it commits only on a change); re-enable
+  it from the repo's Actions tab (People's Price snapshot → Enable workflow) or with `gh workflow enable peoples-price.yml`. **After that merge the file belongs to the workflow:** the
+  build branch never edits, regenerates or commits `data/peoples_price.json` again (merge `main` into the branch to
+  pick up its updates; nothing in `sync-data`, `build` or `pipeline build` writes it). To refresh by hand, run the
+  workflow from the Actions tab rather than committing the file. `sync-data` copies it into `src/data/` (a missing or
+  broken file writes an empty snapshot with a warning: it never fails the build); `src/lib/peoples-price-data.ts` reads
+  it (entries that don't check out are dropped with a warning); the rules are in `src/lib/peoples-price.ts`: a menu with
+  3+ answers gets "People's Price $22 from 14 answers, as of Sep 25, 2026." under its restaurant page's slider card and
+  in its `/best-burgers` row (fewer answers keep the existing wording), `/peoples-price` prerenders its tiles and boards
+  dated "As of Sep 25, 2026", and the live code replaces them in the browser. **Best value burgers**
+  (`/best-value-burgers`, user decision 2026-09-25): the menus whose People's Price is 10% or more above the menu price
+  (as the verdict rounds it), ranked like the bargains board; the page, its sitemap entry, llms.txt line and links
+  (footer Rankings, "More burger rankings.", under the People's Price bargains board) exist only once 10 menus have a
+  verdict (3+ answers). Until then its optional catch-all route builds only the `/_none` 404 placeholder. `check:seo`
+  recomputes all of this from the snapshot. Vercel must be able to deploy the bot's commits: if a bot-authored commit
+  is ever blocked there, that is a Vercel project setting for the user to change.
 
 ## Context.dev (web data)
 

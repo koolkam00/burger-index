@@ -3,11 +3,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/JsonLd";
+import { PeoplesPriceNote } from "@/components/worth/PeoplesPriceNote";
 import { WorthPicker } from "@/components/worth/WorthPicker";
 import { repeatedNames } from "@/components/RestaurantBits";
 import { OutboundLink, SeeOnMapLink } from "@/components/RestaurantLinks";
 import { Scales } from "@/components/icons/nautical";
 import { DetailOverline, Money, PageHeader, PriceChip, SectionHeading, SourceBadge } from "@/components/ui";
+import { badgePageFor } from "@/lib/badge";
 import { boroughSlug } from "@/lib/boroughs";
 import {
   getChainLocations,
@@ -23,9 +25,12 @@ import { formatDate, formatDelta, formatPrice, hostname, safeHttpUrl } from "@/l
 import { breadcrumbNode, restaurantNode } from "@/lib/jsonld";
 import { PRICE_SOURCE_LABEL } from "@/lib/labels";
 import { hasOtherMenus, menuKey, menusByIndexPrice } from "@/lib/menus";
+import { formatMiles, moreInNeighborhood, nearbySimilar } from "@/lib/nearby";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
+import { getSnapshotFigures } from "@/lib/peoples-price-data";
 import type { PricedRestaurant } from "@/lib/schema";
 import { restaurantSeo, sharedTitleIds } from "@/lib/seo";
+import { shareImage } from "@/lib/share-cards";
 import { atLeastOneParam, BOROUGHS_HREF, PLACEHOLDER_PARAM } from "@/lib/site";
 import { WORTH_ANCHOR } from "@/lib/worth";
 
@@ -63,7 +68,8 @@ export async function generateMetadata({ params }: PageProps<"/restaurants/[id]"
     generatedAt: getGeneratedAt(),
     ambiguous: SHARED_TITLES.has(r.id),
   });
-  return pageMetadata({ ...seo, path: `/restaurants/${r.id}` });
+  const path = `/restaurants/${r.id}`;
+  return pageMetadata({ ...seo, path, image: shareImage(path) });
 }
 
 /**
@@ -114,7 +120,19 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
   // Other menus nearby, one card per menu: this restaurant's own chain is left out, and a chain with
   // several locations here shows once.
   const hoodMenus = r.neighborhood_slug ? menusByIndexPrice(getRestaurantsInNeighborhood(r.neighborhood_slug)) : [];
-  const neighbors = hoodMenus.filter((m) => m.key !== menuKey(r)).slice(0, 6);
+  // Nearby at a similar price (lib/nearby.ts): within about 1.5 km and $4, then the same neighborhood.
+  // "More in …" leaves out the menus it already shows; when that leaves none, "All of <neighborhood>"
+  // closes the Nearby section instead.
+  const nearby = nearbySimilar(r, getPricedRestaurants());
+  const { menus: neighbors, linkNeighborhood } = moreInNeighborhood(r, hoodMenus, nearby);
+  const allOfNeighborhood =
+    linkNeighborhood && r.neighborhood_slug ? (
+      <p className="mt-4">
+        <Link href={`/neighborhoods/${r.neighborhood_slug}`} className="link t-ui-m">
+          All of {r.neighborhood}
+        </Link>
+      </p>
+    ) : null;
   // "vs neighborhood" needs another priced menu there (five locations of one chain are one menu).
   const versus = [
     hood && hoodMedian !== null ? { label: `vs ${hood.name}`, value: formatDelta(price, hoodMedian), sub: `Neighborhood median ${formatPrice(hoodMedian, { cents: "always" })}` } : null,
@@ -215,13 +233,35 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
         {r.hand_check ? <HandCheckNote checkedOn={r.hand_check.checked_on} /> : null}
 
         {/* "What's it worth?": visitors name their price for the menu's burger (a chain's locations
-            share one menu, so one People's Price). The board links here by the section's id. */}
+            share one menu, so one People's Price). The board links here by the section's id. Under the card,
+            the People's Price sentence from the daily snapshot (3+ answers), in the static HTML. */}
         <section id={WORTH_ANCHOR} className="section" aria-labelledby="worth-title">
           <SectionHeading id="worth-title" kicker="What's it worth?" icon={Scales} title="What would you pay?" />
           <div className="mt-6 max-w-3xl">
             <WorthPicker menuKey={menuKey(r)} restaurantId={r.id} burger={burger.name} price={price} />
+            <PeoplesPriceNote menuKey={menuKey(r)} snapshot={getSnapshotFigures(menuKey(r))} />
           </div>
         </section>
+
+        {nearby.length ? (
+          <section className="section" aria-labelledby="similar-price">
+            <SectionHeading id="similar-price" title="Nearby at a similar price." />
+            <ul className="mt-6 grid gap-x-8 sm:grid-cols-2">
+              {nearby.map(({ restaurant: n, km }) => (
+                <li key={n.id} className="flex min-h-12 items-center justify-between gap-3 border-b-[1.5px] border-line py-2">
+                  <span className="min-w-0">
+                    <Link href={`/restaurants/${n.id}`} className="ui-link break-anywhere font-semibold">
+                      {n.name}
+                    </Link>
+                    <span className="t-ui-s muted block break-anywhere">{[n.burger.name, km !== null ? `${formatMiles(km)} away` : (n.neighborhood ?? n.borough)].join(" · ")}</span>
+                  </span>
+                  <PriceChip price={n.index_price} median={median} delta={false} />
+                </li>
+              ))}
+            </ul>
+            {neighbors.length ? null : allOfNeighborhood}
+          </section>
+        ) : null}
 
         {neighbors.length ? (
           <section className="section" aria-labelledby="nearby">
@@ -241,13 +281,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
                 </li>
               ))}
             </ul>
-            {r.neighborhood_slug ? (
-              <p className="mt-4">
-                <Link href={`/neighborhoods/${r.neighborhood_slug}`} className="link t-ui-m">
-                  All of {r.neighborhood}
-                </Link>
-              </p>
-            ) : null}
+            {allOfNeighborhood}
           </section>
         ) : null}
 
@@ -267,6 +301,14 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
             </ul>
           </section>
         ) : null}
+
+        <p className="t-ui-s muted mt-12 md:mt-16">
+          Run {r.name}?{" "}
+          <Link href={badgePageFor(r.id)} className="link">
+            Get its price badge
+          </Link>{" "}
+          for your website.
+        </p>
       </div>
     </>
   );

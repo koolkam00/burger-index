@@ -1,18 +1,20 @@
 "use client";
 
-import { Search, X } from "lucide-react";
+import { ArrowRight, Search, X } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Anchor, Net, OrderBell, Scales, Spatula, Spyglass } from "@/components/icons/nautical";
 import { EmptyState, Money, SectionHeading, StatGrid, StatTile } from "@/components/ui";
 import { searchTracker, track, type BoardName } from "@/lib/analytics";
-import { formatCount, formatPrice, pluralize } from "@/lib/format";
+import { formatCount, formatDate, pluralize } from "@/lib/format";
+import { BEST_VALUE_NAME, histsFromEntries, type HistEntries } from "@/lib/peoples-price";
 import { WORTH_ENABLED } from "@/lib/worth-config";
-import { buildWorthBoards, formatDollars, peoplesPrice, searchWorthMenus, summarize, worthHref, type Hist, type WorthMenu, type WorthRow } from "@/lib/worth";
+import { buildWorthBoards, peoplesPrice, searchWorthMenus, summarize, worthHref, type Hist, type WorthMenu, type WorthRow } from "@/lib/worth";
 import { watchHist } from "@/lib/worth-api";
 import { worthStore } from "@/lib/worth-store";
 import { useHists, usePrefersReducedMotion } from "./hooks";
 import { Dollars } from "./Dollars";
+import { WorthBoardHead, WorthRowView } from "./WorthRows";
 
 /** Rows per board before "Haul in … more". */
 const PAGE = 10;
@@ -27,15 +29,31 @@ const SEARCH_ID = "worth-search";
 type Row = WorthRow<WorthMenu>;
 
 /**
- * The People's Price page body (DESIGN.md "The People's Price page"). Everything here loads in the
- * browser: the public histograms of the dataset's menus, then realtime changes (or a refresh every
- * 30 s while the channel is down). The dataset's menus and the Burger Index arrive as props; only
+ * The People's Price page body (DESIGN.md "The People's Price page"). The page prerenders the daily
+ * snapshot's answers (`snapshot`: its date and the dataset's menus' histograms, lib/peoples-price), so the
+ * tiles and boards are in the static HTML with "As of Sep 25, 2026"; in the browser the public histograms of
+ * the dataset's menus load, then realtime changes (or a refresh every 30 s while the channel is down), and
+ * the live numbers replace the snapshot's. The dataset's menus and the Burger Index arrive as props; only
  * those menus' histograms are fetched, realtime changes to other keys are dropped, and a chain is one
- * entry.
+ * entry. Without a snapshot the page waits for the live numbers, as before. `bestValueHref` links the best
+ * value burgers under the bargains board while that page exists.
  */
-export function PeoplesPriceBoard({ menus, burgerIndex, menuCount }: { menus: WorthMenu[]; burgerIndex: number | null; menuCount: number }) {
+export function PeoplesPriceBoard({
+  menus,
+  burgerIndex,
+  menuCount,
+  snapshot,
+  bestValueHref,
+}: {
+  menus: WorthMenu[];
+  burgerIndex: number | null;
+  menuCount: number;
+  snapshot: { asOf: string | null; hists: HistEntries };
+  bestValueHref: string | null;
+}) {
   const hists = useHists();
   const [live, setLive] = useState(false);
+  const snapHists = useMemo(() => histsFromEntries(snapshot.hists), [snapshot.hists]);
   const keys = useMemo(() => menus.map((m) => m.key), [menus]);
   const loadAll = useCallback(() => void worthStore.loadHist(keys, { all: true }), [keys]);
 
@@ -73,11 +91,15 @@ export function PeoplesPriceBoard({ menus, burgerIndex, menuCount }: { menus: Wo
     };
   }, [keys, loadAll]);
 
-  const boards = useMemo(() => buildWorthBoards(menus, hists.hists), [menus, hists.hists]);
-  // Only a load of every menu makes the boards complete (a restaurant page may have loaded one menu).
-  const loading = WORTH_ENABLED && !hists.all && !hists.allFailed;
-  const failedFirst = WORTH_ENABLED && !hists.all && hists.allFailed;
-  const complete = WORTH_ENABLED && hists.all;
+  // Only a load of every menu makes the live boards complete (a restaurant page may have loaded one menu);
+  // until then the snapshot's stand in, when there is one.
+  const current = WORTH_ENABLED && hists.all;
+  const fromSnapshot = !current && snapshot.asOf !== null;
+  const source = current ? hists.hists : fromSnapshot ? snapHists : hists.hists;
+  const boards = useMemo(() => buildWorthBoards(menus, source), [menus, source]);
+  const loading = WORTH_ENABLED && !hists.all && !hists.allFailed && !fromSnapshot;
+  const failedFirst = WORTH_ENABLED && !hists.all && hists.allFailed && !fromSnapshot;
+  const complete = current || fromSnapshot;
   const people = peoplesPrice(boards.index);
 
   const findBurger = () => {
@@ -90,11 +112,13 @@ export function PeoplesPriceBoard({ menus, burgerIndex, menuCount }: { menus: Wo
     <>
       <section className="mt-2" aria-label="The People's Burger Index" aria-busy={loading}>
         <p className="worth-meta t-ui-s muted">
-          {live ? (
+          {current && live ? (
             <span className="badge badge-live">
               <span className="live-dot" aria-hidden="true" />
               Live
             </span>
+          ) : fromSnapshot && snapshot.asOf ? (
+            <span>{`As of ${formatDate(snapshot.asOf)}`}</span>
           ) : null}
         </p>
         <StatGrid cols={3}>
@@ -124,7 +148,7 @@ export function PeoplesPriceBoard({ menus, burgerIndex, menuCount }: { menus: Wo
         ) : null}
       </section>
 
-      {!WORTH_ENABLED ? (
+      {!complete && !WORTH_ENABLED ? (
         <section className="section" aria-label="The boards">
           <EmptyState art="trap" height={220}>
             Answers open soon.
@@ -148,7 +172,7 @@ export function PeoplesPriceBoard({ menus, burgerIndex, menuCount }: { menus: Wo
             Couldn&apos;t reach the counter. Check your connection and try again.
           </EmptyState>
         </section>
-      ) : boards.answered === 0 ? (
+      ) : !complete ? null : boards.answered === 0 ? (
         <section className="section" aria-label="The boards">
           <EmptyState
             art="trap"
@@ -163,12 +187,22 @@ export function PeoplesPriceBoard({ menus, burgerIndex, menuCount }: { menus: Wo
           </EmptyState>
         </section>
       ) : (
-        <>
+        // Keyed by where the numbers come from: the switch from the snapshot to the live numbers redraws the
+        // boards instead of animating every row that changed since the snapshot.
+        <Fragment key={current ? "live" : "snapshot"}>
           <section className="section" aria-labelledby="bargains">
             <SectionHeading id="bargains" kicker="Good catch" icon={Net} title="Biggest bargains." />
             <div className="mt-6">
               {boards.bargains.length ? <PagedBoard rows={boards.bargains} label="Biggest bargains" board="bargains" /> : <BoardEmpty>No bargains on the board yet.</BoardEmpty>}
             </div>
+            {bestValueHref ? (
+              <p className="mt-6">
+                <Link href={bestValueHref} className="link t-ui-m inline-flex items-center gap-1">
+                  {BEST_VALUE_NAME}
+                  <ArrowRight className="size-4" strokeWidth={2} aria-hidden="true" />
+                </Link>
+              </p>
+            ) : null}
           </section>
           <section className="section" aria-labelledby="overpriced">
             <SectionHeading id="overpriced" kicker="Walk the plank" icon={Anchor} title="Most overpriced." />
@@ -193,12 +227,12 @@ export function PeoplesPriceBoard({ menus, burgerIndex, menuCount }: { menus: Wo
               <NeedsAnswers rows={boards.needsAnswers} />
             </section>
           ) : null}
-        </>
+        </Fragment>
       )}
 
       <section className="section" aria-labelledby="find">
         <SectionHeading id="find" kicker="Name your price" icon={Spyglass} title="Find a burger." />
-        <FindBurger menus={menus} hists={hists.hists} />
+        <FindBurger menus={menus} hists={source} />
       </section>
     </>
   );
@@ -304,15 +338,7 @@ function RowList({ rows, ranked = false, label, board }: { rows: Row[]; ranked?:
 
   return (
     <div className={`worth-board-shell ${ranked ? "" : "is-unranked"}`}>
-      {/* Column labels for sighted readers at desktop width; each row's cells carry their own words. */}
-      <div className="worth-board-head t-label muted" aria-hidden="true">
-        {ranked ? <span className="worth-rank">Rank</span> : null}
-        <span className="worth-what">Burger</span>
-        <span className="worth-cell wa-menu num">Menu</span>
-        <span className="worth-cell wa-people num">People&apos;s</span>
-        <span className="worth-cell wa-verdict">Verdict</span>
-        <span className="worth-cell wa-count num">Answers</span>
-      </div>
+      <WorthBoardHead ranked={ranked} />
       <ol ref={listRef} className="worth-board" aria-label={label}>
         {rows.map((r, i) => (
           <BoardRow key={r.key} row={r} ranked={ranked} board={board} position={i + 1} />
@@ -328,36 +354,7 @@ function trackBoardClick(board: BoardName, r: Row, position: number) {
 }
 
 function BoardRow({ row: r, ranked, board, position }: { row: Row; ranked: boolean; board: BoardName; position: number }) {
-  const where = r.neighborhood ? `${r.neighborhood}, ${r.borough}` : r.locations > 1 ? pluralize(r.locations, "location") : r.borough;
-  const verdict = r.answers === 0 ? "No answers yet" : r.verdict.label;
-  return (
-    <li className="worth-row" data-key={r.key} data-tally={`${r.answers}:${r.people ?? ""}`}>
-      {ranked ? (
-        <span className="worth-rank">
-          <span className="sr-only">Rank </span>
-          {r.rank ?? "–"}
-        </span>
-      ) : null}
-      <div className="worth-what">
-        <Link href={worthHref(r.id)} prefetch={false} className="ui-link t-ui-l break-anywhere font-semibold" onClick={() => trackBoardClick(board, r, position)}>
-          {r.name}
-        </Link>
-        <p className="t-ui-s muted break-anywhere">{[r.burger, where].join(" · ")}</p>
-      </div>
-      <div className="worth-facts-row">
-        <p className="worth-cell wa-menu num">
-          <span className="worth-k">Menu </span>
-          <span className="t-num-m">{formatPrice(r.price, { cents: "always" })}</span>
-        </p>
-        <p className="worth-cell wa-people num">
-          <span className="worth-k">People&apos;s </span>
-          <span className="t-num-m">{r.people !== null ? formatDollars(r.people) : "—"}</span>
-        </p>
-        <p className={`worth-cell wa-verdict t-ui-s ${r.verdict.kind === "pending" ? "muted" : "font-semibold"}`}>{verdict}</p>
-        <p className="worth-cell wa-count num t-num-s muted">{pluralize(r.answers, "answer")}</p>
-      </div>
-    </li>
-  );
+  return <WorthRowView row={r} ranked={ranked} onClick={() => trackBoardClick(board, r, position)} />;
 }
 
 /** Answered menus short of a verdict: a compact list of links, most answers first. */

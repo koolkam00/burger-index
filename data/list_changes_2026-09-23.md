@@ -602,3 +602,34 @@ these four rows; each was checked by name and key against `data/restaurants.json
   Foursquare list it as closed and its Grubhub listing is deactivated.
 - **1020** True Burger (JFK Airport, Queens; `camis:50074036`): the only menu page found (trueburger.square.site) is
   TrueBurger in Oakland, California; no menu with prices exists for the JFK Terminal 7 concession.
+
+## Best-burger list additions (2026-09-25, user decision)
+
+The user approved adding the beef-burger places that critics' best-burger lists of 2024-2026 name (two or more
+publishers) and that were missing from the list. Seven rows were appended at the end (data rows 1,102-1,108; 1,101
+rows before, 1,108 after), `source` `best-lists-2026-09`, with each place's DOHMH address in `notes`. Each matched the
+right DOHMH permit (`pipeline sources`, name + neighborhood + notes address), and no existing restaurant id changed.
+
+- **1102** Rolo's (Ridgewood, Queens; `camis:50103900`, 853 Onderdonk Ave): menu page rolosnyc.com/menus/.
+- **1103** Deux Luxe (Nolita, Manhattan; `camis:50169020`, 384 Broome St): its menu page embeds a Canva design, which
+  `pipeline/data/menu_urls.json` names as the page to scrape.
+- **1104** Crane Club (Chelsea, Manhattan; `camis:50133647`, DOHMH CRANE CLUB / BAR CC, 85 10th Ave): its current
+  menu (Tao Group's venue page) lists no burger, so it was not scraped and has no price.
+- **1105** Eel Bar (Lower East Side, Manhattan; `camis:50151982`, 252 Broome St): the menu page shows images; the
+  dinner menu PDF it links is named in `menu_urls.json`.
+- **1106** Joe Jr. (Gramercy, Manhattan; `camis:50073766`, 167 3rd Ave): no menu of its own; the list's `menu_url` is
+  its Grubhub page.
+- **1107** Old Town Bar (Flatiron, Manhattan; `camis:40364389`, 45 E 18th St): oldtownbar.com is a parked domain; the
+  bar's site is oldtownbarnyc.com.
+- **1108** Quatorze (Upper East Side, Manhattan; `camis:50106148`, 1578 1st Ave).
+
+Not added: Gus's Chop House (215 Union St, Carroll Gardens): its Resy page is gone, its site shows only a placeholder,
+DOHMH last inspected it on 2025-02-13 and Time Out dropped it from its 2025 update, so it looks closed. Toad Style
+(vegan) was not added either. Superiority Burger (vegetarian) and Moonburger (the lists picked its plant-based
+burgers) were already on the list, and Shake Shack is a national chain left out of the index.
+
+Later on 2026-09-25 (stage 5 review, no CSV change): the New York Post's off-menu piece of Aug 7, 2025 was left out of
+`data/best_burgers.json` as a trend feature, like Grub Street's. Without it Quatorze (1108) is named by one publisher (The
+Infatuation) and Crane Club (1104, which the user also named) by one (Time Out), so neither is on `/best-burgers`; Old Town
+Bar (1107) is off it too, since Eater's entry picks no burger and mentions only a bison burger. The rows stay on the list
+(Old Town Bar and Quatorze are priced); remove them only if the user asks.

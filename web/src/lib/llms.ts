@@ -84,6 +84,7 @@ export function llmsTxt(d: LlmsInput): string {
     },
     { title: "Neighborhoods", path: "/neighborhoods", note: `${pluralize(d.neighborhoods.pages, "neighborhood")} with prices, ${d.neighborhoods.ranked} ranked by median` },
     { title: "The People's Price", path: "/peoples-price", note: "what visitors would pay for each burger, next to the menu price" },
+    { title: "Press kit", path: "/press", note: "the headline numbers, the price list (CSV) and how to credit it, and the share image" },
     ...d.boroughs.map((b) => ({ title: `${b.name} burger prices`, path: `/boroughs/${b.slug}` })),
   ];
   lines.push(...pages.map((l) => link(d.site, l)), "");
@@ -107,6 +108,7 @@ export function llmsTxt(d: LlmsInput): string {
     "## Optional",
     "",
     link(d.site, { title: "Sitemap", path: "/sitemap.xml", note: "every page, including one per priced restaurant and neighborhood" }),
+    link(d.site, { title: "Price badge", path: "/badge", note: "a badge a priced restaurant can put on its own site: its burger's price here and how it compares with the NYC median, linked to its page" }),
     "",
   );
   return lines.join("\n");

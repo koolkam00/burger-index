@@ -239,16 +239,22 @@ export function neighborhoodSeo(d: {
 // ---- ranking pages -------------------------------------------------------------------------------
 
 export type RankingSeoInput = {
-  kind: "cheapest" | "priciest" | "under";
+  kind: "cheapest" | "priciest" | "under" | "style";
   /**
    * The page's name (rankings.ts rankingName): "Cheapest burger spots in NYC", "Most expensive burgers
    * in the Bronx", "Burger spots in NYC where the priciest burger is under $15".
    */
   name: string;
-  /** "NYC", "Brooklyn", "the Bronx". */
+  /** "NYC", "Brooklyn", "the Bronx", "West Village" (rankings.ts rankingPlace). */
   place: string;
+  /** The place with its preposition (rankings.ts rankingIn): "in NYC", "on the Upper West Side". Default "in <place>". */
+  inPlace?: string;
+  /** The name without the place (rankings.ts rankingShortName): "Cheapest burger spots", "Smash burger spots". Needed for a style list. */
+  shortName?: string;
   /** "under" only: the price the spots' priciest burgers stay under. */
   under: number | null;
+  /** "style" only: the style in a sentence, "a smash burger". */
+  aBurger?: string;
   /** The rows the page shows, in order. */
   rows: ReadonlyArray<{ restaurant: string; burger: string; price: number }>;
   /** Distinct menus the list covers before the cap (a chain once): "Out of 531 menus". */
@@ -263,14 +269,28 @@ export type RankingSeoInput = {
  * (Sep 2026)", "96 NYC burger spots, priciest burger under $15 (Sep 2026)". Each spot publishes its
  * priciest burger, so the cheapest and under-$N lists rank spots by it and say so, and never claim "the
  * cheapest burgers" or "burgers under $15" (user decision 2026-09-25). Each number matches its noun:
- * "burger spots" counts locations, "menus" distinct menus (a chain once). The description names the first rows.
+ * "burger spots" counts locations, "menus" distinct menus (a chain once). The description names the first
+ * rows: every one sharing first place (both of two; three or more are counted), then the next.
  */
 export function rankingSeo(d: RankingSeoInput): Seo {
   const mon = formatMonthYear(d.generatedAt, { short: true });
   const month = formatMonthYear(d.generatedAt);
-  const [first, second, third] = d.rows;
+  const [first] = d.rows;
   if (!first) return { title: d.name, description: `${d.name}: no priced burgers yet.` };
   const menus = pluralize(d.total, "menu");
+  const inPlace = d.inPlace ?? `in ${d.place}`;
+  if (d.kind === "style") {
+    // "Smash burger spots in NYC: from $9 (Sep 2026)": the spots whose priciest burger is of the style.
+    const last = d.rows[d.rows.length - 1];
+    const shortName = d.shortName ?? d.name;
+    return {
+      title: pickTitle([`${shortName} ${inPlace}: from ${short(first.price)} (${mon})`, `${shortName} ${inPlace} (${mon})`, d.name]),
+      description: assemble(`${pluralize(d.spots, "burger spot")} ${inPlace} where the priciest burger is ${d.aBurger}, cheapest first (${month}).`, [
+        d.rows.length > 1 ? `From ${money(first.price)} at ${first.restaurant} to ${money(last.price)} at ${last.restaurant}.` : `${first.restaurant}, at ${money(first.price)}.`,
+        "With each restaurant's neighborhood and price.",
+      ]),
+    };
+  }
   if (d.kind === "under") {
     const spots = pluralize(d.spots, "burger spot");
     const last = d.rows[d.rows.length - 1];
@@ -290,24 +310,118 @@ export function rankingSeo(d: RankingSeoInput): Seo {
   }
   const cheapest = d.kind === "cheapest";
   const edge = cheapest ? `from ${short(first.price)}` : `up to ${short(first.price)}`;
+  // Every row on the first price shares first place, so the sentence names both of two and counts three or
+  // more, as the page's lede does (answers.ts endSentence), with the burgers when they fit, else the places
+  // alone. "Then …" names the rows after the tie and only ever follows that sentence (one slot).
+  const tied = d.rows.filter((r) => Math.round(r.price * 100) === Math.round(first.price * 100));
+  const at = money(first.price);
+  type Row = (typeof d.rows)[number];
+  const leader = (named: (r: Row, start: boolean) => string) =>
+    tied.length === 1
+      ? `${named(first, true)} tops the list at ${at}.`
+      : tied.length === 2
+        ? `${named(tied[0], true)} and ${named(tied[1], false)} top the list at ${at}.`
+        : `${tied.length} ${cheapest ? "menus" : "burgers"} tie at the top at ${at}, among them ${named(first, false)}.`;
+  const place = (r: Row) => r.restaurant;
+  const burgerAt = (r: Row, start: boolean) => `${start ? cap(theBurger(r.burger)) : theBurger(r.burger)} at ${r.restaurant}`;
+  const leaders = [...new Set([leader(cheapest ? place : burgerAt), leader(place)])];
+  const [next, after] = d.rows.slice(tied.length);
   const then = [
-    second && third ? `Then ${second.restaurant} at ${money(second.price)} and ${third.restaurant} at ${money(third.price)}.` : null,
-    second ? `Then ${second.restaurant} at ${money(second.price)}.` : null,
+    next && after ? `Then ${next.restaurant} at ${money(next.price)} and ${after.restaurant} at ${money(after.price)}.` : null,
+    next ? `Then ${next.restaurant} at ${money(next.price)}.` : null,
   ].filter((s): s is string => Boolean(s));
-  // A long place ("Staten Island") keeps the month with the shorter "Cheapest burger spots, Staten Island".
-  const shortName = rankingShortName({ kind: d.kind, borough: null, under: d.under });
+  const top = leaders.flatMap((l) => [...then.map((t) => `${l} ${t}`), l]);
+  // A long place keeps the month with the shorter "Cheapest burger spots, Staten Island", then drops the
+  // price ("Most expensive burgers, Upper West Side (Sep 2026)"); a place too long for even that
+  // ("SoHo-TriBeCa-Civic Center-Little Italy") keeps that form past 60 characters rather than lose the month.
+  const shortName = d.shortName ?? rankingShortName({ kind: d.kind, borough: null, neighborhood: null, under: d.under, style: null });
+  // The opening sentence, shortened for a long place when the first-place sentence would not fit after it
+  // (the first place is never left out: "Cheapest burger spots in Murray Hill-Kips Bay, by top-burger price").
+  const opening = [
+    cheapest
+      ? `${d.name}: the ${pluralize(d.rows.length, "menu")} with the lowest top-burger price (${month}).`
+      : `The ${pluralize(d.rows.length, "most expensive burger")} ${inPlace}, ranked by price (${month}).`,
+    cheapest ? `${d.name}, by top-burger price (${month}).` : `${d.name} (${month}).`,
+  ];
+  const shortest = top[top.length - 1];
+  const lead = opening.find((o) => o.length + 1 + shortest.length <= DESCRIPTION_MAX) ?? opening[opening.length - 1];
   return {
-    title: pickTitle([`${d.name}: ${edge} (${mon})`, `${shortName}, ${d.place}: ${edge} (${mon})`, `${d.name}: ${edge}`, d.name]),
+    title: pickTitle([`${d.name}: ${edge} (${mon})`, `${shortName}, ${d.place}: ${edge} (${mon})`, `${shortName}, ${d.place} (${mon})`]),
+    description: assemble(lead, [top, d.total > d.rows.length ? `Out of ${menus} ${inPlace}.` : null]),
+  };
+}
+
+// ---- the most-recommended burgers -----------------------------------------------------------------------
+
+/**
+ * "The most-recommended burgers in NYC (Sep 2026)" and "33 NYC burger places ranked by how many
+ * publications named each on a best-burger list in 2024–2026, with the menu price. Red Hook Tavern leads,
+ * named by 10." (lib/best-burgers.ts). Publications' opinion, never ours: no quality words of our own.
+ */
+export function bestBurgersSeo(d: { name: string; places: number; leaders: readonly string[]; publishers: number; years: { from: number; to: number }; generatedAt: string }): Seo {
+  const mon = formatMonthYear(d.generatedAt, { short: true });
+  const lead =
+    d.leaders.length === 1
+      ? `${d.leaders[0]} leads, named by ${d.publishers}.`
+      : d.leaders.length === 2
+        ? `${d.leaders[0]} and ${d.leaders[1]} lead, each named by ${d.publishers}.`
+        : null;
+  return {
+    title: pickTitle([`${d.name} (${mon})`, d.name]),
     description: assemble(
-      cheapest
-        ? `${d.name}: the ${pluralize(d.rows.length, "menu")} with the lowest top-burger price (${month}).`
-        : `The ${pluralize(d.rows.length, "most expensive burger")} in ${d.place}, ranked by price (${month}).`,
-      [
-        cheapest ? `${first.restaurant} tops the list at ${money(first.price)}.` : `${cap(theBurger(first.burger))} at ${first.restaurant} tops the list at ${money(first.price)}.`,
-        then.length ? then : null,
-        d.total > d.rows.length ? `Out of ${menus} in ${d.place}.` : null,
-      ],
+      `${pluralize(d.places, "NYC burger place")} ranked by how many publications named each on a best-burger list in ${d.years.from}–${d.years.to}, with the menu price.`,
+      [lead, updated(d.generatedAt)],
     ),
+  };
+}
+
+/**
+ * The best value burgers (lib/peoples-price bestValue): "Best value burgers in NYC (Sep 2026)" and "12 NYC burgers
+ * whose People's Price, what visitors would pay, is 10% or more above the menu price. Emily leads: People's
+ * Price $31, menu price $24.00. People's Price as of Sep 25, 2026." The month and date are the snapshot's.
+ */
+export function bestValueSeo(d: {
+  name: string;
+  minGap: number;
+  rows: ReadonlyArray<{ name: string; people: number | null; price: number }>;
+  asOf: string;
+  asOfDay: string;
+}): Seo {
+  const mon = formatMonthYear(d.asOf, { short: true });
+  const top = d.rows[0];
+  return {
+    title: pickTitle([`${d.name} (${mon})`, d.name]),
+    description: assemble(
+      d.rows.length
+        ? `${pluralize(d.rows.length, "NYC burger")} whose People's Price, what visitors would pay, is ${d.minGap}% or more above the menu price.`
+        : `NYC burgers whose People's Price, what visitors would pay, is ${d.minGap}% or more above the menu price. None yet.`,
+      [top && top.people !== null ? `${top.name} leads: People's Price $${formatCount(top.people)}, menu price ${money(top.price)}.` : null, `People's Price as of ${d.asOfDay}.`],
+    ),
+  };
+}
+
+// ---- the badge page and the press kit -----------------------------------------------------------------
+
+/** "Burger price badge for NYC restaurants" (lib/badge.ts). */
+export function badgePageSeo(d: { restaurants: number; median: number | null }): Seo {
+  return {
+    title: "Burger price badge for NYC restaurants",
+    description: assemble(`A free badge for the ${pluralize(d.restaurants, "NYC restaurant")} on The Burger Index: your burger's price and how it compares with the NYC median, linked to your page.`, [
+      d.median !== null ? `The NYC median is ${money(d.median)}.` : null,
+      "Copy the HTML.",
+    ]),
+  };
+}
+
+/** "Press kit: NYC burger prices, $20.00 median (Sep 2026)". */
+export function pressSeo(d: { median: number | null; menus: number; locations: number; generatedAt: string }): Seo {
+  const mon = formatMonthYear(d.generatedAt, { short: true });
+  if (d.median === null) return { title: "Press kit", description: "The Burger Index press kit: what a burger costs in New York, the data (CSV) and how to credit it." };
+  return {
+    title: pickTitle([`Press kit: NYC burger prices, ${money(d.median)} median (${mon})`, `Press kit: NYC burger prices (${mon})`, "Press kit"]),
+    description: assemble(`The Burger Index press kit: the NYC median burger costs ${money(d.median)} across ${pluralize(d.menus, "menu")} at ${pluralize(d.locations, "restaurant")} (${formatMonthYear(d.generatedAt)}).`, [
+      ["Borough medians, the data (CSV, CC BY 4.0), how to credit it and a share image.", "The data (CSV, CC BY 4.0) and how to credit it."],
+    ]),
   };
 }
 
