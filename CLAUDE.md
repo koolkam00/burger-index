@@ -174,7 +174,7 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
 - `data/peoples_price.json` — **the People's Price snapshot** (user decision 2026-09-25: crawlers must see the crowd's
   numbers). **Owned by the daily workflow on `main`: never edit, regenerate or commit it on a branch** (see "People's
   Price snapshot" under "Website"). Not a pipeline output; `pipeline build` never touches it.
-- `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,108 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, the 2026-09-25 deletions and the 2026-09-25 best-burger-list additions, see `data/list_changes_2026-09-23.md`: `name, neighborhood,
+- `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,127 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, the 2026-09-25 deletions and the 2026-09-25 best-burger-list additions (two rounds), see `data/list_changes_2026-09-23.md`: `name, neighborhood,
   borough, website, menu_url, notes, source` where `source` is `pilot-100|uptown|downtown|outer|dohmh-diner-pub|dohmh-hamburgers|best-lists-2026-09`). It's the user's data:
   don't edit it without their approval; report duplicates (`report.csv_duplicate_matches`), unmatched rows (`report.csv_unmatched`),
   ambiguous rows (`report.csv_ambiguous`) and closed places (`report.csv_address_now_other_business`,
