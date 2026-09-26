@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { BADGE_PAGE_PATH } from "@/lib/badge";
 import { BEST_BURGERS_NAME, BEST_BURGERS_PATH } from "@/lib/best-burgers";
 import { CSV_LICENSE, CSV_PATH } from "@/lib/csv";
 import { formatDate } from "@/lib/format";
 import { BEST_VALUE_NAME, BEST_VALUE_PATH } from "@/lib/peoples-price";
+import { PRESS_NAME, PRESS_PATH } from "@/lib/press";
 import { CITY_RANKINGS, rankingName, rankingPath } from "@/lib/rankings";
 import { sourceLine } from "@/lib/seo";
 import { NAV } from "@/lib/site";
@@ -39,6 +41,17 @@ export function SiteFooter({ generatedAt, bestValue = false }: { generatedAt: st
                     </Link>
                   </li>
                 ))}
+                {/* The press kit and the restaurants' price badge (user decisions 2026-09-25, stage 4). */}
+                <li>
+                  <Link className="deck-link" href={PRESS_PATH}>
+                    {PRESS_NAME}
+                  </Link>
+                </li>
+                <li>
+                  <Link className="deck-link" href={BADGE_PAGE_PATH}>
+                    Price badge
+                  </Link>
+                </li>
                 {/* The public price list (user decision 2026-09-25), where the old JSON download sat, then its
                     license in small type (CC BY 4.0, user decision 2026-09-25). */}
                 <li className="col-span-2">

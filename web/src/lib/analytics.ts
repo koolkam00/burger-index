@@ -24,6 +24,8 @@ export type FilterName = "borough" | "neighborhood" | "price" | "sort" | "clear_
 export type BoardName = "bargains" | "overpriced" | "most_answered" | "needs_answers" | "find";
 /** Where an answer to "What's it worth?" was given: a restaurant page's picker or the home pricer. */
 export type WorthSurface = "restaurant" | "home_pricer";
+/** What a "Copy" button copied: a badge's HTML or image address, or the press kit's credit line. */
+export type SnippetKind = "badge_html" | "badge_image" | "citation";
 /** The home pricer's area kinds (lib/pricer areaType). */
 export type PricerAreaType = "anywhere" | "borough" | "neighborhood";
 
@@ -76,6 +78,8 @@ export type AnalyticsEvents = {
   menu_link_clicked: LinkClick;
   website_link_clicked: LinkClick;
   see_on_map_clicked: { restaurant_id: string };
+  /** A "Copy" on the badge page (the badge's HTML or image address) or the press kit (the credit line). */
+  snippet_copied: { surface: "badge" | "press"; what: SnippetKind; restaurant_id?: string };
 };
 export type EventName = keyof AnalyticsEvents;
 

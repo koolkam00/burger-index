@@ -381,6 +381,31 @@ export function bestValueSeo(d: {
   };
 }
 
+// ---- the badge page and the press kit -----------------------------------------------------------------
+
+/** "Burger price badge for NYC restaurants" (lib/badge.ts). */
+export function badgePageSeo(d: { restaurants: number; median: number | null }): Seo {
+  return {
+    title: "Burger price badge for NYC restaurants",
+    description: assemble(`A free badge for the ${pluralize(d.restaurants, "NYC restaurant")} on The Burger Index: your burger's price and how it compares with the NYC median, linked to your page.`, [
+      d.median !== null ? `The NYC median is ${money(d.median)}.` : null,
+      "Copy the HTML.",
+    ]),
+  };
+}
+
+/** "Press kit: NYC burger prices, $20.00 median (Sep 2026)". */
+export function pressSeo(d: { median: number | null; menus: number; locations: number; generatedAt: string }): Seo {
+  const mon = formatMonthYear(d.generatedAt, { short: true });
+  if (d.median === null) return { title: "Press kit", description: "The Burger Index press kit: what a burger costs in New York, the data (CSV) and how to credit it." };
+  return {
+    title: pickTitle([`Press kit: NYC burger prices, ${money(d.median)} median (${mon})`, `Press kit: NYC burger prices (${mon})`, "Press kit"]),
+    description: assemble(`The Burger Index press kit: the NYC median burger costs ${money(d.median)} across ${pluralize(d.menus, "menu")} at ${pluralize(d.locations, "restaurant")} (${formatMonthYear(d.generatedAt)}).`, [
+      ["Borough medians, the data (CSV, CC BY 4.0), how to credit it and a share image.", "The data (CSV, CC BY 4.0) and how to credit it."],
+    ]),
+  };
+}
+
 // ---- restaurants ---------------------------------------------------------------------------------
 
 export type RestaurantSeoInput = {

@@ -897,6 +897,59 @@
     height: 48px;
     border-radius: 12px;
   }
+  /* Numbered steps and plain bullets in prose (the badge page). */
+  .steps {
+    list-style: decimal;
+    padding-left: 1.4em;
+  }
+  .steps-plain {
+    list-style: disc;
+  }
+  .steps > li + li {
+    margin-top: 10px;
+  }
+  .steps > li::marker {
+    color: var(--ink-muted);
+    font-family: var(--font-ui);
+    font-weight: 700;
+  }
+  /* The badge page: the badge as a restaurant's site would show it, and the finder's result rows. */
+  .badge-stage {
+    display: flex;
+    min-height: 84px;
+    align-items: center;
+  }
+  .badge-stage img {
+    max-width: 100%;
+    height: auto;
+  }
+  .badge-hit {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    padding: 8px 2px;
+    text-align: left;
+    cursor: pointer;
+  }
+  /* The press kit's share image: the picture as it is, at the width of its column. */
+  .press-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 2px solid var(--line);
+    border-radius: var(--radius-3);
+    box-shadow: var(--shadow-block);
+  }
+  /* A snippet to copy (components/CopyField.tsx): the input's box, grown to its lines. */
+  .copy-field {
+    display: block;
+    height: auto;
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.45;
+    resize: vertical;
+    overflow-wrap: anywhere;
+  }
   select.input {
     appearance: none;
     padding-right: 36px;
