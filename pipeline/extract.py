@@ -130,14 +130,20 @@ def normalize_period(v: Any) -> str | None:
     return "other"
 
 
+# A menu line that continues the burger above it: '...with cheese', '… with bacon'.
+CONTINUATION_RE = re.compile(r"^\s*(?:\.{2,}|…)")
+
+
 def normalize_menu(data: Any) -> dict:
     """Extraction JSON -> {is_menu, has_prices, restaurant_name, location, burgers[], notes[]}.
 
-    burgers: [{name, price, description, protein, menu_period}] in page order, deduped.
+    burgers: [{name, price, description, protein, menu_period}] in page order, deduped. A continuation line
+    ('...with cheese & bacon') is named after the burger above it ('Hamburger Sandwich with cheese & bacon').
     """
     data = data if isinstance(data, dict) else {}
     notes: list[str] = []
     items: list[dict] = []
+    base = None  # the last burger named in full: a continuation line ('...with cheese') is a variant of it
     for raw in data.get("burgers") or []:
         if not isinstance(raw, dict):
             continue
@@ -145,6 +151,12 @@ def normalize_menu(data: Any) -> dict:
         name = clean_name(raw.get("name"), price)
         if not name:
             continue
+        if CONTINUATION_RE.match(str(raw.get("name"))):
+            # Henry Public: 'HAMBURGER SANDWICH $22 / ...with cheese $24 / ...with cheese & bacon $26'
+            name = clean_name(CONTINUATION_RE.sub("", str(raw.get("name"))), price) or name
+            name = f"{base} {name}" if base else name
+        else:
+            base = name
         period = normalize_period(raw.get("menu_period"))
         if period == "kids" or re.search(r"\b(kid|kids|kiddie|child|childrens)\b", norm_name(name)):
             continue

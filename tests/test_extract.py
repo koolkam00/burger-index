@@ -54,6 +54,21 @@ def test_happy_hour_price_only_as_last_resort():
     assert [b["price"] for b in m["burgers"]] == [10]
 
 
+def test_continuation_line_takes_the_name_of_the_burger_above():
+    # Henry Public's supper menu: one burger, then its variants on '...' lines
+    m = extract.normalize_menu(menu(("HAMBURGER SANDWICH", 22, "beef", "dinner"), ("...with cheese", 24, "beef", "dinner"),
+                                    ("...with Berkshire bacon", 24, "beef", "dinner"),
+                                    ("...with cheese & bacon", 26, "beef", "dinner"), ("Turkey Burger", 19, "turkey"),
+                                    ("… with avocado", 21, "turkey")))
+    assert [b["name"] for b in m["burgers"]] == [
+        "Hamburger Sandwich", "Hamburger Sandwich with cheese", "Hamburger Sandwich with Berkshire bacon",
+        "Hamburger Sandwich with cheese & bacon", "Turkey Burger", "Turkey Burger with avocado"]
+    assert m["burgers"][extract.top_item(m["burgers"])]["name"] == "Hamburger Sandwich with cheese & bacon"
+    # nothing above it: the line keeps its own words; a name that only contains dots is not a continuation
+    m = extract.normalize_menu(menu(("...with cheese", 24), ("The Burger... Redux", 18)))
+    assert [b["name"] for b in m["burgers"]] == ["with cheese", "The Burger... Redux"]
+
+
 def test_same_name_same_menu_keeps_single_size():
     m = extract.normalize_menu(menu(("Shack Burger", 9.49), ("Shack Burger", 13.99)))
     assert [b["price"] for b in m["burgers"]] == [9.49]
