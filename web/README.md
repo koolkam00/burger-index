@@ -82,7 +82,9 @@ Top 10.", "Not counted: a newer list was saved from this connection. Save again 
 it (a voided list, "Not counted.", can be edited but not deleted: the backend keeps it void). One list per browser and per
 connection: the backend keeps the latest. A burger saved in a list must be one of the dataset's menus (the database's
 `ranker_keys`, synced by `scripts/ranker-keys-migration.mjs`). The header's "Rank your burgers" links to `/#rank`
-from every page (on home it scrolls to the ranker and focuses it). The crowd's ranking is the People's Top 10 below.
+from every page (on home it scrolls to the ranker and focuses it). The crowd's ranking is the People's Top 10 below; once the
+list on the card holds 3 burgers, the card shows it beside the list (user decision 2026-09-26, "Once 3 are added"): the seats
+with the visitor's picks marked, where their other picks stand, and the empty board's sentence before anything is ranked.
 
 The backend is the Supabase project `burger-index`; its schema, the three RPCs (`save_ranking`, `get_my_ranking`,
 `delete_ranking`), the refusals and rate limits are in [`../supabase/README.md`](../supabase/README.md).
@@ -107,11 +109,17 @@ fetches nothing.
   this browser has a saved list, which the `<head>` script turns into `html.ranker-saved` (a skeleton, not an empty list,
   until the saved one loads). Every storage access is wrapped. Tested with a fake backend in `test/ranker-store.test.ts`.
 - `src/lib/menu-list.ts` and `src/app/data/menus.json/route.ts`: the force-static `/data/menus.json` (every distinct priced
-  menu with its priced locations, and the neighborhoods' names), fetched when the ranker mounts (and by the badge page's
-  finder), so no menu sits in the home page's HTML.
+  menu with its priced locations and, where the daily board shows it, its People's Top 10 standing, `{rank}` or `{rising}`;
+  and the neighborhoods' names), fetched when the ranker mounts (and by the badge page's finder), so no menu sits in the home
+  page's HTML.
+- `src/lib/peoples-top-reveal.ts`: the People's Top 10 beside a list of 3+ (pure): when it shows (`showsReveal`), the seats the
+  home page passes the ranker (`revealBoard`, from `getRevealBoard()` in `src/lib/peoples-top-data.ts`: the seats and the
+  board's numbers, never the whole board), the visitor's picks marked, the stand-lines and the empty board's words. Tested in
+  `test/peoples-top-reveal.test.ts`.
 - `src/components/ranker/`: `Ranker` (the card: search, the list with its controls, save, the saved view, edit, delete with a
   confirmation, loading, error, rate-limit and closed states; focus follows each step and a polite live region says what
-  changed) and `PeoplesTopLink` (a link to the People's Top 10 that reports `peoples_top_clicked`).
+  changed), `PeoplesTopReveal` (the People's Top 10 beside the list, and the `lg`-only hint below 3) and `PeoplesTopLink` (a
+  link to the People's Top 10 that reports `peoples_top_clicked`).
 
 ### The People's Top 10 (daily board)
 
@@ -212,7 +220,8 @@ there is no banner, and surveys, product tours and the conversations widget are 
 | `ranking_item_added` | `menu_key`, `position` (1-based: the list's new length) | "Add" in the ranker's search |
 | `ranking_saved` | `length`, `edited` | a list saved (once Supabase saved it) |
 | `ranking_deleted` | `length` | "Delete my list", confirmed and done |
-| `peoples_top_clicked` | `surface` (`nav`, `menu_sheet`, `ranker`, `home`), `from_path` (the path only: no query, no hash) | a link to the People's Top 10 in the header nav, the menu sheet, the ranker card or under the home board |
+| `peoples_top_clicked` | `surface` (`nav`, `menu_sheet`, `ranker`, `home`), `from_path` (the path only: no query, no hash) | a link to the People's Top 10 in the header nav, the menu sheet, the ranker card (its top line, or "See the full People's Top 10" beside a list) or under the home board |
+| `peoples_top_revealed` | `surface` (`ranker`), `list_length` | the home ranker first shows the People's Top 10 beside a list of 3+ (added, or a saved or restored list on load), once per page view |
 | `map_pin_opened` | `restaurant_id`, `source` (`pin` tapped, or `link` for `/map?r=<id>`, once per visit: a List/Map round trip reopens the popup without sending it again) | `MapCanvas` |
 | `map_popup_link_clicked` | `restaurant_id` | the restaurant link in a map popup |
 | `map_view_changed` | `view` (`map` / `list`) | the Map / List toggle |
@@ -366,7 +375,7 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   burger" in our own titles, descriptions or H1s, `/peoples-top-10` recomputed from `../data/peoples_top.json` and the dataset
   (seats, the rest and Rising row by row with ranks, list counts, flags and links; the ItemList; "Early results" exactly while
   early; the one-liner; each `/best-burgers` row's People's rank), no "People's Price", "What's it worth" or "Price a burger"
-  left anywhere and `/peoples-price`, `/best-value-burgers` and `/data/pricer.json` not built, the ranker's region on home,
+  left anywhere and `/peoples-price`, `/best-value-burgers` and `/data/pricer.json` not built, the ranker's region on home (before the H1), each menu's People's Top 10 standing in `/data/menus.json`,
   any `/_none` placeholder noindex and unlisted, every page's share image (its own `/og/<path>.png` for restaurant,
   area, ranking, style, landmark and most-recommended pages, else `/og.png`; a 1200×630 PNG that exists; an alt naming the page's
   price or H1; no image unused or shared), one badge per priced restaurant and nothing else (its title's price and comparison
@@ -450,7 +459,7 @@ Notes:
 
 | Route | Page |
 |---|---|
-| `/` | The burger ranker first (`#rank`), beside the H1, the median as a sentence and the source line; then the headline index on the Order Board with "See the People's Top 10" and "Most-recommended burgers" under it, price histogram, borough bars with links to the five borough pages (`#boroughs`, which replaced `/boroughs`), cheapest and priciest (each with "See all"), neighborhood ranking, Q&A |
+| `/` | The burger ranker first (`#rank`, full width; the People's Top 10 beside a list of 3+), then the H1, the median as a sentence and the source line, and the headline index on the Order Board with "See the People's Top 10" and "Most-recommended burgers" under it, price histogram, borough bars with links to the five borough pages (`#boroughs`, which replaced `/boroughs`), cheapest and priciest (each with "See all"), neighborhood ranking, Q&A |
 | `/burgers` | Every priced restaurant's burger, one row each: search, filters (borough, neighborhood, price), sort, all synced to the URL; then links to every ranking page |
 | `/cheapest-burgers`, `/most-expensive-burgers` (and `/[borough]` and `/[borough]/[neighborhood]` under each), `/burgers-under-15`, `/burgers-under-20`, `/burgers/[style]` | Ranking pages: a one-line answer and a ranked table, one row per distinct menu (top 25 or half the place's menus, ties at the cut kept; every row under $N or of the style) |
 | `/burgers-near`, `/burgers-near/[landmark]` | Burgers near NYC landmarks: the hub (every landmark with 5+ priced spots within half a mile, by borough, with its count and range) and a page per landmark (the spots within half a mile, nearest first, with distance, burger and price; "See them on the map" opens `/map?near=<slug>`) |
@@ -466,7 +475,7 @@ Notes:
 | `/press` | Press kit: the headline numbers, the source line, the CSV and how to credit it, the share image, the contact (GitHub issues) |
 | `/llms.txt` | Plain summary for AI assistants: the headline numbers and date, links to the main pages, the ranking pages and the CSV |
 | `/data/burger-prices.csv` | The public price list, one row per priced restaurant location, licensed CC BY 4.0 (linked from the footer, the license link after it) |
-| `/data/menus.json` | Every distinct priced menu with its locations (not linked; fetched by the home ranker and the badge finder) |
+| `/data/menus.json` | Every distinct priced menu with its locations and People's Top 10 standing (not linked; fetched by the home ranker and the badge finder) |
 | `/<key>.txt` | The IndexNow key file (`public/`, public by design) |
 
 ## Notes for maintainers

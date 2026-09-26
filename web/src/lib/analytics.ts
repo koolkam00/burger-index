@@ -48,6 +48,11 @@ export type AnalyticsEvents = {
   ranking_deleted: { length: number };
   /** A link to the People's Top 10 followed (the header's nav or menu sheet, the ranker, under the home board). */
   peoples_top_clicked: { surface: PeoplesTopSurface; from_path: string };
+  /**
+   * The home ranker showed the People's Top 10 beside a list of 3+ (added, or a saved or restored list on load), once
+   * per page view, with the list's length then.
+   */
+  peoples_top_revealed: { surface: "ranker"; list_length: number };
   /** A map pin's popup opened: tapped, or opened for /map?r=<id> ("See it on the map"). */
   map_pin_opened: { restaurant_id: string; source: "pin" | "link" };
   /** The restaurant link inside a map popup. */

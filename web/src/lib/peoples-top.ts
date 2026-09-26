@@ -127,6 +127,20 @@ export function peoplesTopView<T>(board: BoardFile, menuOf: (key: string) => T |
   };
 }
 
+/**
+ * Where a menu stands on the board, as /peoples-top-10 shows it: ranked (`rank`, numbered like the page, the seats
+ * first) or Rising (`rising`: its list count). A menu the board doesn't show has none.
+ */
+export type PeopleStanding = { rank: number } | { rising: number };
+
+/** Every menu the board shows, with its standing (the home ranker reads them from /data/menus.json). */
+export function peopleStandings(view: PeoplesTopView<unknown>): Map<string, PeopleStanding> {
+  const out = new Map<string, PeopleStanding>();
+  for (const e of [...view.seats, ...view.rest]) out.set(e.key, { rank: e.rank });
+  for (const e of view.rising) if (!out.has(e.key)) out.set(e.key, { rising: e.lists });
+  return out;
+}
+
 // ---- words ------------------------------------------------------------------------------------------
 
 /** "On 143 lists · #1 on 27" (a ranked row), "On 1 list" (nobody's #1). */

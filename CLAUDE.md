@@ -236,7 +236,8 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   before writing Next code. `output: "export"`: every route is static (`generateStaticParams`); the only route
   handlers are force-static files (`/og.png`, `/llms.txt`, `/data/burger-prices.csv`, `/data/menus.json`, sitemap, robots).
 - **The burger ranker (user decisions 2026-09-25/26; it replaced all crowd pricing)** is the home page's first screen
-  (`#rank`; DESIGN.md "The ranker hero"): search the priced burgers (distinct menus, a chain once), add 3 to 25 best first
+  (`#rank`, full width, above the H1 "What a burger costs in New York.", user decision 2026-09-26; DESIGN.md "The ranker
+  hero"): search the priced burgers (distinct menus, a chain once), add 3 to 25 best first
   ("your top 10", room for more), move them with up/down buttons, remove them, save; a returning browser sees its saved
   list and can edit or delete it. `components/ranker/Ranker.tsx` (UI), `src/lib/ranker-store.ts` (state as an external
   store; an unsaved list in `sessionStorage` `bi-ranker-draft`, `localStorage` `bi-ranker-saved` = this browser has a saved
@@ -246,8 +247,12 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   lazily: a returning browser's saved list on mount, else the first save), tested in `test/ranker.test.ts` and
   `test/ranker-store.test.ts`. The voter id is `src/lib/voter.ts` (`localStorage` `burger-index-voter`, the name the old
   worth store gave it). The burgers come from the force-static `/data/menus.json` (`src/lib/menu-list.ts`: every distinct
-  priced menu with its priced locations and the neighborhoods' names; the badge finder reads it too), fetched when the
-  ranker mounts, so the home HTML holds no menus. Without the Supabase settings the card says "Lists open soon." and
+  priced menu with its priced locations, its People's Top 10 standing where the board shows it, and the neighborhoods'
+  names; the badge finder reads it too), fetched when the ranker mounts, so the home HTML holds no menus. **Once the list
+  on the card holds 3 burgers, the People's Top 10 shows beside it** (below it on a phone; user decision 2026-09-26, "Once
+  3 are added", chosen knowing it can anchor later picks): the board's seats (the home page passes only those,
+  `getRevealBoard()`), the visitor's picks on it marked, where their other picks stand, the empty board's sentence
+  (`src/lib/peoples-top-reveal.ts`, `components/ranker/PeoplesTopReveal.tsx`, `test/peoples-top-reveal.test.ts`). Without the Supabase settings the card says "Lists open soon." and
   fetches nothing. The header's "Rank your burgers" (and the menu sheet's) links to `/#rank` from every page; on home it
   scrolls to the ranker and focuses it; the search icon button sits next to it at every width. Under the home board:
   "See the People's Top 10" and "Most-recommended burgers". Menu keys and restaurant ids must never change (lists are
@@ -354,7 +359,8 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   `web/.env.local`**, so dev and local builds send nothing. Components call `track()` in event handlers; nothing in server
   components (the restaurant page's links are the client `components/RestaurantLinks.tsx`). The ranker sends
   `ranking_started` (`edited`), `ranking_item_added` (`menu_key`, `position`), `ranking_saved` (`length`, `edited`, once
-  Supabase saved it) and `ranking_deleted` (`length`); links to the People's Top 10 send `peoples_top_clicked` (`surface`:
+  Supabase saved it) and `ranking_deleted` (`length`); the ranker's first showing of the People's Top 10 beside a list sends `peoples_top_revealed` (`surface: "ranker"`,
+  `list_length`, once per page view); links to the People's Top 10 send `peoples_top_clicked` (`surface`:
   `nav` / `menu_sheet` / `ranker` / `home`, `from_path`: the path only); the badge page's and press kit's "Copy" buttons
   `snippet_copied` (`surface`, `what`, the badge's `restaurant_id`). The worth and pricer events are gone. No personal data: never the voter id, and no free text in events
   but the search query (trimmed, lowercased, 60 characters); replays mask inputs and the query echoed in the "No burgers
