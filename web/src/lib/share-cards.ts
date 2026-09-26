@@ -3,7 +3,7 @@
 // to /og/<page path>.png. A page without a card (home, the map, the People's Price, …) keeps /og.png.
 import "server-only";
 
-import { BEST_BURGERS_NAME, BEST_BURGERS_PATH, BEST_BURGERS_TICKET, bestBurgersCountLine } from "./best-burgers";
+import { BEST_BURGERS_NAME, BEST_BURGERS_PATH, BEST_BURGERS_TICKET, bestBurgersCountLine, namedByHeading } from "./best-burgers";
 import { getBestBurgers } from "./best-burgers-data";
 import { BOROUGH_META } from "./boroughs";
 import { getBorough, getGeneratedAt, getNeighborhoodPages, getPricedRestaurants, getStats, neighborhoodMenuCounts } from "./data";
@@ -51,7 +51,7 @@ function build(): Map<string, ShareCard> {
     listCard({
       ticket: BEST_BURGERS_TICKET,
       title: BEST_BURGERS_NAME,
-      rows: best.map((e) => ({ rank: e.rank, name: e.name, detail: `Named by ${pluralize(e.publishers.length, "publication")}`, price: e.restaurant?.index_price ?? null })),
+      rows: best.map((e) => ({ rank: e.rank, name: e.name, detail: namedByHeading(e.publishers.length), price: e.restaurant?.index_price ?? null })),
       count: best.length ? bestBurgersCountLine(best.length) : null,
     }),
   );

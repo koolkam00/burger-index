@@ -37,7 +37,7 @@ function rankingNote(spec: RankingSpec, restaurants: Parameters<typeof rankMenus
   return `the ${rows.length} most expensive of ${formatCount(total)} menus, up to ${money(first.indexPrice)} at ${first.restaurant.name}`;
 }
 
-/** "33 places ranked by how many publications named them on a best-burger list in 2024–2026, …" */
+/** "96 places ranked by how many publications named them on a best-burger list in 2024–2026, …" */
 function bestBurgersNote(): string {
   const entries = getBestBurgers();
   const years = getBestBurgersYears();

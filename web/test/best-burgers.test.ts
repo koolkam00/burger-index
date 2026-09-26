@@ -1,6 +1,7 @@
 // The most-recommended burgers (lib/best-burgers.ts) and its curated file, ../data/best_burgers.json:
 // the 2026-09-25 decisions (lists of 2024-2026, no Upper Cut Media House, no trend features, beef burgers
-// only, two or more publishers), facts only, and the ranking by distinct publishers.
+// only, closed places out; one publisher is enough: every open place a counted list names is on the page),
+// facts only, the ranking by distinct publishers and the page's groups ("Named by 10 publications").
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
@@ -9,7 +10,9 @@ import {
   bestBurgersLede,
   bestBurgersProblems,
   formatListDate,
+  groupBestBurgers,
   leaders,
+  namedByHeading,
   rankBestBurgers,
   type BestBurgersFile,
 } from "../src/lib/best-burgers";
@@ -22,7 +25,7 @@ import { place } from "./places";
 const FILE = JSON.parse(readFileSync(new URL("../../data/best_burgers.json", import.meta.url), "utf8")) as BestBurgersFile;
 const DATA = loadDataset();
 
-test("best_burgers.json fits the dataset: every id, list and neighborhood exists, two or more publishers each", () => {
+test("best_burgers.json fits the dataset: every id, list and neighborhood exists, every list names a place", () => {
   assert.deepEqual(bestBurgersProblems(FILE, DATA.restaurants, DATA.neighborhoods), []);
   assert.equal(FILE.version, 1);
   assert.deepEqual(FILE.years, { from: 2024, to: 2026 });
@@ -42,10 +45,16 @@ test("best_burgers.json applies the decisions: 2024-2026 lists only, no Upper Cu
     assert.ok(!ids.has(out), `${out} is left out`);
   }
   const keys = new Set(FILE.places.map((p) => p.key));
-  // National chain, vegetarian/vegan and lamb picks, closed places, a place whose only second source mentions
-  // only a bison burger (Old Town Bar: Eater's entry picks no burger), and the places whose only second
-  // publisher was the New York Post's off-menu trend piece (Crane Club, Lord's, Quatorze): none are on the page.
-  for (const out of ["shake-shack", "superiority", "moonburger", "toad-style", "cervos", "harts", "blue-hour", "guss", "old-town-bar", "crane-club", "lords", "quatorze"]) assert.ok(!keys.has(out), out);
+  // National chain, vegetarian/vegan and lamb picks, closed places (F. Ottomanelli: temporarily closed; Little
+  // Fino no longer serves a burger), and places named only on a left-out list (Upper Cut Media House: Bar
+  // Chimera, Txula; the New York Post's off-menu piece: Brass, Caviar Russe): none are on the page.
+  for (const out of ["shake-shack", "superiority", "moonburger", "toad-style", "cervos", "harts", "grilled", "betr-brgr", "blue-hour", "guss", "bandits", "debbies", "loring-place", "paper-plate", "ottomanelli", "little-fino", "bar-chimera", "txula", "brass", "caviar-russe"]) {
+    assert.ok(!keys.has(out), out);
+  }
+  // One publisher is enough (user decision 2026-09-25): places named on one counted list are on the page, Old
+  // Town Bar for The Infatuation's cheeseburger (Eater's bison burger still doesn't count), Crane Club, Lord's
+  // and Quatorze without the New York Post's piece, and the places added to the restaurant list for the lists.
+  for (const on of ["old-town-bar", "crane-club", "lords", "quatorze", "brindle-room", "upland", "union-square-cafe", "lori-jayne", "julius", "lundys", "chelsea-papaya"]) assert.ok(keys.has(on), on);
   for (const p of FILE.places) for (const s of p.sources) if (s.burger) assert.ok(!/bison|lamb|turkey|chicken|veg|plant|impossible|beyond|fish|salmon/i.test(s.burger), `${p.key}: ${s.burger}`);
 });
 
@@ -57,8 +66,8 @@ test("best_burgers.json holds facts only: names, short burger names, titles, lin
     assert.deepEqual(Object.keys(p).sort(), [...allowed.place].sort());
     for (const s of p.sources) {
       assert.deepEqual(Object.keys(s).sort(), [...allowed.source].sort());
-      // A burger's name, never a sentence from the list.
-      if (s.burger) assert.ok(s.burger.length <= 60 && s.burger.split(/\s+/).length <= 8 && !/[.!?]$/.test(s.burger), s.burger);
+      // A burger's name, never a sentence from the list (a name may end in an initialism: "Notorious B.E.E.F.").
+      if (s.burger) assert.ok(s.burger.length <= 60 && s.burger.split(/\s+/).length <= 8 && !/\w{2}[.!?]$/.test(s.burger), s.burger);
     }
   }
 });
@@ -86,6 +95,11 @@ test("rankBestBurgers on the real file: most publishers first, ties share a rank
     assert.equal(byKey.get(k)?.menuKey, null, k);
   }
   assert.equal(byKey.get("peter-luger")?.neighborhood?.name, "Williamsburg");
+  // Places the dataset doesn't carry: their neighborhood from the file, no price, no page.
+  assert.equal(byKey.get("julius")?.neighborhood?.name, "West Village");
+  assert.equal(byKey.get("lundys")?.neighborhood?.slug, "carroll-gardens-columbia-street-red-hook");
+  // Lori Jayne moved from Alphaville to Danger Danger: the place's name, its new home's page and price.
+  assert.equal(byKey.get("lori-jayne")?.restaurant?.id, "lori-jayne-at-danger-danger-bushwick-north");
   // Every list a place cites, newest first.
   for (const e of entries) for (let i = 1; i < e.sources.length; i++) assert.ok(e.sources[i - 1].list.date >= e.sources[i].list.date, e.key);
 });
@@ -144,7 +158,7 @@ test("bestBurgersProblems: catches what the decisions rule out", () => {
     ],
   };
   const problems = bestBurgersProblems(base, restaurants, []).join("\n");
-  for (const want of ["outside 2024-2026", "Upper Cut Media House lists are left out", "url is not https", "restaurant zzz is not in the dataset", "counted twice", "fewer than 2", "needs a known neighborhood_slug", "unknown list nope", "names no place on the page"]) {
+  for (const want of ["outside 2024-2026", "Upper Cut Media House lists are left out", "url is not https", "restaurant zzz is not in the dataset", "counted twice", "three: named on no list of the file", "needs a known neighborhood_slug", "unknown list nope", "names no place on the page"]) {
     assert.ok(problems.includes(want), `expected "${want}" in:\n${problems}`);
   }
 });
@@ -163,7 +177,8 @@ test("the real page's lede, title and description: numbers and names, publicatio
   assert.equal(seo.title, "The most-recommended burgers in NYC (Sep 2026)");
   assert.ok(seo.title.length <= TITLE_MAX);
   assert.ok(seo.description.length <= DESCRIPTION_MAX, seo.description);
-  assert.match(seo.description, /^33 NYC burger places ranked by how many publications named each on a best-burger list in 2024–2026, with the menu price\./);
+  assert.equal(entries.length, 96);
+  assert.match(seo.description, /^96 NYC burger places ranked by how many publications named each on a best-burger list in 2024–2026, with the menu price\. Red Hook Tavern leads, named by 10\./);
   for (const s of [seo.title, seo.description, lede]) assert.ok(!/\bbest burgers?\b|\btop-rated\b/i.test(s), s);
 });
 
@@ -179,5 +194,31 @@ test("every priced place on the page has a restaurant page and its burger is the
   const entries = rankBestBurgers(FILE, DATA.restaurants, DATA.neighborhoods);
   const priced = new Map(DATA.restaurants.filter((r): r is PricedRestaurant => r.index_price !== null).map((r) => [r.id, r]));
   for (const e of entries) if (e.restaurant) assert.equal(priced.get(e.restaurant.id)?.burger.name, e.restaurant.burger.name);
-  assert.ok(entries.filter((e) => e.restaurant).length >= 30);
+  // Every place carries our menu price wherever one was found: only these publish no burger price anywhere.
+  assert.deepEqual(
+    entries.filter((e) => !e.restaurant).map((e) => e.key).sort(),
+    ["crane-club", "julius", "le-b", "lundys", "peter-luger"],
+  );
+});
+
+test("groupBestBurgers: one group per publication count, most first, places by name, sharing the rank", () => {
+  const entries = rankBestBurgers(FILE, DATA.restaurants, DATA.neighborhoods);
+  const groups = groupBestBurgers(entries);
+  assert.deepEqual(groups.flatMap((g) => g.entries), entries, "every entry once, in the page's order");
+  assert.equal(groups[0].heading, "Named by 10 publications");
+  assert.equal(groups[0].id, "named-by-10");
+  assert.deepEqual(groups[0].entries.map((e) => e.name), ["Red Hook Tavern"]);
+  const last = groups[groups.length - 1];
+  assert.equal(last.heading, "Named by 1 publication");
+  assert.ok(last.entries.some((e) => e.key === "union-square-cafe"));
+  for (let i = 0; i < groups.length; i++) {
+    const g = groups[i];
+    if (i) assert.ok(groups[i - 1].publishers > g.publishers, g.heading);
+    for (const e of g.entries) {
+      assert.equal(e.publishers.length, g.publishers, e.key);
+      assert.equal(e.rank, g.rank, e.key);
+    }
+  }
+  assert.equal(namedByHeading(2), "Named by 2 publications");
+  assert.deepEqual(groupBestBurgers([]), []);
 });
