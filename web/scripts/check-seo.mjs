@@ -30,6 +30,16 @@
 // (and no other does), each /best-burgers row carries its menu's snapshot numbers, /peoples-price is dated and
 // its "Most answered" board matches, and /best-value-burgers exists exactly when 10+ menus have a verdict, its
 // rows recomputed here; until then nothing links it and only its 404 placeholder (/_none, noindex) is built.
+// Sharing and link-building (user decisions 2026-09-25, stage 4): every restaurant, neighborhood, borough,
+// ranking and style page and /best-burgers names its own 1200×630 share image (/og/<path>.png, a PNG of that
+// size that exists, used by no other page, its alt naming the page's burger or area and price); every other
+// page names /og.png; nothing under out/og/ goes unused. Every priced restaurant has /badge/<id>.svg (and
+// nothing else is there), whose title states its price and how it compares with the NYC median, and its
+// page links /badge?r=<id>. /badge and /press exist, are linked from every page's footer, in the sitemap
+// and llms.txt; /press carries the median, the borough medians, the source line, the CSV and its license, the
+// share image and the GitHub issues link. No page, llms.txt or badge carries an email address. Each
+// restaurant page's "Nearby at a similar price" is recomputed here (within 1.5 km and $4, nearest first, a
+// menu once, then its neighborhood), and "More in …" repeats none of it.
 // Exit 1 on any error; warnings are printed and don't fail.
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -128,7 +138,10 @@ const STYLE_PATH = /^\/burgers\/([a-z0-9-]+)$/;
 const BEST_PATH = "/best-burgers";
 const CITY_RANKING_PATHS = ["/cheapest-burgers", "/most-expensive-burgers", "/burgers-under-15", "/burgers-under-20"];
 // Every page's footer links these: the NYC ranking pages and the most-recommended burgers.
-const FOOTER_PATHS = [...CITY_RANKING_PATHS, BEST_PATH];
+const PRESS_PATH = "/press";
+const BADGE_PATH = "/badge";
+const CONTACT_URL = "https://github.com/koolkam00/burger-index/issues";
+const FOOTER_PATHS = [...CITY_RANKING_PATHS, BEST_PATH, PRESS_PATH, BADGE_PATH];
 /** Distinct priced menus a neighborhood needs for its own two lists (src/lib/rankings.ts MIN_NEIGHBORHOOD_MENUS). */
 const MIN_NEIGHBORHOOD_MENUS = 10;
 /** Distinct menus a style needs for a page (src/lib/styles.ts MIN_STYLE_MENUS). */
@@ -768,6 +781,188 @@ const tl = pages.map((p) => p.title.length);
 const dl = pages.map((p) => p.description.length);
 for (const p of pages) if (p.description.length > 160) err(`${p.path}: description is ${p.description.length} characters`);
 
+// ---- share images, badges, the press kit, nearby (stage 4) ------------------------------------------
+
+/** The page's own share image, by page type; every other page uses the site's /og.png. */
+function expectedImage(path) {
+  const own = /^\/(restaurants|neighborhoods|boroughs)\/[^/]+$/.test(path) || RANKING_PATH.test(path) || STYLE_PATH.test(path) || path === BEST_PATH;
+  return own ? `/og${path}.png` : "/og.png";
+}
+/** [width, height] of a PNG file, or null. */
+function pngSize(file) {
+  const b = readFileSync(file);
+  if (b.length < 24 || b.readUInt32BE(0) !== 0x89504e47 || b.toString("latin1", 12, 16) !== "IHDR") return null;
+  return [b.readUInt32BE(16), b.readUInt32BE(20)];
+}
+const metaContent = (head, attr, name) => {
+  const tag = new RegExp(`<meta ${attr}="${name.replace(/[:.]/g, "\\$&")}" content="[^"]*"/?>`).exec(head);
+  return tag ? decode(/content="([^"]*)"/.exec(tag[0])[1]) : null;
+};
+const usedImages = new Map();
+for (const p of pages) {
+  const want = expectedImage(p.path);
+  const og = metaContent(p.head, "property", "og:image");
+  if (og !== `${site}${want}`) {
+    err(`${p.path}: og:image ${og}, expected ${site}${want}`);
+    continue;
+  }
+  if (metaContent(p.head, "name", "twitter:image") !== og) err(`${p.path}: twitter:image is not the og:image`);
+  if (metaContent(p.head, "name", "twitter:card") !== "summary_large_image") err(`${p.path}: twitter:card is not summary_large_image`);
+  if (metaContent(p.head, "property", "og:image:width") !== "1200" || metaContent(p.head, "property", "og:image:height") !== "630") err(`${p.path}: og:image is not declared 1200×630`);
+  const alt = metaContent(p.head, "property", "og:image:alt");
+  if (!alt) err(`${p.path}: no og:image:alt`);
+  const file = outFile(want);
+  const size = file ? pngSize(file) : null;
+  if (!size || size[0] !== 1200 || size[1] !== 630) err(`${p.path}: ${want} is ${file ? `a ${size ? size.join("×") : "non-PNG"} file` : "missing"}, not a 1200×630 PNG`);
+  usedImages.set(want, [...(usedImages.get(want) ?? []), p.path]);
+  if (want === "/og.png" || !alt) continue;
+  // The card is the page's own: its alt names the restaurant and its price, the area and its median, or the list.
+  const rest = /^\/restaurants\/([^/]+)$/.exec(p.path);
+  const area = /^\/(neighborhoods|boroughs)\/([^/]+)$/.exec(p.path);
+  if (rest) {
+    const r = byId.get(rest[1]);
+    if (r && !(alt.includes(r.name) && alt.includes(money(r.index_price)))) err(`${p.path}: share image alt "${alt}" does not name ${r.name} and ${money(r.index_price)}`);
+  } else if (area) {
+    const a = (area[1] === "boroughs" ? data.boroughs : data.neighborhoods).find((x) => x.slug === area[2]);
+    if (a?.index_median != null && !alt.includes(money(a.index_median))) err(`${p.path}: share image alt "${alt}" lacks the median ${money(a.index_median)}`);
+  } else {
+    const h1 = text((/<h1[^>]*>(.*?)<\/h1>/s.exec(p.html) ?? ["", ""])[1]).replace(/\.$/, "");
+    if (!alt.includes(h1)) err(`${p.path}: share image alt "${alt}" does not name "${h1}"`);
+  }
+}
+for (const [img, paths] of usedImages) if (img !== "/og.png" && paths.length > 1) err(`${img} is the share image of ${paths.join(", ")}`);
+const ogDir = join(OUT, "og");
+const ogFiles = existsSync(ogDir) ? walk(ogDir).map((f) => `/${relative(OUT, f)}`) : [];
+for (const f of ogFiles) if (!usedImages.has(f)) err(`${f}: a share image no page names`);
+const ogBytes = ogFiles.reduce((n, f) => n + statSync(join(OUT, f)).size, 0);
+
+// Badges: exactly one per priced restaurant, honest text, linked from its page.
+const badgeDir = join(OUT, "badge");
+// The /badge page's own client-navigation payloads (__next.*.txt) share the folder.
+const badgeFiles = existsSync(badgeDir) ? readdirSync(badgeDir).filter((f) => statSync(join(badgeDir, f)).isFile() && !f.startsWith("__next.")) : [];
+const wantBadges = new Set(priced.map((r) => `${r.id}.svg`));
+if (!priced.length) wantBadges.add("_none.svg");
+for (const f of badgeFiles) if (!wantBadges.has(f)) err(`/badge/${f}: a badge for no priced restaurant`);
+const shortMoney = (v) => (cents(v) % 100 ? money(v) : `$${count(cents(v) / 100)}`);
+const vsNyc = (v) => {
+  const m = data.stats.index_median;
+  if (m == null) return null;
+  const pct = ((v - m) / m) * 100;
+  return Math.abs(pct) < 0.5 ? `right at the ${money(m)} NYC median` : `${Math.round(Math.abs(pct))}% ${pct > 0 ? "above" : "below"} the ${money(m)} NYC median`;
+};
+let badgeBytes = 0;
+for (const r of priced) {
+  const file = join(badgeDir, `${r.id}.svg`);
+  if (!existsSync(file)) {
+    err(`/badge/${r.id}.svg is missing`);
+    continue;
+  }
+  const svg = readFileSync(file, "utf8");
+  badgeBytes += svg.length;
+  if (!/^<svg\b[^>]*\swidth="300"[^>]*\sheight="84"/.test(svg)) err(`/badge/${r.id}.svg: not a 300×84 SVG`);
+  if (/<script|\son[a-z]+=|javascript:/i.test(svg)) err(`/badge/${r.id}.svg: carries script`);
+  const vs = vsNyc(r.index_price);
+  const label = `${shortMoney(r.index_price)} burger${vs ? `, ${vs}` : ""} (The Burger Index, ${month})`;
+  const title = decode(/<title>(.*?)<\/title>/s.exec(svg)?.[1] ?? "");
+  if (title !== label) err(`/badge/${r.id}.svg: title "${title}", expected "${label}"`);
+  const page = pages.find((p) => p.path === `/restaurants/${r.id}`);
+  if (page && !page.html.includes(`href="/badge?r=${r.id}"`)) err(`/restaurants/${r.id}: no link to its badge (/badge?r=${r.id})`);
+}
+
+// The badge page and the press kit.
+const badgePage = pages.find((p) => p.path === BADGE_PATH);
+if (!badgePage) err(`missing ${BADGE_PATH}`);
+else {
+  const img = /<img\b[^>]*src="\/badge\/([a-z0-9-]+)\.svg"[^>]*>/.exec(badgePage.html);
+  const r = img && byId.get(img[1]);
+  if (!r) err(`${BADGE_PATH}: no example badge of a priced restaurant`);
+  else {
+    const snippet = decode(/<textarea\b[^>]*>(.*?)<\/textarea>/s.exec(badgePage.html)?.[1] ?? "");
+    const want = `<a href="${site}/restaurants/${r.id}"><img src="${site}/badge/${r.id}.svg" width="300" height="84" alt="`;
+    if (!snippet.startsWith(want)) err(`${BADGE_PATH}: the HTML snippet "${snippet.slice(0, 120)}" does not link ${r.id}'s page and badge`);
+    if (!snippet.includes(`${r.name.replace(/&/g, "&amp;").replace(/"/g, "&quot;")} on The Burger Index: ${shortMoney(r.index_price)} burger`)) err(`${BADGE_PATH}: the snippet's alt does not name ${r.name} and its price`);
+  }
+}
+const press = pages.find((p) => p.path === PRESS_PATH);
+if (!press) err(`missing ${PRESS_PATH}`);
+else {
+  const main = /<main\b[^>]*>(.*?)<\/main>/s.exec(press.html)?.[1] ?? "";
+  const body = text(main);
+  if (data.stats.index_median != null && !body.includes(money(data.stats.index_median))) err(`${PRESS_PATH}: no NYC median ${money(data.stats.index_median)}`);
+  for (const b of data.boroughs) if (b.index_median != null && b.restaurants_priced && !body.includes(money(b.index_median))) err(`${PRESS_PATH}: no ${b.name} median ${money(b.index_median)}`);
+  if (!body.includes(SOURCE_LINE)) err(`${PRESS_PATH}: no source line`);
+  for (const href of ['href="/data/burger-prices.csv"', `href="${LICENSE_URL}"`, `href="${CONTACT_URL}"`]) if (!main.includes(href)) err(`${PRESS_PATH}: the page does not link ${href}`);
+  if (!/<img\b[^>]*src="\/og\.png"[^>]*alt="[^"]+"/.test(main)) err(`${PRESS_PATH}: no share image`);
+  if (!body.includes(`${site}. CC BY 4.0.`)) err(`${PRESS_PATH}: the credit line lacks the site and the license`);
+}
+
+// No email address anywhere we publish (the contact is the GitHub issues page).
+const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/;
+for (const p of pages) {
+  if (/mailto:/i.test(p.html)) err(`${p.path}: a mailto: link`);
+  const m = EMAIL.exec(text(p.html.replace(/<script\b[^>]*>.*?<\/script>/gs, " ")));
+  if (m) err(`${p.path}: an email address "${m[0]}"`);
+}
+
+// "Nearby at a similar price": within 1.5 km and $4 of the restaurant's price, nearest first, a menu once
+// (its own chain never), then its neighborhood, closest in price first; at most four.
+const NEAR_KM = 1.5;
+const NEAR_GAP = 400;
+const menuOf = (r) => (r.chain ? `chain:${r.chain}` : r.id);
+function kmBetween(a, b) {
+  if (a.lat == null || a.lng == null || b.lat == null || b.lng == null) return null;
+  const rad = (d) => (d * Math.PI) / 180;
+  const h = Math.sin(rad(b.lat - a.lat) / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(rad(b.lng - a.lng) / 2) ** 2;
+  return 2 * 6371.0088 * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+function expectedNearby(r) {
+  const gap = (x) => Math.abs(cents(x.index_price) - cents(r.index_price));
+  const byName = (a, b) => a.name.localeCompare(b.name) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  const sim = priced.filter((x) => x.id !== r.id && menuOf(x) !== menuOf(r) && gap(x) <= NEAR_GAP).map((x) => ({ x, d: kmBetween(r, x) }));
+  const out = [];
+  const seen = new Set();
+  const take = (list) => {
+    for (const s of list) {
+      if (out.length >= 4 || seen.has(menuOf(s.x))) continue;
+      seen.add(menuOf(s.x));
+      out.push(s);
+    }
+  };
+  take(sim.filter((s) => s.d !== null && s.d <= NEAR_KM).sort((a, b) => a.d - b.d || gap(a.x) - gap(b.x) || byName(a.x, b.x)));
+  if (r.neighborhood_slug) take(sim.filter((s) => s.x.neighborhood_slug === r.neighborhood_slug).sort((a, b) => gap(a.x) - gap(b.x) || (a.d ?? Infinity) - (b.d ?? Infinity) || byName(a.x, b.x)));
+  return out;
+}
+let nearbyPages = 0;
+let nearbyRows = 0;
+for (const r of priced) {
+  const page = pages.find((p) => p.path === `/restaurants/${r.id}`);
+  if (!page) continue;
+  const section = /<section[^>]*aria-labelledby="similar-price"[^>]*>(.*?)<\/section>/s.exec(page.html)?.[1] ?? "";
+  const rows = [...section.matchAll(/<li\b[^>]*>(.*?)<\/li>/gs)].map(([, li]) => ({
+    id: decode(/href="\/restaurants\/([^"]+)"/.exec(li)?.[1] ?? ""),
+    sub: text(/<span class="t-ui-s[^"]*">(.*?)<\/span>/s.exec(li)?.[1] ?? ""),
+    price: text(/<span class="t-num-m">(.*?)<\/span>/s.exec(li)?.[1] ?? ""),
+  }));
+  const want = expectedNearby(r);
+  const fmt = (list) => list.map((x) => x.id ?? x.x.id).join(", ");
+  if (fmt(rows) !== fmt(want)) err(`/restaurants/${r.id}: "Nearby at a similar price" is [${fmt(rows)}], expected [${fmt(want)}]`);
+  rows.forEach((row, i) => {
+    const w = want[i];
+    if (!w || w.x.id !== row.id) return;
+    if (row.price !== money(w.x.index_price)) err(`/restaurants/${r.id}: nearby ${row.id} shows ${row.price}, not ${money(w.x.index_price)}`);
+    if (w.d !== null && !row.sub.endsWith(`${Math.max(0.1, Math.round((w.d / 1.609344) * 10) / 10).toFixed(1)} mi away`)) err(`/restaurants/${r.id}: nearby ${row.id} says "${row.sub}"`);
+  });
+  if (!want.length && section) err(`/restaurants/${r.id}: an empty "Nearby at a similar price"`);
+  const more = /<section[^>]*aria-labelledby="nearby"[^>]*>(.*?)<\/section>/s.exec(page.html)?.[1] ?? "";
+  const shown = new Set(want.map((w) => menuOf(w.x)));
+  for (const m of more.matchAll(/href="\/restaurants\/([^"]+)"/g)) {
+    const x = byId.get(decode(m[1]));
+    if (x && shown.has(menuOf(x))) err(`/restaurants/${r.id}: "More in …" repeats ${x.id} from "Nearby at a similar price"`);
+  }
+  if (rows.length) nearbyPages += 1;
+  nearbyRows += rows.length;
+}
+
 // ---- sitemap, robots, llms.txt, CSV --------------------------------------------------------------
 
 const sitemap = readFileSync(join(OUT, "sitemap.xml"), "utf8");
@@ -776,6 +971,7 @@ const pageUrls = new Set(pages.map((p) => p.url));
 for (const l of locs) if (!pageUrls.has(l)) err(`sitemap lists ${l}, which is not a page`);
 for (const u of pageUrls) if (!locs.includes(u)) err(`sitemap misses ${u}`);
 if (new Set(locs).size !== locs.length) err("sitemap lists a URL twice");
+for (const l of locs) if (/\.(png|svg|jpe?g|csv|json|txt)$/i.test(l)) err(`sitemap lists a file: ${l}`);
 
 for (const need of ["User-Agent: *", "Allow: /", "Disallow: /ingest/", "OAI-SearchBot", "ChatGPT-User", "PerplexityBot", "Perplexity-User", "Claude-SearchBot", "Claude-User", "GPTBot", "ClaudeBot", "Google-Extended", "Applebot-Extended", "CCBot"]) {
   if (!robots.includes(need)) err(`robots.txt lacks "${need}"`);
@@ -798,6 +994,8 @@ const llmsLinks = [...llms.matchAll(/\]\((https?:\/\/[^)\s]+)\)/g)].map((m) => m
 for (const p of pages) {
   if ((RANKING_PATH.test(p.path) || STYLE_PATH.test(p.path) || p.path === BEST_PATH || p.path === BEST_VALUE_PATH) && !llmsLinks.includes(p.url)) err(`llms.txt does not link ${p.path}`);
 }
+for (const path of [PRESS_PATH, BADGE_PATH]) if (!llmsLinks.includes(`${site}${path}`)) err(`llms.txt does not link ${path}`);
+if (EMAIL.test(llms)) err("llms.txt carries an email address");
 for (const l of llmsLinks) {
   if (!l.startsWith(site)) err(`llms.txt links off-site: ${l}`);
   else if (!outFile(l.slice(site.length) || "/")) err(`llms.txt link does not resolve: ${l}`);
@@ -882,6 +1080,10 @@ console.log(
   `People's Price snapshot: ${asOfDay ? `as of ${asOfDay}` : "none"} · answered menus ${crowd.size}, with a verdict ${verdictMenus.length} · ` +
     `restaurant pages with the sentence ${[...crowd].filter(([, c]) => c.answers >= MIN_VERDICT_ANSWERS).reduce((n, [key]) => n + allMenus.find((m) => m.key === key).locations, 0)} · ` +
     (hasBestValue ? `${BEST_VALUE_PATH}: ${pages.find((p) => p.path === BEST_VALUE_PATH).bestValueRows} rows` : `no ${BEST_VALUE_PATH} (needs ${BEST_VALUE_MIN_VERDICTS} verdicts)`),
+);
+console.log(
+  `share images: ${ogFiles.length} (${(ogBytes / 1048576).toFixed(1)} MB, ${ogFiles.length ? Math.round(ogBytes / ogFiles.length / 1024) : 0} KB each on average) · badges: ${badgeFiles.length} (${(badgeBytes / 1048576).toFixed(1)} MB) · ` +
+    `nearby at a similar price: ${nearbyPages} restaurant pages, ${nearbyRows} rows`,
 );
 console.log(`title lengths: min ${Math.min(...tl)}, max ${Math.max(...tl)}, ${tl.filter((n) => n > 60).length} over 60 · ${histogram(tl, [40, 50, 60, 70, 80])}`);
 console.log(`description lengths: min ${Math.min(...dl)}, max ${Math.max(...dl)} · ${histogram(dl, [100, 120, 140, 150, 160])}`);

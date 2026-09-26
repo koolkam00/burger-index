@@ -270,6 +270,24 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   price_usd, source badge label, page_url, checked; linked once from the footer) are force-static. IndexNow: the key
   file is `public/<key>.txt` (public by design) and `scripts/indexnow.mjs` submits the live sitemap. `npm run check:seo`
   verifies a build end to end (`-- --site https://…` also asserts the origin).
+- **Sharing and link-building (user decisions 2026-09-25, stage 4):** **share images**: every restaurant, neighborhood,
+  borough, ranking and style page and `/best-burgers` has its own 1200×630 Order Board at `/og/<page path>.png`
+  (`src/lib/share-images.ts` the cards and paths, `src/lib/share-cards.ts` server-only, builds them and gives each page its
+  `og:image` through `pageMetadata({ image: shareImage(path) })`, `components/og/` the Satori markup shared with `/og.png`,
+  `app/og/[...path]/route.tsx` renders them); they are stored as 256-color PNGs (`src/lib/png-palette.ts`: 734 images,
+  ~24 MB) and make the build take about 2 minutes instead of 17 s. Other pages keep `/og.png`. **Price badge**:
+  `/badge/<id>.svg` for every priced restaurant (`src/lib/badge.ts`, `app/badge/[file]/route.tsx`: drawn with `satori`
+  (a dependency pinned to the version next/og bundles) so the text is outlines, paths compacted by `src/lib/svg-path.ts`;
+  not pages, never in the sitemap) and the `/badge` page (`components/badge/`: the badge of `?r=<id>` or an example, a finder
+  over the pricer's `/data/pricer.json`, copyable HTML and image address), linked from the foot of every restaurant page.
+  Honest text only: "$22 burger", "10% above the $20.00 NYC median", "THE BURGER INDEX · SEP 2026". **Press kit** `/press`
+  (live numbers, the source line, the CSV and its license, a credit line to copy (`src/lib/press.ts`), the share image, a
+  short description; the contact is the GitHub issues page, `src/lib/contact.ts`: never publish an email address, `check:seo`
+  fails on one). **"Nearby at a similar price"** on restaurant pages (`src/lib/nearby.ts`): up to 4 other priced spots
+  within 1.5 km and $4, nearest first, a menu once and never its own chain, then the same neighborhood by price; "More in …"
+  leaves those out. `/press` and `/badge` are in the footer, the sitemap and llms.txt; `check:seo` checks every share
+  image (one per page, a 1200×630 PNG, its alt naming the page's price or H1), every badge (one per priced restaurant, its
+  title's price and comparison), both pages, no email anywhere, and each nearby list recomputed from the dataset.
 - **Counting:** the site counts distinct menus through `src/lib/menus.ts` (menu key = chain, else restaurant id), the same
   rule as `build.menu_index_prices`: histograms, typical range, rankings, cheapest/priciest lists and the `MIN_RANKED` /
   `MIN_HISTOGRAM` thresholds are per menu; map pins, restaurant pages and table rows are per location.
@@ -286,7 +304,8 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   components (the restaurant page's links are the client `components/RestaurantLinks.tsx`). `worth_answered` comes from
   `worthStore.onSaved` (after Supabase saved the answer) with `surface` (`restaurant` / `home_pricer`) and `price_hidden`;
   the pricer also sends `pricer_area_selected`, `pricer_skipped`, `pricer_next_clicked` and `pricer_exhausted`, and the
-  header `price_a_burger_clicked` (`from_path`: the path only). No personal data: never the voter id, and no free text in events
+  header `price_a_burger_clicked` (`from_path`: the path only), and the badge page's and press kit's "Copy" buttons
+  `snippet_copied` (`surface`, `what`, the badge's `restaurant_id`). No personal data: never the voter id, and no free text in events
   but the search query (trimmed, lowercased, 60 characters); replays mask inputs and the query echoed in the "No burgers
   match" messages (`ph-mask`). Events and properties are listed in `web/README.md` "Analytics
   (PostHog)"; tests in `test/analytics.test.ts`. posthog-js drops headless/webdriver browsers, so browser checks see no
