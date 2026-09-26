@@ -10,13 +10,14 @@ import { listedMenus, menuListData, parseMenuList } from "../src/lib/menu-list";
 import { menuWhere, pricedMenus } from "../src/lib/menus";
 import { EMPTY_BOARD, peopleStandings, peoplesTopView, type BoardFile, type BoardRow, type PeopleStanding } from "../src/lib/peoples-top";
 import {
-  REVEAL_ANNOUNCEMENT,
   REVEAL_AT,
+  revealAnnouncement,
   revealBoard,
   revealEmptyText,
   revealView,
   showsReveal,
   standText,
+  yourList,
   type RevealBoard,
   type RevealPick,
 } from "../src/lib/peoples-top-reveal";
@@ -60,7 +61,9 @@ test("the People's Top 10 shows at 3 burgers (the fewest a list can be saved wit
   assert.equal(REVEAL_AT, 3);
   assert.equal(REVEAL_AT, MIN_ITEMS);
   assert.deepEqual([0, 1, 2, 3, 4, 25].map(showsReveal), [false, false, false, true, true, true]);
-  assert.equal(REVEAL_ANNOUNCEMENT, "The People's Top 10 now shows after your list.");
+  assert.equal(revealAnnouncement(board()), "The People's Top 10 now shows after your list.");
+  // Nothing seated yet: the live region mustn't say the Top 10 shows (the words after the list say when it starts).
+  assert.equal(revealAnnouncement({ seats: [] }), "The People's Top 10 hasn't started yet: see after your list.");
 });
 
 test("the page hands the ranker the seats only, each named, in the page's order, with its flag and '≈'", () => {
@@ -128,7 +131,7 @@ test("where the other picks stand, in the visitor's order: ranked, Rising, or no
 test("an empty board says when it starts, with the real numbers, and what the visitor's list does for it", () => {
   const empty = revealBoard(peoplesTopView(EMPTY_BOARD, (k) => k), describe);
   const first = revealView(empty, ["a", "b", "c"], picks(), "unsaved");
-  assert.deepEqual([first.rows, first.early, first.countLine, first.closeLegend], [[], false, null, false], "no 'Early results' without rows");
+  assert.deepEqual([first.rows, first.early, first.countLine, first.closeLegend], [[], true, null, false], "'Early results' on the empty early board too, as on /peoples-top-10");
   assert.equal(first.empty, "No People's Top 10 yet: it starts when burgers are on 5 lists each. Save your list to help start it.", "before the first board: no count");
   assert.deepEqual(first.stands, [], "nothing to place the picks on");
   const later = { ...empty, asOf: "2026-10-01", totalLists: 12 };
@@ -143,6 +146,20 @@ test("an empty board says when it starts, with the real numbers, and what the vi
     ["Your #3, Place b", "Not ranked yet"],
   ]);
   assert.equal(rising.standsLabel, "Your picks");
+});
+
+test("what the visitor's list does for the empty board follows the saved list, whether or not it is being edited", () => {
+  // The ranker passes yourList(snap.saved?.status) with or without unsaved edits: a saved list keeps counting while
+  // it is edited, and a void one stays uncounted.
+  assert.equal(yourList("active"), "counting", "an active saved list (edited or not)");
+  assert.equal(yourList("void"), "not_counted", "a void saved list (edited or not)");
+  assert.equal(yourList("deleted"), "not_counted");
+  assert.equal(yourList("replaced"), "unsaved", "saving again would count");
+  assert.equal(yourList(null), "unsaved");
+  assert.equal(yourList(undefined), "unsaved");
+  const later = { ...revealBoard(peoplesTopView(EMPTY_BOARD, (k) => k), describe), asOf: "2026-10-01", totalLists: 12 };
+  assert.equal(revealView(later, ["a", "b", "c"], picks(), yourList("active")).empty, "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far). Your list helps start it.");
+  assert.equal(revealView(later, ["a", "b", "c"], picks(), yourList("void")).empty, "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far).");
 });
 
 test("a board past 500 lists isn't early; a board with no '≈' has no legend", () => {

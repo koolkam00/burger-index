@@ -8,7 +8,7 @@ import { RopeLadder } from "@/components/icons/nautical";
 import { PriceChip } from "@/components/ui";
 import { fromPath, track } from "@/lib/analytics";
 import { formatCount, pluralize } from "@/lib/format";
-import { REVEAL_ANNOUNCEMENT, revealView, showsReveal, type RevealBoard, type YourList } from "@/lib/peoples-top-reveal";
+import { revealAnnouncement, revealView, showsReveal, yourList, type RevealBoard } from "@/lib/peoples-top-reveal";
 import {
   countLine,
   listProblem,
@@ -138,7 +138,7 @@ export function Ranker({ median, board }: { median: number | null; board: Reveal
   const revealNote = (from: number, to: number) => {
     if (revealAnnounced.current || showsReveal(from) || !showsReveal(to)) return "";
     revealAnnounced.current = true;
-    return ` ${REVEAL_ANNOUNCEMENT}`;
+    return ` ${revealAnnouncement(board)}`;
   };
   /** The first change to a list (new, or the saved one) is ranking_started. */
   const starting = () => {
@@ -262,9 +262,8 @@ export function Ranker({ median, board }: { median: number | null; board: Reveal
   // (also in the prerendered card, which holds the empty list).
   let side: ReactNode = null;
   if (revealing) {
-    const you: YourList = snap.saved && !snap.dirty ? (snap.saved.status === "active" ? "counting" : snap.saved.status === "replaced" ? "unsaved" : "not_counted") : "unsaved";
     const pick = snap.menus === "ready" ? (key: string) => snap.burgers.get(key) : null;
-    side = <PeoplesTopReveal view={revealView(board, onCard, pick, you)} />;
+    side = <PeoplesTopReveal view={revealView(board, onCard, pick, yourList(snap.saved?.status))} />;
   } else if (!snap.started || (listed && snap.view === "edit")) {
     side = <RevealHint />;
   }

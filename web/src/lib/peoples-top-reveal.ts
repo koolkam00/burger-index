@@ -8,7 +8,7 @@
 // which the ranker loads anyway. Nothing here recomputes the board or explains it (the page's one-liner does).
 import { formatCount, formatDate, pluralize } from "./format";
 import type { PeopleStanding, PeoplesTopView, RowFlag } from "./peoples-top";
-import { MIN_ITEMS } from "./ranker";
+import { MIN_ITEMS, type RankingStatus } from "./ranker";
 
 /** The list length at which the People's Top 10 shows beside it: the fewest burgers a list can be saved with. */
 export const REVEAL_AT = MIN_ITEMS;
@@ -62,13 +62,24 @@ export type StandLine = { key: string; who: string; stand: string };
 /** The visitor's list as it counts toward the board (the empty board's last sentence follows it). */
 export type YourList = "counting" | "unsaved" | "not_counted";
 
+/**
+ * What the visitor's list does for the board, from the saved list's status (none: nothing saved). A saved list keeps
+ * counting while it is being edited, so an edit in progress doesn't change it: active → counting; replaced (a newer
+ * list from this connection counts instead) or none → unsaved (saving would count); void or deleted → not counted.
+ */
+export function yourList(status: RankingStatus | null | undefined): YourList {
+  if (status === "active") return "counting";
+  if (!status || status === "replaced") return "unsaved";
+  return "not_counted";
+}
+
 /** A picked burger as the reveal needs it: its name (the ranker's label) and its standing, if any. */
 export type RevealPick = { label: string; people: PeopleStanding | null };
 
 export type RevealView = {
   /** The seats, in order, the visitor's picks marked. Empty: nothing ranked yet. */
   rows: RevealRow[];
-  /** "Early results" (only with rows). */
+  /** "Early results": while the board is early (under 500 lists), the empty board too, as on /peoples-top-10. */
   early: boolean;
   /** "From 260 lists, as of Sep 30, 2026." under the rows (null without rows). */
   countLine: string | null;
@@ -127,7 +138,7 @@ export function revealView(board: RevealBoard, list: readonly string[], pick: ((
   const stands = showStands ? others.map((o) => ({ key: o.key, who: `Your #${o.position}, ${o.label}`, stand: standText(o.people) })) : [];
   return {
     rows,
-    early: rows.length > 0 && board.early,
+    early: board.early,
     countLine: rows.length ? `From ${pluralize(board.totalLists, "list")}${board.asOf ? `, as of ${formatDate(board.asOf)}` : ""}.` : null,
     empty: rows.length ? null : revealEmptyText(board, you),
     closeLegend: rows.some((r) => r.closeToAbove),
@@ -136,5 +147,10 @@ export function revealView(board: RevealBoard, list: readonly string[], pick: ((
   };
 }
 
-/** What the live region adds when the reveal first shows after a change the visitor made. */
-export const REVEAL_ANNOUNCEMENT = "The People's Top 10 now shows after your list.";
+/**
+ * What the live region adds when the reveal first shows after a change the visitor made: that the People's Top 10 now
+ * shows after the list, or, before anything is seated, that it hasn't started (the words after the list say when).
+ */
+export function revealAnnouncement(board: Pick<RevealBoard, "seats">): string {
+  return board.seats.length ? "The People's Top 10 now shows after your list." : "The People's Top 10 hasn't started yet: see after your list.";
+}
