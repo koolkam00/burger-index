@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-09-25",
+  "updated": "2026-09-26",
   "years": {
     "from": 2024,
     "to": 2026
@@ -77,6 +77,13 @@
       "date": "2026-01-20"
     },
     {
+      "id": "gayot-best-burgers-usa-2026",
+      "publisher": "GAYOT",
+      "title": "2026 Best Burgers in the U.S.A.",
+      "url": "https://www.gayot.com/restaurants/top-best-burgers-in-the-usa.html",
+      "date": "2026"
+    },
+    {
       "id": "gayot-best-burgers-new-york-2026",
       "publisher": "GAYOT",
       "title": "2026 Best Burgers in New York Area",
@@ -110,6 +117,13 @@
       "title": "The Ultimate Guide to Burgers (and Fries) in New York",
       "url": "https://blog.resy.com/2025/09/best-burgers-nyc/",
       "date": "2025-09-23"
+    },
+    {
+      "id": "bkmag-new-burgers-brooklyn-2025",
+      "publisher": "Brooklyn Magazine",
+      "title": "Eight New Burgers You Need to Try in Brooklyn",
+      "url": "https://www.bkmag.com/2025/06/13/best-burgers-brooklyn/",
+      "date": "2025-06-13"
     },
     {
       "id": "infatuation-it-burgers-america",
@@ -952,6 +966,778 @@
         {
           "list": "resy-ultimate-guide-burgers-nyc",
           "burger": "Happiest burger"
+        }
+      ]
+    },
+    {
+      "key": "5-napkin",
+      "name": "5 Napkin Burger",
+      "restaurant_id": "5-napkin-burger-clinton",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "gayot-best-burgers-new-york-2026",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "au-cheval",
+      "name": "Au Cheval",
+      "restaurant_id": "au-cheval-soho",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "gayot-best-burgers-new-york-2026",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "berimbau",
+      "name": "Berimbau Brazilian Table",
+      "restaurant_id": "berimbau-brazilian-table-west-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": "Picanha burger"
+        }
+      ]
+    },
+    {
+      "key": "bernies",
+      "name": "Bernie's",
+      "restaurant_id": "bernies-greenpoint",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "bk-jani",
+      "name": "BK Jani",
+      "restaurant_id": "bk-jani-east-williamsburg",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": "Signature burger"
+        }
+      ]
+    },
+    {
+      "key": "blue-collar",
+      "name": "Blue Collar Burger",
+      "restaurant_id": "blue-collar-burger-greenpoint",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "timeout-best-burgers-nyc",
+          "burger": "Flat Top Burger"
+        }
+      ]
+    },
+    {
+      "key": "brindle-room",
+      "name": "Brindle Room",
+      "restaurant_id": "brindle-room-lower-east-side",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "Burger"
+        }
+      ]
+    },
+    {
+      "key": "burger-by-day",
+      "name": "Burger By Day",
+      "restaurant_id": "burger-by-day-chinatown",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-smashburger-power-rankings",
+          "burger": "BBD Smashburger"
+        }
+      ]
+    },
+    {
+      "key": "burger-joint",
+      "name": "Burger Joint",
+      "restaurant_id": "burger-joint-midtown",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "gayot-best-burgers-usa-2026",
+          "burger": null
+        },
+        {
+          "list": "gayot-best-burgers-new-york-2026",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "butter",
+      "name": "Butter Smashburgers",
+      "restaurant_id": "butter-smashburgers-west-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-smashburger-power-rankings",
+          "burger": "Double burger"
+        }
+      ]
+    },
+    {
+      "key": "cafe-kestrel",
+      "name": "Cafe Kestrel",
+      "restaurant_id": "cafe-kestrel-carroll-gardens",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "cecchis",
+      "name": "Cecchi's",
+      "restaurant_id": "cecchis-west-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "chelsea-papaya",
+      "name": "Chelsea Papaya",
+      "restaurant_id": "chelsea-papaya-hudson-yards",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "eater-best-smash-burgers-nyc",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "crane-club",
+      "name": "Crane Club",
+      "restaurant_id": null,
+      "neighborhood_slug": "hudson-yards-chelsea-flat-iron-union-square",
+      "sources": [
+        {
+          "list": "timeout-best-burgers-nyc",
+          "burger": "The Crane Club Burger"
+        }
+      ]
+    },
+    {
+      "key": "crevette",
+      "name": "Crevette",
+      "restaurant_id": "crevette-west-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-limited-edition-burgers-ranked",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "cubbys",
+      "name": "Cubby's",
+      "restaurant_id": "cubbys-clinton",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-smashburger-power-rankings",
+          "burger": "Sylvester Smash"
+        }
+      ]
+    },
+    {
+      "key": "diner",
+      "name": "Diner",
+      "restaurant_id": "diner-williamsburg",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "dirty-pierres",
+      "name": "Dirty Pierre's",
+      "restaurant_id": "dirty-pierres-forest-hills",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "Bistro Burger"
+        }
+      ]
+    },
+    {
+      "key": "disco-birdies",
+      "name": "Disco Birdies",
+      "restaurant_id": "disco-birdies-bedford",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "bkmag-new-burgers-brooklyn-2025",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "duffys",
+      "name": "Duffy's Tavern",
+      "restaurant_id": "duffys-tavern-new-brighton",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "Cheeseburger"
+        }
+      ]
+    },
+    {
+      "key": "ear-inn",
+      "name": "Ear Inn",
+      "restaurant_id": "ear-inn-soho",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "gayot-best-burgers-new-york-2026",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "el-sazon",
+      "name": "El Sazón R.D.",
+      "restaurant_id": "el-sazon-r-d-chinatown",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-smashburger-power-rankings",
+          "burger": "Dominican smashburger with fried cheese"
+        }
+      ]
+    },
+    {
+      "key": "employees-only",
+      "name": "Employees Only",
+      "restaurant_id": "employees-only-west-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "fairfax",
+      "name": "Fairfax",
+      "restaurant_id": "fairfax-west-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": "Bar Sardine burger"
+        }
+      ]
+    },
+    {
+      "key": "fat-ronnies",
+      "name": "Fat Ronnie's Burger Bar",
+      "restaurant_id": "fat-ronnies-burger-bar-nyc-west-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "cntraveler-best-burger-nyc",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "flat-out",
+      "name": "Flat Out Burger",
+      "restaurant_id": "flat-out-burger-stuyvesant-heights",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-smashburger-power-rankings",
+          "burger": "Flat Out Single"
+        }
+      ]
+    },
+    {
+      "key": "gallaghers",
+      "name": "Gallaghers Steakhouse",
+      "restaurant_id": "gallaghers-steakhouse-midtown",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "eater-best-burgers-nyc",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "gator",
+      "name": "Gator",
+      "restaurant_id": "gator-greenpoint",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "bkmag-brooklyn-9-best-burgers-2024",
+          "burger": "Cheeseburger with miso tempura mushroom"
+        }
+      ]
+    },
+    {
+      "key": "gertrudes",
+      "name": "Gertrude's",
+      "restaurant_id": "gertrudes-prospect-heights",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "timeout-best-burgers-nyc",
+          "burger": "Gertrude's Burger"
+        }
+      ]
+    },
+    {
+      "key": "golden-diner",
+      "name": "Golden Diner",
+      "restaurant_id": "golden-diner-chinatown",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "hawksmoor",
+      "name": "Hawksmoor NYC",
+      "restaurant_id": "hawksmoor-gramercy",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": "Notorious B.E.E.F."
+        }
+      ]
+    },
+    {
+      "key": "henry-public",
+      "name": "Henry Public",
+      "restaurant_id": "henry-public-carroll-gardens",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "Hamburger Sandwich"
+        }
+      ]
+    },
+    {
+      "key": "herbies",
+      "name": "Herbie's Burgers",
+      "restaurant_id": "herbies-burgers-williamsburg",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-smashburger-power-rankings",
+          "burger": "The Double"
+        }
+      ]
+    },
+    {
+      "key": "hoexters",
+      "name": "Hoexters",
+      "restaurant_id": "hoexters-upper-east-side",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": "Double smashburger"
+        }
+      ]
+    },
+    {
+      "key": "jackson-hole",
+      "name": "Jackson Hole",
+      "restaurant_id": "jackson-hole-lenox-hill",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "The Classic"
+        }
+      ]
+    },
+    {
+      "key": "joe-allen",
+      "name": "Joe Allen",
+      "restaurant_id": "joe-allen-clinton",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "Joe Allen Burger"
+        }
+      ]
+    },
+    {
+      "key": "jr-and-son",
+      "name": "JR & Son",
+      "restaurant_id": "jr-and-son-east-williamsburg",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "bkmag-new-burgers-brooklyn-2025",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "julius",
+      "name": "Julius'",
+      "restaurant_id": null,
+      "neighborhood_slug": "west-village",
+      "sources": [
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "Julius Burger"
+        }
+      ]
+    },
+    {
+      "key": "lartusi",
+      "name": "L'Artusi",
+      "restaurant_id": "lartusi-west-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": "L'Burger"
+        }
+      ]
+    },
+    {
+      "key": "le-dive",
+      "name": "Le Dive",
+      "restaurant_id": "le-dive-chinatown",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-limited-edition-burgers-ranked",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "lords",
+      "name": "Lord's",
+      "restaurant_id": "lords-west-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": null
+        },
+        {
+          "list": "infatuation-limited-edition-burgers-ranked",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "lori-jayne",
+      "name": "Lori Jayne",
+      "restaurant_id": "lori-jayne-at-danger-danger-bushwick-north",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "bkmag-brooklyn-9-best-burgers-2024",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "lundys",
+      "name": "Lundy's",
+      "restaurant_id": null,
+      "neighborhood_slug": "carroll-gardens-columbia-street-red-hook",
+      "sources": [
+        {
+          "list": "bkmag-new-burgers-brooklyn-2025",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "manhatta",
+      "name": "Manhatta",
+      "restaurant_id": "manhatta-battery-park-city",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "miladys",
+      "name": "Milady's",
+      "restaurant_id": "miladys-soho",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "timeout-best-burgers-nyc",
+          "burger": "The Milady's Burger"
+        }
+      ]
+    },
+    {
+      "key": "milk-burger",
+      "name": "Milk Burger",
+      "restaurant_id": "milk-burger-mott-haven",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-smashburger-power-rankings",
+          "burger": "Double Garlic Smash"
+        },
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": "Garlic Smash"
+        }
+      ]
+    },
+    {
+      "key": "nectar",
+      "name": "Nectar",
+      "restaurant_id": "nectar-upper-east-side",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "Hamburger"
+        }
+      ]
+    },
+    {
+      "key": "nightlys",
+      "name": "Nightly's",
+      "restaurant_id": "nightlys-lenox-hill",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "Black Tie Burger"
+        }
+      ]
+    },
+    {
+      "key": "oh-boy",
+      "name": "Oh Boy Brooklyn",
+      "restaurant_id": "oh-boy-brooklyn-williamsburg",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "eater-best-smash-burgers-nyc",
+          "burger": "Double smash burger"
+        }
+      ]
+    },
+    {
+      "key": "old-town-bar",
+      "name": "Old Town Bar",
+      "restaurant_id": "old-town-bar-hudson-yards",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "Cheeseburger"
+        }
+      ]
+    },
+    {
+      "key": "peteys",
+      "name": "Petey's Burger",
+      "restaurant_id": "peteys-burger-hunters-point",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "eater-best-smash-burgers-nyc",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "quatorze",
+      "name": "Quatorze",
+      "restaurant_id": "quatorze-yorkville",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-limited-edition-burgers-ranked",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "royale",
+      "name": "Royale",
+      "restaurant_id": "royale-lower-east-side",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "Royale With Cheese"
+        }
+      ]
+    },
+    {
+      "key": "saigon-social",
+      "name": "Saigon Social",
+      "restaurant_id": "saigon-social-chinatown",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-best-burgers-nyc",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "dram-shop",
+      "name": "The Dram Shop",
+      "restaurant_id": "dram-shop-park-slope",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "Dram Burger"
+        }
+      ]
+    },
+    {
+      "key": "golden-swan",
+      "name": "The Golden Swan",
+      "restaurant_id": "the-golden-swan-west-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": "Brixton burger"
+        }
+      ]
+    },
+    {
+      "key": "lions",
+      "name": "The Lions Bar & Grill",
+      "restaurant_id": "the-lions-bar-and-grill-east-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "infatuation-no-fuss-burgers-nyc",
+          "burger": "Hamburger"
+        }
+      ]
+    },
+    {
+      "key": "snail",
+      "name": "The Snail",
+      "restaurant_id": "the-snail-williamsburg",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": "Double cheeseburger"
+        }
+      ]
+    },
+    {
+      "key": "three-decker",
+      "name": "Three Decker Diner",
+      "restaurant_id": "three-decker-diner-greenpoint",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "bkmag-new-burgers-brooklyn-2025",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "union-square-cafe",
+      "name": "Union Square Cafe",
+      "restaurant_id": "union-square-cafe-gramercy",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "resy-ultimate-guide-burgers-nyc",
+          "burger": "19th Street burger"
+        }
+      ]
+    },
+    {
+      "key": "upland",
+      "name": "Upland",
+      "restaurant_id": "upland-gramercy",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "gayot-best-burgers-new-york-2026",
+          "burger": null
+        }
+      ]
+    },
+    {
+      "key": "whitmans",
+      "name": "Whitmans",
+      "restaurant_id": "whitmans-east-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "secretnyc-best-burgers-nyc",
+          "burger": "Juicy Lucy"
+        }
+      ]
+    },
+    {
+      "key": "wild-cherry",
+      "name": "Wild Cherry",
+      "restaurant_id": "wild-cherry-west-village",
+      "neighborhood_slug": null,
+      "sources": [
+        {
+          "list": "cntraveler-best-burger-nyc",
+          "burger": "Cheeseburger"
         }
       ]
     }

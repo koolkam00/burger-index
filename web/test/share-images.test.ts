@@ -1,7 +1,8 @@
 // Share images (lib/share-images.ts): where each page's image lives, what its card says, and the text fitting.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { bestBurgersCountLine } from "../src/lib/best-burgers";
+import { readFileSync } from "node:fs";
+import { BEST_BURGERS_NAME, BEST_BURGERS_TICKET, bestBurgersCountLine, namedByHeading, rankBestBurgers, type BestBurgersFile } from "../src/lib/best-burgers";
 import { BOROUGH_META } from "../src/lib/boroughs";
 import { rankingCountLine, RANKING_TICKETS, rankingName, rankingPath, rankingSpecs, rankMenus } from "../src/lib/rankings";
 import type { PricedRestaurant } from "../src/lib/schema";
@@ -110,7 +111,22 @@ test("the dataset: one card per restaurant, neighborhood, borough, ranking and s
     );
     assert.ok(!/cheapest burgers? (in|at|on|of)\b|burgers under \$/i.test(`${card.title} ${card.line} ${card.alt}`), card.alt);
   }
-  assert.equal(bestBurgersCountLine(33), "All 33 places on this list, most publications first.");
+  // The most-recommended card: the page's first rows (every place on the page, one publisher is enough) and its count.
+  const file = JSON.parse(readFileSync(new URL("../../data/best_burgers.json", import.meta.url), "utf8")) as BestBurgersFile;
+  const best = rankBestBurgers(file, data.restaurants, data.neighborhoods);
+  const bestCard = listCard({
+    ticket: BEST_BURGERS_TICKET,
+    title: BEST_BURGERS_NAME,
+    rows: best.map((e) => ({ rank: e.rank, name: e.name, detail: namedByHeading(e.publishers.length), price: e.restaurant?.index_price ?? null })),
+    count: bestBurgersCountLine(best.length),
+  });
+  assert.deepEqual(
+    bestCard.rows.map((r) => `${r.rank}. ${r.name} · ${r.detail}`),
+    best.slice(0, LIST_CARD_ROWS).map((e) => `${e.rank}. ${e.name} · Named by ${e.publishers.length} publications`),
+  );
+  assert.equal(bestCard.line, `All ${best.length} places on this list, most publications first`);
+  assert.equal(best.length, file.places.length);
+  assert.equal(bestBurgersCountLine(96), "All 96 places on this list, most publications first.");
   assert.equal(BOROUGH_META.length, 5);
   for (const r of priced.slice(0, 50)) assert.equal(shareImagePath(`/restaurants/${r.id}`), `/og/restaurants/${r.id}.png`);
 });

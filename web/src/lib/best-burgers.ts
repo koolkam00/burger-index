@@ -5,13 +5,16 @@
 // Rules the file already follows and problems() checks: lists published or updated 2024-2026 only; no Upper
 // Cut Media House lists (the publisher sells partnerships) and no pure trend features (Grub Street 2025, the
 // New York Post's off-menu piece; chef-pick features count); beef burgers only (no national chains, no
-// vegetarian, vegan or lamb picks); closed places left out; every place named by two or more distinct
-// publishers. A place ranks by how many distinct publishers named it (several lists from one publisher
-// count once); ties share a rank (1, 2, 2, 4) and are listed by name.
+// vegetarian, vegan, lamb or bison picks); closed places left out. One publisher is enough (user decision
+// 2026-09-25, "/best-burgers should have all those burgers": the earlier two-publisher minimum is gone), so
+// every open place whose beef burger a counted list names is on the page. A place ranks by how many distinct
+// publishers named it (several lists from one publisher count once); ties share a rank (1, 2, 2, 4) and are
+// listed by name. The page groups the places by that count ("Named by 10 publications" … "Named by 1
+// publication"; groupBestBurgers).
 //
 // Our menu price and burger come from the dataset (a place's restaurant_id); a place without a price has
 // no page and shows "Not priced". Pure and client-safe: types only from ./schema.
-import { formatCount, formatDate, formatPrice, theBurger } from "./format";
+import { formatCount, formatDate, formatPrice, pluralize, theBurger } from "./format";
 import { joinList, menuKey } from "./menus";
 import type { AreaSummary, Borough, PricedRestaurant, Restaurant } from "./schema";
 
@@ -20,12 +23,10 @@ export const BEST_BURGERS_PATH = "/best-burgers";
 export const BEST_BURGERS_NAME = "The most-recommended burgers in NYC";
 /** The page's kicker ticket (and its share image's overline). */
 export const BEST_BURGERS_TICKET = "Critics' catch";
-/** The count under the list: "All 33 places on this list, most publications first." */
+/** The count under the list: "All 96 places on this list, most publications first." */
 export function bestBurgersCountLine(places: number): string {
   return `All ${formatCount(places)} places on this list, most publications first.`;
 }
-/** Distinct publishers a place needs to be on the page. */
-export const MIN_PUBLISHERS = 2;
 
 export type BestList = {
   id: string;
@@ -126,6 +127,35 @@ export function rankBestBurgers(file: BestBurgersFile, restaurants: readonly Res
   return entries;
 }
 
+export type BestGroup = {
+  /** How many distinct publishers named each place in the group. */
+  publishers: number;
+  /** The rank the group's places share. */
+  rank: number;
+  /** "Named by 10 publications", "Named by 1 publication": the group's heading. */
+  heading: string;
+  /** Its anchor: "named-by-10". */
+  id: string;
+  entries: BestEntry[];
+};
+
+/** "Named by 10 publications" / "Named by 1 publication". */
+export function namedByHeading(publishers: number): string {
+  return `Named by ${pluralize(publishers, "publication")}`;
+}
+
+/** The ranked entries in groups of one publication count, most first; each group keeps the entries' order (by name). */
+export function groupBestBurgers(entries: readonly BestEntry[]): BestGroup[] {
+  const groups: BestGroup[] = [];
+  for (const e of entries) {
+    const n = e.publishers.length;
+    const last = groups[groups.length - 1];
+    if (last && last.publishers === n) last.entries.push(e);
+    else groups.push({ publishers: n, rank: e.rank, heading: namedByHeading(n), id: `named-by-${n}`, entries: [e] });
+  }
+  return groups;
+}
+
 /** The places that share first place. */
 export function leaders(entries: readonly BestEntry[]): BestEntry[] {
   return entries.filter((e) => e.rank === 1);
@@ -190,8 +220,7 @@ export function bestBurgersProblems(file: BestBurgersFile, restaurants: readonly
       seen.add(s.list);
       used.add(s.list);
     }
-    const publishers = new Set(p.sources.map((s) => lists.get(s.list)?.publisher).filter(Boolean));
-    if (publishers.size < MIN_PUBLISHERS) problems.push(`${p.key}: named by ${publishers.size} publisher(s), fewer than ${MIN_PUBLISHERS}`);
+    if (!p.sources.some((s) => lists.has(s.list))) problems.push(`${p.key}: named on no list of the file`);
   }
   for (const l of file.lists) if (!used.has(l.id)) problems.push(`list ${l.id} names no place on the page`);
   return problems;

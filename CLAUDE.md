@@ -85,7 +85,8 @@ Curated chains whose own site shows no prices (`official_has_prices=False`: the 
 Extraction rules (schema + instructions in `context_client.py`, clean-up in `extract.py`): numeric price of the
 burger alone; market price → null; single/standard size; no combo/meal upgrades or add-ons (meal-only → null);
 sliders only when sold as a burger; kids' items dropped; prices < $2 or > $150 dropped as suspect (noted);
-names cleaned (trailing prices, emoji, ®); duplicates collapsed. **Lunch vs dinner:** a burger on several menus
+names cleaned (trailing prices, emoji, ®; a `...with cheese` continuation line takes the name of the burger above it,
+as on Henry Public's menu); duplicates collapsed. **Lunch vs dinner:** a burger on several menus
 keeps its dinner/all-day price; late-night, lunch, brunch, then happy-hour prices are used only when it is not on
 the dinner menu. Status (pipeline only: `run_log.jsonl`, `plan`, the `build` summary; not in the dataset):
 `priced` (≥1 index-eligible beef burger) | `no_prices` | `no_burgers` (incl. only non-beef) | `no_menu_found` |
@@ -131,7 +132,11 @@ to withhold, so American Whiskey (its Grubhub/Seamless `Burger`, $20.40, `delive
 where the restaurant's own price was read and set by hand (Boeuf & Bun: Uber Eats = own price / 0.56, so its own
 ordering page's $32) the own price stays. Withholds remain for closed places, another restaurant's page, stale copies
 and partial pages (Brooklyn Diner's LaGuardia Terminal B row is withheld: its search found only the Manhattan menu, and an
-airport concession never gets a street restaurant's price).
+airport concession never gets a street restaurant's price). **Sauce (`getsauce.com`) is a third-party pickup and delivery
+platform, not the restaurant's site:** it is not yet in `discover.ONLINE_ORDERING` (adding it changes the offline replay:
+plan it with a re-run), so a CSV `menu_url` there reads as `official_menu`; corrections relabel the six such pages
+`online_ordering` (BK Jani, whose Sauce prices are a flat $2 above its year-old own menu image, Fat Boys, Gracie's,
+Moe's, Murray Hill Diner, The Flame Diner), and a new one needs the same entry.
 
 Post-processing index rules (`extract.py`/`build.py`; free on the next `build`, no re-scrape; `normalize_menu` never
 removes these rows, because `corrections.json` names them and `process` counts them):
@@ -162,19 +167,24 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
 - `data/burger_index.json` — THE dataset (contract v2 above). `build` validates before writing and fails loudly.
 - `data/best_burgers.json` — the `/best-burgers` page's lists and places, curated by hand from the 2026-09-25 research
   (facts only: publisher, list title, link, date; place name, dataset `restaurant_id` (or a `neighborhood_slug` for a place
-  the dataset doesn't carry), the burger each list names). Decisions applied in the file: lists published or updated
-  2024-2026; no Upper Cut Media House lists (the publisher sells partnerships) and no pure trend features (Grub Street 2025,
-  and the New York Post's Aug 2025 off-menu piece, which dropped Crane Club, Lord's and Quatorze to one publisher; chef-pick
-  features count); beef burgers only (no national chains, no vegetarian/vegan or lamb picks, and a source naming only a
-  non-beef burger doesn't count: Eater's Old Town Bar entry picks no burger and mentions only a bison burger, so Old Town Bar
-  has one publisher); closed places left out (Blue Hour, Gus's Chop House); two or more distinct publishers per place
-  (33 places from 21 lists by 11 publications). The web build (`web/src/lib/best-burgers-data.ts`) fails if an id,
-  list or neighborhood is missing or a rule is broken. Not a pipeline output: `pipeline build` never touches it, but a
-  dataset change that drops a `restaurant_id` breaks the web build until the file is fixed.
+  the dataset doesn't carry: Crane Club, Julius', Lundy's), the burger each list names). **Every open place whose beef burger
+  a counted list names is on it: one publisher is enough** (user decision 2026-09-25, "/best-burgers should have all those
+  burgers"; the earlier two-publisher minimum was not the user's rule). Decisions applied in the file: lists published or
+  updated 2024-2026; no Upper Cut Media House lists (the publisher sells partnerships) and no pure trend features (Grub
+  Street 2025, the New York Post's Aug 2025 off-menu piece; chef-pick features count); beef burgers only (no national chains,
+  no vegetarian/vegan, lamb or bison picks, and a source naming only a non-beef burger doesn't count: Eater's Old Town Bar
+  entry mentions only a bison burger, so Old Town Bar is there for The Infatuation's cheeseburger alone); closed places left
+  out (Blue Hour, Gus's Chop House, Bandits Burger & Dive, Debbie's Burgers, Loring Place, Paper Plate, F. Ottomanelli:
+  temporarily closed; Little Fino no longer serves a burger). 96 places from 23 lists by 11 publications; the places the
+  lists name were added to the restaurant list (`source` `best-lists-2026-09`) and priced, so 91 carry a menu price (Peter
+  Luger, Le B., Crane Club, Julius' and Lundy's publish none). The page groups them by publication count ("Named by 10
+  publications" … "Named by 1 publication"). The web build (`web/src/lib/best-burgers-data.ts`) fails if an id, list or
+  neighborhood is missing or a rule is broken. Not a pipeline output: `pipeline build` never touches it, but a dataset
+  change that drops a `restaurant_id` breaks the web build until the file is fixed.
 - `data/peoples_price.json` — **the People's Price snapshot** (user decision 2026-09-25: crawlers must see the crowd's
   numbers). **Owned by the daily workflow on `main`: never edit, regenerate or commit it on a branch** (see "People's
   Price snapshot" under "Website"). Not a pipeline output; `pipeline build` never touches it.
-- `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,108 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, the 2026-09-25 deletions and the 2026-09-25 best-burger-list additions, see `data/list_changes_2026-09-23.md`: `name, neighborhood,
+- `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,127 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, the 2026-09-25 deletions and the 2026-09-25 best-burger-list additions (two rounds), see `data/list_changes_2026-09-23.md`: `name, neighborhood,
   borough, website, menu_url, notes, source` where `source` is `pilot-100|uptown|downtown|outer|dohmh-diner-pub|dohmh-hamburgers|best-lists-2026-09`). It's the user's data:
   don't edit it without their approval; report duplicates (`report.csv_duplicate_matches`), unmatched rows (`report.csv_unmatched`),
   ambiguous rows (`report.csv_ambiguous`) and closed places (`report.csv_address_now_other_business`,
@@ -257,9 +267,10 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   patty melt; a conservative classifier on the published burger's name and description, add-ons dropped) has a list only
   with 10+ menus, titled for what it is: "Burger spots in NYC where the priciest burger is a smash burger." **The
   most-recommended burgers (`/best-burgers`, user decisions 2026-09-25):** places ranked by how many distinct publishers named
-  them on a best-burger list of 2024-2026, from `data/best_burgers.json` (see "Data files"), each with every list linked
-  (publisher, title, date), our menu price and the People's Price; one ranking-note line, the lists' own words never quoted,
-  ItemList JSON-LD (no Review or Rating). **Honest wording (user
+  them on a best-burger list of 2024-2026 (one publisher is enough), from `data/best_burgers.json` (see "Data files"),
+  grouped under sticky bars by publication count ("Named by 10 publications" … "Named by 1 publication"), each with every
+  list linked (publisher, title, date), our menu price and the People's Price; one ranking-note line, the lists' own words
+  never quoted, ItemList JSON-LD (no Review or Rating). **Honest wording (user
   decision 2026-09-25):** each restaurant publishes only its priciest burger, so the cheapest and under-$N lists rank
   burger spots by their priciest burger and say so ("Cheapest burger spots in NYC.", "Burger spots in NYC where the priciest
   burger is under $15.", "The priciest burger at Johnny's Reef is $6.00, the lowest top-burger price of any spot in NYC", the Q&A

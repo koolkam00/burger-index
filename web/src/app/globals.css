@@ -2810,20 +2810,61 @@
     box-shadow: var(--shadow-block);
     overflow: clip;
   }
+  /* A group of one publication count: its heading is a sticky bar like the ticket rail's header (it sticks
+     under the nav while its places scroll by, then the next group's pushes it away). */
+  .best-group + .best-group {
+    border-top: 2px solid var(--line-strong);
+  }
+  .best-group-head {
+    position: sticky;
+    top: var(--nav-h);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px 12px;
+    flex-wrap: wrap;
+    min-height: 42px;
+    padding: 8px 12px;
+    background-color: var(--surface-2);
+    background-image: var(--plank-faint);
+    border-bottom: 2px solid var(--line-strong);
+    font-family: var(--font-ui);
+    font-weight: 700;
+    font-size: 12px;
+    line-height: 1.2;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .best-group-title {
+    margin: 0;
+    font: inherit;
+    letter-spacing: inherit;
+    color: var(--ink);
+  }
+  .best-group-count {
+    margin: 0;
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums lining-nums;
+  }
   .best-list {
     margin: 0;
     padding: 0;
     list-style: none;
   }
-  /* Phone: the rank beside the place; the menu price and the People's Price side by side under it; the
-     lists last. From 1024px the prices sit beside the place and the lists run under all three. */
+  /* Shift+Tab upward through a group: keep the focused link clear of its sticky heading. */
+  .best-list :is(a, button, input, select, [tabindex]) {
+    scroll-margin-top: 54px;
+  }
+  /* Phone: the place, then the menu price and the People's Price side by side, then the lists. From
+     1024px the prices sit beside the place and the lists run under all three. */
   .best-row {
     display: grid;
-    grid-template-columns: 28px minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas:
-      "rank place place"
-      ". price people"
-      ". sources sources";
+      "place place"
+      "price people"
+      "sources sources";
     column-gap: 12px;
     row-gap: 12px;
     align-items: start;
@@ -2832,16 +2873,6 @@
   }
   .best-list > .best-row:first-child {
     border-top: 0;
-  }
-  .best-rank {
-    grid-area: rank;
-    margin: 0;
-    font-family: var(--font-ui);
-    font-weight: 700;
-    font-size: 20px;
-    line-height: 1.2;
-    font-variant-numeric: tabular-nums lining-nums;
-    text-align: right;
   }
   .best-place {
     grid-area: place;
@@ -2887,17 +2918,19 @@
   }
   @media (min-width: 640px) {
     .best-row {
-      grid-template-columns: 32px minmax(0, 1fr) minmax(0, 1fr);
       column-gap: 16px;
+      padding-inline: 16px;
+    }
+    .best-group-head {
       padding-inline: 16px;
     }
   }
   @media (min-width: 1024px) {
     .best-row {
-      grid-template-columns: 44px minmax(0, 1fr) 240px 150px;
+      grid-template-columns: minmax(0, 1fr) 240px 150px;
       grid-template-areas:
-        "rank place price people"
-        ". sources sources sources";
+        "place price people"
+        "sources sources sources";
       row-gap: 10px;
     }
   }

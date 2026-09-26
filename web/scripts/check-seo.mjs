@@ -25,8 +25,9 @@
 // neighborhoods with 10+ distinct priced menus whose two lists share no menu have them. Style lists
 // (/burgers/<style>) are checked row by row against the dataset (distinct menus, prices, order, ranks,
 // a style word in each burger) and say "where the priciest burger is a …". /best-burgers is recomputed
-// from ../data/best_burgers.json: its rows, ranks, publication counts, menu prices, every list link and
-// its ItemList; no title, description or H1 says "best burger(s)" in our own voice.
+// from ../data/best_burgers.json (every place on it, one publisher is enough): its groups ("Named by 10
+// publications", their place counts), their rows in order, menu prices, every list link and its ItemList;
+// no title, description or H1 says "best burger(s)" in our own voice.
 // The People's Price snapshot (../data/peoples_price.json, user decision 2026-09-25) is in the static HTML:
 // every restaurant page whose menu has 3+ answers says "People's Price $22 from 14 answers, as of Sep 25, 2026."
 // (and no other does), each /best-burgers row carries its menu's snapshot numbers, /peoples-price is dated and
@@ -253,13 +254,10 @@ const bestEntries = (best?.places ?? [])
     const r = p.restaurant_id ? allById.get(p.restaurant_id) : null;
     if (p.restaurant_id && !r) err(`best_burgers.json: ${p.key} names ${p.restaurant_id}, not in the dataset`);
     for (const s of p.sources) if (!bestLists.has(s.list)) err(`best_burgers.json: ${p.key} cites unknown list ${s.list}`);
-    if (publishers.size < 2) err(`best_burgers.json: ${p.key} is named by ${publishers.size} publisher(s)`);
+    if (!publishers.size) err(`best_burgers.json: ${p.key} is named on no list`);
     return { key: p.key, name: p.name, publishers: publishers.size, lists: p.sources.map((s) => bestLists.get(s.list)).filter(Boolean), r: r && r.index_price !== null ? r : null };
   })
   .sort((a, b) => b.publishers - a.publishers || a.name.localeCompare(b.name, "en", { sensitivity: "base" }));
-bestEntries.forEach((e, i) => {
-  e.rank = i && e.publishers === bestEntries[i - 1].publishers ? bestEntries[i - 1].rank : i + 1;
-});
 for (const l of best?.lists ?? []) {
   const year = +String(l.date).slice(0, 4);
   if (!(year >= best.years.from && year <= best.years.to)) err(`best_burgers.json: list ${l.id} dated ${l.date}, outside ${best.years.from}-${best.years.to}`);
@@ -626,23 +624,41 @@ for (const p of pages) {
     const h1 = text((/<h1[^>]*>(.*?)<\/h1>/s.exec(html) ?? ["", ""])[1]);
     if (h1 !== "The most-recommended burgers in NYC.") err(`${path}: h1 "${h1}"`);
     if (!/Ranked by how many publications named each place on a best-burger list in \d{4}–\d{4}\./.test(text(html))) err(`${path}: no ranking note`);
-    const rows = [...html.matchAll(/<li class="best-row">(.*?)<\/li>\s*(?=<li class="best-row">|<\/ol>)/gs)].map(([, li]) => {
-      const nameHtml = /<p class="best-name[^"]*">(.*?)<\/p>/s.exec(li)?.[1] ?? "";
-      const link = /<a\b[^>]*href="(\/restaurants\/[^"#]+)"/.exec(nameHtml);
-      return {
-        rank: +text(/<p class="best-rank">(.*?)<\/p>/s.exec(li)?.[1] ?? "").replace(/^Rank /, ""),
-        name: text(nameHtml),
-        path: link ? decode(link[1]) : null,
-        pubs: +(/<span class="t-num-s font-semibold">(\d+)<\/span>/.exec(li)?.[1] ?? NaN),
-        price: text(/<span class="t-num-m">(.*?)<\/span>/s.exec(li)?.[1] ?? "") || null,
-        hrefs: [...li.matchAll(/<a\b[^>]*href="(https?:\/\/[^"]+)"/g)].map((m) => decode(m[1])),
-        // Tags as spaces: the fact's label, amount and count are separate blocks.
-        text: decode(li.replace(/<!--.*?-->/gs, "").replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim(),
-      };
+    // One group per publication count, most first: its heading ("Named by 10 publications", "Named by 1
+    // publication"), its place count and its rows, by name.
+    const groups = [...html.matchAll(/<section class="best-group" aria-labelledby="([^"]+)">(.*?)<\/ol><\/section>/gs)].map(([, id, g]) => ({
+      id,
+      heading: text(/<h2 id="[^"]+" class="best-group-title">(.*?)<\/h2>/s.exec(g)?.[1] ?? ""),
+      count: text(/<p class="best-group-count">(.*?)<\/p>/s.exec(g)?.[1] ?? ""),
+      pubs: +(/^named-by-(\d+)$/.exec(id)?.[1] ?? NaN),
+      html: g,
+    }));
+    const wantGroups = [...new Set(bestEntries.map((e) => e.publishers))].map((n) => {
+      const places = bestEntries.filter((e) => e.publishers === n).length;
+      return `named-by-${n}: Named by ${n} ${n === 1 ? "publication" : "publications"} · ${places} ${places === 1 ? "place" : "places"}`;
     });
-    const fmtRow = (x) => `${x.rank}. ${x.name} <${x.path}> ${x.pubs} ${x.price}`;
-    const wantRows = bestEntries.map((e) => ({ rank: e.rank, name: e.name, path: e.r ? `/restaurants/${e.r.id}` : null, pubs: e.publishers, price: e.r ? money(e.r.index_price) : null }));
+    const gotGroups = groups.map((g) => `${g.id}: ${g.heading} · ${g.count}`);
+    if (gotGroups.join("\n") !== wantGroups.join("\n")) err(`${path}: groups differ from best_burgers.json:\n    page ${gotGroups.join(" | ")}\n    data ${wantGroups.join(" | ")}`);
+    const rows = groups.flatMap((g) =>
+      [...g.html.matchAll(/<li class="best-row">(.*?)<\/li>\s*(?=<li class="best-row">|$)/gs)].map(([, li]) => {
+        const nameHtml = /<p class="best-name[^"]*">(.*?)<\/p>/s.exec(li)?.[1] ?? "";
+        const link = /<a\b[^>]*href="(\/restaurants\/[^"#]+)"/.exec(nameHtml);
+        return {
+          name: text(nameHtml),
+          path: link ? decode(link[1]) : null,
+          pubs: g.pubs,
+          price: text(/<span class="t-num-m">(.*?)<\/span>/s.exec(li)?.[1] ?? "") || null,
+          hrefs: [...li.matchAll(/<a\b[^>]*href="(https?:\/\/[^"]+)"/g)].map((m) => decode(m[1])),
+          // Tags as spaces: the fact's label, amount and count are separate blocks.
+          text: decode(li.replace(/<!--.*?-->/gs, "").replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim(),
+        };
+      }),
+    );
+    const fmtRow = (x) => `${x.pubs}: ${x.name} <${x.path}> ${x.price}`;
+    const wantRows = bestEntries.map((e) => ({ name: e.name, path: e.r ? `/restaurants/${e.r.id}` : null, pubs: e.publishers, price: e.r ? money(e.r.index_price) : null }));
     if (rows.map(fmtRow).join("\n") !== wantRows.map(fmtRow).join("\n")) err(`${path}: rows differ from best_burgers.json:\n    page ${rows.slice(0, 3).map(fmtRow).join(" | ")}…\n    data ${wantRows.slice(0, 3).map(fmtRow).join(" | ")}…`);
+    for (const x of rows) if (!x.path && !x.text.includes("Not priced")) err(`${path}: ${x.name}'s row has no price and no "Not priced"`);
+    if (!text(html).includes(`All ${count(bestEntries.length)} places on this list, most publications first.`)) err(`${path}: no count line for ${bestEntries.length} places`);
     bestEntries.forEach((e, i) => {
       const row = rows[i];
       if (!row) return;
