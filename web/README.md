@@ -197,13 +197,31 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   that would repeat, such as chain locations, name the street address: `sharedTitleIds`). `sourceLine()` is the one plain
   source/date line ("Prices from restaurant menus and ordering pages, checked September 2026."), shown under the home H1 and
   in the footer.
-- **Ranking pages:** `src/lib/rankings.ts` defines the 14 lists and their rows (`rankMenus`: distinct menus in the site's
-  usual cheapest/priciest order, a chain once with its location count, ties sharing a rank; the first 25 or half the place's
-  menus, whichever is fewer (`rankingCap`), plus every menu tied at the cut, or every row under $N), `components/RankingPage.tsx` draws them (breadcrumbs, a ticket, the H1, a one-line answer, the table, a link to the
-  same list on `/burgers`, "More burger rankings.") and `rankingSeo()` titles them. Each route is a thin static page:
-  `app/cheapest-burgers/page.tsx`, `app/cheapest-burgers/[borough]/page.tsx` (`generateStaticParams` over the boroughs with
-  a priced restaurant), the same for `most-expensive-burgers`, and `app/burgers-under-15|20/page.tsx`. They are linked from the
-  home and borough card lists ("See all"), `/burgers`, every ranking page and the footer's "Rankings" group, never the nav.
+- **Ranking pages:** `src/lib/rankings.ts` defines the lists and their rows (`rankingSpecs`; `rankMenus`: distinct menus in
+  the site's usual cheapest/priciest order, a chain once with its location count, ties sharing a rank; the first 25 or half
+  the place's menus, whichever is fewer (`rankingCap`), plus every menu tied at the cut, or every row under $N or of a style):
+  the 14 NYC and borough lists; each neighborhood's cheapest and most expensive when it has at least 10 distinct priced menus
+  and the two lists share no menu (`neighborhoodsWithRankings`, `MIN_NEIGHBORHOOD_MENUS`; 13 neighborhoods today); and the
+  burger-style lists (`stylesWithRankings`: the spots whose priciest burger is a smash, double, wagyu, dry-aged burger or
+  patty melt, from the conservative classifier in `src/lib/styles.ts`, for the styles with at least 10 menus; patty melt has
+  5, so no page). `components/RankingPage.tsx` draws them (breadcrumbs, a ticket, the H1, a one-line answer, the table, a link
+  to the same list on `/burgers` (none for a style: the explorer has no style filter), "More burger rankings.") and
+  `rankingSeo()` titles them. Each route is a thin static page reading `src/lib/ranking-routes.ts`:
+  `app/cheapest-burgers/page.tsx`, `app/cheapest-burgers/[borough]/page.tsx`, `app/cheapest-burgers/[borough]/[neighborhood]/page.tsx`
+  (both params come from the child, since `[borough]` has no layout), the same for `most-expensive-burgers`,
+  `app/burgers-under-15|20/page.tsx` and `app/burgers/[style]/page.tsx`. They are linked from the home and borough card lists
+  ("See all"), `/burgers`, every ranking page ("More burger rankings.": a neighborhood's own pair first, New York City, Burger
+  styles, the boroughs), each neighborhood page with lists (two links under its restaurant heading and its Q&A) and the
+  footer's "Rankings" group (the NYC lists), never the nav.
+- **The most-recommended burgers (`/best-burgers`, user decisions 2026-09-25):** places ranked by how many distinct publishers
+  named them on a best-burger list published or updated in 2024-2026 (ties share a rank and go by name), each with every list
+  that names it (publisher, title linked, date, the burger it names), our menu price and burger (linked to the restaurant
+  page's burger block, or "Not priced") and the People's Price (read-only, `components/worth/PeoplesPriceFact.tsx`). The data
+  is `../data/best_burgers.json` (committed, curated by hand, facts only: no list text; no Upper Cut Media House lists, no
+  trend features, beef burgers only, no closed places, two or more publishers each), copied by `sync-data`, checked by
+  `src/lib/best-burgers-data.ts` (server-only: the build fails on a bad file) and ranked by `src/lib/best-burgers.ts`
+  (`rankBestBurgers`, `bestBurgersProblems`). To change a list, edit the JSON (ids from `data/burger_index.json`), then run
+  `npm test` (`test/best-burgers.test.ts`) and `check:seo`.
   **Honest wording (user decision 2026-09-25):** each restaurant publishes only its priciest burger, so the cheapest and
   under-$N lists rank burger spots by it and say so: "Cheapest burger spots in NYC.", "Burger spots in NYC where the priciest
   burger is under $15.", "The priciest burger at Johnny's Reef is $6.00, the lowest top-burger price of any spot in NYC
@@ -233,7 +251,8 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   Applebot-Extended, CCBot), and only the analytics proxy `/ingest/` is disallowed.
 - **`/llms.txt`** (`src/lib/llms.ts`) and **`/data/burger-prices.csv`** (`src/lib/csv.ts`: `restaurant, neighborhood, borough,
   burger, price_usd, source, page_url, checked`; RFC 4180 quoting, CRLF, UTF-8, formula-looking text cells prefixed with `'`)
-  are force-static route handlers. llms.txt lists the ranking pages under "Rankings".
+  are force-static route handlers. llms.txt lists every ranking page (neighborhood and style lists included) and
+  `/best-burgers` under "Rankings".
 - **IndexNow:** `public/<key>.txt` holds the key (public by design: IndexNow fetches it to check we control the host). After
   each production deploy, from `web/`: `SITE_URL=https://<production host> npm run indexnow` (or `-- --site https://…`). It
   checks that the live site serves the key file, reads the live sitemap, refuses URLs on another host, and POSTs them to
@@ -242,13 +261,18 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
 - **Check a build:** `npm run check:seo` reads `out/` and the dataset: one `<title>`, a description, an absolute
   self-referencing canonical and one `<h1>` per page, no skipped heading levels, JSON-LD that parses, has the expected types
   and matches the page (names, prices, breadcrumbs, list order), each ranking table (ranks, restaurants, prices, count line
-  and ItemList) against a ranking it recomputes from the dataset, every Q&A block against its FAQPage word for word (and
+  and ItemList) against a ranking it recomputes from the dataset (and that exactly the neighborhoods with 10+ menus and
+  non-overlapping lists have them, each linked from its neighborhood page), each style list row by row (distinct menus,
+  dataset prices, order, ranks, a style word in each burger, the "where the priciest burger is a …" H1), `/best-burgers`
+  against `../data/best_burgers.json` (rows, ranks, publication counts, prices, every list link, the ItemList), no "best
+  burger" in our own titles, descriptions or H1s, every Q&A block against its FAQPage word for word (and
   one on home, every borough and every neighborhood page), the footer's source line, CSV link with its CC BY 4.0 license
   link and ranking links on every page, the Dataset's license, no overclaiming "cheapest" or "under $N" phrase in any page,
   title, description, JSON-LD, llms.txt or the CSV, unique titles and descriptions (with a length summary), the sitemap equal
   to the pages, robots.txt, every llms.txt link (and the license named next to the CSV), the CSV against the dataset, and no
   broken or orphaned internal links. `-- --site https://…` also asserts the origin. Tests:
-  `test/seo.test.ts`, `test/jsonld.test.ts`, `test/rankings.test.ts` (ranking rows, answers, FAQ, ranking titles),
+  `test/seo.test.ts`, `test/jsonld.test.ts`, `test/rankings.test.ts` (ranking rows, neighborhood lists, answers, FAQ, ranking
+  titles), `test/styles.test.ts` (the style classifier and lists), `test/best-burgers.test.ts` (the curated file and its ranking),
   `test/csv.test.ts`, `test/site.test.ts` (origin, titles, robots) and `test/indexnow.test.ts`.
 
 ## Deploy to Vercel
@@ -310,9 +334,10 @@ Notes:
 
 | Route | Page |
 |---|---|
-| `/` | The burger pricer first (`#price`), beside the H1, the median as a sentence and the source line; then the headline index on the Order Board, price histogram, borough bars with links to the five borough pages (`#boroughs`, which replaced `/boroughs`), cheapest and priciest (each with "See all"), neighborhood ranking, Q&A |
+| `/` | The burger pricer first (`#price`), beside the H1, the median as a sentence and the source line; then the headline index on the Order Board with "See the People's Price" and "Most-recommended burgers" under it, price histogram, borough bars with links to the five borough pages (`#boroughs`, which replaced `/boroughs`), cheapest and priciest (each with "See all"), neighborhood ranking, Q&A |
 | `/burgers` | Every priced restaurant's burger, one row each: search, filters (borough, neighborhood, price), sort, all synced to the URL; then links to every ranking page |
-| `/cheapest-burgers`, `/most-expensive-burgers` (and `/[borough]` under each), `/burgers-under-15`, `/burgers-under-20` | Ranking pages: a one-line answer and a ranked table, one row per distinct menu (top 25 or half the place's menus, ties at the cut kept; every row under $N) |
+| `/cheapest-burgers`, `/most-expensive-burgers` (and `/[borough]` and `/[borough]/[neighborhood]` under each), `/burgers-under-15`, `/burgers-under-20`, `/burgers/[style]` | Ranking pages: a one-line answer and a ranked table, one row per distinct menu (top 25 or half the place's menus, ties at the cut kept; every row under $N or of the style) |
+| `/best-burgers` | The most-recommended burgers in NYC: places ranked by how many publications named them on a best-burger list in 2024-2026, each with its lists, menu price and People's Price |
 | `/peoples-price` | The People's Price: the People's Burger Index beside the Burger Index, live boards (biggest bargains, most overpriced, most answered), burgers that need a few more answers, and a search that links to any burger's slider (all loaded in the browser) |
 | `/restaurants/[id]` | Priced restaurants only: "The burger" (name, price, description, vs neighborhood and NYC, price source), menu page and website links, "See it on the map" (`/map?r=<id>`), hand-check label, "What would you pay?" (the slider, then the People's Price), more in the neighborhood, other chain locations |
 | `/neighborhoods`, `/neighborhoods/[slug]` | Sortable ranking (areas with at least 5 distinct priced menus; a chain counts once) and a page for every neighborhood with a priced restaurant (its unpriced restaurants listed as plain names, then a Q&A); neighborhoods with nothing priced are plain names on `/neighborhoods` |

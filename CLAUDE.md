@@ -160,6 +160,15 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
 ## Data files
 
 - `data/burger_index.json` — THE dataset (contract v2 above). `build` validates before writing and fails loudly.
+- `data/best_burgers.json` — the `/best-burgers` page's lists and places, curated by hand from the 2026-09-25 research
+  (facts only: publisher, list title, link, date; place name, dataset `restaurant_id` (or a `neighborhood_slug` for a place
+  the dataset doesn't carry), the burger each list names). Decisions applied in the file: lists published or updated
+  2024-2026; no Upper Cut Media House lists (the publisher sells partnerships) and no pure trend features (Grub Street 2025;
+  chef-pick features count); beef burgers only (no national chains, no vegetarian/vegan or lamb picks, and a source naming a
+  non-beef burger doesn't count: Old Town Bar's Eater pick is a bison burger); closed places left out (Blue Hour, Gus's Chop
+  House); two or more distinct publishers per place. The web build (`web/src/lib/best-burgers-data.ts`) fails if an id,
+  list or neighborhood is missing or a rule is broken. Not a pipeline output: `pipeline build` never touches it, but a
+  dataset change that drops a `restaurant_id` breaks the web build until the file is fixed.
 - `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,108 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, the 2026-09-25 deletions and the 2026-09-25 best-burger-list additions, see `data/list_changes_2026-09-23.md`: `name, neighborhood,
   borough, website, menu_url, notes, source` where `source` is `pilot-100|uptown|downtown|outer|dohmh-diner-pub|dohmh-hamburgers|best-lists-2026-09`). It's the user's data:
   don't edit it without their approval; report duplicates (`report.csv_duplicate_matches`), unmatched rows (`report.csv_unmatched`),
@@ -220,7 +229,9 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   the pricer mounts, so the home HTML holds no menus or prices beyond the H1 band's median sentence and source line (the
   card is `data-nosnippet`); answers go through the worth store (`cast_worth`, same pool, 150 per hour per IP). The header's
   "Price a burger" (and the menu sheet's) links to `/#price` from every page; on home it scrolls to the pricer and
-  focuses it. Menu keys and restaurant ids must never change (answers are keyed on them).
+  focuses it; the search icon button sits next to it at every width (user decision 2026-09-25). Under the home board:
+  "See the People's Price" and "Most-recommended burgers" (they replaced the old "What's it worth?" section). Menu keys
+  and restaurant ids must never change (answers are keyed on them).
 - **SEO / AEO / GEO (user decisions 2026-09-25):** the origin comes from `src/lib/site-url.ts`: `NEXT_PUBLIC_SITE_URL`,
   else `https://$VERCEL_PROJECT_PRODUCTION_URL` (the free `*.vercel.app` address), else `http://localhost:4173` with a
   build warning (never a domain the user doesn't own). Titles and meta descriptions for every page type are built in
@@ -233,8 +244,16 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   Menu → MenuItem → Offer on restaurant pages, BreadcrumbList on every page below home (the visible crumbs where shown),
   ItemList for the `/neighborhoods` ranking, each neighborhood's restaurant table and each ranking page, FAQPage for the Q&A
   blocks (home, borough and neighborhood pages; `src/lib/answers.ts` + `components/QandA.tsx`, visible text = markup text).
-  The 14 ranking pages (`/cheapest-burgers[/<borough>]`, `/most-expensive-burgers[/<borough>]`, `/burgers-under-15|20`;
-  `src/lib/rankings.ts`, `components/RankingPage.tsx`) are per distinct menu and stay out of the nav. **Honest wording (user
+  The ranking pages (`/cheapest-burgers[/<borough>[/<neighborhood>]]`, `/most-expensive-burgers[/<borough>[/<neighborhood>]]`,
+  `/burgers-under-15|20`, `/burgers/<style>`; `src/lib/rankings.ts`, `components/RankingPage.tsx`) are per distinct menu
+  and stay out of the nav: a neighborhood has its two lists only with 10+ distinct priced menus and lists that share no menu
+  (`neighborhoodsWithRankings`), linked from its page; a burger style (`src/lib/styles.ts`: smash, double, wagyu, dry-aged,
+  patty melt; a conservative classifier on the published burger's name and description, add-ons dropped) has a list only
+  with 10+ menus, titled for what it is: "Burger spots in NYC where the priciest burger is a smash burger." **The
+  most-recommended burgers (`/best-burgers`, user decisions 2026-09-25):** places ranked by how many distinct publishers named
+  them on a best-burger list of 2024-2026, from `data/best_burgers.json` (see "Data files"), each with every list linked
+  (publisher, title, date), our menu price and the People's Price; one ranking-note line, the lists' own words never quoted,
+  ItemList JSON-LD (no Review or Rating). **Honest wording (user
   decision 2026-09-25):** each restaurant publishes only its priciest burger, so the cheapest and under-$N lists rank
   burger spots by their priciest burger and say so ("Cheapest burger spots in NYC.", "Burger spots in NYC where the priciest
   burger is under $15.", "The priciest burger at Johnny's Reef is $6.00, the lowest top-burger price of any spot in NYC", the Q&A
