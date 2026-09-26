@@ -112,13 +112,6 @@
       "date": "2025-09-23"
     },
     {
-      "id": "nypost-off-menu-burgers-2025",
-      "publisher": "New York Post",
-      "title": "These are some of the best burgers in NYC — but they're not on any menu",
-      "url": "https://nypost.com/2025/08/07/lifestyle/these-are-some-of-the-best-burgers-in-nyc-but-theyre-not-on-any-menu/",
-      "date": "2025-08-07"
-    },
-    {
       "id": "infatuation-it-burgers-america",
       "publisher": "The Infatuation",
       "title": "The \"It\" Burgers Across The Country, Ranked From Thinnest To Thickest",
@@ -795,22 +788,6 @@
       ]
     },
     {
-      "key": "crane-club",
-      "name": "Crane Club",
-      "restaurant_id": null,
-      "neighborhood_slug": "hudson-yards-chelsea-flat-iron-union-square",
-      "sources": [
-        {
-          "list": "timeout-best-burgers-nyc",
-          "burger": "The Crane Club Burger"
-        },
-        {
-          "list": "nypost-off-menu-burgers-2025",
-          "burger": null
-        }
-      ]
-    },
-    {
       "key": "donovans",
       "name": "Donovan's Pub",
       "restaurant_id": "donovans-pub-woodside",
@@ -891,26 +868,6 @@
       ]
     },
     {
-      "key": "lords",
-      "name": "Lord's",
-      "restaurant_id": "lords-west-village",
-      "neighborhood_slug": null,
-      "sources": [
-        {
-          "list": "infatuation-best-burgers-nyc",
-          "burger": null
-        },
-        {
-          "list": "infatuation-limited-edition-burgers-ranked",
-          "burger": null
-        },
-        {
-          "list": "nypost-off-menu-burgers-2025",
-          "burger": "Welsh rarebit cheeseburger (off-menu)"
-        }
-      ]
-    },
-    {
       "key": "lovelys",
       "name": "Lovely's Old Fashioned",
       "restaurant_id": "lovelys-old-fashioned-clinton",
@@ -927,22 +884,6 @@
         {
           "list": "eater-best-smash-burgers-nyc",
           "burger": "Smash burger with cheese"
-        }
-      ]
-    },
-    {
-      "key": "quatorze",
-      "name": "Quatorze",
-      "restaurant_id": "quatorze-yorkville",
-      "neighborhood_slug": null,
-      "sources": [
-        {
-          "list": "infatuation-limited-edition-burgers-ranked",
-          "burger": null
-        },
-        {
-          "list": "nypost-off-menu-burgers-2025",
-          "burger": null
         }
       ]
     },

@@ -3,11 +3,11 @@
 // the burger names the lists give, publishers, list titles, links and dates; never a sentence from a list).
 //
 // Rules the file already follows and problems() checks: lists published or updated 2024-2026 only; no Upper
-// Cut Media House lists (the publisher sells partnerships) and no pure trend features (chef-pick features
-// count); beef burgers only (no national chains, no vegetarian, vegan or lamb picks); closed places left
-// out; every place named by two or more distinct publishers. A place ranks by how many distinct
-// publishers named it (several lists from one publisher count once); ties share a rank (1, 2, 2, 4) and
-// are listed by name.
+// Cut Media House lists (the publisher sells partnerships) and no pure trend features (Grub Street 2025, the
+// New York Post's off-menu piece; chef-pick features count); beef burgers only (no national chains, no
+// vegetarian, vegan or lamb picks); closed places left out; every place named by two or more distinct
+// publishers. A place ranks by how many distinct publishers named it (several lists from one publisher
+// count once); ties share a rank (1, 2, 2, 4) and are listed by name.
 //
 // Our menu price and burger come from the dataset (a place's restaurant_id); a place without a price has
 // no page and shows "Not priced". Pure and client-safe: types only from ./schema.
@@ -20,7 +20,7 @@ export const BEST_BURGERS_PATH = "/best-burgers";
 export const BEST_BURGERS_NAME = "The most-recommended burgers in NYC";
 /** The page's kicker ticket (and its share image's overline). */
 export const BEST_BURGERS_TICKET = "Critics' catch";
-/** The count under the list: "All 36 places on this list, most publications first." */
+/** The count under the list: "All 33 places on this list, most publications first." */
 export function bestBurgersCountLine(places: number): string {
   return `All ${formatCount(places)} places on this list, most publications first.`;
 }

@@ -36,13 +36,16 @@ test("best_burgers.json applies the decisions: 2024-2026 lists only, no Upper Cu
     assert.match(l.url, /^https:\/\//);
   }
   const ids = new Set(FILE.lists.map((l) => l.id));
-  for (const out of ["grubstreet-best-new-burgers-2025", "worlds-101-best-burger-places-2026", "worlds-25-best-burgers-2025", "thrillist-best-burgers-nyc", "grubstreet-absolute-best-burger-2016"]) {
+  // Trend features that are not recommendations (Grub Street 2025, the New York Post's off-menu piece), Upper
+  // Cut Media House and lists older than 2024 are left out.
+  for (const out of ["grubstreet-best-new-burgers-2025", "nypost-off-menu-burgers-2025", "worlds-101-best-burger-places-2026", "worlds-25-best-burgers-2025", "thrillist-best-burgers-nyc", "grubstreet-absolute-best-burger-2016"]) {
     assert.ok(!ids.has(out), `${out} is left out`);
   }
   const keys = new Set(FILE.places.map((p) => p.key));
-  // National chain, vegetarian/vegan and lamb picks, closed places, and a place whose only second
-  // publisher named a bison burger (Old Town Bar): none are on the page.
-  for (const out of ["shake-shack", "superiority", "moonburger", "toad-style", "cervos", "harts", "blue-hour", "guss", "old-town-bar"]) assert.ok(!keys.has(out), out);
+  // National chain, vegetarian/vegan and lamb picks, closed places, a place whose only second source mentions
+  // only a bison burger (Old Town Bar: Eater's entry picks no burger), and the places whose only second
+  // publisher was the New York Post's off-menu trend piece (Crane Club, Lord's, Quatorze): none are on the page.
+  for (const out of ["shake-shack", "superiority", "moonburger", "toad-style", "cervos", "harts", "blue-hour", "guss", "old-town-bar", "crane-club", "lords", "quatorze"]) assert.ok(!keys.has(out), out);
   for (const p of FILE.places) for (const s of p.sources) if (s.burger) assert.ok(!/bison|lamb|turkey|chicken|veg|plant|impossible|beyond|fish|salmon/i.test(s.burger), `${p.key}: ${s.burger}`);
 });
 
@@ -78,11 +81,10 @@ test("rankBestBurgers on the real file: most publishers first, ties share a rank
   // A chain's People's Price key is its chain; unpriced places have no price, no page and no key.
   const byKey = new Map(entries.map((e) => [e.key, e]));
   assert.equal(byKey.get("7th-street-burger")?.menuKey, "chain:7th-street-burger");
-  for (const k of ["peter-luger", "le-b", "crane-club"]) {
+  for (const k of ["peter-luger", "le-b"]) {
     assert.equal(byKey.get(k)?.restaurant, null, k);
     assert.equal(byKey.get(k)?.menuKey, null, k);
   }
-  assert.deepEqual(byKey.get("crane-club")?.neighborhood, { name: "Hudson Yards-Chelsea-Flat Iron-Union Square", slug: "hudson-yards-chelsea-flat-iron-union-square", borough: "Manhattan", hasPage: true });
   assert.equal(byKey.get("peter-luger")?.neighborhood?.name, "Williamsburg");
   // Every list a place cites, newest first.
   for (const e of entries) for (let i = 1; i < e.sources.length; i++) assert.ok(e.sources[i - 1].list.date >= e.sources[i].list.date, e.key);
@@ -114,6 +116,10 @@ test("rankBestBurgers: distinct publishers, not lists; unknown ids are unpriced"
   assert.equal(entries[1].restaurant?.id, "a");
   assert.equal(entries[1].menuKey, "a");
   assert.equal(entries[2].restaurant, null, "an unpriced restaurant has no price");
+  // A place the dataset doesn't carry: its neighborhood from the file, no price, no page, no key.
+  assert.deepEqual(entries[0].neighborhood, { name: "SoHo", slug: "soho", borough: "Manhattan", hasPage: true });
+  assert.equal(entries[0].restaurant, null);
+  assert.equal(entries[0].menuKey, null);
   assert.deepEqual(entries[1].sources.map((s) => s.list.id), ["x1", "x2", "y1"]);
   assert.deepEqual(leaders(entries).map((e) => e.name), ["Gamma"]);
   assert.equal(bestBurgersLede(entries, "September 2026"), "Gamma tops the list: 3 publications named it.");
@@ -157,7 +163,7 @@ test("the real page's lede, title and description: numbers and names, publicatio
   assert.equal(seo.title, "The most-recommended burgers in NYC (Sep 2026)");
   assert.ok(seo.title.length <= TITLE_MAX);
   assert.ok(seo.description.length <= DESCRIPTION_MAX, seo.description);
-  assert.match(seo.description, /^36 NYC burger places ranked by how many publications named each on a best-burger list in 2024–2026, with the menu price\./);
+  assert.match(seo.description, /^33 NYC burger places ranked by how many publications named each on a best-burger list in 2024–2026, with the menu price\./);
   for (const s of [seo.title, seo.description, lede]) assert.ok(!/\bbest burgers?\b|\btop-rated\b/i.test(s), s);
 });
 

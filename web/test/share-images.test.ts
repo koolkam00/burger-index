@@ -110,7 +110,7 @@ test("the dataset: one card per restaurant, neighborhood, borough, ranking and s
     );
     assert.ok(!/cheapest burgers? (in|at|on|of)\b|burgers under \$/i.test(`${card.title} ${card.line} ${card.alt}`), card.alt);
   }
-  assert.equal(bestBurgersCountLine(36), "All 36 places on this list, most publications first.");
+  assert.equal(bestBurgersCountLine(33), "All 33 places on this list, most publications first.");
   assert.equal(BOROUGH_META.length, 5);
   for (const r of priced.slice(0, 50)) assert.equal(shareImagePath(`/restaurants/${r.id}`), `/og/restaurants/${r.id}.png`);
 });

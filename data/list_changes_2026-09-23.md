@@ -627,3 +627,9 @@ Not added: Gus's Chop House (215 Union St, Carroll Gardens): its Resy page is go
 DOHMH last inspected it on 2025-02-13 and Time Out dropped it from its 2025 update, so it looks closed. Toad Style
 (vegan) was not added either. Superiority Burger (vegetarian) and Moonburger (the lists picked its plant-based
 burgers) were already on the list, and Shake Shack is a national chain left out of the index.
+
+Later on 2026-09-25 (stage 5 review, no CSV change): the New York Post's off-menu piece of Aug 7, 2025 was left out of
+`data/best_burgers.json` as a trend feature, like Grub Street's. Without it Quatorze (1108) is named by one publisher (The
+Infatuation) and Crane Club (1104, which the user also named) by one (Time Out), so neither is on `/best-burgers`; Old Town
+Bar (1107) is off it too, since Eater's entry picks no burger and mentions only a bison burger. The rows stay on the list
+(Old Town Bar and Quatorze are priced); remove them only if the user asks.
