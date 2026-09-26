@@ -46,7 +46,8 @@ export type BoardCard = {
   alt: string;
 };
 
-export type ListCardRow = { rank: number; name: string; detail: string | null; price: number | null };
+/** A list card's row: `rank` null on a list that isn't a ranking (a landmark page's spots, nearest first). */
+export type ListCardRow = { rank: number | null; name: string; detail: string | null; price: number | null };
 
 /** A ranking: an overline, the page's H1 and its first rows, then the page's count line. */
 export type ListCard = {

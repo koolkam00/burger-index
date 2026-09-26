@@ -4,6 +4,7 @@ import { BEST_BURGERS_PATH } from "@/lib/best-burgers";
 import { BOROUGH_META } from "@/lib/boroughs";
 import { getGeneratedAt, getNeighborhoodPages, getPricedRestaurants } from "@/lib/data";
 import { absoluteUrl } from "@/lib/metadata";
+import { landmarkPath, landmarksWithPages, LANDMARKS_PATH } from "@/lib/landmarks";
 import { getPeoplesTopStamp } from "@/lib/peoples-top-data";
 import { PRESS_PATH } from "@/lib/press";
 import { rankingPath, rankingSpecs } from "@/lib/rankings";
@@ -14,7 +15,7 @@ export const dynamic = "force-static";
 /**
  * Every page the export writes (never the share images or the badges, which are files, not pages): priced restaurants,
  * neighborhoods with a priced restaurant, the ranking pages (NYC, boroughs, neighborhoods with their own lists, burger
- * styles), the most-recommended burgers and the People's Top 10. The pages whose static HTML changes with the daily
+ * styles), the landmarks hub and each landmark page, the most-recommended burgers and the People's Top 10. The pages whose static HTML changes with the daily
  * People's Top 10 board (the board itself, and /best-burgers with each row's People's rank) carry the board's date
  * when it is the later one.
  */
@@ -29,6 +30,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: absoluteUrl(PEOPLES_TOP_PATH), lastModified: crowd, changeFrequency: "daily" as const, priority: 0.8 },
     ...BOROUGH_META.map((b) => ({ url: absoluteUrl(`/boroughs/${b.slug}`), lastModified, changeFrequency: "weekly" as const, priority: 0.7 })),
     ...rankingSpecs(getPricedRestaurants()).map((s) => ({ url: absoluteUrl(rankingPath(s)), lastModified, changeFrequency: "weekly" as const, priority: 0.7 })),
+    { url: absoluteUrl(LANDMARKS_PATH), lastModified, changeFrequency: "weekly" as const, priority: 0.7 },
+    ...landmarksWithPages(getPricedRestaurants()).map((p) => ({ url: absoluteUrl(landmarkPath(p.landmark)), lastModified, changeFrequency: "weekly" as const, priority: 0.6 })),
     ...getNeighborhoodPages().map((n) => ({ url: absoluteUrl(`/neighborhoods/${n.slug}`), lastModified, changeFrequency: "weekly" as const, priority: 0.6 })),
     ...getPricedRestaurants().map((r) => ({ url: absoluteUrl(`/restaurants/${r.id}`), lastModified, changeFrequency: "weekly" as const, priority: 0.5 })),
   ];

@@ -3,6 +3,7 @@ import { BADGE_PAGE_PATH } from "@/lib/badge";
 import { BEST_BURGERS_NAME, BEST_BURGERS_PATH } from "@/lib/best-burgers";
 import { CSV_LICENSE, CSV_PATH } from "@/lib/csv";
 import { formatDate } from "@/lib/format";
+import { LANDMARKS_NAME, LANDMARKS_PATH } from "@/lib/landmarks";
 import { PRESS_NAME, PRESS_PATH } from "@/lib/press";
 import { CITY_RANKINGS, rankingName, rankingPath } from "@/lib/rankings";
 import { sourceLine } from "@/lib/seo";
@@ -12,8 +13,8 @@ import { Wordmark } from "./Wordmark";
 
 /**
  * The deck: a rope rail, then dark stained deck planks. The source line, the non-affiliation line, the
- * CSV link with its license and the NYC ranking pages (with the most-recommended burgers and the People's
- * Top 10) ship on every page.
+ * CSV link with its license and the NYC ranking pages (with the most-recommended burgers, the People's
+ * Top 10 and the burgers near NYC landmarks) ship on every page.
  */
 export function SiteFooter({ generatedAt }: { generatedAt: string }) {
   return (
@@ -70,8 +71,8 @@ export function SiteFooter({ generatedAt }: { generatedAt: string }) {
                 </li>
               </ul>
             </nav>
-            {/* The NYC ranking pages, the most-recommended burgers and the People's Top 10; each borough's lists are linked from its
-                borough page and every ranking page, each neighborhood's from its neighborhood page. */}
+            {/* The NYC ranking pages, the most-recommended burgers, the People's Top 10 and the landmarks hub; each borough's lists
+                are linked from its borough page and every ranking page, each neighborhood's from its neighborhood page. */}
             <nav aria-labelledby="footer-rankings" className="mt-8">
               <h2 id="footer-rankings" className="t-label deck-muted">
                 Rankings
@@ -93,6 +94,11 @@ export function SiteFooter({ generatedAt }: { generatedAt: string }) {
                 <li className="text-balance">
                   <Link className="deck-link" href={PEOPLES_TOP_PATH}>
                     {PEOPLES_TOP_NAME}
+                  </Link>
+                </li>
+                <li className="text-balance">
+                  <Link className="deck-link" href={LANDMARKS_PATH}>
+                    {LANDMARKS_NAME}
                   </Link>
                 </li>
               </ul>

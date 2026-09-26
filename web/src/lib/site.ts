@@ -12,9 +12,12 @@ export const NAV: readonly NavItem[] = [
   { href: "/neighborhoods", label: "Neighborhoods" },
 ];
 
-/** The ranking pages' paths (lib/rankings.ts rankingPath): /cheapest-burgers[/borough], /most-expensive-burgers[/borough], /burgers-under-N. */
+/**
+ * The ranking pages' paths (lib/rankings.ts rankingPath: /cheapest-burgers[/borough], /most-expensive-burgers[/borough],
+ * /burgers-under-N) and the landmark pages' (lib/landmarks.ts: /burgers-near[/landmark]); the nav marks Burgers on them.
+ */
 export function isRankingPath(pathname: string): boolean {
-  return /^\/(cheapest-burgers|most-expensive-burgers|burgers-under-\d+)(\/|$)/.test(pathname);
+  return /^\/(cheapest-burgers|most-expensive-burgers|burgers-under-\d+|burgers-near)(\/|$)/.test(pathname);
 }
 
 /** The People's Top 10 (lib/peoples-top.ts): the crowd's ranking, made daily from the visitors' lists. */

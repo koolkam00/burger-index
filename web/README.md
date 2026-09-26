@@ -261,6 +261,30 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   ("See all"), `/burgers`, every ranking page ("More burger rankings.": a neighborhood's own pair first, New York City, Burger
   styles, the boroughs), each neighborhood page with lists (two links under its restaurant heading and its Q&A) and the
   footer's "Rankings" group (the NYC lists), never the nav.
+- **Burgers near a landmark (`/burgers-near`, `/burgers-near/<landmark>`, user decision 2026-09-26):** for searches like
+  "burger near Times Square". `src/lib/landmarks.mjs` holds the landmarks (slug, name, the name in a sentence, borough and
+  point: each landmark's Wikipedia coordinates, the article named in a comment; places that are effectively one point are
+  one landmark, such as Penn Station and Madison Square Garden, and a page names only the place its point measures, so
+  Columbus Circle, Chelsea Market and City Hall stand alone while Central Park South, the High Line and the Brooklyn Bridge,
+  which run on past the half mile, have no page; `short`, a shorter name for the title of a long one, so every title keeps
+  its count and month), the radius (half a mile,
+  0.804672 km, "about a 10-minute walk") and the minimum (5 spots). It is plain JS so `scripts/check-seo.mjs` reads the same
+  points. `src/lib/landmarks.ts` (pure, client-safe) does the rest: `spotsNear` (every priced location within the radius as the
+  crow flies, nearest first, ties by name; a chain's two locations are two rows, and a restaurant without coordinates is never
+  on a list, so the count line is the plain "36 burger spots within half a mile, nearest first.", never "All 36 …"), `landmarksWithPages` (the landmarks with 5+ spots, in borough order: 17 today; DUMBO, Yankee Stadium, Citi Field
+  and Coney Island have fewer, so no page until the dataset has more), `landmarkSentence` (the lede: "36 burger spots within
+  half a mile of Times Square, about a 10-minute walk; their priciest burgers run from $12.65 at … to $34.00 at …
+  (September 2026)."), the count line, the hub's rows and sentence, and `landmarkBounds` for the map. `components/Landmarks.tsx`
+  draws the page (breadcrumbs "The Burger Index / Burgers near landmarks / Times Square", the ticket "Shore leave", the H1
+  "Burgers near Times Square.", the table: Away "0.3 mi", Restaurant with its neighborhood and source badge, Burger, Price;
+  "See them on the map" to `/map?near=<slug>`, which fits the map to the landmark's half mile; "Burgers near other
+  landmarks.") and the hub's list; the routes are `app/burgers-near/page.tsx` and `app/burgers-near/[landmark]/page.tsx`
+  (params from `src/lib/landmark-routes.ts`). `landmarkSeo()` / `landmarksHubSeo()` title them. ItemList (the rows, nearest
+  first) and BreadcrumbList JSON-LD; each landmark page has its own share image (a list card: its nearest three with burger
+  and distance, no rank); the hub keeps `/og.png`. Linked from the footer's Rankings group and "More burger rankings." (so
+  from `/burgers`); in the sitemap and llms.txt ("Burgers near landmarks"). Honest wording: spots and their priciest burger,
+  never "the cheapest burger near …" (`check:seo`). To add a landmark, add its point to `landmarks.mjs` with its source; a
+  slug is a URL, never renamed. Tested in `test/landmarks.test.ts`.
 - **The most-recommended burgers (`/best-burgers`, user decisions 2026-09-25):** places ranked by how many distinct publishers
   named them on a best-burger list published or updated in 2024-2026 (ties share a rank and go by name), shown in groups of one
   publication count ("Named by 10 publications" … "Named by 1 publication", `groupBestBurgers`), each with every list
@@ -303,16 +327,17 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
 - **`/llms.txt`** (`src/lib/llms.ts`) and **`/data/burger-prices.csv`** (`src/lib/csv.ts`: `restaurant, neighborhood, borough,
   burger, price_usd, source, page_url, checked`; RFC 4180 quoting, CRLF, UTF-8, formula-looking text cells prefixed with `'`)
   are force-static route handlers. llms.txt lists every ranking page (neighborhood and style lists included),
-  `/best-burgers` and the People's Top 10 (with its first three) under "Rankings".
+  `/best-burgers` and the People's Top 10 (with its first three) under "Rankings", and the landmarks hub and every landmark
+  page (with its spot count and the ends of their priciest burgers) under "Burgers near landmarks".
 - **Share images, the price badge, the press kit (user decisions 2026-09-25, stage 4):**
-  - Every restaurant, neighborhood, borough, ranking and style page and `/best-burgers` names its own 1200×630 share image,
+  - Every restaurant, neighborhood, borough, ranking, style and landmark page and `/best-burgers` names its own 1200×630 share image,
     `/og/<page path>.png` (`og:image`, `twitter:image` and their alt text through `pageMetadata({ image })`); the rest keep
     `/og.png`. `src/lib/share-images.ts` says what each card holds (a board: the name, burger and price, or the area's median
     and menu count; a list: the page's ticket, H1, first three rows and count line) and fits the text; `src/lib/share-cards.ts`
     (server-only) builds one per page from the dataset; `components/og/board.tsx` holds the Order Board pieces `/og.png`
     uses too, `components/og/cards.tsx` the two cards; `app/og/[...path]/route.tsx` renders each at build time with next/og and
     stores it in 256 colors (`src/lib/png-palette.ts`: median cut, no dithering; about a third of next/og's RGBA file, no
-    visible change). 734 images, about 24 MB; they make `npm run build` take about 2 minutes (from 17 s) on a 12-core Mac.
+    visible change). 786 images, about 26 MB; they make `npm run build` take about 2 minutes (from 17 s) on a 12-core Mac.
   - `/badge/<id>.svg`: a 300×84 badge for every priced restaurant ("$22 burger", "10% above the $20.00 NYC median", "THE
     BURGER INDEX · SEP 2026"; `src/lib/badge.ts`), drawn by `satori` (a dependency, pinned to the version next/og bundles)
     in `app/badge/[file]/route.tsx`, so the text is outlines and looks the same on any site; `src/lib/svg-path.ts` rewrites
@@ -343,21 +368,25 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   early; the one-liner; each `/best-burgers` row's People's rank), no "People's Price", "What's it worth" or "Price a burger"
   left anywhere and `/peoples-price`, `/best-value-burgers` and `/data/pricer.json` not built, the ranker's region on home,
   any `/_none` placeholder noindex and unlisted, every page's share image (its own `/og/<path>.png` for restaurant,
-  area, ranking, style and most-recommended pages, else `/og.png`; a 1200×630 PNG that exists; an alt naming the page's
+  area, ranking, style, landmark and most-recommended pages, else `/og.png`; a 1200×630 PNG that exists; an alt naming the page's
   price or H1; no image unused or shared), one badge per priced restaurant and nothing else (its title's price and comparison
   recomputed, no script) with its page's `/badge?r=<id>` link, `/badge` (the example snippet) and `/press` (median, borough
   medians, source line, CSV, license and GitHub links, share image, credit line), no email address on any page or in
   llms.txt, each restaurant's "Nearby at a similar price" recomputed from the dataset (and "More in …" not repeating it),
-  every Q&A block against its FAQPage word for word (and
+  each landmark page recomputed from the dataset and `src/lib/landmarks.mjs`'s points (the spots within half a mile,
+  nearest first, row by row with distance, name, link and price; exactly the landmarks with 5+ spots have a page; the H1,
+  the lede, the count line, every "N burger spots" in its title and description, the ItemList, the map link) and the hub's
+  list (order, counts, ranges, ItemList), every Q&A block against its FAQPage word for word (and
   one on home, every borough and every neighborhood page), the footer's source line, CSV link with its CC BY 4.0 license
-  link and ranking links on every page, the Dataset's license, no overclaiming "cheapest" or "under $N" phrase in any page,
+  link and ranking links (the landmarks hub too) on every page, the Dataset's license, no overclaiming "cheapest", "cheapest burger near" or "under $N" phrase in any page,
   title, description, JSON-LD, llms.txt or the CSV, unique titles and descriptions (with a length summary), the sitemap equal
   to the pages (each `lastmod` the dataset's date, or the board's where the People's Top 10 is in the HTML: `/peoples-top-10` and `/best-burgers`), robots.txt, every llms.txt link (and the license named next to the CSV), the CSV against the dataset, and no
   broken or orphaned internal links. `-- --site https://…` also asserts the origin. Tests:
   `test/seo.test.ts`, `test/jsonld.test.ts`, `test/rankings.test.ts` (ranking rows, neighborhood lists, answers, FAQ, ranking
   titles), `test/styles.test.ts` (the style classifier and lists), `test/best-burgers.test.ts` (the curated file and its ranking),
   `test/peoples-top.test.ts` (the board as the page shows it, its words, the board file, a real ladder board end to end),
-  `test/share-images.test.ts` (image paths, the cards, text fitting), `test/png-palette.test.ts` (every PNG row filter, the
+  `test/share-images.test.ts` (image paths, the cards, text fitting), `test/landmarks.test.ts` (the points, the half-mile
+  filter and order, the pages kept, the lede, titles and descriptions, the map's view, the landmark share card), `test/png-palette.test.ts` (every PNG row filter, the
   quantizer, the indexed encoder), `test/badge.test.ts` (badge text, snippet, finder, path compaction, the press kit's credit
   line and both pages' titles), `test/nearby.test.ts`,
   `test/csv.test.ts`, `test/site.test.ts` (origin, titles, robots) and `test/indexnow.test.ts`.
@@ -424,14 +453,15 @@ Notes:
 | `/` | The burger ranker first (`#rank`), beside the H1, the median as a sentence and the source line; then the headline index on the Order Board with "See the People's Top 10" and "Most-recommended burgers" under it, price histogram, borough bars with links to the five borough pages (`#boroughs`, which replaced `/boroughs`), cheapest and priciest (each with "See all"), neighborhood ranking, Q&A |
 | `/burgers` | Every priced restaurant's burger, one row each: search, filters (borough, neighborhood, price), sort, all synced to the URL; then links to every ranking page |
 | `/cheapest-burgers`, `/most-expensive-burgers` (and `/[borough]` and `/[borough]/[neighborhood]` under each), `/burgers-under-15`, `/burgers-under-20`, `/burgers/[style]` | Ranking pages: a one-line answer and a ranked table, one row per distinct menu (top 25 or half the place's menus, ties at the cut kept; every row under $N or of the style) |
+| `/burgers-near`, `/burgers-near/[landmark]` | Burgers near NYC landmarks: the hub (every landmark with 5+ priced spots within half a mile, by borough, with its count and range) and a page per landmark (the spots within half a mile, nearest first, with distance, burger and price; "See them on the map" opens `/map?near=<slug>`) |
 | `/best-burgers` | The most-recommended burgers in NYC: places ranked by how many publications named them on a best-burger list in 2024-2026, each with its lists, menu price and People's rank (where ranked) |
 | `/peoples-top-10` | The People's Top 10: the daily board of the burgers visitors rank highest (the 10 seats, the rest of the ranking, Rising), "Early results" under 500 lists, the one-liner, "Rank your burgers" (`/peoples-price` redirects here: `vercel.json`) |
 | `/restaurants/[id]` | Priced restaurants only: "The burger" (name, price, description, vs neighborhood and NYC, price source), menu page and website links, "See it on the map" (`/map?r=<id>`), hand-check label, nearby at a similar price, more in the neighborhood, other chain locations, and "Get its price badge" (`/badge?r=<id>`) |
 | `/neighborhoods`, `/neighborhoods/[slug]` | Sortable ranking (areas with at least 5 distinct priced menus; a chain counts once) and a page for every neighborhood with a priced restaurant (its unpriced restaurants listed as plain names, then a Q&A); neighborhoods with nothing priced are plain names on `/neighborhoods` |
 | `/boroughs/[slug]` | The five borough pages (there is no `/boroughs` index), each with "See all" links to its two ranking pages and a Q&A |
-| `/map` | MapLibre GL map of the priced restaurants, pins colored by price level, legend, list view, priced restaurants without coordinates |
+| `/map` | MapLibre GL map of the priced restaurants, pins colored by price level, legend, list view, priced restaurants without coordinates; `?r=<id>` opens a pin, `?near=<landmark>` fits a landmark's half mile |
 | `/og.png`, `/sitemap.xml`, `/robots.txt` | Open Graph image (the Order Board), sitemap (every page), robots (every crawler welcome, AI bots named, only `/ingest/` disallowed) |
-| `/og/<page path>.png` | Each restaurant, neighborhood, borough, ranking and style page's and `/best-burgers`' own share image (256-color PNG) |
+| `/og/<page path>.png` | Each restaurant, neighborhood, borough, ranking, style and landmark page's and `/best-burgers`' own share image (256-color PNG) |
 | `/badge`, `/badge/<id>.svg` | The price badge page (the badge of `?r=<id>` or an example, a finder, copyable snippets, how to add it) and every priced restaurant's badge |
 | `/press` | Press kit: the headline numbers, the source line, the CSV and how to credit it, the share image, the contact (GitHub issues) |
 | `/llms.txt` | Plain summary for AI assistants: the headline numbers and date, links to the main pages, the ranking pages and the CSV |

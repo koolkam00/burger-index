@@ -1,6 +1,6 @@
 // A page's share image (DESIGN.md "Share images"): the Order Board over the water, carrying the page's own
 // card (lib/share-images.ts). A board card (a restaurant or an area) is the name and one price; a list card
-// (a ranking or the most-recommended burgers) is the page's H1 and its first rows. Satori-only markup.
+// (a ranking, the most-recommended burgers or a landmark page) is the page's H1 and its first rows. Satori-only markup.
 import "server-only";
 
 import type { ReactNode } from "react";
@@ -102,6 +102,8 @@ function ListCardImage({ card }: { card: ListCard }) {
   const rule = "2px solid rgba(58,31,12,0.22)";
   const used = 26.4 + 8 + title.lines * title.size * 1.04 + 12 + card.rows.length * 62 + (card.line ? 10 + 26.4 : 0);
   const spare = Math.max(0, LIST_CONTENT - used);
+  // A list that isn't a ranking (a landmark page, nearest first) has no rank column.
+  const ranked = card.rows.some((row) => row.rank !== null);
   return (
     <Sea>
       <Board width={BOARD} marginTop={40} hang={24 + Math.round(spare / 2)} facePadding="24px 40px 24px">
@@ -112,7 +114,7 @@ function ListCardImage({ card }: { card: ListCard }) {
         <div style={{ display: "flex", flexDirection: "column", width: "100%", marginTop: 12, borderTop: rule }}>
           {card.rows.map((row, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", height: 60, borderBottom: rule, gap: 18 }}>
-              <div style={{ display: "flex", justifyContent: "flex-end", width: 40, fontSize: 28, fontWeight: 700 }}>{row.rank}</div>
+              {ranked ? <div style={{ display: "flex", justifyContent: "flex-end", width: 40, fontSize: 28, fontWeight: 700 }}>{row.rank ?? ""}</div> : null}
               <div style={{ display: "flex", flexDirection: "column", flexGrow: 1, flexShrink: 1, minWidth: 0 }}>
                 <div style={{ display: "block", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", fontSize: 28, fontWeight: 600, lineHeight: 1.1 }}>{row.name}</div>
                 {row.detail ? (
