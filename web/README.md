@@ -262,11 +262,13 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   styles, the boroughs), each neighborhood page with lists (two links under its restaurant heading and its Q&A) and the
   footer's "Rankings" group (the NYC lists), never the nav.
 - **The most-recommended burgers (`/best-burgers`, user decisions 2026-09-25):** places ranked by how many distinct publishers
-  named them on a best-burger list published or updated in 2024-2026 (ties share a rank and go by name), each with every list
+  named them on a best-burger list published or updated in 2024-2026 (ties share a rank and go by name), shown in groups of one
+  publication count ("Named by 10 publications" … "Named by 1 publication", `groupBestBurgers`), each with every list
   that names it (publisher, title linked, date, the burger it names), our menu price and burger (linked to the restaurant
   page's burger block, or "Not priced") and the People's Price (read-only, `components/worth/PeoplesPriceFact.tsx`). The data
   is `../data/best_burgers.json` (committed, curated by hand, facts only: no list text; no Upper Cut Media House lists, no
-  trend features, beef burgers only, no closed places, two or more publishers each), copied by `sync-data`, checked by
+  trend features, beef burgers only, no closed places; one publisher is enough, so every open place a counted list names is
+  on it), copied by `sync-data`, checked by
   `src/lib/best-burgers-data.ts` (server-only: the build fails on a bad file) and ranked by `src/lib/best-burgers.ts`
   (`rankBestBurgers`, `bestBurgersProblems`). To change a list, edit the JSON (ids from `data/burger_index.json`), then run
   `npm test` (`test/best-burgers.test.ts`) and `check:seo`.
@@ -334,7 +336,7 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   and ItemList) against a ranking it recomputes from the dataset, its description naming every menu sharing first place (and that exactly the neighborhoods with 10+ menus and
   non-overlapping lists have them, each linked from its neighborhood page), each style list row by row (distinct menus,
   dataset prices, order, ranks, a style word in each burger, the "where the priciest burger is a …" H1), `/best-burgers`
-  against `../data/best_burgers.json` (rows, ranks, publication counts, prices, every list link, the ItemList), no "best
+  against `../data/best_burgers.json` (groups and their place counts, rows in order, prices, every list link, the count line, the ItemList), no "best
   burger" in our own titles, descriptions or H1s, the People's Price snapshot in the HTML (every restaurant page whose menu has
   3+ answers carries its exact sentence and no other page does, each `/best-burgers` row its snapshot numbers, `/peoples-price`
   its date and its "Most answered" board, `/best-value-burgers` present exactly when 10+ menus have a verdict, row by row, and

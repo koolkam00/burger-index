@@ -162,15 +162,20 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
 - `data/burger_index.json` — THE dataset (contract v2 above). `build` validates before writing and fails loudly.
 - `data/best_burgers.json` — the `/best-burgers` page's lists and places, curated by hand from the 2026-09-25 research
   (facts only: publisher, list title, link, date; place name, dataset `restaurant_id` (or a `neighborhood_slug` for a place
-  the dataset doesn't carry), the burger each list names). Decisions applied in the file: lists published or updated
-  2024-2026; no Upper Cut Media House lists (the publisher sells partnerships) and no pure trend features (Grub Street 2025,
-  and the New York Post's Aug 2025 off-menu piece, which dropped Crane Club, Lord's and Quatorze to one publisher; chef-pick
-  features count); beef burgers only (no national chains, no vegetarian/vegan or lamb picks, and a source naming only a
-  non-beef burger doesn't count: Eater's Old Town Bar entry picks no burger and mentions only a bison burger, so Old Town Bar
-  has one publisher); closed places left out (Blue Hour, Gus's Chop House); two or more distinct publishers per place
-  (33 places from 21 lists by 11 publications). The web build (`web/src/lib/best-burgers-data.ts`) fails if an id,
-  list or neighborhood is missing or a rule is broken. Not a pipeline output: `pipeline build` never touches it, but a
-  dataset change that drops a `restaurant_id` breaks the web build until the file is fixed.
+  the dataset doesn't carry: Crane Club, Julius', Lundy's), the burger each list names). **Every open place whose beef burger
+  a counted list names is on it: one publisher is enough** (user decision 2026-09-25, "/best-burgers should have all those
+  burgers"; the earlier two-publisher minimum was not the user's rule). Decisions applied in the file: lists published or
+  updated 2024-2026; no Upper Cut Media House lists (the publisher sells partnerships) and no pure trend features (Grub
+  Street 2025, the New York Post's Aug 2025 off-menu piece; chef-pick features count); beef burgers only (no national chains,
+  no vegetarian/vegan, lamb or bison picks, and a source naming only a non-beef burger doesn't count: Eater's Old Town Bar
+  entry mentions only a bison burger, so Old Town Bar is there for The Infatuation's cheeseburger alone); closed places left
+  out (Blue Hour, Gus's Chop House, Bandits Burger & Dive, Debbie's Burgers, Loring Place, Paper Plate, F. Ottomanelli:
+  temporarily closed; Little Fino no longer serves a burger). 96 places from 23 lists by 11 publications; the places the
+  lists name were added to the restaurant list (`source` `best-lists-2026-09`) and priced, so 91 carry a menu price (Peter
+  Luger, Le B., Crane Club, Julius' and Lundy's publish none). The page groups them by publication count ("Named by 10
+  publications" … "Named by 1 publication"). The web build (`web/src/lib/best-burgers-data.ts`) fails if an id, list or
+  neighborhood is missing or a rule is broken. Not a pipeline output: `pipeline build` never touches it, but a dataset
+  change that drops a `restaurant_id` breaks the web build until the file is fixed.
 - `data/peoples_price.json` — **the People's Price snapshot** (user decision 2026-09-25: crawlers must see the crowd's
   numbers). **Owned by the daily workflow on `main`: never edit, regenerate or commit it on a branch** (see "People's
   Price snapshot" under "Website"). Not a pipeline output; `pipeline build` never touches it.
@@ -257,9 +262,10 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   patty melt; a conservative classifier on the published burger's name and description, add-ons dropped) has a list only
   with 10+ menus, titled for what it is: "Burger spots in NYC where the priciest burger is a smash burger." **The
   most-recommended burgers (`/best-burgers`, user decisions 2026-09-25):** places ranked by how many distinct publishers named
-  them on a best-burger list of 2024-2026, from `data/best_burgers.json` (see "Data files"), each with every list linked
-  (publisher, title, date), our menu price and the People's Price; one ranking-note line, the lists' own words never quoted,
-  ItemList JSON-LD (no Review or Rating). **Honest wording (user
+  them on a best-burger list of 2024-2026 (one publisher is enough), from `data/best_burgers.json` (see "Data files"),
+  grouped under sticky bars by publication count ("Named by 10 publications" … "Named by 1 publication"), each with every
+  list linked (publisher, title, date), our menu price and the People's Price; one ranking-note line, the lists' own words
+  never quoted, ItemList JSON-LD (no Review or Rating). **Honest wording (user
   decision 2026-09-25):** each restaurant publishes only its priciest burger, so the cheapest and under-$N lists rank
   burger spots by their priciest burger and say so ("Cheapest burger spots in NYC.", "Burger spots in NYC where the priciest
   burger is under $15.", "The priciest burger at Johnny's Reef is $6.00, the lowest top-burger price of any spot in NYC", the Q&A
