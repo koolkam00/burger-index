@@ -85,7 +85,8 @@ Curated chains whose own site shows no prices (`official_has_prices=False`: the 
 Extraction rules (schema + instructions in `context_client.py`, clean-up in `extract.py`): numeric price of the
 burger alone; market price → null; single/standard size; no combo/meal upgrades or add-ons (meal-only → null);
 sliders only when sold as a burger; kids' items dropped; prices < $2 or > $150 dropped as suspect (noted);
-names cleaned (trailing prices, emoji, ®); duplicates collapsed. **Lunch vs dinner:** a burger on several menus
+names cleaned (trailing prices, emoji, ®; a `...with cheese` continuation line takes the name of the burger above it,
+as on Henry Public's menu); duplicates collapsed. **Lunch vs dinner:** a burger on several menus
 keeps its dinner/all-day price; late-night, lunch, brunch, then happy-hour prices are used only when it is not on
 the dinner menu. Status (pipeline only: `run_log.jsonl`, `plan`, the `build` summary; not in the dataset):
 `priced` (≥1 index-eligible beef burger) | `no_prices` | `no_burgers` (incl. only non-beef) | `no_menu_found` |
@@ -131,7 +132,11 @@ to withhold, so American Whiskey (its Grubhub/Seamless `Burger`, $20.40, `delive
 where the restaurant's own price was read and set by hand (Boeuf & Bun: Uber Eats = own price / 0.56, so its own
 ordering page's $32) the own price stays. Withholds remain for closed places, another restaurant's page, stale copies
 and partial pages (Brooklyn Diner's LaGuardia Terminal B row is withheld: its search found only the Manhattan menu, and an
-airport concession never gets a street restaurant's price).
+airport concession never gets a street restaurant's price). **Sauce (`getsauce.com`) is a third-party pickup and delivery
+platform, not the restaurant's site:** it is not yet in `discover.ONLINE_ORDERING` (adding it changes the offline replay:
+plan it with a re-run), so a CSV `menu_url` there reads as `official_menu`; corrections relabel the six such pages
+`online_ordering` (BK Jani, whose Sauce prices are a flat $2 above its year-old own menu image, Fat Boys, Gracie's,
+Moe's, Murray Hill Diner, The Flame Diner), and a new one needs the same entry.
 
 Post-processing index rules (`extract.py`/`build.py`; free on the next `build`, no re-scrape; `normalize_menu` never
 removes these rows, because `corrections.json` names them and `process` counts them):
