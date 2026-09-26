@@ -175,7 +175,7 @@ test("the committed data/peoples_price.json is a snapshot in the writer's own ca
 test("fetchHistRows: read-only GETs of burger_worth_hist with the key as apikey, 100 menus per request", async () => {
   const keys = Array.from({ length: 250 }, (_, i) => `menu-${String(i).padStart(3, "0")}`);
   const { fn, calls } = fakeFetch((url) => ({ status: 200, body: askedKeys(url).slice(0, 2).map((k) => ({ menu_key: k, dollars: 20, votes: 1 })) }));
-  const rows = await fetchHistRows({ url: "https://example.supabase.co/", key: "sb_publishable_test", keys, fetch: fn, warn: () => {} });
+  const rows = await fetchHistRows({ url: "https://example.supabase.co/", key: "sb_publishable_test", keys, fetch: fn });
   assert.equal(calls.length, 3);
   for (const { url, init } of calls) {
     assert.equal(init.method, "GET");
@@ -189,14 +189,18 @@ test("fetchHistRows: read-only GETs of burger_worth_hist with the key as apikey,
   assert.equal(rows.length, 6);
 });
 
-test("fetchHistRows pages through a full page, skips rows that don't check out, and fails loudly", async () => {
+test("fetchHistRows pages through a full page, and fails loudly on a row that doesn't check out", async () => {
   const full = Array.from({ length: PAGE_SIZE }, (_, i) => ({ menu_key: "busy", dollars: 5 + (i % 71), votes: 1 }));
-  const { fn, calls } = fakeFetch((url) => ({ status: 200, body: url.searchParams.get("offset") === "0" ? full : [{ menu_key: "busy", dollars: 99, votes: 1 }, { menu_key: "busy", dollars: 40, votes: 2 }] }));
-  const warned: string[] = [];
-  const rows = await fetchHistRows({ url: "https://example.supabase.co", key: "k", keys: ["busy"], fetch: fn, warn: (m: string) => warned.push(m) });
+  const { fn, calls } = fakeFetch((url) => ({ status: 200, body: url.searchParams.get("offset") === "0" ? full : [{ menu_key: "busy", dollars: 40, votes: 2 }] }));
+  const rows = await fetchHistRows({ url: "https://example.supabase.co", key: "k", keys: ["busy"], fetch: fn });
   assert.deepEqual(calls.map((c) => c.url.searchParams.get("offset")), ["0", String(PAGE_SIZE)]);
   assert.equal(rows.length, PAGE_SIZE + 1);
-  assert.equal(warned.length, 1, "the $99 row is skipped with a warning");
+
+  // A $99 answer, or dollars as a string (a column type change): the whole read fails, nothing is written.
+  for (const bad of [{ menu_key: "busy", dollars: 99, votes: 1 }, { menu_key: "busy", dollars: "44", votes: 1 }]) {
+    const odd = fakeFetch(() => ({ status: 200, body: [{ menu_key: "busy", dollars: 40, votes: 2 }, bad] }));
+    await assert.rejects(fetchHistRows({ url: "https://x.supabase.co", key: "k", keys: ["busy"], fetch: odd.fn }), /row that doesn't check out/);
+  }
 
   const notList = fakeFetch(() => ({ status: 200, body: { message: "hi" } }));
   await assert.rejects(fetchHistRows({ url: "https://x.supabase.co", key: "k", keys: ["a"], fetch: notList.fn }), /did not answer with a list/);
@@ -253,6 +257,11 @@ test("main: writes the snapshot, leaves it alone when nothing changed, and never
     const broken = fakeFetch(() => ({ status: 401, body: "no" }));
     await assert.rejects(main(["--dataset", dataset, "--out", out], env, broken.fn), /401/);
     assert.equal(readFileSync(out, "utf8"), before, "a failed read writes nothing");
+    // A 200 reply whose rows no longer check out (dollars as a string after a column type change) fails the
+    // same way, rather than committing a snapshot without those menus.
+    const drifted = fakeFetch((url) => ({ status: 200, body: askedKeys(url).map((k) => ({ menu_key: k, dollars: "44", votes: 1 })) }));
+    await assert.rejects(main(["--dataset", dataset, "--out", out], env, drifted.fn), /doesn't check out/);
+    assert.equal(readFileSync(out, "utf8"), before, "an odd reply writes nothing");
     await assert.rejects(main(["--dataset", dataset, "--out", out], { ...env, NEXT_PUBLIC_SUPABASE_ANON_KEY: "sb_secret_x" }, fn), /publishable/);
     writeFileSync(dataset, JSON.stringify({ restaurants: [] }));
     await assert.rejects(main(["--dataset", dataset, "--out", out], env, fn), /no priced menus/);

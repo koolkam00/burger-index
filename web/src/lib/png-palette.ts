@@ -3,7 +3,7 @@
 // same picture in 256 colors (median cut, no dithering) looks the same at about a third of the size. With
 // a share image for every restaurant, neighborhood, borough and ranking page, that keeps the static export
 // (and each deploy) tens of megabytes smaller. Only opaque, 8-bit, non-interlaced RGB or RGBA input is
-// converted; anything else comes back untouched.
+// converted; anything else comes back untouched. zlib.crc32 needs Node 20.15+ or 22.2+ (package.json engines).
 import { crc32, deflateSync, inflateSync } from "node:zlib";
 
 const SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);

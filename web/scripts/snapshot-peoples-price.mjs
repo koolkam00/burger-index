@@ -208,9 +208,11 @@ async function getJson(fetchImpl, url, key, retryDelayMs) {
 
 /**
  * Every burger_worth_hist row for `keys`, KEY_BATCH keys and PAGE_SIZE rows per GET. Throws on any failed
- * request or a reply that isn't a list; rows that don't check out are skipped with a warning.
+ * request, a reply that isn't a list, or a row that doesn't check out (a changed column type or policy): a
+ * snapshot missing those rows would be committed and take their People's Price off the pages, so nothing
+ * is written instead.
  */
-export async function fetchHistRows({ url, key, keys, fetch: fetchImpl = globalThis.fetch, warn = (m) => console.warn(m), retryDelayMs = 1000 }) {
+export async function fetchHistRows({ url, key, keys, fetch: fetchImpl = globalThis.fetch, retryDelayMs = 1000 }) {
   const base = `${url.replace(/\/+$/, "")}/rest/v1/burger_worth_hist`;
   const rows = [];
   for (let i = 0; i < keys.length; i += KEY_BATCH) {
@@ -227,8 +229,8 @@ export async function fetchHistRows({ url, key, keys, fetch: fetchImpl = globalT
       if (!Array.isArray(page)) throw new Error("burger_worth_hist did not answer with a list");
       for (const r of page) {
         const row = parseRow(r);
-        if (row) rows.push(row);
-        else warn(`skipped a row that doesn't check out: ${JSON.stringify(r).slice(0, 120)}`);
+        if (!row) throw new Error(`burger_worth_hist sent a row that doesn't check out: ${JSON.stringify(r).slice(0, 120)}`);
+        rows.push(row);
       }
       if (page.length < PAGE_SIZE) break;
     }
