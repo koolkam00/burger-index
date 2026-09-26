@@ -1,18 +1,18 @@
 {
  "version": 2,
- "generated_at": "2026-09-25T23:55:32Z",
+ "generated_at": "2026-09-26T04:04:07Z",
  "stats": {
-  "restaurants_priced": 563,
+  "restaurants_priced": 595,
   "index_median": 20.0,
   "index_p10": 13.0,
-  "index_p90": 28.95
+  "index_p90": 29.0
  },
  "boroughs": [
   {
    "slug": "manhattan",
    "name": "Manhattan",
    "borough": "Manhattan",
-   "restaurants_priced": 324,
+   "restaurants_priced": 346,
    "index_median": 22.0,
    "index_min": 7.25,
    "index_max": 39.0
@@ -21,8 +21,8 @@
    "slug": "brooklyn",
    "name": "Brooklyn",
    "borough": "Brooklyn",
-   "restaurants_priced": 96,
-   "index_median": 18.65,
+   "restaurants_priced": 106,
+   "index_median": 18.83,
    "index_min": 7.99,
    "index_max": 34.0
   },
@@ -86,17 +86,17 @@
    "slug": "chinatown-lower-east-side",
    "name": "Chinatown-Lower East Side",
    "borough": "Manhattan",
-   "restaurants_priced": 17,
+   "restaurants_priced": 20,
    "index_median": 18.0,
    "index_min": 9.0,
-   "index_max": 28.0
+   "index_max": 29.0
   },
   {
    "slug": "clinton",
    "name": "Clinton",
    "borough": "Manhattan",
-   "restaurants_priced": 12,
-   "index_median": 18.98,
+   "restaurants_priced": 13,
+   "index_median": 20.0,
    "index_min": 12.65,
    "index_max": 26.0
   },
@@ -122,8 +122,8 @@
    "slug": "east-village",
    "name": "East Village",
    "borough": "Manhattan",
-   "restaurants_priced": 11,
-   "index_median": 19.55,
+   "restaurants_priced": 13,
+   "index_median": 19.0,
    "index_min": 10.0,
    "index_max": 38.0
   },
@@ -131,10 +131,10 @@
    "slug": "gramercy",
    "name": "Gramercy",
    "borough": "Manhattan",
-   "restaurants_priced": 9,
-   "index_median": 19.29,
+   "restaurants_priced": 12,
+   "index_median": 22.0,
    "index_min": 8.99,
-   "index_max": 25.0
+   "index_max": 32.0
   },
   {
    "slug": "hamilton-heights",
@@ -149,7 +149,7 @@
    "slug": "hudson-yards-chelsea-flat-iron-union-square",
    "name": "Hudson Yards-Chelsea-Flat Iron-Union Square",
    "borough": "Manhattan",
-   "restaurants_priced": 23,
+   "restaurants_priced": 25,
    "index_median": 24.0,
    "index_min": 14.0,
    "index_max": 39.0
@@ -158,10 +158,10 @@
    "slug": "lenox-hill-roosevelt-island",
    "name": "Lenox Hill-Roosevelt Island",
    "borough": "Manhattan",
-   "restaurants_priced": 9,
-   "index_median": 22.45,
+   "restaurants_priced": 10,
+   "index_median": 22.7,
    "index_min": 15.99,
-   "index_max": 26.99
+   "index_max": 32.0
   },
   {
    "slug": "lincoln-square",
@@ -230,7 +230,7 @@
    "slug": "soho-tribeca-civic-center-little-italy",
    "name": "SoHo-TriBeCa-Civic Center-Little Italy",
    "borough": "Manhattan",
-   "restaurants_priced": 23,
+   "restaurants_priced": 25,
    "index_median": 21.0,
    "index_min": 7.75,
    "index_max": 33.0
@@ -248,7 +248,7 @@
    "slug": "upper-east-side-carnegie-hill",
    "name": "Upper East Side-Carnegie Hill",
    "borough": "Manhattan",
-   "restaurants_priced": 7,
+   "restaurants_priced": 9,
    "index_median": 25.95,
    "index_min": 11.83,
    "index_max": 36.0
@@ -257,8 +257,8 @@
    "slug": "upper-west-side",
    "name": "Upper West Side",
    "borough": "Manhattan",
-   "restaurants_priced": 11,
-   "index_median": 21.95,
+   "restaurants_priced": 12,
+   "index_median": 21.85,
    "index_min": 14.95,
    "index_max": 35.0
   },
@@ -284,7 +284,7 @@
    "slug": "west-village",
    "name": "West Village",
    "borough": "Manhattan",
-   "restaurants_priced": 67,
+   "restaurants_priced": 72,
    "index_median": 24.0,
    "index_min": 7.25,
    "index_max": 38.99
@@ -311,8 +311,8 @@
    "slug": "bedford",
    "name": "Bedford",
    "borough": "Brooklyn",
-   "restaurants_priced": 3,
-   "index_median": 18.0,
+   "restaurants_priced": 4,
+   "index_median": 17.0,
    "index_min": 16.0,
    "index_max": 21.0
   },
@@ -356,9 +356,9 @@
    "slug": "bushwick-north",
    "name": "Bushwick North",
    "borough": "Brooklyn",
-   "restaurants_priced": 4,
-   "index_median": 16.74,
-   "index_min": 14.0,
+   "restaurants_priced": 5,
+   "index_median": 14.95,
+   "index_min": 11.0,
    "index_max": 31.0
   },
   {
@@ -383,8 +383,8 @@
    "slug": "carroll-gardens-columbia-street-red-hook",
    "name": "Carroll Gardens-Columbia Street-Red Hook",
    "borough": "Brooklyn",
-   "restaurants_priced": 7,
-   "index_median": 24.0,
+   "restaurants_priced": 8,
+   "index_median": 25.0,
    "index_min": 15.0,
    "index_max": 34.0
   },
@@ -446,10 +446,10 @@
    "slug": "east-williamsburg",
    "name": "East Williamsburg",
    "borough": "Brooklyn",
-   "restaurants_priced": 1,
+   "restaurants_priced": 3,
    "index_median": 22.0,
-   "index_min": 22.0,
-   "index_max": 22.0
+   "index_min": 20.96,
+   "index_max": 25.0
   },
   {
    "slug": "flatbush",
@@ -491,8 +491,8 @@
    "slug": "greenpoint",
    "name": "Greenpoint",
    "borough": "Brooklyn",
-   "restaurants_priced": 4,
-   "index_median": 17.2,
+   "restaurants_priced": 5,
+   "index_median": 18.9,
    "index_min": 8.75,
    "index_max": 24.95
   },
@@ -626,10 +626,10 @@
    "slug": "williamsburg",
    "name": "Williamsburg",
    "borough": "Brooklyn",
-   "restaurants_priced": 9,
+   "restaurants_priced": 13,
    "index_median": 16.0,
    "index_min": 10.0,
-   "index_max": 26.0
+   "index_max": 27.0
   },
   {
    "slug": "windsor-terrace",
@@ -1455,18 +1455,46 @@
   {
    "id": "5-napkin-burger-clinton",
    "name": "5 Napkin Burger",
+   "chain": "5-napkin-burger",
    "address": "630 9 Avenue",
+   "borough": "Manhattan",
+   "neighborhood": "Clinton",
    "neighborhood_slug": "clinton",
-   "index_price": null,
-   "burger": null
+   "lat": 40.760031,
+   "lng": -73.991449,
+   "website": null,
+   "menu_url": "https://www.5napkinburger.com/menus/",
+   "price_source": "official_site",
+   "index_price": 21.75,
+   "burger": {
+    "name": "Original 5 Napkin Burger",
+    "description": "Our signature 10oz. Patty, aged gruyere cheese, caramelized onions, rosemary aioli"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "5-napkin-burger-upper-west-side",
    "name": "5 Napkin Burger",
+   "chain": "5-napkin-burger",
    "address": "2315 Broadway",
+   "borough": "Manhattan",
+   "neighborhood": "Upper West Side",
    "neighborhood_slug": "upper-west-side",
-   "index_price": null,
-   "burger": null
+   "lat": 40.786895,
+   "lng": -73.977708,
+   "website": null,
+   "menu_url": "https://www.5napkinburger.com/menus/",
+   "price_source": "official_site",
+   "index_price": 21.75,
+   "burger": {
+    "name": "Original 5 Napkin Burger",
+    "description": "Our signature 10oz. Patty, aged gruyere cheese, caramelized onions, rosemary aioli"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "57s-all-american-grill-bayside",
@@ -2753,6 +2781,26 @@
    "hand_check": null
   },
   {
+   "id": "berimbau-brazilian-table-west-village",
+   "name": "Berimbau Brazilian Table",
+   "chain": null,
+   "address": "43 Carmine Street",
+   "borough": "Manhattan",
+   "neighborhood": "West Village",
+   "neighborhood_slug": "west-village",
+   "lat": 40.72999,
+   "lng": -74.00354,
+   "website": "https://www.berimbaunyc.com/",
+   "menu_url": "https://www.berimbaunyc.com/menus/west/Dinner_Berimbau-West-Village.pdf",
+   "price_source": "official_pdf",
+   "index_price": 26.0,
+   "burger": {
+    "name": "Picanha Burger",
+    "description": "brioche, spicy caramelized onions, chimichurri, cheese, lettuce, tomato, pickles, fries"
+   },
+   "hand_check": null
+  },
+  {
    "id": "bernies-greenpoint",
    "name": "Bernie's",
    "chain": null,
@@ -2927,6 +2975,26 @@
    "neighborhood_slug": "crown-heights-north",
    "index_price": null,
    "burger": null
+  },
+  {
+   "id": "bk-jani-east-williamsburg",
+   "name": "BK Jani",
+   "chain": null,
+   "address": "679 Grand Street",
+   "borough": "Brooklyn",
+   "neighborhood": "East Williamsburg",
+   "neighborhood_slug": "east-williamsburg",
+   "lat": 40.711524,
+   "lng": -73.945161,
+   "website": "https://www.bkjani.com/",
+   "menu_url": "https://www.getsauce.com/order/bk-jani-grand-st-brooklyn/menu",
+   "price_source": "official_site",
+   "index_price": 20.96,
+   "burger": {
+    "name": "The Jani",
+    "description": "This is world famous - ½ pound of custom blend ground beef, cooked medium rare, mint chutney at the bottom, grilled tomato and a touch of raita. Boom!"
+   },
+   "hand_check": null
   },
   {
    "id": "black-barn-hudson-yards",
@@ -4373,10 +4441,24 @@
   {
    "id": "cafe-kestrel-carroll-gardens",
    "name": "Cafe Kestrel",
+   "chain": null,
    "address": "293 Van Brunt Street",
+   "borough": "Brooklyn",
+   "neighborhood": "Carroll Gardens-Columbia Street-Red Hook",
    "neighborhood_slug": "carroll-gardens-columbia-street-red-hook",
-   "index_price": null,
-   "burger": null
+   "lat": 40.678791,
+   "lng": -74.011187,
+   "website": null,
+   "menu_url": "https://www.kesnewyork.com/s/MASTER-MENU-KES-DINNER-II.pdf",
+   "price_source": "official_pdf",
+   "index_price": 32.0,
+   "burger": {
+    "name": "Grilled Burger",
+    "description": null
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "cafe-luka-lenox-hill",
@@ -4733,6 +4815,28 @@
     "description": "Lettuce, Tomato, Red Onions, Special Sauce, Brioche Bun"
    },
    "hand_check": null
+  },
+  {
+   "id": "chelsea-papaya-hudson-yards",
+   "name": "Chelsea Papaya",
+   "chain": null,
+   "address": "171 West 23 Street",
+   "borough": "Manhattan",
+   "neighborhood": "Hudson Yards-Chelsea-Flat Iron-Union Square",
+   "neighborhood_slug": "hudson-yards-chelsea-flat-iron-union-square",
+   "lat": 40.743683,
+   "lng": -73.994648,
+   "website": null,
+   "menu_url": "https://www.seamless.com/menu/chelsea-papaya-171-w-23rd-st-new-york/265791",
+   "price_source": "delivery_app",
+   "index_price": 14.95,
+   "burger": {
+    "name": "Bacon Cheeseburger",
+    "description": "5oz cheeseburger crispy bacon; melted cheese lettuce tomatoes mayonnaise and ketchup on a toasted potato bun"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "chelsea-square-restaurant-hudson-yards",
@@ -5189,10 +5293,24 @@
   {
    "id": "crevette-west-village",
    "name": "Crevette",
+   "chain": null,
    "address": "10 Downing Street",
+   "borough": "Manhattan",
+   "neighborhood": "West Village",
    "neighborhood_slug": "west-village",
-   "index_price": null,
-   "burger": null
+   "lat": 40.729589,
+   "lng": -74.002825,
+   "website": "https://www.crevettenyc.com/",
+   "menu_url": "https://www.crevettenyc.com/brunch",
+   "price_source": "official_site",
+   "index_price": 24.0,
+   "burger": {
+    "name": "Cheeseburger with Green Piperade & Aioli",
+    "description": null
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "crispy-burger-east-village",
@@ -5621,10 +5739,24 @@
   {
    "id": "diner-williamsburg",
    "name": "Diner",
+   "chain": null,
    "address": "85 Broadway",
+   "borough": "Brooklyn",
+   "neighborhood": "Williamsburg",
    "neighborhood_slug": "williamsburg",
-   "index_price": null,
-   "burger": null
+   "lat": 40.710511,
+   "lng": -73.965737,
+   "website": "https://www.dinernyc.com/",
+   "menu_url": "https://www.dinernyc.com/menus/",
+   "price_source": "official_site",
+   "index_price": 27.0,
+   "burger": {
+    "name": "Grass-Fed & Finished Burger",
+    "description": "white cheddar, pickled red onions, lettuce, fries"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "dinosaur-bar-b-que-manhattanville",
@@ -5663,6 +5795,26 @@
    "hand_check": {
     "checked_on": "2026-09-24"
    }
+  },
+  {
+   "id": "disco-birdies-bedford",
+   "name": "Disco Birdies",
+   "chain": null,
+   "address": "355 Franklin Avenue",
+   "borough": "Brooklyn",
+   "neighborhood": "Bedford",
+   "neighborhood_slug": "bedford",
+   "lat": 40.687229,
+   "lng": -73.956879,
+   "website": "https://discobirdies.com/",
+   "menu_url": "https://discobirdies.com/menu",
+   "price_source": "official_site",
+   "index_price": 16.0,
+   "burger": {
+    "name": "Smash Burger",
+    "description": null
+   },
+   "hand_check": null
   },
   {
    "id": "doc-watsons-lenox-hill",
@@ -5877,6 +6029,26 @@
    "burger": null
   },
   {
+   "id": "ear-inn-soho",
+   "name": "Ear Inn",
+   "chain": null,
+   "address": "326 Spring Street",
+   "borough": "Manhattan",
+   "neighborhood": "SoHo-TriBeCa-Civic Center-Little Italy",
+   "neighborhood_slug": "soho-tribeca-civic-center-little-italy",
+   "lat": 40.725993,
+   "lng": -74.009301,
+   "website": "https://www.theearinn.com/",
+   "menu_url": "https://www.theearinn.com/dinnermenu",
+   "price_source": "official_site",
+   "index_price": 20.0,
+   "burger": {
+    "name": "8oz Ear Inn Burger",
+    "description": "salad, home fries"
+   },
+   "hand_check": null
+  },
+  {
    "id": "east-end-bar-and-grill-upper-east-side",
    "name": "East End Bar & Grill",
    "chain": null,
@@ -5985,10 +6157,24 @@
   {
    "id": "el-sazon-r-d-chinatown",
    "name": "El Sazón R.D.",
+   "chain": null,
    "address": "83 Baxter Street",
+   "borough": "Manhattan",
+   "neighborhood": "Chinatown-Lower East Side",
    "neighborhood_slug": "chinatown-lower-east-side",
-   "index_price": null,
-   "burger": null
+   "lat": 40.716713,
+   "lng": -73.999812,
+   "website": null,
+   "menu_url": "https://www.checkle.com/biz/el-sazn-rd-new-york/menu",
+   "price_source": "menu_aggregator",
+   "index_price": 13.0,
+   "burger": {
+    "name": "Dominican Double Smashburger",
+    "description": "2 Pat Lafrieda Burger Patties, Fried Cheese, American Cheese, Pickles and Chimi sauce on a Martins Potato Bun."
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "ellens-stardust-diner-midtown",
@@ -6167,10 +6353,24 @@
   {
    "id": "employees-only-west-village",
    "name": "Employees Only",
+   "chain": null,
    "address": "510 Hudson Street",
+   "borough": "Manhattan",
+   "neighborhood": "West Village",
    "neighborhood_slug": "west-village",
-   "index_price": null,
-   "burger": null
+   "lat": 40.73339,
+   "lng": -74.00634,
+   "website": "http://www.employeesonlynyc.com/",
+   "menu_url": "https://www.employeesonlynyc.com/menus/dinner",
+   "price_source": "official_site",
+   "index_price": 29.0,
+   "burger": {
+    "name": "EO Burger",
+    "description": "8 oz. Beef Patty, Brioche, Tomato, Cheese, Red Onion, Bibb Lettuce, EO Sauce, Fries"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "esquire-diner-ozone-park",
@@ -6771,10 +6971,24 @@
   {
    "id": "gator-greenpoint",
    "name": "Gator",
+   "chain": null,
    "address": "105 Norman Avenue",
+   "borough": "Brooklyn",
+   "neighborhood": "Greenpoint",
    "neighborhood_slug": "greenpoint",
-   "index_price": null,
-   "burger": null
+   "lat": 40.725678,
+   "lng": -73.951009,
+   "website": null,
+   "menu_url": "https://gatorbk.com/menu/food",
+   "price_source": "official_site",
+   "index_price": 20.0,
+   "burger": {
+    "name": "Cheeseburger",
+    "description": "6oz beef patty, miso tempura mushroom, yuzu aioli, brioche"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "gemini-diner-murray-hill",
@@ -7503,6 +7717,26 @@
    "burger": null
   },
   {
+   "id": "hawksmoor-gramercy",
+   "name": "Hawksmoor",
+   "chain": null,
+   "address": "287 Park Avenue South",
+   "borough": "Manhattan",
+   "neighborhood": "Gramercy",
+   "neighborhood_slug": "gramercy",
+   "lat": 40.739678,
+   "lng": -73.98672,
+   "website": "https://thehawksmoor.com/us/locations/new-york/",
+   "menu_url": "https://thehawksmoor.com/us/locations/new-york/food/bar-menu/",
+   "price_source": "official_site",
+   "index_price": 25.0,
+   "burger": {
+    "name": "Notorious B.E.E.F",
+    "description": "two dry-aged beef patties, Hawksmoor special sauce, New School American Cheese, shredded lettuce, onion, homemade pickles"
+   },
+   "hand_check": null
+  },
+  {
    "id": "healys-pub-breezy-point",
    "name": "Healy's Pub",
    "address": "10807 Rockaway Beach Boulevard",
@@ -7569,10 +7803,24 @@
   {
    "id": "herbies-burgers-williamsburg",
    "name": "Herbie's Burgers",
+   "chain": null,
    "address": "196 Roebling Street",
+   "borough": "Brooklyn",
+   "neighborhood": "Williamsburg",
    "neighborhood_slug": "williamsburg",
-   "index_price": null,
-   "burger": null
+   "lat": 40.712699,
+   "lng": -73.958734,
+   "website": "https://www.herbiesburgers.com/",
+   "menu_url": "https://order.herbiesburgers.com/r/67459",
+   "price_source": "official_site",
+   "index_price": 15.99,
+   "burger": {
+    "name": "Herbfather",
+    "description": "FOUR 100% organic grass fed patties, American cheese, lettuce, tomatoes, onions, pickles, and Nerdy Sauce with french fries in the middle on a St. Pierre Sesame Seed Brioche Bun"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "hibernia-bar-clinton",
@@ -7715,6 +7963,26 @@
    "burger": {
     "name": "Jalapeno Thrill",
     "description": "Smash Patty, Pepper Jack Cheese, Grilled Onions, Jalapenos, & Jalapeno Rush"
+   },
+   "hand_check": null
+  },
+  {
+   "id": "hoexters-upper-east-side",
+   "name": "Hoexters",
+   "chain": null,
+   "address": "174 East 82 Street",
+   "borough": "Manhattan",
+   "neighborhood": "Upper East Side-Carnegie Hill",
+   "neighborhood_slug": "upper-east-side-carnegie-hill",
+   "lat": 40.776519,
+   "lng": -73.956579,
+   "website": "https://www.hoexters.com/",
+   "menu_url": "https://www.hoexters.com/menu",
+   "price_source": "official_site",
+   "index_price": 29.0,
+   "burger": {
+    "name": "Hoexters Double Smash Cheeseburger",
+    "description": "new school american cheese, pickles, special sauce, french fries"
    },
    "hand_check": null
   },
@@ -8983,6 +9251,26 @@
    "burger": null
   },
   {
+   "id": "jr-and-son-east-williamsburg",
+   "name": "JR & Son",
+   "chain": null,
+   "address": "575 Lorimer Street",
+   "borough": "Brooklyn",
+   "neighborhood": "East Williamsburg",
+   "neighborhood_slug": "east-williamsburg",
+   "lat": 40.71421,
+   "lng": -73.949409,
+   "website": "https://www.jrandson.com/",
+   "menu_url": "https://www.jrandson.com/menu",
+   "price_source": "official_site",
+   "index_price": 25.0,
+   "burger": {
+    "name": "JR’s Burger",
+    "description": "Steamed Onions, Cheese, Shredded Lettuce, Tomato, Relish Aioli on a Sesame Bun"
+   },
+   "hand_check": null
+  },
+  {
    "id": "js-perrys-diner-melrose-south",
    "name": "Js Perry's Diner",
    "address": "2783 3 Avenue",
@@ -9351,10 +9639,24 @@
   {
    "id": "lartusi-west-village",
    "name": "L'Artusi",
+   "chain": null,
    "address": "228 West 10 Street",
+   "borough": "Manhattan",
+   "neighborhood": "West Village",
    "neighborhood_slug": "west-village",
-   "index_price": null,
-   "burger": null
+   "lat": 40.733901,
+   "lng": -74.005174,
+   "website": "https://www.lartusi.com/",
+   "menu_url": "https://media-cdn.getbento.com/accounts/bdb69cbcf8445b793b8602ba4bf3f6c2/media/e9lYtTmSU2RdH1iAD3kQ_LUNCH926.pdf",
+   "price_source": "official_pdf",
+   "index_price": 29.0,
+   "burger": {
+    "name": "L’Burger",
+    "description": "taleggio, chili aioli, tomato, arugula, crispy potatoes"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "le-b-west-village",
@@ -9371,6 +9673,26 @@
    "neighborhood_slug": "washington-heights-north",
    "index_price": null,
    "burger": null
+  },
+  {
+   "id": "le-dive-chinatown",
+   "name": "Le Dive",
+   "chain": null,
+   "address": "37 Canal Street",
+   "borough": "Manhattan",
+   "neighborhood": "Chinatown-Lower East Side",
+   "neighborhood_slug": "chinatown-lower-east-side",
+   "lat": 40.714652,
+   "lng": -73.991072,
+   "website": "https://www.ledivenyc.com/",
+   "menu_url": "https://www.ubereats.com/store/le-dive-37-canal-street/FdoXj1aaXYqlT-rrS0gDyg",
+   "price_source": "delivery_app",
+   "index_price": 29.0,
+   "burger": {
+    "name": "Le Dive Burger",
+    "description": "Au poivre, watercress, emmental, brioche bun, fries."
+   },
+   "hand_check": null
   },
   {
    "id": "lees-tavern-bedford",
@@ -9697,6 +10019,28 @@
     "description": "Caramelized Onions, Cheddar & Crisp Maple Bacon"
    },
    "hand_check": null
+  },
+  {
+   "id": "lori-jayne-at-danger-danger-bushwick-north",
+   "name": "Lori Jayne at Danger Danger",
+   "chain": null,
+   "address": null,
+   "borough": "Brooklyn",
+   "neighborhood": "Bushwick North",
+   "neighborhood_slug": "bushwick-north",
+   "lat": null,
+   "lng": null,
+   "website": "https://dangerdangerbar.com/",
+   "menu_url": "https://dangerdangerbar.com/lori-jayne-menu",
+   "price_source": "official_site",
+   "index_price": 11.0,
+   "burger": {
+    "name": "LJ Burger",
+    "description": "LJ sauce, thickle & carms"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "lori-jayne-bushwick-south",
@@ -10287,6 +10631,26 @@
    "burger": {
     "name": "Bacon Cheeseburger",
     "description": null
+   },
+   "hand_check": null
+  },
+  {
+   "id": "miladys-soho",
+   "name": "Milady's",
+   "chain": null,
+   "address": "160 Prince Street",
+   "borough": "Manhattan",
+   "neighborhood": "SoHo-TriBeCa-Civic Center-Little Italy",
+   "neighborhood_slug": "soho-tribeca-civic-center-little-italy",
+   "lat": 40.725971,
+   "lng": -74.001335,
+   "website": "https://www.miladysnyc.com/",
+   "menu_url": "https://www.miladysnyc.com/dinner",
+   "price_source": "official_site",
+   "index_price": 24.0,
+   "burger": {
+    "name": "Milady’s Burger",
+    "description": "Two Beef Patties, Lettuce, Onion, Pickles, Party Sauce, American Cheese, Served With Fries or Greens"
    },
    "hand_check": null
   },
@@ -10899,6 +11263,26 @@
    "hand_check": null
   },
   {
+   "id": "nectar-upper-east-side",
+   "name": "Nectar",
+   "chain": null,
+   "address": "1090 Madison Avenue",
+   "borough": "Manhattan",
+   "neighborhood": "Upper East Side-Carnegie Hill",
+   "neighborhood_slug": "upper-east-side-carnegie-hill",
+   "lat": 40.778129,
+   "lng": -73.960813,
+   "website": "https://nectarrestaurantnyc.com/",
+   "menu_url": "https://nectarrestaurantnyc.com/menu/nectar-1090-madison-avenue",
+   "price_source": "official_site",
+   "index_price": 16.0,
+   "burger": {
+    "name": "Hamburger",
+    "description": null
+   },
+   "hand_check": null
+  },
+  {
    "id": "neirs-tavern-woodhaven",
    "name": "Neir's Tavern",
    "address": "87-48 78 Street",
@@ -11017,6 +11401,28 @@
    "neighborhood_slug": "airport",
    "index_price": null,
    "burger": null
+  },
+  {
+   "id": "nightlys-lenox-hill",
+   "name": "Nightly's",
+   "chain": null,
+   "address": "1496 2 Avenue",
+   "borough": "Manhattan",
+   "neighborhood": "Lenox Hill-Roosevelt Island",
+   "neighborhood_slug": "lenox-hill-roosevelt-island",
+   "lat": 40.77255,
+   "lng": -73.955614,
+   "website": "https://www.nightlysnyc.com/",
+   "menu_url": "https://www.nightlysnyc.com/main-menu",
+   "price_source": "official_site",
+   "index_price": 32.0,
+   "burger": {
+    "name": "Black Tie Burger",
+    "description": "8oz Pat LaFrieda dry-aged gourmet burger, secret sauce, white cheddar & caramelized onions, brioche bun, french fries"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "nisi-bistro-lenox-hill",
@@ -11187,6 +11593,28 @@
    "neighborhood_slug": "astoria",
    "index_price": null,
    "burger": null
+  },
+  {
+   "id": "oh-boy-brooklyn-williamsburg",
+   "name": "Oh Boy Brooklyn",
+   "chain": null,
+   "address": "84 Havemeyer Street",
+   "borough": "Brooklyn",
+   "neighborhood": "Williamsburg",
+   "neighborhood_slug": "williamsburg",
+   "lat": 40.713864,
+   "lng": -73.956136,
+   "website": "https://www.ohboybk.com/",
+   "menu_url": "https://www.ohboybk.com/menu",
+   "price_source": "official_site",
+   "index_price": 15.0,
+   "burger": {
+    "name": "Oh Boy Burger",
+    "description": "the double / two brisket & short-rib beef smash patties / grilled onion / american cheese / pickles / oh boy sauce / on a martin's potato roll"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "oharas-restaurant-and-pub-battery-park-city",
@@ -12653,6 +13081,28 @@
    "neighborhood_slug": "hudson-yards-chelsea-flat-iron-union-square",
    "index_price": null,
    "burger": null
+  },
+  {
+   "id": "saigon-social-chinatown",
+   "name": "Saigon Social",
+   "chain": null,
+   "address": "172 Orchard Street",
+   "borough": "Manhattan",
+   "neighborhood": "Chinatown-Lower East Side",
+   "neighborhood_slug": "chinatown-lower-east-side",
+   "lat": 40.721629,
+   "lng": -73.988419,
+   "website": "https://www.saigonsocialnyc.com/",
+   "menu_url": "https://www.saigonsocialnyc.com/menus",
+   "price_source": "official_site",
+   "index_price": 26.0,
+   "burger": {
+    "name": "Banh Mi Burger",
+    "description": "8oz Pat Lafrieda dry aged ribeye & shortrib, oxtail Maggi gravy, pate aioli, pickles, jalapeno, fried potatoes"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "sailor-fort-greene",
@@ -14641,10 +15091,24 @@
   {
    "id": "the-golden-swan-west-village",
    "name": "The Golden Swan",
+   "chain": null,
    "address": "314 West 11 Street",
+   "borough": "Manhattan",
+   "neighborhood": "West Village",
    "neighborhood_slug": "west-village",
-   "index_price": null,
-   "burger": null
+   "lat": 40.735726,
+   "lng": -74.006672,
+   "website": "http://www.tgsnyc.com/",
+   "menu_url": "https://www.tgsnyc.com/food-and-drink",
+   "price_source": "official_site",
+   "index_price": 38.0,
+   "burger": {
+    "name": "TGS Burger",
+    "description": "dry-aged blend, pawlet cheese, caramelized onions, gribiche sauce, fries"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "the-grafton-east-village",
@@ -14949,10 +15413,24 @@
   {
    "id": "the-lions-bar-and-grill-east-village",
    "name": "The Lion's Bar & Grill",
+   "chain": null,
    "address": "132 1 Avenue",
+   "borough": "Manhattan",
+   "neighborhood": "East Village",
    "neighborhood_slug": "east-village",
-   "index_price": null,
-   "burger": null
+   "lat": 40.727488,
+   "lng": -73.985352,
+   "website": "https://www.thelionsbar.com/",
+   "menu_url": "https://www.thelionsbar.com/menu",
+   "price_source": "official_site",
+   "index_price": 19.0,
+   "burger": {
+    "name": "Hamburger",
+    "description": "Dry aged blend, house ground daily, american cheese, grilled onion"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "the-little-owl-west-village",
@@ -15433,10 +15911,24 @@
   {
    "id": "the-snail-williamsburg",
    "name": "The Snail",
+   "chain": null,
    "address": "544 Manhattan Avenue",
+   "borough": "Brooklyn",
+   "neighborhood": "Williamsburg",
    "neighborhood_slug": "williamsburg",
-   "index_price": null,
-   "burger": null
+   "lat": 40.721827,
+   "lng": -73.949464,
+   "website": "https://www.thesnail.nyc/",
+   "menu_url": "https://images.getbento.com/accounts/73fb163445c718de1f2356ac20672aaa/media/2lzen72ISKeBlLMqJ6ce_The%20Snail_Dinner%20Menu%20923.pdf",
+   "price_source": "official_pdf",
+   "index_price": 19.0,
+   "burger": {
+    "name": "Double Cheeseburger",
+    "description": "mustard aioli, pickles, onion"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "the-spaniard-west-village",
@@ -16119,6 +16611,26 @@
    "burger": null
   },
   {
+   "id": "union-square-cafe-gramercy",
+   "name": "Union Square Cafe",
+   "chain": null,
+   "address": "101 East 19 Street",
+   "borough": "Manhattan",
+   "neighborhood": "Gramercy",
+   "neighborhood_slug": "gramercy",
+   "lat": 40.737672,
+   "lng": -73.988027,
+   "website": "https://www.unionsquarecafe.com/",
+   "menu_url": "https://www.unionsquarecafe.com/menu/lunch/",
+   "price_source": "official_site",
+   "index_price": 32.0,
+   "burger": {
+    "name": "19th Street Burger",
+    "description": "Cheddar, Heritage Bacon, Herb Aioli, Rosemary Shoestring Fries"
+   },
+   "hand_check": null
+  },
+  {
    "id": "union-street-pub-crown-heights-south",
    "name": "Union Street Pub",
    "chain": null,
@@ -16137,6 +16649,28 @@
     "description": "Maple Bacon, Cheddar Cheese, Chipotle Aioli"
    },
    "hand_check": null
+  },
+  {
+   "id": "upland-gramercy",
+   "name": "Upland",
+   "chain": null,
+   "address": "345 Park Avenue South",
+   "borough": "Manhattan",
+   "neighborhood": "Gramercy",
+   "neighborhood_slug": "gramercy",
+   "lat": 40.741602,
+   "lng": -73.985316,
+   "website": "https://www.uplandnyc.com/",
+   "menu_url": "https://www.uplandnyc.com/",
+   "price_source": "official_site",
+   "index_price": 31.0,
+   "burger": {
+    "name": "Upland Cheeseburger",
+    "description": "grass fed beef, american cheese, peppadew peppers + avocado"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "utopia-diner-lincoln-square",
@@ -16545,18 +17079,46 @@
   {
    "id": "whitmans-east-village",
    "name": "Whitmans",
+   "chain": null,
    "address": "406 East 9 Street",
+   "borough": "Manhattan",
+   "neighborhood": "East Village",
    "neighborhood_slug": "east-village",
-   "index_price": null,
-   "burger": null
+   "lat": 40.727936,
+   "lng": -73.98432,
+   "website": "https://whitmansnyc.com/",
+   "menu_url": "https://whitmansnyc.com/s/WhitmansEV2025editedit.png",
+   "price_source": "official_site",
+   "index_price": 19.0,
+   "burger": {
+    "name": "Patty Melt",
+    "description": "Short rib patty, smoked gruyere, cheddar, american cheese, pullman bread, served with fries and a pickle"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "whitmans-hudson-yards-hudson-yards",
    "name": "Whitmans (Hudson Yards)",
+   "chain": null,
    "address": "500 West 30 Street",
+   "borough": "Manhattan",
+   "neighborhood": "Hudson Yards-Chelsea-Flat Iron-Union Square",
    "neighborhood_slug": "hudson-yards-chelsea-flat-iron-union-square",
-   "index_price": null,
-   "burger": null
+   "lat": 40.752118,
+   "lng": -74.001159,
+   "website": "https://whitmansnyc.com/",
+   "menu_url": "https://whitmans-104523.square.site/",
+   "price_source": "online_ordering",
+   "index_price": 19.0,
+   "burger": {
+    "name": "Patty Melt",
+    "description": "Short rib patty, smoked gruyere, cheddar, american cheese, pullman bread, served with fries and a pickle"
+   },
+   "hand_check": {
+    "checked_on": "2026-09-25"
+   }
   },
   {
    "id": "wicked-willys-west-village",

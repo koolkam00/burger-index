@@ -1,5 +1,5 @@
 {
-  "about": "Hand-checked corrections applied by `pipeline build` (see pipeline/corrections.py). The 2026-09-23 entries were found by re-reading the live menu during that day's price check; all but Tavern on Jane and Jimbo's Hamburger Palace were confirmed by two independent checks. Every 2026-09-24 entry was confirmed by two independent checks; where the restaurant's own current menu page can be scraped, the fix is a menu-URL override in pipeline/data/menu_urls.json instead (re-scraped on the next run). The 2026-09-25 entries come from the review of each restaurant's one published burger (its highest-priced beef burger): Boeuf & Bun and the two Carnegie Diners were re-read on their own current menu pages, and the Grubhub/Seamless entries withhold pages whose cached scrape shows only the Best Sellers / recently ordered items (the burger section never loaded). Remove one of those once a full menu for the restaurant has been scraped. A second 2026-09-25 batch records the errors two independent checks agreed on in that review: pages whose only prices are years old are withheld, and a missed or mispriced top burger is corrected from the page named in source_url. The user's decisions of 2026-09-25 then changed some entries: a price marked up for delivery or online ordering is published, labelled by its price_source, when it is the only price found (American Whiskey and Grillify-NYC are no longer withheld, and XO Burgers' entry is retired: its webshop's scraped $22.54, the price that page shows, is published; an own-site price already read, such as Boeuf & Bun's, stays); a burger club counts as a burger (Washington Square Diner, Tom's Restaurant, Murray Hill Diner and The Flame Diner gain the club their scrape missed); a diner's bunless diet plate never counts (extract.is_diet_plate, which replaces Mike's Oakwood Diner's Lo-Cal Burger entry); and the closed Abbey Tavern, Bell Book & Candle and Kelly's Tavern and True Burger at JFK were deleted from the restaurant list, with their entries. Brooklyn Diner's LaGuardia Terminal B row is withheld: its search found only the Manhattan restaurant's menu, and an airport concession never gets a street restaurant's price. The last 2026-09-25 batch prices places named on critics' best-burger lists that the scrape left unpriced (J.G. Melon, Raoul's, Sip & Guzzle, Lord's, Sailor, Keens, Harlem Shake, Black Tap) or read only in part (Joe Jr.'s Grubhub Best Sellers), each from the restaurant's own current menu or ordering page read by hand; where the only burger price is on the brunch or lunch menu, the entry records that period.",
+  "about": "Hand-checked corrections applied by `pipeline build` (see pipeline/corrections.py). The 2026-09-23 entries were found by re-reading the live menu during that day's price check; all but Tavern on Jane and Jimbo's Hamburger Palace were confirmed by two independent checks. Every 2026-09-24 entry was confirmed by two independent checks; where the restaurant's own current menu page can be scraped, the fix is a menu-URL override in pipeline/data/menu_urls.json instead (re-scraped on the next run). The 2026-09-25 entries come from the review of each restaurant's one published burger (its highest-priced beef burger): Boeuf & Bun and the two Carnegie Diners were re-read on their own current menu pages, and the Grubhub/Seamless entries withhold pages whose cached scrape shows only the Best Sellers / recently ordered items (the burger section never loaded). Remove one of those once a full menu for the restaurant has been scraped. A second 2026-09-25 batch records the errors two independent checks agreed on in that review: pages whose only prices are years old are withheld, and a missed or mispriced top burger is corrected from the page named in source_url. The user's decisions of 2026-09-25 then changed some entries: a price marked up for delivery or online ordering is published, labelled by its price_source, when it is the only price found (American Whiskey and Grillify-NYC are no longer withheld, and XO Burgers' entry is retired: its webshop's scraped $22.54, the price that page shows, is published; an own-site price already read, such as Boeuf & Bun's, stays); a burger club counts as a burger (Washington Square Diner, Tom's Restaurant, Murray Hill Diner and The Flame Diner gain the club their scrape missed); a diner's bunless diet plate never counts (extract.is_diet_plate, which replaces Mike's Oakwood Diner's Lo-Cal Burger entry); and the closed Abbey Tavern, Bell Book & Candle and Kelly's Tavern and True Burger at JFK were deleted from the restaurant list, with their entries. Brooklyn Diner's LaGuardia Terminal B row is withheld: its search found only the Manhattan restaurant's menu, and an airport concession never gets a street restaurant's price. The last 2026-09-25 batch prices places named on critics' best-burger lists that the scrape left unpriced (J.G. Melon, Raoul's, Sip & Guzzle, Lord's, Sailor, Keens, Harlem Shake, Black Tap) or read only in part (Joe Jr.'s Grubhub Best Sellers), each from the restaurant's own current menu or ordering page read by hand; where the only burger price is on the brunch or lunch menu, the entry records that period. A further 2026-09-25 batch, after the user asked for every open place a counted best-burger list names, prices the rest of them from menus read by hand: places already on the list whose scrape found no price (Whitmans, 5 Napkin Burger, Cafe Kestrel, Crevette, Diner, El Sazón R.D., Employees Only, Gator, Herbie's Burgers in Williamsburg, L'Artusi, The Golden Swan, The Lion's Bar & Grill, The Snail) and places added to the list that day whose menus are images or tabs the scrape could not read, or a delivery page read only in part (Upland, Chelsea Papaya, Lori Jayne at Danger Danger, Nightly's, Oh Boy Brooklyn, Saigon Social).",
   "corrections": [
     {
       "target": "camis:50054294",
@@ -1859,6 +1859,416 @@
           "protein": "beef",
           "menu_period": "all_day",
           "description": "Add avocado for an additional charge."
+        }
+      ]
+    },
+    {
+      "target": "camis:50133673",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.tgsnyc.com/food-and-drink",
+      "price_source": "official_site",
+      "reason": "the scrape read only the home page (not a menu); the Food & Drink page's dining room menu, served from 5pm and also at brunch, lists the TGS Burger at $38 (the Golden Hour burger is a happy-hour deal and is left out).",
+      "add": [
+        {
+          "name": "TGS Burger",
+          "price": 38,
+          "protein": "beef",
+          "menu_period": "dinner",
+          "description": "dry-aged blend, pawlet cheese, caramelized onions, gribiche sauce, fries"
+        }
+      ]
+    },
+    {
+      "target": "camis:41100350",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.employeesonlynyc.com/menus/dinner",
+      "price_source": "official_site",
+      "reason": "the scrape read an aggregator's unpriced 'Burger' and the bar's old mobile pages (not menus); its current dinner menu lists the EO Burger at $29.",
+      "drop": [
+        "Burger"
+      ],
+      "add": [
+        {
+          "name": "EO Burger",
+          "price": 29,
+          "protein": "beef",
+          "menu_period": "dinner",
+          "description": "8 oz. Beef Patty, Brioche, Tomato, Cheese, Red Onion, Bibb Lettuce, EO Sauce, Fries"
+        }
+      ]
+    },
+    {
+      "target": "camis:41378319",
+      "checked_at": "2026-09-25",
+      "source_url": "https://media-cdn.getbento.com/accounts/bdb69cbcf8445b793b8602ba4bf3f6c2/media/e9lYtTmSU2RdH1iAD3kQ_LUNCH926.pdf",
+      "price_source": "official_pdf",
+      "reason": "the scrape read only the dinner menu, which has no burger; the burger is served at lunch and brunch, and the current lunch menu PDF lists it at $29 (the brunch menu too).",
+      "add": [
+        {
+          "name": "L’Burger",
+          "price": 29,
+          "protein": "beef",
+          "menu_period": "lunch",
+          "description": "taleggio, chili aioli, tomato, arugula, crispy potatoes"
+        }
+      ]
+    },
+    {
+      "target": "camis:41496506",
+      "checked_at": "2026-09-25",
+      "source_url": "https://whitmansnyc.com/s/WhitmansEV2025editedit.png",
+      "price_source": "official_site",
+      "reason": "the menu page scraped lists the burgers without prices; the East Village menu it links (an image) prices them, the Patty Melt highest at $19.",
+      "set": {
+        "Patty Melt": 19,
+        "Juicy Lucy": 17,
+        "The Hound": 17,
+        "Bacon, Egg & Cheese": 17,
+        "Spicy Patty": 16,
+        "The Mangold": 15,
+        "Whitmans Smash": 14,
+        "Whitmans Classic": 13
+      }
+    },
+    {
+      "target": "camis:50057778",
+      "checked_at": "2026-09-25",
+      "source_url": "https://whitmans-104523.square.site/",
+      "price_source": "online_ordering",
+      "reason": "the menu page scraped lists the burgers without prices; the Hudson Yards location's live ordering page prices them, the Patty Melt highest at $19 (its 2025 menu image also lists an American Wagyu burger at $20, which the live page no longer sells).",
+      "set": {
+        "Patty Melt": 19,
+        "Juicy Lucy": 17,
+        "Whitmans Classic": 13
+      }
+    },
+    {
+      "target": "camis:50105047",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.thelionsbar.com/menu",
+      "price_source": "official_site",
+      "reason": "the menu page shows its menu as an image, which the scrape could not read; the image lists one burger, the Hamburger at $19 (the Infatuation's October 2025 guide gives the same price).",
+      "add": [
+        {
+          "name": "Hamburger",
+          "price": 19,
+          "protein": "beef",
+          "menu_period": "dinner",
+          "description": "Dry aged blend, house ground daily, american cheese, grilled onion"
+        }
+      ]
+    },
+    {
+      "target": "camis:50147240",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.checkle.com/biz/el-sazn-rd-new-york/menu",
+      "price_source": "menu_aggregator",
+      "reason": "El Sazón R.D. has no site of its own, its Grubhub/Seamless menu is shown only in opening hours and the DoorDash scrape found no burger; this aggregator's copy of its menu prices the smashburgers, the Dominican Double Smashburger highest at $13.",
+      "add": [
+        {
+          "name": "Dominican Double Smashburger",
+          "price": 13,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "2 Pat Lafrieda Burger Patties, Fried Cheese, American Cheese, Pickles and Chimi sauce on a Martins Potato Bun."
+        },
+        {
+          "name": "Single Dominican Smashburger",
+          "price": 11,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Classic Double Smashburger",
+          "price": 11,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Classic Single Smashburger",
+          "price": 9,
+          "protein": "beef",
+          "menu_period": "all_day"
+        }
+      ]
+    },
+    {
+      "target": "camis:50164564",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.crevettenyc.com/brunch",
+      "price_source": "official_site",
+      "reason": "the scrape stopped at the dinner menu, which has no burger; the burger is on the weekend brunch menu only, at $24.",
+      "add": [
+        {
+          "name": "Cheeseburger with Green Piperade & Aioli",
+          "price": 24,
+          "protein": "beef",
+          "menu_period": "brunch"
+        }
+      ]
+    },
+    {
+      "target": "chain:5-napkin-burger",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.5napkinburger.com/menus/",
+      "price_source": "official_site",
+      "reason": "the web search found no menu page; the restaurant's own menu, one for both NYC locations, lists the same burger prices at lunch and dinner, the Original 5 Napkin Burger highest at $21.75.",
+      "add": [
+        {
+          "name": "Original 5 Napkin Burger",
+          "price": 21.75,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "Our signature 10oz. Patty, aged gruyere cheese, caramelized onions, rosemary aioli"
+        },
+        {
+          "name": "Queso Fundido Burger",
+          "price": 20.75,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Truffle",
+          "price": 20.75,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Bacon - Cheddar",
+          "price": 19.75,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Avocado - Ranch",
+          "price": 19.75,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Au Poivre Burger",
+          "price": 19.5,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "Classic Cheese",
+          "price": 18.75,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "5N Patty Melt",
+          "price": 18.75,
+          "protein": "beef",
+          "menu_period": "all_day"
+        }
+      ]
+    },
+    {
+      "target": "camis:50160010",
+      "checked_at": "2026-09-25",
+      "source_url": "https://images.getbento.com/accounts/73fb163445c718de1f2356ac20672aaa/media/2lzen72ISKeBlLMqJ6ce_The%20Snail_Dinner%20Menu%20923.pdf",
+      "price_source": "official_pdf",
+      "reason": "the list gives no website and the search found no menu page; the dinner menu PDF linked from thesnail.nyc lists one burger, the Double Cheeseburger at $19 (the lunch menu too).",
+      "add": [
+        {
+          "name": "Double Cheeseburger",
+          "price": 19,
+          "protein": "beef",
+          "menu_period": "dinner",
+          "description": "mustard aioli, pickles, onion"
+        }
+      ]
+    },
+    {
+      "target": "camis:50144246",
+      "checked_at": "2026-09-25",
+      "source_url": "https://gatorbk.com/menu/food",
+      "price_source": "official_site",
+      "reason": "the search found only another business's page, so the restaurant's own site was never tried; its food menu (images) lists the Cheeseburger at $20 at dinner and brunch.",
+      "add": [
+        {
+          "name": "Cheeseburger",
+          "price": 20,
+          "protein": "beef",
+          "menu_period": "dinner",
+          "description": "6oz beef patty, miso tempura mushroom, yuzu aioli, brioche"
+        }
+      ]
+    },
+    {
+      "target": "camis:50154597",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.kesnewyork.com/s/MASTER-MENU-KES-DINNER-II.pdf",
+      "price_source": "official_pdf",
+      "reason": "the search found only reviews and listings; the restaurant's own Spring 2026 dinner menu PDF (kesnewyork.com) prints 'Grilled burgers available everyday $32'.",
+      "add": [
+        {
+          "name": "Grilled Burger",
+          "price": 32,
+          "protein": "beef",
+          "menu_period": "dinner"
+        }
+      ]
+    },
+    {
+      "target": "camis:40675892",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.dinernyc.com/menus/",
+      "price_source": "official_site",
+      "reason": "Diner posts its menu as a typewritten image each day, which the scrape could not read; the dinner menu dated 09.25.26 (and the brunch menu) lists the grass-fed & finished burger at $27.",
+      "add": [
+        {
+          "name": "Grass-Fed & Finished Burger",
+          "price": 27,
+          "protein": "beef",
+          "menu_period": "dinner",
+          "description": "white cheddar, pickled red onions, lettuce, fries"
+        }
+      ]
+    },
+    {
+      "target": "camis:50177088",
+      "checked_at": "2026-09-25",
+      "source_url": "https://order.herbiesburgers.com/r/67459",
+      "price_source": "official_site",
+      "reason": "the scrape reached only the ordering site's store picker and a DoorDash storefront without burgers; Herbie's own ordering page for 196 Roebling St lists the same burgers and prices as its East Village store, the Herbfather highest at $15.99.",
+      "add": [
+        {
+          "name": "The Herbie",
+          "price": 10.99,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "The standard order at Herbie's. Two 100% grass fed organic beef patties with American cheese, lettuce, tomato, onions, pickles, house-made nerdy sauce, on a St. Pierre Sesame Seed Brioche Bun"
+        },
+        {
+          "name": "Big Herbie",
+          "price": 12.99,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "Three 100% organic grass fed patties, American cheese, lettuce, tomatoes, onions, pickles, and Nerdy Sauce on St. Pierre Sesame Seed Brioche Bun"
+        },
+        {
+          "name": "Herbfather",
+          "price": 15.99,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "FOUR 100% organic grass fed patties, American cheese, lettuce, tomatoes, onions, pickles, and Nerdy Sauce with french fries in the middle on a St. Pierre Sesame Seed Brioche Bun"
+        }
+      ]
+    },
+    {
+      "target": "camis:50011590",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.uplandnyc.com/",
+      "price_source": "official_site",
+      "reason": "the menus are tabs on the home page, which the scrape did not read as a menu; the lunch and brunch tabs list the Upland Cheeseburger at $31 (the dinner tab has no burger).",
+      "add": [
+        {
+          "name": "Upland Cheeseburger",
+          "price": 31,
+          "protein": "beef",
+          "menu_period": "lunch",
+          "description": "grass fed beef, american cheese, peppadew peppers + avocado"
+        }
+      ]
+    },
+    {
+      "target": "camis:41467165",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.seamless.com/menu/chelsea-papaya-171-w-23rd-st-new-york/265791",
+      "price_source": "delivery_app",
+      "reason": "the scrape read only the page's 24 Hour Specials (its Burgers, Hot Dogs and Sandwiches section loads on a click); that section, opened by hand, prices the Bacon Cheeseburger at $14.95, its priciest burger sold alone. Chelsea Papaya has no menu site of its own; Seamless notes prices may be lower in-store.",
+      "add": [
+        {
+          "name": "Bacon Cheeseburger",
+          "price": 14.95,
+          "protein": "beef",
+          "menu_period": "all_day",
+          "description": "5oz cheeseburger crispy bacon; melted cheese lettuce tomatoes mayonnaise and ketchup on a toasted potato bun"
+        },
+        {
+          "name": "5 oz Beef Cheese Burger",
+          "price": 11.95,
+          "protein": "beef",
+          "menu_period": "all_day"
+        },
+        {
+          "name": "5 oz Hamburger",
+          "price": 9.95,
+          "protein": "beef",
+          "menu_period": "all_day"
+        }
+      ]
+    },
+    {
+      "target": "csv:lori-jayne-at-danger-danger-brooklyn",
+      "checked_at": "2026-09-25",
+      "source_url": "https://dangerdangerbar.com/lori-jayne-menu",
+      "price_source": "official_site",
+      "reason": "Lori Jayne's menu at Danger Danger is an image on the bar's site, which the scrape could not read; it lists one beef burger, the LJ Burger at $11.",
+      "add": [
+        {
+          "name": "LJ Burger",
+          "price": 11,
+          "protein": "beef",
+          "menu_period": "dinner",
+          "description": "LJ sauce, thickle & carms"
+        }
+      ]
+    },
+    {
+      "target": "camis:50154496",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.nightlysnyc.com/main-menu",
+      "price_source": "official_site",
+      "reason": "the menus are images, which the scrape could not read; the main menu (served daily from 4pm) lists the Black Tie Burger at $32 (the weekday lunch menu at $29).",
+      "add": [
+        {
+          "name": "Black Tie Burger",
+          "price": 32,
+          "protein": "beef",
+          "menu_period": "dinner",
+          "description": "8oz Pat LaFrieda dry-aged gourmet burger, secret sauce, white cheddar & caramelized onions, brioche bun, french fries"
+        }
+      ]
+    },
+    {
+      "target": "camis:50076322",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.ohboybk.com/menu",
+      "price_source": "official_site",
+      "reason": "the menus are images, which the scrape could not read, and the DoorDash page it fell back to showed no burgers; the lunch menu (the restaurant closes at 4pm) lists the Oh Boy Burger, a double, at $15.",
+      "add": [
+        {
+          "name": "Oh Boy Burger",
+          "price": 15,
+          "protein": "beef",
+          "menu_period": "lunch",
+          "description": "the double / two brisket & short-rib beef smash patties / grilled onion / american cheese / pickles / oh boy sauce / on a martin's potato roll"
+        },
+        {
+          "name": "Single Smash",
+          "price": 10,
+          "protein": "beef",
+          "menu_period": "lunch"
+        }
+      ]
+    },
+    {
+      "target": "camis:50106557",
+      "checked_at": "2026-09-25",
+      "source_url": "https://www.saigonsocialnyc.com/menus",
+      "price_source": "official_site",
+      "reason": "the dinner menu is an image (linked from the menus page), which the scrape could not read; it lists the banh mi burger at $26 among the chef's specials.",
+      "add": [
+        {
+          "name": "Banh Mi Burger",
+          "price": 26,
+          "protein": "beef",
+          "menu_period": "dinner",
+          "description": "8oz Pat Lafrieda dry aged ribeye & shortrib, oxtail Maggi gravy, pate aioli, pickles, jalapeno, fried potatoes"
         }
       ]
     }

@@ -1,5 +1,5 @@
 {
-  "about": "Hand-checked menu pages per restaurant key (camis:... or csv:..., as in data/restaurants.json), applied by `pipeline sources` (see pipeline/sources.py load_menu_url_overrides): the page becomes the restaurant's menu_url, is scraped first and is trusted as this restaurant's menu; burger-list-master.csv is not edited. Use one when the page the list names (or the scrape found) is stale, partial or another restaurant's, and the restaurant's own current menu page (or, when it publishes none, this location's full menu on an ordering or delivery site) was checked by hand. A changed menu_url means a new scrape on the next `run` (credits); an override the list catches up with, or whose key leaves the scope, is reported as unused. Entries from the 2026-09-24 price check and unpriced-restaurant recovery, and from the 2026-09-25 review of each restaurant's one published burger, and from the 2026-09-25 additions of places named on critics' best-burger lists (Deux Luxe, Eel Bar).",
+  "about": "Hand-checked menu pages per restaurant key (camis:... or csv:..., as in data/restaurants.json), applied by `pipeline sources` (see pipeline/sources.py load_menu_url_overrides): the page becomes the restaurant's menu_url, is scraped first and is trusted as this restaurant's menu; burger-list-master.csv is not edited. Use one when the page the list names (or the scrape found) is stale, partial or another restaurant's, and the restaurant's own current menu page (or, when it publishes none, this location's full menu on an ordering or delivery site) was checked by hand. A changed menu_url means a new scrape on the next `run` (credits); an override the list catches up with, or whose key leaves the scope, is reported as unused. Entries from the 2026-09-24 price check and unpriced-restaurant recovery, and from the 2026-09-25 review of each restaurant's one published burger, and from the 2026-09-25 additions of places named on critics' best-burger lists (Deux Luxe, Eel Bar; and, when the user asked for every place a counted list names, Upland, Ear Inn and Le Dive).",
   "overrides": {
     "camis:50135016": {
       "name": "Bay Ridge House of Wings",
@@ -390,6 +390,24 @@
       "menu_url": "https://www.eelbarnyc.com/s/EB-Dinner-92426.pdf",
       "checked_at": "2026-09-25",
       "reason": "The restaurant's menu page (eelbarnyc.com/menu) shows the menu as images; its linked dinner menu PDF (created 2026-09-24), read by hand, lists the Grass-fed burger with boquerones and roquefort at $28. Menu PDFs here are renamed with each update, so the list keeps the menu page."
+    },
+    "camis:50011590": {
+      "name": "Upland",
+      "menu_url": "https://www.uplandnyc.com/",
+      "checked_at": "2026-09-25",
+      "reason": "The restaurant's menus (Lunch, Brunch, Dinner, Dessert) are tabs on its home page, not separate pages, so the home page is the menu page; read by hand, its only beef burger is the Upland Cheeseburger at $31 on the lunch and brunch tabs (the dinner tab has no burger)."
+    },
+    "camis:40370168": {
+      "name": "Ear Inn",
+      "menu_url": "https://www.theearinn.com/dinnermenu",
+      "checked_at": "2026-09-25",
+      "reason": "The bar's dinner menu page (its URL does not look like a menu page, so it would otherwise be mapped from the home page); read by hand, its only beef burger is the 8oz Ear Inn Burger at $20."
+    },
+    "camis:50119000": {
+      "name": "Le Dive",
+      "menu_url": "https://www.ubereats.com/store/le-dive-37-canal-street/FdoXj1aaXYqlT-rrS0gDyg",
+      "checked_at": "2026-09-25",
+      "reason": "The restaurant's dinner menu PDF (ledivenyc.com, 19 Aug 2026) lists the Le Dive Burger with no prices, and its Toast ordering page could not be read (a bot check, and the scrape found no menu); this Uber Eats store page is the Delivery link on the restaurant's own site."
     }
   }
 }

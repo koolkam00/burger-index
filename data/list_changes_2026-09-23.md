@@ -633,3 +633,71 @@ Later on 2026-09-25 (stage 5 review, no CSV change): the New York Post's off-men
 Infatuation) and Crane Club (1104, which the user also named) by one (Time Out), so neither is on `/best-burgers`; Old Town
 Bar (1107) is off it too, since Eater's entry picks no burger and mentions only a bison burger. The rows stay on the list
 (Old Town Bar and Quatorze are priced); remove them only if the user asks.
+
+## Best-burger list additions, one publisher is enough (2026-09-25, user decision)
+
+The user asked for every open place whose beef burger a counted best-burger list of 2024-2026 names, whatever the
+number of publishers, with our menu price wherever one can be found (the same exclusions: lists before 2024, Upper Cut
+Media House's lists, the pure trend features, national chains, non-beef picks and closed places). Nineteen rows were
+appended at the end (data rows 1,109-1,127; 1,108 rows before, 1,127 after), `source` `best-lists-2026-09`, with each
+place's DOHMH address in `notes`. Eighteen matched the right DOHMH permit (`pipeline sources`, name + neighborhood +
+notes address); Lori Jayne's new home has no permit of its own (below). No existing restaurant id or chain key changed.
+Seventeen were scraped (140 credits), and every one of them is priced: from the page scraped, or, where the menu is an
+image or a tab the scrape could not read, by hand in `pipeline/data/corrections.json`.
+
+- **1109** Upland (Kips Bay, Manhattan; `camis:50011590`, 345 Park Avenue South): its menus are tabs on the home page,
+  which `menu_urls.json` names as the menu page; Upland Cheeseburger $31 (lunch and brunch), by hand.
+- **1110** Berimbau Brazilian Table (West Village; `camis:41395589`, DOHMH BERIMBAU, 43 Carmine St): the West Village
+  dinner menu PDF; Picanha Burger $26. The 36th St location has no burger.
+- **1111** BK Jani (Williamsburg; `camis:50091446`, 679 Grand St): its own ordering page (Sauce); The Jani $20.96.
+- **1112** Chelsea Papaya (Chelsea; `camis:41467165`, 171 W 23rd St): no menu site of its own; its Seamless page, whose
+  burger section loads on a click, read by hand: Bacon Cheeseburger $14.95 (`delivery_app`).
+- **1113** Disco Birdies (Bed-Stuy / Clinton Hill border, Brooklyn; `camis:50169702`, 355 Franklin Ave): its own menu
+  page; Smash Burger $16.
+- **1114** Ear Inn (SoHo; `camis:40370168`, 326 Spring St): its dinner menu page, named in `menu_urls.json` (its URL
+  does not look like a menu page); 8oz Ear Inn Burger $20.
+- **1115** Hawksmoor (Gramercy / Flatiron; `camis:50103016`, DOHMH THE HAWKSMOOR, 287 Park Avenue South, the entrance
+  at 109 E 22nd St): the bar menu (from 5pm); Notorious B.E.E.F $25.
+- **1116** Hoexters (Upper East Side; `camis:50143911`, DOHMH HOEXTER'S, 174 E 82nd St): Hoexters Double Smash
+  Cheeseburger $29.
+- **1117** JR & Son (Williamsburg; `camis:50167060`, 575 Lorimer St): JR's Burger $25.
+- **1118** Julius' (West Village; `camis:40729164`, 159 W 10th St): a cash-only bar with no food menu or prices online
+  (only a guide's $13), so it was not scraped and has no price.
+- **1119** Le Dive (Lower East Side; `camis:50119000`, 37 Canal St): its dinner menu lists the burger without prices and
+  its Toast page could not be read; `menu_urls.json` names its Uber Eats page (the Delivery link on its own site): Le
+  Dive Burger $29 (`delivery_app`).
+- **1120** Lori Jayne at Danger Danger (Bushwick North, Brooklyn; `csv:lori-jayne-at-danger-danger-brooklyn`): Lori
+  Jayne left Alphaville (140 Wilson Ave) in September 2025 and, after a Time Out Market stall, reopened in January 2026
+  inside the Danger Danger bar, 232 Knickerbocker Ave. DOHMH has no permit for Danger Danger, so the row stays
+  list-only (no address or map pin; `csv_unmatched` says why). Its menu is an image on the bar's site; LJ Burger $11, by
+  hand. Row **434** (Lori Jayne, matched to ALPHAVILLE / LORI JAYNE at 140 Wilson Ave) is now Alphaville alone: it stays
+  unpriced, and it is the user's to delete.
+- **1121** Lundy's (Red Hook; `camis:50157617`, DOHMH LUNDY'S OF BROOKLYN, 44 Beard St): its menu lists no prices and
+  no ordering page shows one, so it was not scraped and has no price.
+- **1122** Milady's (SoHo; `camis:50128429`, 160 Prince St): Milady's Burger $24.
+- **1123** Nectar (Upper East Side; `camis:40388672`, 1090 Madison Ave): its own menu page; Hamburger $16.
+- **1124** Nightly's (Upper East Side; `camis:50154496`, 1496 2nd Ave): the menus are images; Black Tie Burger $32
+  (main menu, from 4pm), by hand.
+- **1125** Oh Boy Brooklyn (Williamsburg; `camis:50076322`, DOHMH OH BOY, 84 Havemeyer St): open until 4pm, menus are
+  images; Oh Boy Burger (a double) $15 at lunch, by hand.
+- **1126** Saigon Social (Lower East Side; `camis:50106557`, 172 Orchard St): the dinner menu is an image; banh mi
+  burger $26, by hand.
+- **1127** Union Square Cafe (Gramercy; `camis:50056945`, DOHMH UNION SQUARE CAFE/ DAILY PROVISIONS, 101 E 19th St): the
+  burger is on the lunch, midday and brunch menus, not at dinner; 19th Street Burger $32 (lunch).
+
+Places already on the list that the lists name and the scrape had left unpriced were priced by hand the same day (see
+`pipeline/data/corrections.json`): Whitmans (East Village and Hudson Yards), 5 Napkin Burger (both locations), Cafe
+Kestrel, Crevette (brunch), Diner, El Sazón R.D. (an aggregator's copy), Employees Only, Gator, Herbie's Burgers
+(Williamsburg), L'Artusi (lunch), The Golden Swan, The Lion's Bar & Grill and The Snail.
+
+Not added, or left unpriced:
+
+- Only on lists the user excluded: Bar Chimera (550 Madison Ave) and Txula Steak (Mercado Little Spain) are named only by
+  Upper Cut Media House's World's 101 Best Burger Places; Brass (Evelyn Hotel) and Caviar Russe only by the New York
+  Post's off-menu piece of Aug 7, 2025.
+- Closed: Debbie's Burgers (192 Seigel St; its Instagram says the shop closed after summer 2025), Loring Place (21 W
+  8th St; closed July 2026, its site shows a farewell) and Paper Plate (Jacx & Co, Long Island City; Yelp lists it as
+  closed and DOHMH has no permit for it). Bandits Burger + Dive (row **199**, 44 Bedford St) is on the list but closed:
+  its site shows only a farewell and Yelp marks it closed. It stays unpriced; deleting the row is the user's call.
+- No longer serving a burger: Little Fino (The William Vale, Williamsburg) is now a morning café (7-11am) with no
+  burger on its menu.
