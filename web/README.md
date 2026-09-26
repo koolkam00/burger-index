@@ -34,7 +34,8 @@ page: `id`, `name`, `address`, `neighborhood_slug`, with `index_price` and `burg
 
 ## Run it locally
 
-Requires Node 20.9 or later.
+Requires Node 20.15 or later (the share images use `zlib.crc32`); `npm test` needs Node 22.6 or later (it runs the
+TypeScript tests with `--experimental-strip-types`). Vercel builds on Node 22.x.
 
 ```bash
 cd web
@@ -155,12 +156,14 @@ Supabase burger_worth_hist ──(read-only GET, publishable key)──> scripts
   "hist": { "18": 2, "22": 5, … } } } }`: the dataset's answered menus only, keys sorted, answers ascending, two-space JSON. The
   writer rewrites it only when the numbers change (the same numbers keep the old `generated_at`), so the workflow commits only
   real changes. It asks for the dataset's menu keys, 100 per request (`menu_key=in.(…)`), never the whole table; a failed or odd
-  read exits 1 and writes nothing. URL and key: `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` when set, else the
+  read (including a single row that doesn't check out) exits 1 and writes nothing. URL and key: `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` when set, else the
   public defaults in the script (the key must be publishable: it refuses a secret or service_role key). Node built-ins only.
 - **The workflow** (`../.github/workflows/peoples-price.yml`): daily at 09:00 UTC and on `workflow_dispatch`; checks out `main`,
   Node 22, runs the script, and if the file changed commits "Update People's Price snapshot" as `github-actions[bot]` and pushes
   to `main` (`permissions: contents: write`, no secrets). It runs only from the default branch. **Once merged, the file belongs to
-  it: branches never edit or commit `data/peoples_price.json`** (merge `main` in to get the latest).
+  it: branches never edit or commit `data/peoples_price.json`** (merge `main` in to get the latest). The repo is public, so
+  GitHub disables the schedule after 60 days without repository activity; re-enable it from the Actions tab or with
+  `gh workflow enable peoples-price.yml`.
 - **Reading it:** `sync-data` copies it into `src/data/` (missing or broken: an empty snapshot and a warning, never a failed
   build). `src/lib/peoples-price-data.ts` (server-only) parses it once per worker against the dataset's menus (a bad entry is
   dropped with a warning; menus that left the dataset are ignored) and serves the figures, the board's histograms and the best
@@ -326,7 +329,7 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
 - **Check a build:** `npm run check:seo` reads `out/` and the dataset: one `<title>`, a description, an absolute
   self-referencing canonical and one `<h1>` per page, no skipped heading levels, JSON-LD that parses, has the expected types
   and matches the page (names, prices, breadcrumbs, list order), each ranking table (ranks, restaurants, prices, count line
-  and ItemList) against a ranking it recomputes from the dataset (and that exactly the neighborhoods with 10+ menus and
+  and ItemList) against a ranking it recomputes from the dataset, its description naming every menu sharing first place (and that exactly the neighborhoods with 10+ menus and
   non-overlapping lists have them, each linked from its neighborhood page), each style list row by row (distinct menus,
   dataset prices, order, ranks, a style word in each burger, the "where the priciest burger is a …" H1), `/best-burgers`
   against `../data/best_burgers.json` (rows, ranks, publication counts, prices, every list link, the ItemList), no "best
@@ -343,7 +346,7 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   one on home, every borough and every neighborhood page), the footer's source line, CSV link with its CC BY 4.0 license
   link and ranking links on every page, the Dataset's license, no overclaiming "cheapest" or "under $N" phrase in any page,
   title, description, JSON-LD, llms.txt or the CSV, unique titles and descriptions (with a length summary), the sitemap equal
-  to the pages, robots.txt, every llms.txt link (and the license named next to the CSV), the CSV against the dataset, and no
+  to the pages (each `lastmod` the dataset's date, or the snapshot's where the People's Price is in the HTML), robots.txt, every llms.txt link (and the license named next to the CSV), the CSV against the dataset, and no
   broken or orphaned internal links. `-- --site https://…` also asserts the origin. Tests:
   `test/seo.test.ts`, `test/jsonld.test.ts`, `test/rankings.test.ts` (ranking rows, neighborhood lists, answers, FAQ, ranking
   titles), `test/styles.test.ts` (the style classifier and lists), `test/best-burgers.test.ts` (the curated file and its ranking),

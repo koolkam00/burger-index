@@ -15,7 +15,7 @@ The price of every burger at NYC restaurants. Two halves joined by one JSON file
   its neighborhood's page (`id`, `name`, `address`, `neighborhood_slug`, `index_price: null`, `burger: null`). Status,
   scrape notes, DOHMH ids, cuisine and the like stay in the pipeline (`data/restaurants.json`,
   `data/run_log.jsonl`).
-- **`web/`** (Next.js 16 static export, Node ≥ 20.9) copies that file in at build time and renders it to plain
+- **`web/`** (Next.js 16 static export, Node ≥ 20.15; `npm test` needs Node ≥ 22.6) copies that file in at build time and renders it to plain
   HTML in `web/out/`. No server code, no API keys. See "Website" below and `web/README.md`.
 
 **Design system:** always read `DESIGN.md` before any visual or UI decision. Fonts, colors, spacing and aesthetic
@@ -163,10 +163,12 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
 - `data/best_burgers.json` — the `/best-burgers` page's lists and places, curated by hand from the 2026-09-25 research
   (facts only: publisher, list title, link, date; place name, dataset `restaurant_id` (or a `neighborhood_slug` for a place
   the dataset doesn't carry), the burger each list names). Decisions applied in the file: lists published or updated
-  2024-2026; no Upper Cut Media House lists (the publisher sells partnerships) and no pure trend features (Grub Street 2025;
-  chef-pick features count); beef burgers only (no national chains, no vegetarian/vegan or lamb picks, and a source naming a
-  non-beef burger doesn't count: Old Town Bar's Eater pick is a bison burger); closed places left out (Blue Hour, Gus's Chop
-  House); two or more distinct publishers per place. The web build (`web/src/lib/best-burgers-data.ts`) fails if an id,
+  2024-2026; no Upper Cut Media House lists (the publisher sells partnerships) and no pure trend features (Grub Street 2025,
+  and the New York Post's Aug 2025 off-menu piece, which dropped Crane Club, Lord's and Quatorze to one publisher; chef-pick
+  features count); beef burgers only (no national chains, no vegetarian/vegan or lamb picks, and a source naming only a
+  non-beef burger doesn't count: Eater's Old Town Bar entry picks no burger and mentions only a bison burger, so Old Town Bar
+  has one publisher); closed places left out (Blue Hour, Gus's Chop House); two or more distinct publishers per place
+  (33 places from 21 lists by 11 publications). The web build (`web/src/lib/best-burgers-data.ts`) fails if an id,
   list or neighborhood is missing or a rule is broken. Not a pipeline output: `pipeline build` never touches it, but a
   dataset change that drops a `restaurant_id` breaks the web build until the file is fixed.
 - `data/peoples_price.json` — **the People's Price snapshot** (user decision 2026-09-25: crawlers must see the crowd's
@@ -333,11 +335,14 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   the public `burger_worth_hist` table over the Supabase REST API with the **publishable** key (`NEXT_PUBLIC_SUPABASE_URL`
   / `NEXT_PUBLIC_SUPABASE_ANON_KEY`, else the public defaults in the script; it refuses a secret or service_role key),
   100 menu keys per request; deterministic, and it rewrites the file only when the numbers change (an unchanged run
-  keeps the old `generated_at`); a failed read exits 1 and writes nothing. **`.github/workflows/peoples-price.yml`** runs
+  keeps the old `generated_at`); a failed read, or a reply with a row that doesn't check out (a changed column type or
+  policy), exits 1 and writes nothing. **`.github/workflows/peoples-price.yml`** runs
   it every day at 09:00 UTC (and on `workflow_dispatch`): checks out `main`, Node 22, no npm install, no secrets
   (`permissions: contents: write`), and if the file changed commits "Update People's Price snapshot" as
   `github-actions[bot]` and pushes to `main`, which triggers the Vercel production deploy. Scheduled workflows run only
-  from the default branch, so it starts working once merged. **After that merge the file belongs to the workflow:** the
+  from the default branch, so it starts working once merged. The repo is public, so **GitHub disables this scheduled
+  workflow after 60 days without repository activity** (its own runs don't count, and it commits only on a change); re-enable
+  it from the repo's Actions tab (People's Price snapshot → Enable workflow) or with `gh workflow enable peoples-price.yml`. **After that merge the file belongs to the workflow:** the
   build branch never edits, regenerates or commits `data/peoples_price.json` again (merge `main` into the branch to
   pick up its updates; nothing in `sync-data`, `build` or `pipeline build` writes it). To refresh by hand, run the
   workflow from the Actions tab rather than committing the file. `sync-data` copies it into `src/data/` (a missing or

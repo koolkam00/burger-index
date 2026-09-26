@@ -53,7 +53,10 @@ menu keys per request, the publishable key as the `apikey` header): never an RPC
 The GitHub workflow `.github/workflows/peoples-price.yml` runs it every day at 09:00 UTC and commits the file to `main` when the
 numbers changed, which redeploys the site. It needs no secret: the URL and the publishable key are public values (the site
 ships them in its JavaScript), written into the script as defaults. The script refuses a `sb_secret_…` or `service_role` key.
-Deleting test answers (below) empties the next snapshot too.
+A failed read, or a reply with a row that doesn't check out (after a column type or policy change), exits 1 and writes nothing.
+Deleting test answers (below) empties the next snapshot too. The repo is public, so GitHub disables this scheduled workflow
+after 60 days without repository activity (its own runs don't count, and it commits only when the numbers change): re-enable
+it from the repo's Actions tab (People's Price snapshot → Enable workflow) or with `gh workflow enable peoples-price.yml`.
 
 ## Site configuration
 
