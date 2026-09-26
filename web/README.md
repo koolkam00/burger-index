@@ -68,6 +68,7 @@ Other scripts:
 | `npm run validate:data [file]` | Validate a dataset against the contract (defaults to `../data/burger_index.json`) |
 | `npm run check:seo [-- --site https://…]` | After a build: check `out/` (titles, descriptions, canonicals, JSON-LD, sitemap, robots, llms.txt, CSV, internal links); see "Search engines and AI assistants" |
 | `npm run indexnow [-- --dry-run] [-- --site https://…]` | After a production deploy: submit the live sitemap to IndexNow |
+| `node scripts/snapshot-peoples-price.mjs [--out PATH]` | Read the People's Price from Supabase (read-only GETs) into `../data/peoples_price.json`; the daily workflow runs it on `main` (see "The People's Price in the static HTML") |
 
 ## What's it worth? (Supabase)
 
@@ -77,7 +78,8 @@ Once they have answered, the card shows the crowd's median, **the People's Price
 menu price and their own answer, the answer count, a verdict ("A bargain by 7%", "Overpriced by 43%", "Right on the money"; only
 from 3 answers) and the answer distribution in $5 ranges. `/peoples-price` shows the People's Burger Index (the median People's
 Price over burgers with a verdict) beside the real Burger Index, and live boards: biggest bargains, most overpriced, most
-answered, plus the burgers that need a few more answers. It replaced a 1–10 rating on 2026-09-25 (that never shipped).
+answered, plus the burgers that need a few more answers. It replaced a 1–10 rating on 2026-09-25 (that never shipped). A daily
+snapshot of the answers puts the crowd's numbers in the static HTML too (see "The People's Price in the static HTML" below).
 
 **The burger pricer** (user decision 2026-09-25) makes it the first thing on the home page: pick an area ("Anywhere in NYC", a
 borough, or a neighborhood with a priced menu; the last one is remembered in `localStorage` as `bi-pricer-area`), then price one
@@ -129,12 +131,52 @@ Code map:
   shows, it refreshes every 30 seconds while the tab is visible, a poll rather than a realtime channel per page view), `Pricer`
   (the home pricer: area picker, burger card, reveal, exhausted and closed states; a `<head>` flag, `html.pricer-saved`, shows a
   skeleton instead of the picker to a returning visitor until it mounts), `AnswerSpread` (the distribution), `PeoplesPriceBoard`
-  (the page body: tiles, boards, search; loads the dataset's menus only, realtime on `burger_worth_hist` filtered to those
-  menus, with a 30-second polling fallback while the channel is down).
+  (the page body: tiles, boards, search; prerendered from the snapshot, then loads the dataset's menus only, realtime on
+  `burger_worth_hist` filtered to those menus, with a 30-second polling fallback while the channel is down), `WorthRows` (the
+  board rows, server-safe: the live boards and the static best value list draw the same rows), `PeoplesPriceFact` (one menu's
+  People's Price on `/best-burgers`) and `PeoplesPriceNote` (the restaurant page's People's Price sentence).
 
 The rules behind the numbers (the People's Price is the median answer; a verdict needs 3 answers; "Right on the money" is a gap
 under 5%, measured from the smaller of the two prices; the People's Burger Index counts each burger with a verdict once, a chain
 once) are never explained on the site.
+
+### The People's Price in the static HTML (daily snapshot)
+
+User decision 2026-09-25: crawlers must see the crowd's numbers, so the build carries a copy of them, refreshed daily, with no
+secrets anywhere.
+
+```
+Supabase burger_worth_hist ──(read-only GET, publishable key)──> scripts/snapshot-peoples-price.mjs ──> ../data/peoples_price.json
+   (.github/workflows/peoples-price.yml, 09:00 UTC daily: commits it to main when it changed ──> Vercel production deploy)
+../data/peoples_price.json ──> npm run sync-data ──> src/data/peoples_price.json ──> next build (static HTML) ──> live code in the browser
+```
+
+- **The file:** `{ "version": 1, "generated_at": "2026-09-26T09:00:04Z", "menus": { "<menu key>": { "answers": 14, "median": 21.5,
+  "hist": { "18": 2, "22": 5, … } } } }`: the dataset's answered menus only, keys sorted, answers ascending, two-space JSON. The
+  writer rewrites it only when the numbers change (the same numbers keep the old `generated_at`), so the workflow commits only
+  real changes. It asks for the dataset's menu keys, 100 per request (`menu_key=in.(…)`), never the whole table; a failed or odd
+  read exits 1 and writes nothing. URL and key: `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` when set, else the
+  public defaults in the script (the key must be publishable: it refuses a secret or service_role key). Node built-ins only.
+- **The workflow** (`../.github/workflows/peoples-price.yml`): daily at 09:00 UTC and on `workflow_dispatch`; checks out `main`,
+  Node 22, runs the script, and if the file changed commits "Update People's Price snapshot" as `github-actions[bot]` and pushes
+  to `main` (`permissions: contents: write`, no secrets). It runs only from the default branch. **Once merged, the file belongs to
+  it: branches never edit or commit `data/peoples_price.json`** (merge `main` in to get the latest).
+- **Reading it:** `sync-data` copies it into `src/data/` (missing or broken: an empty snapshot and a warning, never a failed
+  build). `src/lib/peoples-price-data.ts` (server-only) parses it once per worker against the dataset's menus (a bad entry is
+  dropped with a warning; menus that left the dataset are ignored) and serves the figures, the board's histograms and the best
+  value list. The pure rules are `src/lib/peoples-price.ts`, tested in `test/peoples-price.test.ts`; the writer is tested in
+  `test/peoples-price-snapshot.test.ts` (Supabase faked).
+- **What the pages render** (DESIGN.md "People's Price in the static HTML"): a menu with 3+ answers gets "People's Price $22 from
+  14 answers, as of Sep 25, 2026." under its restaurant page's slider card (`components/worth/PeoplesPriceNote.tsx`; it steps
+  aside once the visitor has answered, since the card then shows the People's Price) and the same words in its `/best-burgers`
+  row; fewer answers keep each page's existing wording. `/peoples-price` prerenders its tiles and boards from the snapshot with
+  "As of Sep 25, 2026" where the Live badge goes. In the browser the live numbers (the worth store) replace the snapshot's as soon
+  as they load; the date goes with them.
+- **Best value burgers** (`/best-value-burgers`, `app/best-value-burgers/[[...all]]/page.tsx`): the menus whose People's Price is
+  10% or more above the menu price (as the verdict rounds it: "A bargain by 10%" or more), ranked like the bargains board, static
+  from the snapshot and dated in its lede. It exists only once 10 menus have a verdict (3+ answers): until then the route (an
+  optional catch-all, because a static export can't build zero pages) builds only the `/_none` 404 placeholder, and the sitemap,
+  llms.txt, the footer's Rankings, "More burger rankings." and the People's Price page don't mention it (`hasBestValuePage()`).
 
 ## Analytics (PostHog)
 
@@ -251,8 +293,8 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   Applebot-Extended, CCBot), and only the analytics proxy `/ingest/` is disallowed.
 - **`/llms.txt`** (`src/lib/llms.ts`) and **`/data/burger-prices.csv`** (`src/lib/csv.ts`: `restaurant, neighborhood, borough,
   burger, price_usd, source, page_url, checked`; RFC 4180 quoting, CRLF, UTF-8, formula-looking text cells prefixed with `'`)
-  are force-static route handlers. llms.txt lists every ranking page (neighborhood and style lists included) and
-  `/best-burgers` under "Rankings".
+  are force-static route handlers. llms.txt lists every ranking page (neighborhood and style lists included),
+  `/best-burgers` and, once it exists, `/best-value-burgers` under "Rankings".
 - **IndexNow:** `public/<key>.txt` holds the key (public by design: IndexNow fetches it to check we control the host). After
   each production deploy, from `web/`: `SITE_URL=https://<production host> npm run indexnow` (or `-- --site https://…`). It
   checks that the live site serves the key file, reads the live sitemap, refuses URLs on another host, and POSTs them to
@@ -265,7 +307,10 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   non-overlapping lists have them, each linked from its neighborhood page), each style list row by row (distinct menus,
   dataset prices, order, ranks, a style word in each burger, the "where the priciest burger is a …" H1), `/best-burgers`
   against `../data/best_burgers.json` (rows, ranks, publication counts, prices, every list link, the ItemList), no "best
-  burger" in our own titles, descriptions or H1s, every Q&A block against its FAQPage word for word (and
+  burger" in our own titles, descriptions or H1s, the People's Price snapshot in the HTML (every restaurant page whose menu has
+  3+ answers carries its exact sentence and no other page does, each `/best-burgers` row its snapshot numbers, `/peoples-price`
+  its date and its "Most answered" board, `/best-value-burgers` present exactly when 10+ menus have a verdict, row by row, and
+  the `/_none` placeholder noindex and unlisted), every Q&A block against its FAQPage word for word (and
   one on home, every borough and every neighborhood page), the footer's source line, CSV link with its CC BY 4.0 license
   link and ranking links on every page, the Dataset's license, no overclaiming "cheapest" or "under $N" phrase in any page,
   title, description, JSON-LD, llms.txt or the CSV, unique titles and descriptions (with a length summary), the sitemap equal
@@ -273,6 +318,7 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   broken or orphaned internal links. `-- --site https://…` also asserts the origin. Tests:
   `test/seo.test.ts`, `test/jsonld.test.ts`, `test/rankings.test.ts` (ranking rows, neighborhood lists, answers, FAQ, ranking
   titles), `test/styles.test.ts` (the style classifier and lists), `test/best-burgers.test.ts` (the curated file and its ranking),
+  `test/peoples-price.test.ts` (the snapshot's rendering rules and the best value page in both states),
   `test/csv.test.ts`, `test/site.test.ts` (origin, titles, robots) and `test/indexnow.test.ts`.
 
 ## Deploy to Vercel

@@ -44,6 +44,17 @@ two policy-less private tables — both intended.
 `cast_worth` accepts any key in the right format, not only the dataset's: the site asks for and
 shows only the dataset's menus, and an allowlist would have to be refreshed on every data update.
 
+## The daily snapshot (read-only)
+
+The static pages carry the crowd's numbers too (user decision 2026-09-25: crawlers must see them), from a committed copy:
+`data/peoples_price.json`. `web/scripts/snapshot-peoples-price.mjs` makes it with **GET requests only** on the public
+`burger_worth_hist` table (`/rest/v1/burger_worth_hist?select=menu_key,dollars,votes&menu_key=in.(…)`, 100 of the dataset's
+menu keys per request, the publishable key as the `apikey` header): never an RPC, never a write, never the private tables.
+The GitHub workflow `.github/workflows/peoples-price.yml` runs it every day at 09:00 UTC and commits the file to `main` when the
+numbers changed, which redeploys the site. It needs no secret: the URL and the publishable key are public values (the site
+ships them in its JavaScript), written into the script as defaults. The script refuses a `sb_secret_…` or `service_role` key.
+Deleting test answers (below) empties the next snapshot too.
+
 ## Site configuration
 
 `web/.env.local` (gitignored) holds `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -54,6 +65,7 @@ Without the variables the site still builds; the slider says "Answers open soon.
 ## Before launch, and if spam shows up
 
 Delete test answers before launch (SQL editor): `delete from public.burger_worth; delete from
-public.burger_vote_rate;` — the trigger empties `burger_worth_hist` to match. To reset one burger:
+public.burger_vote_rate;` — the trigger empties `burger_worth_hist` to match, and the next daily snapshot drops them from the
+static pages (or run the "People's Price snapshot" workflow by hand from the Actions tab). To reset one burger:
 `delete from public.burger_worth where menu_key = '…';`. If spam still gets through, lower the
 per-IP budget in `cast_worth`, or add Cloudflare Turnstile in front of answering.

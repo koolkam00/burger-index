@@ -169,6 +169,9 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
   House); two or more distinct publishers per place. The web build (`web/src/lib/best-burgers-data.ts`) fails if an id,
   list or neighborhood is missing or a rule is broken. Not a pipeline output: `pipeline build` never touches it, but a
   dataset change that drops a `restaurant_id` breaks the web build until the file is fixed.
+- `data/peoples_price.json` — **the People's Price snapshot** (user decision 2026-09-25: crawlers must see the crowd's
+  numbers). **Owned by the daily workflow on `main`: never edit, regenerate or commit it on a branch** (see "People's
+  Price snapshot" under "Website"). Not a pipeline output; `pipeline build` never touches it.
 - `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,108 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, the 2026-09-25 deletions and the 2026-09-25 best-burger-list additions, see `data/list_changes_2026-09-23.md`: `name, neighborhood,
   borough, website, menu_url, notes, source` where `source` is `pilot-100|uptown|downtown|outer|dohmh-diner-pub|dohmh-hamburgers|best-lists-2026-09`). It's the user's data:
   don't edit it without their approval; report duplicates (`report.csv_duplicate_matches`), unmatched rows (`report.csv_unmatched`),
@@ -205,8 +208,9 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
 ```
 
 - **Data in:** `scripts/sync-data.mjs` (runs as `predev`/`prebuild`) copies `../data/burger_index.json` to
-  `src/data/`, validates it against the contract with ajv (invalid data fails the build) and copies the MapLibre worker to
-  `public/vendor/maplibre/`; both outputs are generated and gitignored. There is no sample data: a missing
+  `src/data/`, validates it against the contract with ajv (invalid data fails the build), copies
+  `../data/best_burgers.json` and `../data/peoples_price.json` (the People's Price snapshot: an empty one when missing) and
+  copies the MapLibre worker to `public/vendor/maplibre/`; all outputs are generated and gitignored. There is no sample data: a missing
   `data/burger_index.json` fails `dev` and `build` with a message (it is committed; `pipeline build` rewrites it from the
   cache). The web tests read the same file (`test/dataset.ts`) or small inline rows.
 - **Reading data:** `src/lib/data.ts` is `server-only`: it parses the file once with the zod mirror
@@ -293,7 +297,8 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   itself; setting it to `out` failed with `NEXT_NO_ROUTES_MANIFEST`), Node.js 22.x, and "Include files outside the root
   directory in the Build Step" on (the build reads `../data` and `../contract`). CLI deploys run **from the repo
   root** (`npx vercel link` once, then `npx vercel --prod`); the root `.vercelignore` is an allowlist so `.env`,
-  `.venv/` and `data/cache/` are never uploaded. Environment variables: `NEXT_PUBLIC_SUPABASE_URL` and
+  `.venv/` and `data/cache/` are never uploaded (it lets through `data/burger_index.json`, `data/best_burgers.json` and
+  `data/peoples_price.json`: a new data file the build reads must be added there). Environment variables: `NEXT_PUBLIC_SUPABASE_URL` and
   `NEXT_PUBLIC_SUPABASE_ANON_KEY` on Production and Preview, `NEXT_PUBLIC_POSTHOG_KEY` on Production only
   (`NEXT_PUBLIC_POSTHOG_HOST` stays unset: the default `/ingest` is proxied to PostHog by the rewrites in
   `web/vercel.json`, which Vercel reads from the Root Directory; Next's own `rewrites` don't work with
@@ -302,6 +307,32 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   Content-Security-Policy.
 - **Refresh the live site:** `pipeline run` (spends credits) → `pipeline build` → commit `data/burger_index.json` →
   deploy → `cd web && SITE_URL=https://<production host> npm run indexnow` (tells Bing and the other IndexNow engines).
+- **People's Price snapshot (user decision 2026-09-25: crawlers must see the crowd's numbers).** The answers live in
+  Supabase and load in the browser, so the static HTML carries a daily copy: `data/peoples_price.json`
+  (`{version: 1, generated_at, menus: {<menu key>: {answers, median, hist: {<dollars>: <answers>}}}}`, answered menus of
+  the dataset only, keys sorted, two-space JSON). `web/scripts/snapshot-peoples-price.mjs` writes it: read-only GETs of
+  the public `burger_worth_hist` table over the Supabase REST API with the **publishable** key (`NEXT_PUBLIC_SUPABASE_URL`
+  / `NEXT_PUBLIC_SUPABASE_ANON_KEY`, else the public defaults in the script; it refuses a secret or service_role key),
+  100 menu keys per request; deterministic, and it rewrites the file only when the numbers change (an unchanged run
+  keeps the old `generated_at`); a failed read exits 1 and writes nothing. **`.github/workflows/peoples-price.yml`** runs
+  it every day at 09:00 UTC (and on `workflow_dispatch`): checks out `main`, Node 22, no npm install, no secrets
+  (`permissions: contents: write`), and if the file changed commits "Update People's Price snapshot" as
+  `github-actions[bot]` and pushes to `main`, which triggers the Vercel production deploy. Scheduled workflows run only
+  from the default branch, so it starts working once merged. **After that merge the file belongs to the workflow:** the
+  build branch never edits, regenerates or commits `data/peoples_price.json` again (merge `main` into the branch to
+  pick up its updates; nothing in `sync-data`, `build` or `pipeline build` writes it). To refresh by hand, run the
+  workflow from the Actions tab rather than committing the file. `sync-data` copies it into `src/data/` (a missing or
+  broken file writes an empty snapshot with a warning: it never fails the build); `src/lib/peoples-price-data.ts` reads
+  it (entries that don't check out are dropped with a warning); the rules are in `src/lib/peoples-price.ts`: a menu with
+  3+ answers gets "People's Price $22 from 14 answers, as of Sep 25, 2026." under its restaurant page's slider card and
+  in its `/best-burgers` row (fewer answers keep the existing wording), `/peoples-price` prerenders its tiles and boards
+  dated "As of Sep 25, 2026", and the live code replaces them in the browser. **Best value burgers**
+  (`/best-value-burgers`, user decision 2026-09-25): the menus whose People's Price is 10% or more above the menu price
+  (as the verdict rounds it), ranked like the bargains board; the page, its sitemap entry, llms.txt line and links
+  (footer Rankings, "More burger rankings.", under the People's Price bargains board) exist only once 10 menus have a
+  verdict (3+ answers). Until then its optional catch-all route builds only the `/_none` 404 placeholder. `check:seo`
+  recomputes all of this from the snapshot. Vercel must be able to deploy the bot's commits: if a bot-authored commit
+  is ever blocked there, that is a Vercel project setting for the user to change.
 
 ## Context.dev (web data)
 
