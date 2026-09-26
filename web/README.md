@@ -157,7 +157,9 @@ Supabase burger_worth_hist ──(read-only GET, publishable key)──> scripts
   writer rewrites it only when the numbers change (the same numbers keep the old `generated_at`), so the workflow commits only
   real changes. It asks for the dataset's menu keys, 100 per request (`menu_key=in.(…)`), never the whole table; a failed or odd
   read (including a single row that doesn't check out) exits 1 and writes nothing. URL and key: `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` when set, else the
-  public defaults in the script (the key must be publishable: it refuses a secret or service_role key). Node built-ins only.
+  public defaults in the script (the key must be publishable: it refuses a secret or service_role key). Node built-ins only. It
+  refuses to replace a snapshot that had answers with an empty one unless given `--allow-empty` (the workflow's manual
+  `allow_empty` input), since an empty read is likelier a changed table policy than every answer deleted.
 - **The workflow** (`../.github/workflows/peoples-price.yml`): daily at 09:00 UTC and on `workflow_dispatch`; checks out `main`,
   Node 22, runs the script, and if the file changed commits "Update People's Price snapshot" as `github-actions[bot]` and pushes
   to `main` (`permissions: contents: write`, no secrets). It runs only from the default branch. **Once merged, the file belongs to

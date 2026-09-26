@@ -263,6 +263,14 @@ test("main: writes the snapshot, leaves it alone when nothing changed, and never
     await assert.rejects(main(["--dataset", dataset, "--out", out], env, drifted.fn), /doesn't check out/);
     assert.equal(readFileSync(out, "utf8"), before, "an odd reply writes nothing");
     await assert.rejects(main(["--dataset", dataset, "--out", out], { ...env, NEXT_PUBLIC_SUPABASE_ANON_KEY: "sb_secret_x" }, fn), /publishable/);
+    // No answers at all after a snapshot that had some (a policy change makes PostgREST answer []): refuse to
+    // wipe it, unless --allow-empty says the answers really were cleared.
+    const emptied = fakeFetch(() => ({ status: 200, body: [] }));
+    await assert.rejects(main(["--dataset", dataset, "--out", out], env, emptied.fn), /refusing to wipe/);
+    assert.equal(readFileSync(out, "utf8"), before, "an empty read after answers writes nothing");
+    assert.deepEqual(await main(["--dataset", dataset, "--out", out, "--allow-empty"], env, emptied.fn), { changed: true });
+    assert.deepEqual(JSON.parse(readFileSync(out, "utf8")).menus, {}, "--allow-empty writes the empty snapshot");
+    writeFileSync(out, before);
     writeFileSync(dataset, JSON.stringify({ restaurants: [] }));
     await assert.rejects(main(["--dataset", dataset, "--out", out], env, fn), /no priced menus/);
     assert.equal(readFileSync(out, "utf8"), before);

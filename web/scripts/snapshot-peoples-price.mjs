@@ -280,6 +280,16 @@ export async function main(argv = process.argv.slice(2), env = process.env, fetc
   const rows = await fetchHistRows({ url, key, keys, fetch: fetchImpl });
   const menus = snapshotMenus(rows, keys);
   const previous = existsSync(out) ? readFileSync(out, "utf8") : null;
+  // A read that finds no answers at all, after a snapshot that had some, is far likelier to be a changed table
+  // policy (PostgREST then answers [] like an empty table) than every answer being deleted: refuse to wipe the
+  // snapshot unless told the answers really were cleared.
+  const previousMenus = Object.keys(readSnapshotText(previous)?.menus ?? {}).length;
+  if (previousMenus > 0 && Object.keys(menus).length === 0 && !argv.includes("--allow-empty")) {
+    throw new Error(
+      `the read found no answers, but the last snapshot had ${previousMenus} answered menu${previousMenus === 1 ? "" : "s"}: ` +
+        "refusing to wipe it (run with --allow-empty if the answers really were cleared)",
+    );
+  }
   const { changed, text } = nextSnapshot(previous, menus, new Date());
   const answers = Object.values(menus).reduce((s, m) => s + m.answers, 0);
   const verdicts = Object.values(menus).filter((m) => m.answers >= 3).length;

@@ -9,6 +9,11 @@ on:
   schedule:
     - cron: "0 9 * * *" # 09:00 UTC, 5 am in New York
   workflow_dispatch:
+    inputs:
+      allow_empty:
+        description: "The answers really were cleared: allow an empty snapshot (otherwise the job refuses to wipe one that had answers)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -32,9 +37,10 @@ jobs:
         with:
           node-version: 22
 
-      # Node built-ins only (fetch, fs): no npm install. Exits non-zero, writing nothing, if the read fails.
+      # Node built-ins only (fetch, fs): no npm install. Exits non-zero, writing nothing, if the read fails or finds
+      # no answers after a snapshot that had some (unless run by hand with allow_empty).
       - name: Read the People's Price
-        run: node web/scripts/snapshot-peoples-price.mjs
+        run: node web/scripts/snapshot-peoples-price.mjs ${{ inputs.allow_empty && '--allow-empty' || '' }}
 
       - name: Commit and push if the numbers changed
         run: |

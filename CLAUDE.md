@@ -336,7 +336,8 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   / `NEXT_PUBLIC_SUPABASE_ANON_KEY`, else the public defaults in the script; it refuses a secret or service_role key),
   100 menu keys per request; deterministic, and it rewrites the file only when the numbers change (an unchanged run
   keeps the old `generated_at`); a failed read, or a reply with a row that doesn't check out (a changed column type or
-  policy), exits 1 and writes nothing. **`.github/workflows/peoples-price.yml`** runs
+  policy), exits 1 and writes nothing; so does a read that finds no answers at all after a snapshot that had some
+  (refusing to wipe it unless run with `--allow-empty`, the workflow's manual `allow_empty` input). **`.github/workflows/peoples-price.yml`** runs
   it every day at 09:00 UTC (and on `workflow_dispatch`): checks out `main`, Node 22, no npm install, no secrets
   (`permissions: contents: write`), and if the file changed commits "Update People's Price snapshot" as
   `github-actions[bot]` and pushes to `main`, which triggers the Vercel production deploy. Scheduled workflows run only
