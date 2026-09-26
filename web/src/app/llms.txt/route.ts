@@ -1,3 +1,5 @@
+import { BEST_BURGERS_NAME, BEST_BURGERS_PATH, leaders } from "@/lib/best-burgers";
+import { getBestBurgers, getBestBurgersYears } from "@/lib/best-burgers-data";
 import { getBoroughs, getGeneratedAt, getMenuCounts, getNeighborhoodPages, getPricedRestaurants, getStats, rankedNeighborhoods } from "@/lib/data";
 import { CSV_LICENSE, CSV_PATH } from "@/lib/csv";
 import { llmsTxt } from "@/lib/llms";
@@ -18,8 +20,9 @@ function end(m: Menu | undefined) {
 
 /**
  * "the 25 cheapest of 531 menus by their priciest burger, from $6.00 at Johnny's Reef", "the 25 most
- * expensive of 531 menus, up to $75.00 at …", "96 burger spots, priciest burgers $6.00 to $14.99"
- * (menus count a chain once; burger spots count its every location).
+ * expensive of 531 menus, up to $75.00 at …", "96 burger spots, priciest burgers $6.00 to $14.99",
+ * "45 burger spots whose priciest burger is a smash burger, $9.00 to $31.00" (menus count a chain once;
+ * burger spots count its every location).
  */
 function rankingNote(spec: RankingSpec, restaurants: Parameters<typeof rankMenus>[0]): string | undefined {
   const { rows, total, spots } = rankMenus(restaurants, spec);
@@ -27,8 +30,18 @@ function rankingNote(spec: RankingSpec, restaurants: Parameters<typeof rankMenus
   const money = (v: number) => formatPrice(v, { cents: "always" });
   const first = rows[0];
   if (spec.kind === "under") return `${formatCount(spots)} burger spots, priciest burgers ${money(first.indexPrice)} to ${money(rows[rows.length - 1].indexPrice)}`;
+  if (spec.kind === "style") return `${formatCount(spots)} burger spots whose priciest burger is ${spec.style!.aBurger}, ${money(first.indexPrice)} to ${money(rows[rows.length - 1].indexPrice)}`;
   if (spec.kind === "cheapest") return `the ${rows.length} cheapest of ${formatCount(total)} menus by their priciest burger, from ${money(first.indexPrice)} at ${first.restaurant.name}`;
   return `the ${rows.length} most expensive of ${formatCount(total)} menus, up to ${money(first.indexPrice)} at ${first.restaurant.name}`;
+}
+
+/** "36 places ranked by how many publications named them on a best-burger list in 2024–2026, …" */
+function bestBurgersNote(): string {
+  const entries = getBestBurgers();
+  const years = getBestBurgersYears();
+  const top = leaders(entries);
+  const lead = top.length === 1 ? `; ${top[0].name} leads, named by ${top[0].publishers.length}` : "";
+  return `${formatCount(entries.length)} places ranked by how many publications named them on a best-burger list in ${years.from}–${years.to}, with the menu price${lead}`;
 }
 
 export function GET() {
@@ -60,7 +73,10 @@ export function GET() {
     sections: [
       {
         title: "Rankings",
-        links: rankingSpecs(restaurants).map((spec) => ({ title: rankingName(spec), path: rankingPath(spec), note: rankingNote(spec, restaurants) })),
+        links: [
+          ...rankingSpecs(restaurants).map((spec) => ({ title: rankingName(spec), path: rankingPath(spec), note: rankingNote(spec, restaurants) })),
+          { title: BEST_BURGERS_NAME, path: BEST_BURGERS_PATH, note: bestBurgersNote() },
+        ],
       },
     ],
   });

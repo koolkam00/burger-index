@@ -9,9 +9,10 @@ import { Letterboard } from "@/components/Letterboard";
 import { QandA } from "@/components/QandA";
 import { MenuEnds, menuEndsLists } from "@/components/RestaurantBits";
 import { Pricer } from "@/components/worth/Pricer";
-import { Buoy, Net, Scales, ShipWheel, Spatula, Spyglass } from "@/components/icons/nautical";
+import { Buoy, Net, ShipWheel, Spatula, Spyglass } from "@/components/icons/nautical";
 import { BoroughDot, Bubbles, Caustics, ChartEmpty, KickerTicket, SectionHeading, WaveEdge } from "@/components/ui";
 import { cityFaq, medianClause } from "@/lib/answers";
+import { BEST_BURGERS_PATH } from "@/lib/best-burgers";
 import { boroughInProse, neighborhoodInProse } from "@/lib/boroughs";
 import { getBoroughs, getGeneratedAt, getMenuCounts, getPricedRestaurants, getStats, rankedNeighborhoods } from "@/lib/data";
 import { CSV_PATH } from "@/lib/csv";
@@ -132,6 +133,18 @@ export default function HomePage() {
               price={median}
               line={[pluralize(counts.menus, "menu"), `Updated ${formatDate(generated)}`]}
             />
+            {/* Under the board (user decisions 2026-09-25): the People's Price boards (the pricer above feeds
+                them; this replaced the "What's it worth?" section) and the most-recommended burgers. */}
+            <p className="hero-links">
+              <Link href="/peoples-price" className="btn btn-secondary">
+                See the People&apos;s Price
+                <ArrowRight strokeWidth={2} aria-hidden="true" />
+              </Link>
+              <Link href={BEST_BURGERS_PATH} className="btn btn-secondary">
+                Most-recommended burgers
+                <ArrowRight strokeWidth={2} aria-hidden="true" />
+              </Link>
+            </p>
           </div>
         </div>
         <WaveEdge />
@@ -233,19 +246,6 @@ export default function HomePage() {
       </section>
 
       <QandA items={faq} />
-
-      {/* "What's it worth?": the People's Price boards (the pricer at the top feeds them). */}
-      <section className="section" aria-labelledby="worth">
-        <SectionHeading id="worth" kicker="What's it worth?" icon={Scales} title="What would you pay for a burger?">
-          Name your price for any burger, then see what everyone else would pay.
-        </SectionHeading>
-        <p className="mt-6">
-          <Link href="/peoples-price" className="btn btn-primary btn-lg">
-            See the People&apos;s Price
-            <ArrowRight strokeWidth={2} aria-hidden="true" />
-          </Link>
-        </p>
-      </section>
 
       <section className="section" aria-labelledby="explore">
         <SectionHeading id="explore" kicker="Cast a line" icon={Spyglass} title="Look up any burger." />

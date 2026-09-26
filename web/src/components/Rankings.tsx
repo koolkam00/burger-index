@@ -1,9 +1,22 @@
 // The ranking pages' table and the grouped links between ranking pages (DESIGN.md "Ranking page").
 // Server-safe and presentational: the pages pass the rows (lib/rankings.ts rankMenus).
 import Link from "next/link";
+import { BEST_BURGERS_NAME, BEST_BURGERS_PATH } from "@/lib/best-burgers";
 import { BOROUGH_META } from "@/lib/boroughs";
 import { formatDelta, pluralize } from "@/lib/format";
-import { boroughRankings, chainExplorerHref, CITY_RANKINGS, rankingName, rankingPath, type RankedMenu, type RankingSpec } from "@/lib/rankings";
+import {
+  boroughRankings,
+  chainExplorerHref,
+  CITY_RANKINGS,
+  neighborhoodRankings,
+  rankingName,
+  rankingPath,
+  rankingShortName,
+  type RankedMenu,
+  type RankingNeighborhood,
+  type RankingSpec,
+} from "@/lib/rankings";
+import type { Borough } from "@/lib/schema";
 import { BoroughDot, PriceChip, SourceBadge } from "./ui";
 
 /**
@@ -49,7 +62,7 @@ export function RankingTable({ rows, spec, median, caption }: { rows: readonly R
                   <div className="t-ui-s muted break-anywhere">
                     {chainRow ? (
                       <Link href={chainExplorerHref(m, spec)} className="ui-link text-ink-muted underline hover:text-ink">
-                        {pluralize(m.locations, spec.borough ? `${spec.borough.name} location` : "location")}
+                        {pluralize(m.locations, spec.borough && !spec.neighborhood ? `${spec.borough.name} location` : "location")}
                       </Link>
                     ) : r.neighborhood ? (
                       `${r.neighborhood} · ${r.borough}`
@@ -75,19 +88,33 @@ export function RankingTable({ rows, spec, median, caption }: { rows: readonly R
   );
 }
 
+type LinkGroup = { key: string; title: string; borough: Borough | null; links: Array<{ href: string; label: string }> };
+
+const specLink = (s: RankingSpec) => ({ href: rankingPath(s), label: rankingName(s) });
+
 /**
- * Every ranking page, grouped: New York City first, then each borough with its flag dot, as plain
- * list rows. `current` (this page's path) is named, not linked. `available` leaves out the lists of a
- * borough with nothing priced.
+ * Every ranking page, grouped: a neighborhood's own two lists first on its ranking pages, then New York
+ * City (with the most-recommended burgers), the burger styles and each borough with its flag dot, as plain
+ * list rows. `current` (this page's path) is named, not linked. `available` (rankings.ts rankingSpecs)
+ * leaves out the lists of a borough with nothing priced and the styles without a list. The other
+ * neighborhoods' lists are linked from their neighborhood pages.
  */
-export function RankingLinks({ current, available }: { current?: string; available: readonly RankingSpec[] }) {
+export function RankingLinks({ current, available, neighborhood = null }: { current?: string; available: readonly RankingSpec[]; neighborhood?: RankingNeighborhood | null }) {
   const paths = new Set(available.map(rankingPath));
-  const groups = [
-    { key: "nyc", title: "New York City", borough: null, specs: CITY_RANKINGS },
-    ...BOROUGH_META.map((b) => ({ key: b.slug, title: b.name, borough: b.name, specs: boroughRankings(b) })),
-  ]
-    .map((g) => ({ ...g, specs: g.specs.filter((s) => paths.has(rankingPath(s))) }))
-    .filter((g) => g.specs.length);
+  const has = (s: RankingSpec) => paths.has(rankingPath(s));
+  const groups: LinkGroup[] = [
+    ...(neighborhood
+      ? [{ key: `n-${neighborhood.slug}`, title: neighborhood.name, borough: neighborhood.borough.name, links: neighborhoodRankings(neighborhood).filter(has).map(specLink) }]
+      : []),
+    { key: "nyc", title: "New York City", borough: null, links: [...CITY_RANKINGS.filter(has).map(specLink), { href: BEST_BURGERS_PATH, label: BEST_BURGERS_NAME }] },
+    {
+      key: "styles",
+      title: "Burger styles",
+      borough: null,
+      links: available.filter((s) => s.kind === "style").map((s) => ({ href: rankingPath(s), label: `${rankingShortName(s)} in NYC` })),
+    },
+    ...BOROUGH_META.map((b) => ({ key: b.slug, title: b.name, borough: b.name, links: boroughRankings(b).filter(has).map(specLink) })),
+  ].filter((g) => g.links.length);
   return (
     <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
       {groups.map((g) => (
@@ -97,22 +124,19 @@ export function RankingLinks({ current, available }: { current?: string; availab
             {g.title}
           </h3>
           <ul className="mt-2">
-            {g.specs.map((s) => {
-              const path = rankingPath(s);
-              return (
-                <li key={path} className="flex min-h-11 items-center border-b border-line py-1.5">
-                  {path === current ? (
-                    <span className="t-ui-m muted break-anywhere text-balance" aria-current="page">
-                      {rankingName(s)}
-                    </span>
-                  ) : (
-                    <Link href={path} className="ui-link t-ui-m break-anywhere text-balance">
-                      {rankingName(s)}
-                    </Link>
-                  )}
-                </li>
-              );
-            })}
+            {g.links.map((l) => (
+              <li key={l.href} className="flex min-h-11 items-center border-b border-line py-1.5">
+                {l.href === current ? (
+                  <span className="t-ui-m muted break-anywhere text-balance" aria-current="page">
+                    {l.label}
+                  </span>
+                ) : (
+                  <Link href={l.href} className="ui-link t-ui-m break-anywhere text-balance">
+                    {l.label}
+                  </Link>
+                )}
+              </li>
+            ))}
           </ul>
         </div>
       ))}

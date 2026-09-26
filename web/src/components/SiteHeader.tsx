@@ -82,8 +82,9 @@ export function SiteHeader() {
           </nav>
 
           <div className="flex flex-none items-center gap-1 sm:gap-2">
-            {/* Below sm the search moves into the menu sheet, so "Price a burger" fits beside the wordmark. */}
-            <Link href="/burgers#search" className="wood-btn hidden sm:inline-flex" aria-label="Search burgers" title="Search burgers" onClick={searchClick}>
+            {/* One-tap search at every width (user decision 2026-09-25), next to "Price a burger"; the menu
+                sheet keeps its own "Search" below sm. */}
+            <Link href="/burgers#search" className="wood-btn search-btn" aria-label="Search burgers" title="Search burgers" onClick={searchClick}>
               <Search strokeWidth={2} aria-hidden="true" />
             </Link>
             <span className="hidden sm:inline-flex">

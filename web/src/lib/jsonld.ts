@@ -116,9 +116,10 @@ export function breadcrumbNode(site: string, crumbs: readonly Crumb[], pagePath:
   };
 }
 
-export type ListEntry = { name: string; path: string };
+/** One list entry: its name and its page, if it has one (a place without a price has none). */
+export type ListEntry = { name: string; path?: string | null };
 
-/** An ordered list of pages (a ranking or a cheapest-first list), each entry linking to its page. */
+/** An ordered list of pages (a ranking or a cheapest-first list), each entry linking to its page when it has one. */
 export function itemListNode(site: string, list: { name: string; entries: readonly ListEntry[]; order?: "ascending" | "descending" }): JsonLdNode {
   return {
     "@type": "ItemList",
@@ -129,7 +130,7 @@ export function itemListNode(site: string, list: { name: string; entries: readon
       "@type": "ListItem",
       position: i + 1,
       name: e.name,
-      url: siteUrl(site, e.path),
+      ...(e.path ? { url: siteUrl(site, e.path) } : {}),
     })),
   };
 }

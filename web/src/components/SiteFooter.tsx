@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BEST_BURGERS_NAME, BEST_BURGERS_PATH } from "@/lib/best-burgers";
 import { CSV_LICENSE, CSV_PATH } from "@/lib/csv";
 import { formatDate } from "@/lib/format";
 import { CITY_RANKINGS, rankingName, rankingPath } from "@/lib/rankings";
@@ -55,7 +56,8 @@ export function SiteFooter({ generatedAt }: { generatedAt: string }) {
                 </li>
               </ul>
             </nav>
-            {/* The NYC ranking pages; each borough's lists are linked from its borough page and every ranking page. */}
+            {/* The NYC ranking pages and the most-recommended burgers; each borough's lists are linked from its
+                borough page and every ranking page, each neighborhood's from its neighborhood page. */}
             <nav aria-labelledby="footer-rankings" className="mt-8">
               <h2 id="footer-rankings" className="t-label deck-muted">
                 Rankings
@@ -69,6 +71,11 @@ export function SiteFooter({ generatedAt }: { generatedAt: string }) {
                     </Link>
                   </li>
                 ))}
+                <li className="text-balance">
+                  <Link className="deck-link" href={BEST_BURGERS_PATH}>
+                    {BEST_BURGERS_NAME}
+                  </Link>
+                </li>
               </ul>
             </nav>
           </div>

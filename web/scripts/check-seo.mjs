@@ -19,6 +19,12 @@
 // in …" or "burgers under $15"; the cheapest lists name burger spots and their priciest burger. Every
 // count matches its noun: "N burger spots" counts locations (a chain's every one), "N menus" distinct
 // menus (a chain once).
+// Neighborhood lists (/cheapest-burgers/<borough>/<neighborhood>) are recomputed here too, and exactly the
+// neighborhoods with 10+ distinct priced menus whose two lists share no menu have them. Style lists
+// (/burgers/<style>) are checked row by row against the dataset (distinct menus, prices, order, ranks,
+// a style word in each burger) and say "where the priciest burger is a …". /best-burgers is recomputed
+// from ../data/best_burgers.json: its rows, ranks, publication counts, menu prices, every list link and
+// its ItemList; no title, description or H1 says "best burger(s)" in our own voice.
 // Exit 1 on any error; warnings are printed and don't fail.
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -29,6 +35,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const WEB = join(here, "..");
 const OUT = join(WEB, "out");
 const DATASET = join(WEB, "..", "data", "burger_index.json");
+const BEST = join(WEB, "..", "data", "best_burgers.json");
 
 const args = process.argv.slice(2);
 const expectSite = (() => {
@@ -109,8 +116,28 @@ const cents = (v) => Math.round(v * 100);
 // ---- rankings, recomputed from the dataset (independently of src/lib/rankings.ts) ------------------
 
 const BOROUGH_BY_SLUG = { manhattan: "Manhattan", brooklyn: "Brooklyn", queens: "Queens", bronx: "Bronx", "staten-island": "Staten Island" };
-const RANKING_PATH = /^\/(?:(cheapest-burgers|most-expensive-burgers)(?:\/([a-z-]+))?|burgers-under-(\d+))$/;
+const RANKING_PATH = /^\/(?:(cheapest-burgers|most-expensive-burgers)(?:\/([a-z-]+)(?:\/([a-z0-9-]+))?)?|burgers-under-(\d+))$/;
+const STYLE_PATH = /^\/burgers\/([a-z0-9-]+)$/;
+const BEST_PATH = "/best-burgers";
 const CITY_RANKING_PATHS = ["/cheapest-burgers", "/most-expensive-burgers", "/burgers-under-15", "/burgers-under-20"];
+// Every page's footer links these: the NYC ranking pages and the most-recommended burgers.
+const FOOTER_PATHS = [...CITY_RANKING_PATHS, BEST_PATH];
+/** Distinct priced menus a neighborhood needs for its own two lists (src/lib/rankings.ts MIN_NEIGHBORHOOD_MENUS). */
+const MIN_NEIGHBORHOOD_MENUS = 10;
+/** Distinct menus a style needs for a page (src/lib/styles.ts MIN_STYLE_MENUS). */
+const MIN_STYLE_MENUS = 10;
+/**
+ * A loose, independent check on each style list's rows: its burger's name or description must carry the
+ * style's word (the site's classifier in src/lib/styles.ts is stricter; this catches a row that can't be
+ * one). "a" is the style in the H1's words.
+ */
+const STYLE_WORDS = {
+  smash: { a: "a smash burger", re: /smash/i },
+  double: { a: "a double burger", re: /\bdouble\b|\bdbl\b|\btwo\b|\b2\b|\btwin\b/i },
+  wagyu: { a: "a wagyu burger", re: /wagyu|kobe/i },
+  "dry-aged": { a: "a dry-aged burger", re: /dry[\s-]?aged|day[\s-]+aged/i },
+  "patty-melt": { a: "a patty melt", re: /patty[\s-]?melt/i },
+};
 
 /** Distinct menus in dataset order: a chain once (its first priced location), with its location count. */
 function distinctMenus(list) {
@@ -126,9 +153,10 @@ const byKeyOrder = (a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
 function expectedRanking(path) {
   const m = RANKING_PATH.exec(path);
   if (!m) return null;
-  const [, list, slug, under] = m;
+  const [, list, slug, hood, under] = m;
   if (slug && !BOROUGH_BY_SLUG[slug]) return { error: `unknown borough ${slug}` };
-  const scope = slug ? priced.filter((r) => r.borough === BOROUGH_BY_SLUG[slug]) : priced;
+  if (hood && !priced.some((r) => r.neighborhood_slug === hood && r.borough === BOROUGH_BY_SLUG[slug])) return { error: `no priced restaurant in ${hood}, ${slug}` };
+  const scope = hood ? priced.filter((r) => r.neighborhood_slug === hood) : slug ? priced.filter((r) => r.borough === BOROUGH_BY_SLUG[slug]) : priced;
   const desc = list === "most-expensive-burgers";
   let menus = distinctMenus(scope).sort((a, b) => (desc ? b.price - a.price : a.price - b.price) || a.r.name.localeCompare(b.r.name) || byKeyOrder(a, b));
   if (under) menus = menus.filter((x) => cents(x.price) < +under * 100);
@@ -143,10 +171,30 @@ function expectedRanking(path) {
   // every menu tied with the last of them; under $N: every row.
   const cap = Math.max(1, Math.min(25, Math.floor(total / 2)));
   const rows = under || menus.length <= cap ? menus : menus.filter((x) => x.rank <= menus[cap - 1].rank);
-  return { rows, total, spots, desc };
+  return { rows, total, spots, desc, hood: hood ?? null };
+}
+
+/** The neighborhoods that must have their two lists: 10+ distinct priced menus, and lists that share no menu. */
+const hoodsWithLists = new Map();
+for (const r of priced) {
+  if (!r.neighborhood_slug) continue;
+  const key = `${BOROUGH_BY_SLUG_REVERSE(r.borough)}/${r.neighborhood_slug}`;
+  if (!hoodsWithLists.has(key)) hoodsWithLists.set(key, { slug: r.neighborhood_slug, borough: r.borough, name: r.neighborhood });
+}
+function BOROUGH_BY_SLUG_REVERSE(name) {
+  return Object.keys(BOROUGH_BY_SLUG).find((k) => BOROUGH_BY_SLUG[k] === name);
+}
+for (const [key, n] of [...hoodsWithLists]) {
+  const cheap = expectedRanking(`/cheapest-burgers/${key}`);
+  const pricey = expectedRanking(`/most-expensive-burgers/${key}`);
+  const shared = cheap.rows.some((x) => pricey.rows.some((y) => y.key === x.key));
+  if (cheap.total < MIN_NEIGHBORHOOD_MENUS || shared) hoodsWithLists.delete(key);
+  else n.cheapPath = `/cheapest-burgers/${key}`;
 }
 
 const count = (v) => v.toLocaleString("en-US");
+/** Restaurant and burger names that carry "best" themselves (the restaurant's words, not ours). */
+const OWN_NAMES_WITH_BEST = [...new Set(priced.flatMap((r) => [r.name, r.burger.name]).filter((n) => /\bbest\b|top-rated/i.test(n)))];
 const month = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "long", year: "numeric" }).format(new Date(data.generated_at));
 const SOURCE_LINE = `Prices from restaurant menus and ordering pages, checked ${month}.`;
 const LICENSE_URL = "https://creativecommons.org/licenses/by/4.0/";
@@ -159,12 +207,41 @@ const OVERCLAIMS = [
   /\bburgers? (?:in [^.]{1,40} )?costs? (?:less than|under)\b/i,
   /\bdifferent burgers under\b/i,
   /\bno burger costs? more than\b/i,
+  // A style list names the spots whose priciest burger is of the style, never every such burger.
+  /\b(?:every|all(?: the)?) (?:smash|double|wagyu|dry-aged) burgers\b/i,
+  /\bcheapest (?:smash|double|wagyu|dry-aged) burgers?\b/i,
+  /\b(?:smash|double|wagyu|dry-aged) burgers (?:in NYC )?(?:cost|range|run)\b/i,
 ];
 function overclaims(where, str) {
   for (const re of OVERCLAIMS) {
     const m = re.exec(str);
     if (m) err(`${where}: overclaiming "${str.slice(Math.max(0, m.index - 40), m.index + m[0].length + 40)}"`);
   }
+}
+
+// ---- the most-recommended burgers, recomputed from ../data/best_burgers.json -------------------------
+
+const best = existsSync(BEST) ? JSON.parse(readFileSync(BEST, "utf8")) : null;
+if (!best) err("../data/best_burgers.json not found");
+const bestLists = new Map((best?.lists ?? []).map((l) => [l.id, l]));
+const allById = new Map(data.restaurants.map((r) => [r.id, r]));
+const bestEntries = (best?.places ?? [])
+  .map((p) => {
+    const publishers = new Set(p.sources.map((s) => bestLists.get(s.list)?.publisher).filter(Boolean));
+    const r = p.restaurant_id ? allById.get(p.restaurant_id) : null;
+    if (p.restaurant_id && !r) err(`best_burgers.json: ${p.key} names ${p.restaurant_id}, not in the dataset`);
+    for (const s of p.sources) if (!bestLists.has(s.list)) err(`best_burgers.json: ${p.key} cites unknown list ${s.list}`);
+    if (publishers.size < 2) err(`best_burgers.json: ${p.key} is named by ${publishers.size} publisher(s)`);
+    return { key: p.key, name: p.name, publishers: publishers.size, lists: p.sources.map((s) => bestLists.get(s.list)).filter(Boolean), r: r && r.index_price !== null ? r : null };
+  })
+  .sort((a, b) => b.publishers - a.publishers || a.name.localeCompare(b.name, "en", { sensitivity: "base" }));
+bestEntries.forEach((e, i) => {
+  e.rank = i && e.publishers === bestEntries[i - 1].publishers ? bestEntries[i - 1].rank : i + 1;
+});
+for (const l of best?.lists ?? []) {
+  const year = +String(l.date).slice(0, 4);
+  if (!(year >= best.years.from && year <= best.years.to)) err(`best_burgers.json: list ${l.id} dated ${l.date}, outside ${best.years.from}-${best.years.to}`);
+  if (/upper cut|world'?s (101|25) best/i.test(`${l.publisher} ${l.title}`)) err(`best_burgers.json: list ${l.id} is an Upper Cut Media House list`);
 }
 
 // ---- pages ---------------------------------------------------------------------------------------
@@ -326,7 +403,7 @@ for (const p of pages) {
       });
     }
   } else {
-    checkBreadcrumbs(p, /^\/(restaurants|neighborhoods|boroughs)\//.test(path) || RANKING_PATH.test(path));
+    checkBreadcrumbs(p, /^\/(restaurants|neighborhoods|boroughs)\//.test(path) || RANKING_PATH.test(path) || STYLE_PATH.test(path) || path === BEST_PATH);
   }
 
   const rest = /^\/restaurants\/([^/]+)$/.exec(path);
@@ -359,9 +436,16 @@ for (const p of pages) {
     const table = /<table class="data-table">(.*?)<\/table>/s.exec(html)?.[1] ?? "";
     const rows = [...table.matchAll(/<th scope="row"[^>]*>\s*<a\b[^>]*href="(\/restaurants\/[^"]+)"[^>]*>(.*?)<\/a>/gs)].map((m) => ({ name: text(m[2]), path: decode(m[1]) }));
     checkItemList(p, one(p, "ItemList"), rows, "restaurant table");
+    // A neighborhood with its own two lists links both; one without links neither.
+    const lists = [...hoodsWithLists.entries()].find(([, n]) => n.slug === hood[1]);
+    const linksCheap = /href="\/cheapest-burgers\/[a-z-]+\/[a-z0-9-]+"/.test(html);
+    const linksPricey = /href="\/most-expensive-burgers\/[a-z-]+\/[a-z0-9-]+"/.test(html);
+    if (lists && !(html.includes(`href="/cheapest-burgers/${lists[0]}"`) && html.includes(`href="/most-expensive-burgers/${lists[0]}"`))) err(`${path}: does not link its two ranking pages`);
+    if (!lists && (linksCheap || linksPricey)) err(`${path}: links a neighborhood ranking page it does not have`);
   }
   const ranking = expectedRanking(path);
   if (ranking?.error) err(`${path}: ${ranking.error}`);
+  else if (ranking?.hood && ![...hoodsWithLists.keys()].some((k) => path.endsWith(`/${k}`))) err(`${path}: a neighborhood list that should not exist (fewer than ${MIN_NEIGHBORHOOD_MENUS} menus, or its two lists meet)`);
   else if (ranking) {
     const h1 = text((/<h1[^>]*>(.*?)<\/h1>/s.exec(html) ?? ["", ""])[1]);
     const table = /<table class="data-table ranking-table">(.*?)<\/table>/s.exec(html)?.[1] ?? "";
@@ -394,7 +478,7 @@ for (const p of pages) {
     const countLine = text(/<\/table>\s*<\/div>\s*<p class="t-ui-s muted mt-3">(.*?)<\/p>/s.exec(html)?.[1] ?? "");
     const wantCount = /under/.test(path)
       ? `All ${count(ranking.rows.length)} menus on this list, cheapest first.`
-      : `The ${count(ranking.rows.length)} ${ranking.desc ? "most expensive" : "cheapest"} of ${count(ranking.total)} menus in`;
+      : `The ${count(ranking.rows.length)} ${ranking.desc ? "most expensive" : "cheapest"} of ${count(ranking.total)} menus ${ranking.hood ? "" : "in"}`;
     if (ranking.rows.length > 1 && !countLine.startsWith(wantCount)) err(`${path}: count line "${countLine}", expected "${wantCount} …"`);
     // "Burger spots" are locations: the under-$N lede counts them ("At 96 burger spots in NYC, …"), and
     // any "N burger spots" in the page, its title or description is the list's location count.
@@ -405,6 +489,92 @@ for (const p of pages) {
       }
     }
     p.rankingRows = trs.length;
+  }
+
+  const style = STYLE_PATH.exec(path);
+  if (style) {
+    const want = STYLE_WORDS[style[1]];
+    if (!want) err(`${path}: unknown burger style ${style[1]}`);
+    const h1 = text((/<h1[^>]*>(.*?)<\/h1>/s.exec(html) ?? ["", ""])[1]);
+    if (want && h1 !== `Burger spots in NYC where the priciest burger is ${want.a}.`) err(`${path}: h1 "${h1}" does not say the spots' priciest burger is ${want?.a}`);
+    const table = /<table class="data-table ranking-table">(.*?)<\/table>/s.exec(html)?.[1] ?? "";
+    const trs = [...(/<tbody>(.*?)<\/tbody>/s.exec(table)?.[1] ?? "").matchAll(/<tr\b[^>]*>(.*?)<\/tr>/gs)].map(([, tr]) => {
+      const link = /<th scope="row"[^>]*>\s*<a\b[^>]*href="\/restaurants\/([^"]+)"[^>]*>(.*?)<\/a>/s.exec(tr);
+      return { rank: +(/<td class="num rank-col[^"]*">(\d+)<\/td>/.exec(tr)?.[1] ?? NaN), id: link ? decode(link[1]) : null, name: link ? text(link[2]) : null, price: text(/<span class="t-num-m">(.*?)<\/span>/s.exec(tr)?.[1] ?? "") };
+    });
+    if (trs.length < MIN_STYLE_MENUS) err(`${path}: ${trs.length} rows, fewer than ${MIN_STYLE_MENUS}`);
+    const menuKeys = new Set();
+    let spots = 0;
+    trs.forEach((t, i) => {
+      const r = t.id && byId.get(t.id);
+      if (!r) return err(`${path}: row ${i + 1} links no priced restaurant (${t.id})`);
+      const key = r.chain ? `chain:${r.chain}` : r.id;
+      if (menuKeys.has(key)) err(`${path}: ${key} listed twice (a menu once)`);
+      menuKeys.add(key);
+      spots += r.chain ? priced.filter((x) => x.chain === r.chain).length : 1;
+      if (t.name !== r.name || t.price !== money(r.index_price)) err(`${path}: row ${i + 1} "${t.name}" ${t.price} ≠ dataset "${r.name}" ${money(r.index_price)}`);
+      if (want && !want.re.test(`${r.burger.name} ${r.burger.description ?? ""}`)) err(`${path}: ${r.id}'s burger "${r.burger.name}" names no ${style[1]}`);
+      const prev = i && byId.get(trs[i - 1].id);
+      if (prev) {
+        if (cents(prev.index_price) > cents(r.index_price)) err(`${path}: row ${i + 1} is out of price order`);
+        const wantRank = cents(prev.index_price) === cents(r.index_price) ? trs[i - 1].rank : i + 1;
+        if (t.rank !== wantRank) err(`${path}: row ${i + 1} has rank ${t.rank}, expected ${wantRank}`);
+      } else if (t.rank !== 1) err(`${path}: the first row has rank ${t.rank}`);
+    });
+    checkItemList(p, one(p, "ItemList"), trs.map((t) => ({ name: t.name, path: `/restaurants/${t.id}` })), "style table");
+    const lede = text(/<p class="t-lede[^"]*">(.*?)<\/p>/s.exec(html)?.[1] ?? "");
+    if (want && trs.length > 1 && !lede.startsWith(`At ${count(spots)} burger spots in NYC, the priciest burger is ${want.a} (${month})`)) err(`${path}: lede "${lede}" does not count ${count(spots)} burger spots`);
+    const countLine = text(/<\/table>\s*<\/div>\s*<p class="t-ui-s muted mt-3">(.*?)<\/p>/s.exec(html)?.[1] ?? "");
+    if (countLine !== `All ${count(trs.length)} menus on this list, cheapest first.`) err(`${path}: count line "${countLine}"`);
+    for (const [where, str] of [["page", text(html.replace(/<script\b[^>]*>.*?<\/script>/gs, " "))], ["<title>", p.title], ["description", p.description]]) {
+      for (const m of str.matchAll(/\b(\d[\d,]*) (?:NYC )?burger spots?\b/g)) if (m[1] !== count(spots)) err(`${path} ${where}: "${m[0]}", but the list covers ${count(spots)} burger spots`);
+    }
+    p.styleRows = trs.length;
+  }
+
+  if (path === BEST_PATH) {
+    const h1 = text((/<h1[^>]*>(.*?)<\/h1>/s.exec(html) ?? ["", ""])[1]);
+    if (h1 !== "The most-recommended burgers in NYC.") err(`${path}: h1 "${h1}"`);
+    if (!/Ranked by how many publications named each place on a best-burger list in \d{4}–\d{4}\./.test(text(html))) err(`${path}: no ranking note`);
+    const rows = [...html.matchAll(/<li class="best-row">(.*?)<\/li>\s*(?=<li class="best-row">|<\/ol>)/gs)].map(([, li]) => {
+      const nameHtml = /<p class="best-name[^"]*">(.*?)<\/p>/s.exec(li)?.[1] ?? "";
+      const link = /<a\b[^>]*href="(\/restaurants\/[^"#]+)"/.exec(nameHtml);
+      return {
+        rank: +text(/<p class="best-rank">(.*?)<\/p>/s.exec(li)?.[1] ?? "").replace(/^Rank /, ""),
+        name: text(nameHtml),
+        path: link ? decode(link[1]) : null,
+        pubs: +(/<span class="t-num-s font-semibold">(\d+)<\/span>/.exec(li)?.[1] ?? NaN),
+        price: text(/<span class="t-num-m">(.*?)<\/span>/s.exec(li)?.[1] ?? "") || null,
+        hrefs: [...li.matchAll(/<a\b[^>]*href="(https?:\/\/[^"]+)"/g)].map((m) => decode(m[1])),
+      };
+    });
+    const fmtRow = (x) => `${x.rank}. ${x.name} <${x.path}> ${x.pubs} ${x.price}`;
+    const wantRows = bestEntries.map((e) => ({ rank: e.rank, name: e.name, path: e.r ? `/restaurants/${e.r.id}` : null, pubs: e.publishers, price: e.r ? money(e.r.index_price) : null }));
+    if (rows.map(fmtRow).join("\n") !== wantRows.map(fmtRow).join("\n")) err(`${path}: rows differ from best_burgers.json:\n    page ${rows.slice(0, 3).map(fmtRow).join(" | ")}…\n    data ${wantRows.slice(0, 3).map(fmtRow).join(" | ")}…`);
+    bestEntries.forEach((e, i) => {
+      const row = rows[i];
+      if (!row) return;
+      for (const l of e.lists) if (!row.hrefs.includes(l.url)) err(`${path}: ${e.name}'s row does not link ${l.id} (${l.url})`);
+      if (row.hrefs.length !== e.lists.length) err(`${path}: ${e.name}'s row links ${row.hrefs.length} lists, the data ${e.lists.length}`);
+    });
+    for (const l of best?.lists ?? []) if (!html.includes(`href="${l.url.replace(/&/g, "&amp;")}"`)) err(`${path}: list ${l.id} is not linked`);
+    const list = one(p, "ItemList");
+    if (list) {
+      if (list.name !== h1.replace(/\.$/, "")) err(`${path}: ItemList "${list.name}" ≠ h1`);
+      const got = (list.itemListElement ?? []).map((e) => `${e.position}. ${e.name} <${e.url ?? ""}>`);
+      const wantLd = bestEntries.map((e, i) => `${i + 1}. ${e.name} <${e.r ? `${site}/restaurants/${e.r.id}` : ""}>`);
+      if (got.join("\n") !== wantLd.join("\n") || list.numberOfItems !== bestEntries.length) err(`${path}: ItemList differs from the rows`);
+    }
+    p.bestRows = rows.length;
+  }
+
+  // Our own voice never calls a burger the best: the titles, descriptions and H1s, less the restaurants'
+  // own names for themselves and their burgers ("The Very Best Burger"); a list's own title, quoted on
+  // /best-burgers, is the publisher's words.
+  const h1Text = text((/<h1[^>]*>(.*?)<\/h1>/s.exec(html) ?? ["", ""])[1]);
+  for (const [where, str] of [["<title>", p.title], ["description", p.description], ["h1", h1Text]]) {
+    const ours = OWN_NAMES_WITH_BEST.reduce((acc, n) => acc.split(n).join(" "), str);
+    if (/\bbest burgers?\b|\btop-rated\b/i.test(ours)) err(`${path} ${where}: quality claim "${str}"`);
   }
 
   // Q&A block and its FAQPage: same questions, same words, same order.
@@ -443,7 +613,7 @@ for (const p of pages) {
   overclaims(`${path} <title>`, p.title);
   overclaims(`${path} description`, p.description);
   overclaims(`${path} JSON-LD`, JSON.stringify(p.ld));
-  for (const r of CITY_RANKING_PATHS) if (!html.includes(`href="${r}"`)) err(`${path}: no link to ${r}`);
+  for (const r of FOOTER_PATHS) if (!html.includes(`href="${r}"`)) err(`${path}: no link to ${r}`);
   if (path === "/" && !text(/<section class="hero[^"]*"[^>]*>(.*?)<\/section>/s.exec(html)?.[1] ?? "").includes(SOURCE_LINE)) err("/: no source line near the board");
 
   if (path === "/neighborhoods") {
@@ -454,6 +624,12 @@ for (const p of pages) {
     if (list) checkItemList(p, list, rows, "ranking");
   }
 }
+
+// Every neighborhood that should have its two lists has them.
+for (const [key] of hoodsWithLists) {
+  for (const base of ["/cheapest-burgers", "/most-expensive-burgers"]) if (!pages.some((p) => p.path === `${base}/${key}`)) err(`missing ${base}/${key}`);
+}
+if (!pages.some((p) => p.path === BEST_PATH)) err(`missing ${BEST_PATH}`);
 
 // ---- uniqueness and lengths ----------------------------------------------------------------------
 
@@ -501,6 +677,9 @@ for (const path of CITY_RANKING_PATHS) {
   if (!line.includes(want)) err(`llms.txt: the ${path} line "${line}" lacks "${want}"`);
 }
 const llmsLinks = [...llms.matchAll(/\]\((https?:\/\/[^)\s]+)\)/g)].map((m) => m[1]);
+for (const p of pages) {
+  if ((RANKING_PATH.test(p.path) || STYLE_PATH.test(p.path) || p.path === BEST_PATH) && !llmsLinks.includes(p.url)) err(`llms.txt does not link ${p.path}`);
+}
 for (const l of llmsLinks) {
   if (!l.startsWith(site)) err(`llms.txt links off-site: ${l}`);
   else if (!outFile(l.slice(site.length) || "/")) err(`llms.txt link does not resolve: ${l}`);
@@ -578,6 +757,8 @@ console.log(`site ${site} · ${pages.length} pages · sitemap ${locs.length} URL
 console.log(`JSON-LD nodes: ${[...typeCounts].map(([t, n]) => `${t} ${n}`).join(", ")}`);
 const rankingPages = pages.filter((p) => p.rankingRows !== undefined);
 console.log(`ranking pages: ${rankingPages.length} (${rankingPages.map((p) => `${p.path} ${p.rankingRows}`).join(", ")})`);
+const stylePages = pages.filter((p) => p.styleRows !== undefined);
+console.log(`style pages: ${stylePages.map((p) => `${p.path} ${p.styleRows}`).join(", ")} · best-burgers rows: ${pages.find((p) => p.path === BEST_PATH)?.bestRows ?? 0}`);
 console.log(`Q&A blocks: ${pages.filter((p) => p.faqs).length} pages, ${pages.reduce((n, p) => n + (p.faqs ?? 0), 0)} questions`);
 console.log(`title lengths: min ${Math.min(...tl)}, max ${Math.max(...tl)}, ${tl.filter((n) => n > 60).length} over 60 · ${histogram(tl, [40, 50, 60, 70, 80])}`);
 console.log(`description lengths: min ${Math.min(...dl)}, max ${Math.max(...dl)} · ${histogram(dl, [100, 120, 140, 150, 160])}`);

@@ -106,6 +106,10 @@ export function getMenuCounts(): MenuCounts {
 
 // ---- restaurants -------------------------------------------------------------------------------
 
+/** Every restaurant in the dataset, priced (a page) or not (a name). */
+export function getAllRestaurants(): readonly Restaurant[] {
+  return DATA.restaurants;
+}
 /** The restaurants that get a page: the priced ones. Every menu count and price list is drawn from them. */
 export function getPricedRestaurants(): readonly PricedRestaurant[] {
   return PRICED;

@@ -4,7 +4,9 @@
 // 1. Copies ../data/burger_index.json (written by the Python pipeline and committed) to
 //    src/data/burger_index.json. No file there fails the build: there is no sample data to fall back on.
 // 2. Validates the dataset against contract/burger_index.schema.json. Invalid data fails the build.
-// 3. Copies the MapLibre worker modules into public/vendor/maplibre/ (served same-origin).
+// 3. Copies ../data/best_burgers.json (the /best-burgers page's curated lists, committed) to
+//    src/data/best_burgers.json; src/lib/best-burgers-data.ts checks it against the dataset at build.
+// 4. Copies the MapLibre worker modules into public/vendor/maplibre/ (served same-origin).
 
 import { copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
@@ -46,6 +48,14 @@ console.log(
   `✓ data: ${relative(web, PIPELINE_DATA)} → ${relative(web, OUT)} ` +
     `(${dataset.restaurants.length} restaurants, ${dataset.stats.restaurants_priced} priced, generated ${dataset.generated_at})`,
 );
+
+const BEST_BURGERS = join(web, "..", "data", "best_burgers.json");
+if (!existsSync(BEST_BURGERS)) {
+  console.error(`✗ ${relative(web, BEST_BURGERS)} not found (it is committed: \`git checkout -- data/best_burgers.json\`).`);
+  process.exit(1);
+}
+copyFileSync(BEST_BURGERS, join(OUT_DIR, "best_burgers.json"));
+console.log(`✓ best burgers: ${relative(web, BEST_BURGERS)} → ${relative(web, join(OUT_DIR, "best_burgers.json"))}`);
 
 // MapLibre v6 resolves its worker relative to its own module URL, which bundling breaks.
 // Ship the worker (and the shared chunk it imports) as plain static files instead.
