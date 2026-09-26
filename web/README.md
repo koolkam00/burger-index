@@ -79,7 +79,9 @@ The home page opens on it (`#rank`; DESIGN.md "The ranker hero"): search the pri
 add 3 to 25 of them best first ("your top 10", with room for more), move them with up and down buttons, remove them, and save.
 A returning browser sees its saved list, what it counts for ("Saved. It counts from Sep 27, 2026.", "Counted in the People's
 Top 10.", "Not counted: a newer list was saved from this connection. Save again to count this one."), and can edit or delete
-it. One list per browser and per connection: the backend keeps the latest. The header's "Rank your burgers" links to `/#rank`
+it (a voided list, "Not counted.", can be edited but not deleted: the backend keeps it void). One list per browser and per
+connection: the backend keeps the latest. A burger saved in a list must be one of the dataset's menus (the database's
+`ranker_keys`, synced by `scripts/ranker-keys-migration.mjs`). The header's "Rank your burgers" links to `/#rank`
 from every page (on home it scrolls to the ranker and focuses it). The crowd's ranking is the People's Top 10 below.
 
 The backend is the Supabase project `burger-index`; its schema, the three RPCs (`save_ranking`, `get_my_ranking`,
@@ -148,8 +150,14 @@ rpc/ranker_board_inputs ──(read-only GET, publishable key)──> scripts/sn
   dataset's menu keys in the file (other keys stay in the fit), and writes the file only when it changes (deterministic:
   no wall-clock stamp). A quiet day (aggregates as of the board's own day: the database publishes only once 20 lists
   changed) writes nothing. It exits 1, writes nothing and keeps yesterday's board on a failed or odd read, another method's
-  aggregates, aggregates older than the board or none after one, counted lists down by more than 20% beyond the owner's
-  logged voids (`--allow-drop` overrides), or a fit that did not converge. `--inputs-out PATH` saves the aggregates read.
+  aggregates, aggregates older than the board or none after one, counted lists down by more than 20% beyond the published
+  lists the owner voided (`--allow-drop` overrides), or a fit that did not converge. `--inputs-out PATH` saves the
+  aggregates read. Each new board also prints the owner's watch as GitHub warnings: "Burial watch" (a raw score down more
+  than 0.5 since the committed board) and "Inconsistent record" (phi ≥ 2.5); they change nothing on the board.
+- **The keys** (`scripts/ranker-keys-migration.mjs`): `save_ranking` accepts only the dataset's menu keys, set in the
+  database by the latest `../supabase/migrations/<version>_ranker_keys.sql`. When the priced menus change, `--write` makes
+  the next one; apply it with the Supabase connector (`apply_migration`, name `ranker_keys`). `test/ranker-keys.test.ts`
+  fails while the latest sync differs from the dataset.
 - **The workflow** (`../.github/workflows/peoples-top.yml`): daily at 10:00 UTC and on `workflow_dispatch` (with an
   `allow_drop` input); checks out `main`, Node 22, runs the writer, keeps the aggregates as the `ranker-board-inputs`
   artifact for 90 days, and if the file changed commits "Update People's Top 10" as `github-actions[bot]` and pushes to
@@ -165,6 +173,7 @@ rpc/ranker_board_inputs ──(read-only GET, publishable key)──> scripts/sn
   shows the 10 seats ("The top 3 so far." early on), the rest of the ranking, Rising ("On 7 lists · needs 3 more lists"),
   "Early results" under 500 lists, "Under review" (an owner hold) and "Checking a surge of lists" (the surge review bar),
   the one-liner, and before anything is ranked "The ladder starts when burgers are on 5 lists each (12 lists so far)."
+  (before the first board, with no count: the lists saved so far aren't published yet)
   ItemList JSON-LD only; its own share image; in the sitemap (dated by the board), llms.txt, the nav, the footer and "More
   burger rankings."; `/best-burgers` rows show a ranked menu's People's rank. Tested in `test/peoples-top.test.ts`.
 - **Tests:** `test/ladder.test.ts` (weights, the fit, the surge rule as the database applies it, the cautious score, step,

@@ -22,6 +22,11 @@
 // Aggregates as of the committed board's day are normal (the database publishes only when 20 lists changed): nothing
 // to do, exit 0. Before the first publication the file is the empty early board.
 //
+// The owner's watch (FINAL.md section 6: the review flags that need the fit; the database's review queue has the
+// rest): each new board also prints GitHub warning lines, shown as annotations on the job's run, for a burger whose
+// raw score fell more than 0.5 since the committed board ("Burial watch") and for phi at or above 2.5 ("Inconsistent
+// record"). They change nothing on the board.
+//
 // The file (CLAUDE.md "People's Top 10 snapshot"): method, params, asOf, refreshedAt, inputsSha256 (SHA-256 of the
 // aggregates' response body, the --inputs-out dump), totalLists / countedLists / weightedLists, gate, early,
 // iterations, top10, computed10 and one row per burger in the fit that the dataset has (ranked, then rising, then
@@ -219,6 +224,35 @@ export function nextBoardText(previousText, snapshot) {
   return { changed: text !== previousText, text };
 }
 
+// ---- the owner's watch --------------------------------------------------------------------------------
+
+/** A burger whose raw score fell more than this since the last board is on the burial watch (FINAL.md 6 and 9). */
+export const RAW_DROP = 0.5;
+
+const fixed = (x) => (typeof x === "number" ? x.toFixed(3) : String(x));
+
+/**
+ * The owner's review flags that need the fit (FINAL.md section 6; the database's review queue has the rest), as
+ * GitHub Actions warning lines, which the job's log and its run page show as annotations:
+ * - "Burial watch": a burger whose raw score fell more than RAW_DROP since the committed board;
+ * - "Inconsistent record": phi at or above the flag level (the row's `inconsistent`).
+ * Only the dataset's burgers (the file's rows). No automatic effect: the owner looks at the lists behind them.
+ */
+export function ownerWatch(prev, snapshot) {
+  const lines = [];
+  const before = new Map((prev?.rows ?? []).filter((r) => typeof r.raw === "number").map((r) => [r.key, r.raw]));
+  for (const r of snapshot.rows) {
+    const was = before.get(r.key);
+    if (typeof was === "number" && typeof r.raw === "number" && was - r.raw > RAW_DROP) {
+      lines.push(`::warning title=Burial watch::${r.key} raw ${fixed(was)} -> ${fixed(r.raw)} since ${prev.asOf ?? "the last board"}`);
+    }
+  }
+  for (const r of snapshot.rows) {
+    if (r.inconsistent) lines.push(`::warning title=Inconsistent record::${r.key} phi ${fixed(r.phi)} (flag at ${PARAMS.phiFlag})`);
+  }
+  return lines;
+}
+
 // ---- reading ------------------------------------------------------------------------------------------
 
 async function getText(fetchImpl, url, key, retryDelayMs) {
@@ -257,7 +291,10 @@ export async function fetchBoardInputs({ url, key, fetch: fetchImpl = globalThis
   return { body, raw };
 }
 
-/** Lists voided by the owner on New York days after `sinceDay` (public.ranker_actions, action "void"). */
+/**
+ * Lists the owner voided on New York days after `sinceDay` that were in the published aggregates (public.ranker_actions,
+ * action "void": each void logs how many of its lists the last publication counted, the only ones a drop can be).
+ */
 export async function fetchVoidsSince({ url, key, sinceDay, fetch: fetchImpl = globalThis.fetch, retryDelayMs = 1000 }) {
   const base = `${url.replace(/\/+$/, "")}/rest/v1/ranker_actions`;
   let voided = 0;
@@ -376,6 +413,7 @@ export async function main(argv = process.argv.slice(2), env = process.env, fetc
   }
   const sha = createHash("sha256").update(body).digest("hex");
   const snapshot = boardSnapshot(board, inputs, sha, keys);
+  for (const line of ownerWatch(prev, snapshot)) console.log(line);
   const { changed, text } = nextBoardText(previousText, snapshot);
   const ranked = snapshot.rows.filter((r) => r.tier === "ranked").length;
   const rising = snapshot.rows.filter((r) => r.tier === "rising").length;

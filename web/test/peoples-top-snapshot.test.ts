@@ -20,7 +20,9 @@ import {
   INPUTS_FORMAT,
   isPublicKey,
   main,
+  ownerWatch,
   parseBoardInputs,
+  RAW_DROP,
   readBoardText,
   renderBoard,
 } from "../scripts/snapshot-peoples-top.mjs";
@@ -345,6 +347,46 @@ test("main refuses a secret key, an unreadable or another method's board, and a 
     writeFileSync(box.dataset, JSON.stringify({ restaurants: [{ id: "x", chain: null, index_price: null }] }));
     await assert.rejects(main(box.args(), ENV, fn), /no priced menus/);
     assert.equal(existsSync(box.out), false);
+  } finally {
+    box.done();
+  }
+});
+
+test("the owner's watch: a raw score down more than 0.5 since the committed board, and phi at the flag level, as GitHub warnings", () => {
+  assert.equal(RAW_DROP, 0.5);
+  const row = (key: string, raw: number, phi = 1) => ({ key, raw, phi, inconsistent: phi >= PARAMS.phiFlag });
+  const prev = { asOf: "2026-10-01", rows: [row("spot-01", 1.2), row("spot-02", 0.4), row("spot-03", 0.9), row("spot-05", 0.2)] };
+  const today = { rows: [row("spot-01", 0.75), row("spot-02", -0.2, 2.7), row("spot-03", 0.35), row("spot-04", -3)] };
+  assert.deepEqual(ownerWatch(prev, today), [
+    "::warning title=Burial watch::spot-02 raw 0.400 -> -0.200 since 2026-10-01",
+    "::warning title=Burial watch::spot-03 raw 0.900 -> 0.350 since 2026-10-01",
+    "::warning title=Inconsistent record::spot-02 phi 2.700 (flag at 2.5)",
+  ]);
+  // a drop of exactly 0.5, a burger new to the board, the first board: no burial watch
+  assert.deepEqual(ownerWatch({ asOf: "2026-10-01", rows: [row("spot-01", 1)] }, { rows: [row("spot-01", 0.5)] }), []);
+  assert.deepEqual(ownerWatch(null, today), ["::warning title=Inconsistent record::spot-02 phi 2.700 (flag at 2.5)"]);
+});
+
+test("main prints the owner's watch for the new board", async () => {
+  const box = sandbox();
+  try {
+    const lists = cityLists(90);
+    await quietly(() => main(box.args(), ENV, fakeSupabase({ body: rpcBody(buildAggregates(lists, { asOf: "2026-10-01" })) }).fn));
+    // yesterday's raw score of one burger set well above today's: it is on the watch
+    const board = JSON.parse(readFileSync(box.out, "utf8"));
+    const target = board.rows[0];
+    writeFileSync(box.out, renderBoard({ ...board, rows: board.rows.map((r: { key: string; raw: number }) => (r.key === target.key ? { ...r, raw: r.raw + 5 } : r)) }));
+    const printed: string[] = [];
+    const log = console.log;
+    console.log = (line: string) => void printed.push(String(line));
+    try {
+      await main(box.args(), ENV, fakeSupabase({ body: rpcBody(buildAggregates([...lists, ...cityLists(25, 11)], { asOf: "2026-10-02" })) }).fn);
+    } finally {
+      console.log = log;
+    }
+    const burial = printed.filter((l) => l.startsWith(`::warning title=Burial watch::${target.key} raw `));
+    assert.equal(burial.length, 1, printed.join("\n"));
+    assert.match(burial[0], /raw -?[0-9.]+ -> -?[0-9.]+ since 2026-10-01$/);
   } finally {
     box.done();
   }
