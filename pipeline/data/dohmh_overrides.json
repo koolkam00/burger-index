@@ -14,10 +14,28 @@
       "camis": "40942152",
       "dba": "CROTON RESERVOIR TAVERN",
       "when": {"building": "108110"},
-      "set": {"building": "108"},
-      "reason": "DOHMH's building number '108110' (its '108-110' run together) reads as 108110 West 40 Street, which does not exist. Croton Reservoir Tavern gives its address as 108 West 40th Street, between Sixth Avenue and Broadway. Only the building is set: the record has no zipcode or NTA, and adding one would move its neighborhood and so its restaurant id.",
-      "source_url": "https://www.crotonnyc.com/",
-      "checked_at": "2026-09-25"
+      "set": {"building": "108", "latitude": 40.753663, "longitude": -73.985839},
+      "reason": "DOHMH's building number '108110' (its '108-110' run together) reads as 108110 West 40 Street, which does not exist, and its coordinates are 0,0. Croton Reservoir Tavern gives its address as 108 West 40th Street, between Sixth Avenue and Broadway (crotonnyc.com); the coordinates (added 2026-09-26, so the landmark pages and the map can place it) are NYC Planning's PAD geocode of that address, BBL 1008150039. Only the building and the coordinates are set: the record has no zipcode or NTA, and adding one would move its neighborhood and so its restaurant id.",
+      "source_url": "https://geosearch.planninglabs.nyc/v2/search?text=108%20West%2040%20Street%2C%20Manhattan",
+      "checked_at": "2026-09-26"
+    },
+    {
+      "camis": "41509909",
+      "dba": "BILL'S BAR & BURGER ROCKEFELLER CENTER",
+      "when": {"street": "ROCKEFELLER CENTER", "latitude": ""},
+      "set": {"latitude": 40.759119, "longitude": -73.97755},
+      "reason": "DOHMH gives Bill's Bar & Burger Rockefeller Center only the street 'Rockefeller Center' and no coordinates, so it had no map location. Its own location page gives 16 West 51st St; the coordinates are NYC Planning's PAD geocode of that address (BBL 1012660001, geosearch.planninglabs.nyc). Only the coordinates are set: the street, zipcode and NTA stay DOHMH's, so its neighborhood and restaurant id don't move.",
+      "source_url": "https://www.billsbarandburger.com/location/bills-bar-and-burger-rockefeller-center/",
+      "checked_at": "2026-09-26"
+    },
+    {
+      "camis": "50005823",
+      "dba": "TAVERN ON THE GREEN",
+      "when": {"street": "67th Street and Central Park West", "latitude": "0"},
+      "set": {"latitude": 40.7723, "longitude": -73.9778},
+      "reason": "DOHMH lists Tavern on the Green at '67th Street and Central Park West' with 0,0 coordinates, so it had no map location. The restaurant stands in Central Park off West 67th Street; the coordinates are Wikipedia's for it (article 'Tavern on the Green', read 2026-09-26). Only the coordinates are set: the record has no zipcode or NTA, and adding one could move its neighborhood and so its restaurant id.",
+      "source_url": "https://en.wikipedia.org/wiki/Tavern_on_the_Green",
+      "checked_at": "2026-09-26"
     }
   ]
 }
