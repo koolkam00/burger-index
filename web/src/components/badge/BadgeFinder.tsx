@@ -101,8 +101,18 @@ export function BadgeFinder({ example, context }: { example: BadgeSpot; context:
             </button>
           ) : null}
         </div>
+        {/* Always mounted, so screen readers hear every result: the match count, or (sr-only, since the
+            visible lines below say it) "Looking…" and the no-match sentence, without echoing the query. */}
         <p className="t-ui-s muted mt-3" role="status">
-          {searching && spots ? (hits.length ? `Showing ${formatCount(Math.min(MAX_HITS, hits.length))} of ${pluralize(hits.length, "match", "matches")}` : "") : ""}
+          {!searching || failed ? (
+            ""
+          ) : !spots ? (
+            <span className="sr-only">Looking…</span>
+          ) : hits.length ? (
+            `Showing ${formatCount(Math.min(MAX_HITS, hits.length))} of ${pluralize(hits.length, "match", "matches")}`
+          ) : (
+            <span className="sr-only">No priced restaurant matches that name. Only restaurants with a price here have a badge.</span>
+          )}
         </p>
         {searching ? (
           failed ? (

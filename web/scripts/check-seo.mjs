@@ -8,10 +8,12 @@
 // no skipped heading level, <img> alt text, JSON-LD that parses, has the expected @types and restates
 // the page (names, prices, breadcrumbs, list order), and no Review / Rating / AggregateRating
 // anywhere. Ranking pages: the table, its ranks and prices and its ItemList equal a ranking recomputed
-// here from the dataset (distinct menus, a chain once). Q&A blocks: the FAQPage JSON-LD says word for
+// here from the dataset (distinct menus, a chain once), and the description names every menu
+// sharing first place (a tie of three or more is counted). Q&A blocks: the FAQPage JSON-LD says word for
 // word what the block shows, and home, borough and neighborhood pages have one. The footer carries the
 // source line, the CSV link with its CC BY 4.0 license link and the NYC ranking links on every page.
-// Titles and descriptions unique. The sitemap lists exactly the pages; robots.txt, llms.txt (every link
+// Titles and descriptions unique. The sitemap lists exactly the pages, each dated by the data it shows (the
+// snapshot's date where the People's Price is in the HTML); robots.txt, llms.txt (every link
 // resolves, the license named) and the CSV (one row per priced restaurant, equal to the dataset) are
 // checked, and so is every internal link (no broken targets, no page without an inbound link).
 // Honest wording (user decision 2026-09-25): each spot publishes its priciest burger, so no page text,
@@ -545,6 +547,17 @@ for (const p of pages) {
     const lede = text(/<p class="t-lede[^"]*">(.*?)<\/p>/s.exec(html)?.[1] ?? "");
     const top = ranking.rows[0];
     if (top && !(lede.includes(top.r.name) && lede.includes(money(top.price)) && lede.includes(`(${month})`))) err(`${path}: lede "${lede}" does not name ${top.r.name}, ${money(top.price)} and ${month}`);
+    // The description's first-place sentence, like the lede: every menu sharing rank 1 by name (one or two),
+    // or their count (three or more), never one leader of a tie.
+    if (top && !/under/.test(path)) {
+      const firsts = ranking.rows.filter((x) => x.rank === 1);
+      const at = money(top.price);
+      const ok =
+        firsts.length <= 2
+          ? firsts.every((x) => p.description.includes(x.r.name)) && p.description.includes(`${firsts.length === 1 ? "tops" : "top"} the list at ${at}.`)
+          : p.description.includes(`${firsts.length} ${ranking.desc ? "burgers" : "menus"} tie at the top at ${at}, among them `);
+      if (!ok) err(`${path}: description "${p.description}" does not name the ${firsts.length} menu(s) sharing first place at ${at}`);
+    }
     // The cheap lists say what they rank: each spot's priciest burger ("Cheapest burger spots in NYC.").
     if (!ranking.desc) {
       if (!/burger spots/i.test(h1)) err(`${path}: h1 "${h1}" does not name burger spots`);
@@ -972,6 +985,23 @@ for (const l of locs) if (!pageUrls.has(l)) err(`sitemap lists ${l}, which is no
 for (const u of pageUrls) if (!locs.includes(u)) err(`sitemap misses ${u}`);
 if (new Set(locs).size !== locs.length) err("sitemap lists a URL twice");
 for (const l of locs) if (/\.(png|svg|jpe?g|csv|json|txt)$/i.test(l)) err(`sitemap lists a file: ${l}`);
+// lastmod: a page whose static HTML changes with the People's Price snapshot (/peoples-price, /best-value-burgers,
+// /best-burgers, a restaurant page with the People's Price sentence) carries the later of the dataset's and the
+// snapshot's dates; every other page the dataset's.
+const lastmods = new Map([...sitemap.matchAll(/<url>\s*<loc>([^<]+)<\/loc>\s*<lastmod>([^<]+)<\/lastmod>/g)].map((m) => [decode(m[1]), m[2]]));
+const dataTime = new Date(data.generated_at).getTime();
+const crowdTime = snap.generatedAt ? Math.max(dataTime, new Date(snap.generatedAt).getTime()) : dataTime;
+for (const p of pages) {
+  const lastmod = lastmods.get(p.url);
+  if (!lastmod) {
+    if (locs.includes(p.url)) err(`sitemap: ${p.path} has no lastmod`);
+    continue;
+  }
+  const r = byId.get(/^\/restaurants\/(.+)$/.exec(p.path)?.[1]);
+  const withSnapshot = ["/peoples-price", BEST_VALUE_PATH, BEST_PATH].includes(p.path) || (r && (crowd.get(r.chain ? `chain:${r.chain}` : r.id)?.answers ?? 0) >= MIN_VERDICT_ANSWERS);
+  const want = withSnapshot ? crowdTime : dataTime;
+  if (new Date(lastmod).getTime() !== want) err(`sitemap: ${p.path} lastmod ${lastmod}, expected ${new Date(want).toISOString()}`);
+}
 
 for (const need of ["User-Agent: *", "Allow: /", "Disallow: /ingest/", "OAI-SearchBot", "ChatGPT-User", "PerplexityBot", "Perplexity-User", "Claude-SearchBot", "Claude-User", "GPTBot", "ClaudeBot", "Google-Extended", "Applebot-Extended", "CCBot"]) {
   if (!robots.includes(need)) err(`robots.txt lacks "${need}"`);

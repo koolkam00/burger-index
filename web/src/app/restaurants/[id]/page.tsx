@@ -25,7 +25,7 @@ import { formatDate, formatDelta, formatPrice, hostname, safeHttpUrl } from "@/l
 import { breadcrumbNode, restaurantNode } from "@/lib/jsonld";
 import { PRICE_SOURCE_LABEL } from "@/lib/labels";
 import { hasOtherMenus, menuKey, menusByIndexPrice } from "@/lib/menus";
-import { formatMiles, nearbySimilar } from "@/lib/nearby";
+import { formatMiles, moreInNeighborhood, nearbySimilar } from "@/lib/nearby";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
 import { getSnapshotFigures } from "@/lib/peoples-price-data";
 import type { PricedRestaurant } from "@/lib/schema";
@@ -121,10 +121,18 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
   // several locations here shows once.
   const hoodMenus = r.neighborhood_slug ? menusByIndexPrice(getRestaurantsInNeighborhood(r.neighborhood_slug)) : [];
   // Nearby at a similar price (lib/nearby.ts): within about 1.5 km and $4, then the same neighborhood.
-  // "More in …" leaves out the menus it already shows.
+  // "More in …" leaves out the menus it already shows; when that leaves none, "All of <neighborhood>"
+  // closes the Nearby section instead.
   const nearby = nearbySimilar(r, getPricedRestaurants());
-  const shown = new Set(nearby.map((n) => menuKey(n.restaurant)));
-  const neighbors = hoodMenus.filter((m) => m.key !== menuKey(r) && !shown.has(m.key)).slice(0, 6);
+  const { menus: neighbors, linkNeighborhood } = moreInNeighborhood(r, hoodMenus, nearby);
+  const allOfNeighborhood =
+    linkNeighborhood && r.neighborhood_slug ? (
+      <p className="mt-4">
+        <Link href={`/neighborhoods/${r.neighborhood_slug}`} className="link t-ui-m">
+          All of {r.neighborhood}
+        </Link>
+      </p>
+    ) : null;
   // "vs neighborhood" needs another priced menu there (five locations of one chain are one menu).
   const versus = [
     hood && hoodMedian !== null ? { label: `vs ${hood.name}`, value: formatDelta(price, hoodMedian), sub: `Neighborhood median ${formatPrice(hoodMedian, { cents: "always" })}` } : null,
@@ -251,6 +259,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
                 </li>
               ))}
             </ul>
+            {neighbors.length ? null : allOfNeighborhood}
           </section>
         ) : null}
 
@@ -272,13 +281,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
                 </li>
               ))}
             </ul>
-            {r.neighborhood_slug ? (
-              <p className="mt-4">
-                <Link href={`/neighborhoods/${r.neighborhood_slug}`} className="link t-ui-m">
-                  All of {r.neighborhood}
-                </Link>
-              </p>
-            ) : null}
+            {allOfNeighborhood}
           </section>
         ) : null}
 

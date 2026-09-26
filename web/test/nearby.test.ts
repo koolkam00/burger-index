@@ -1,8 +1,8 @@
 // "Nearby at a similar price" on restaurant pages (lib/nearby.ts).
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { menuKey } from "../src/lib/menus";
-import { distanceKm, formatMiles, NEARBY_KM, NEARBY_MAX, NEARBY_PRICE_GAP, nearbySimilar } from "../src/lib/nearby";
+import { menuKey, menusByIndexPrice } from "../src/lib/menus";
+import { distanceKm, formatMiles, MORE_IN_MAX, moreInNeighborhood, NEARBY_KM, NEARBY_MAX, NEARBY_PRICE_GAP, nearbySimilar } from "../src/lib/nearby";
 import type { PricedRestaurant } from "../src/lib/schema";
 import { loadDataset } from "./dataset";
 import { place } from "./places";
@@ -96,4 +96,41 @@ test("the dataset: every row a priced restaurant, a menu once, within $4, near o
     }
   }
   assert.ok(withRows > priced.length / 2, `${withRows} of ${priced.length}`);
+});
+
+test("moreInNeighborhood: the menus Nearby doesn't show, and the neighborhood link even when Nearby took them all", () => {
+  const me = at({ id: "me", price: 20, east: 0, hood: "h" });
+  const a = at({ id: "a", price: 21, east: 0.2, hood: "h" });
+  const b = at({ id: "b", price: 22, east: 0.3, hood: "h" });
+  const all = [me, a, b];
+  const hood = menusByIndexPrice(all);
+  // Nearby shows both others: no "More in" rows, but the page still links "All of <neighborhood>".
+  const nearby = nearbySimilar(me, all);
+  assert.deepEqual(nearby.map((n) => n.restaurant.id), ["a", "b"]);
+  assert.deepEqual(moreInNeighborhood(me, hood, nearby), { menus: [], linkNeighborhood: true });
+  // Nothing nearby: the others are "More in" rows (never this restaurant), with the link.
+  const more = moreInNeighborhood(me, hood, []);
+  assert.deepEqual(more.menus.map((m) => m.key), ["a", "b"]);
+  assert.equal(more.linkNeighborhood, true);
+  // Alone in its neighborhood (or no neighborhood): no rows, no link.
+  assert.deepEqual(moreInNeighborhood(me, menusByIndexPrice([me]), []), { menus: [], linkNeighborhood: false });
+  const nowhere = { ...me, neighborhood: null, neighborhood_slug: null } as PricedRestaurant;
+  assert.equal(moreInNeighborhood(nowhere, hood, []).linkNeighborhood, false);
+});
+
+test("the dataset: every page whose neighborhood has another menu links that neighborhood in its body", () => {
+  const data = loadDataset();
+  const priced = data.restaurants.filter((r): r is PricedRestaurant => r.index_price !== null);
+  let linkOnly = 0;
+  for (const r of priced) {
+    if (!r.neighborhood_slug) continue;
+    const hood = menusByIndexPrice(priced.filter((x) => x.neighborhood_slug === r.neighborhood_slug));
+    const more = moreInNeighborhood(r, hood, nearbySimilar(r, priced));
+    const others = hood.some((m) => m.key !== menuKey(r));
+    assert.equal(more.linkNeighborhood, others, r.id);
+    assert.ok(more.menus.length <= MORE_IN_MAX);
+    if (others && !more.menus.length) linkOnly += 1;
+  }
+  // Pages like Affy's Grill (Maspeth), whose Nearby rows are every other menu there, keep the link.
+  assert.ok(linkOnly > 0, "some pages have the link under Nearby only");
 });

@@ -4,7 +4,7 @@
 // neighborhood, closest in price first. Every row is a priced restaurant with a page (an unpriced place
 // has none), one per menu: this restaurant's own chain is left out and another chain shows once, at its
 // nearest location. Computed at build time from the dataset. Pure and client-safe.
-import { menuKey } from "./menus";
+import { menuKey, type Menu } from "./menus";
 import type { PricedRestaurant } from "./schema";
 
 /** How far "nearby" reaches, in kilometers (as the crow flies). */
@@ -78,4 +78,24 @@ export function nearbySimilar(r: PricedRestaurant, all: readonly PricedRestauran
     );
   }
   return out;
+}
+
+/** "More in <neighborhood>" shows at most this many menus. */
+export const MORE_IN_MAX = 6;
+
+/**
+ * "More in <neighborhood>" under the nearby rows: the neighborhood's other menus (`hoodMenus`, cheapest
+ * first, from menusByIndexPrice) less this restaurant's own and those Nearby already shows, and whether the
+ * page links "All of <neighborhood>". The link stays whenever the neighborhood has another menu, even when
+ * Nearby took them all (the page then puts it under Nearby), so no page loses its in-body neighborhood link.
+ */
+export function moreInNeighborhood(
+  r: PricedRestaurant,
+  hoodMenus: readonly Menu[],
+  nearby: readonly NearbySpot[],
+): { menus: Menu[]; linkNeighborhood: boolean } {
+  const own = menuKey(r);
+  const shown = new Set(nearby.map((n) => menuKey(n.restaurant)));
+  const others = hoodMenus.filter((m) => m.key !== own);
+  return { menus: others.filter((m) => !shown.has(m.key)).slice(0, MORE_IN_MAX), linkNeighborhood: r.neighborhood_slug !== null && others.length > 0 };
 }
