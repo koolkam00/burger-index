@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "method": "patty-ladder/1",
+  "params": {"c":1,"z":1,"floor":0.2,"kappa":20,"phiFlag":2.5,"step":0.25,"margin":0.05,"bar":0.25,"gateFrac":0.005,"gateMin":5,"gateMax":50,"keep":0.8,"netFrac":0.5,"risingMin":3,"closeP":0.75,"tol":1e-10,"surge":{"tminDay":3,"tminWeek":5,"mult":3,"warmup":500,"windowDays":7,"minDup":5}},
+  "asOf": null,
+  "refreshedAt": null,
+  "inputsSha256": null,
+  "totalLists": 0,
+  "countedLists": 0,
+  "weightedLists": 0,
+  "gate": 5,
+  "early": true,
+  "iterations": 0,
+  "top10": [],
+  "computed10": [],
+  "rows": []
+}

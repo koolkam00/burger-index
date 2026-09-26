@@ -184,6 +184,10 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
 - `data/peoples_price.json` — **the People's Price snapshot** (user decision 2026-09-25: crawlers must see the crowd's
   numbers). **Owned by the daily workflow on `main`: never edit, regenerate or commit it on a branch** (see "People's
   Price snapshot" under "Website"). Not a pipeline output; `pipeline build` never touches it.
+- `data/peoples_top.json` — **the People's Top 10 board** (the Patty Ladder's daily board, user decisions 2026-09-25/26).
+  **Owned by the daily workflow on `main` once merged: never edit, regenerate or commit it on a branch**, and never
+  hand-edit it anywhere: it is the ladder's only memory (yesterday's scores, tiers and seats). See "People's Top 10
+  snapshot" under "Website". Not a pipeline output; `pipeline build` never touches it.
 - `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,127 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, the 2026-09-25 deletions and the 2026-09-25 best-burger-list additions (two rounds), see `data/list_changes_2026-09-23.md`: `name, neighborhood,
   borough, website, menu_url, notes, source` where `source` is `pilot-100|uptown|downtown|outer|dohmh-diner-pub|dohmh-hamburgers|best-lists-2026-09`). It's the user's data:
   don't edit it without their approval; report duplicates (`report.csv_duplicate_matches`), unmatched rows (`report.csv_unmatched`),
@@ -329,8 +333,8 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   itself; setting it to `out` failed with `NEXT_NO_ROUTES_MANIFEST`), Node.js 22.x, and "Include files outside the root
   directory in the Build Step" on (the build reads `../data` and `../contract`). CLI deploys run **from the repo
   root** (`npx vercel link` once, then `npx vercel --prod`); the root `.vercelignore` is an allowlist so `.env`,
-  `.venv/` and `data/cache/` are never uploaded (it lets through `data/burger_index.json`, `data/best_burgers.json` and
-  `data/peoples_price.json`: a new data file the build reads must be added there). Environment variables: `NEXT_PUBLIC_SUPABASE_URL` and
+  `.venv/` and `data/cache/` are never uploaded (it lets through `data/burger_index.json`, `data/best_burgers.json`,
+  `data/peoples_price.json` and `data/peoples_top.json`: a new data file the build reads must be added there). Environment variables: `NEXT_PUBLIC_SUPABASE_URL` and
   `NEXT_PUBLIC_SUPABASE_ANON_KEY` on Production and Preview, `NEXT_PUBLIC_POSTHOG_KEY` on Production only
   (`NEXT_PUBLIC_POSTHOG_HOST` stays unset: the default `/ingest` is proxied to PostHog by the rewrites in
   `web/vercel.json`, which Vercel reads from the Root Directory; Next's own `rewrites` don't work with
@@ -369,6 +373,49 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   verdict (3+ answers). Until then its optional catch-all route builds only the `/_none` 404 placeholder. `check:seo`
   recomputes all of this from the snapshot. Vercel must be able to deploy the bot's commits: if a bot-authored commit
   is ever blocked there, that is a Vercel project setting for the user to change.
+- **People's Top 10 snapshot (the force ranker, user decisions 2026-09-25/26; the site doesn't read it yet).** Visitors
+  save one ranked list of 3-25 burgers (Supabase, `supabase/README.md`); the crowd's ranking is **the Patty Ladder**
+  (the ranker design's `FINAL.md`, with its reference `ladder.mjs` and simulator `sim.py`), computed once a day from
+  the public aggregates the database rebuilds each night at 00:20 New York, never live in the browser (the board is
+  path-dependent by design). `web/src/lib/ladder.mjs` is the method (a port of the reference; plain JS, no imports):
+  `computeBoard(inputs, yesterday)` (weights 0.8^(p-1)/(k-1), the anchored Bradley-Terry fit, the cautious score
+  θ - max(0, sd - 0.2), the 0.25-a-day step, the freeze while surging or held, the gate clamp(ceil(0.5% of weighted
+  lists), 5, 50) with the 80% keep band and the network floor, Rising, the seat rule: two boards running in the
+  computed ten, beat the weakest seat by 0.05, no surge review or owner hold), `refreshInputs` (the JS twin of the
+  nightly refresh, for tests and audits: surge damping from every list before the duplicate collapse, surging = a
+  factor below 1 on `asOf`, as the database and `sim.py` do) and `buildAggregates`. The file `data/peoples_top.json`
+  (`version: 1`): `method` (`patty-ladder/1`), `params` (the board's and the database's surge rule), `asOf` (the last
+  New York save day counted), `refreshedAt`, `inputsSha256`, `totalLists` (in the fit) / `countedLists` (before the
+  duplicate collapse) / `weightedLists`, `gate`, `early` (under 500 lists: "Early results"), `iterations`, `top10`,
+  `computed10`, and one row per burger in the fit that the dataset has (ranked in board order, then rising, then
+  listed: `key, tier, rank, score, theta, sd, phi, raw, lists, weighted, firsts, networks, needs, surging,
+  inconsistent, held, review, frozen, aheadP, closeToNext`); two-space JSON, one row per line. Before the first
+  publication it is the empty early board. `web/scripts/snapshot-peoples-top.mjs` writes it: a read-only GET of
+  `rpc/ranker_board_inputs` (and of `ranker_actions` when the lists fell) with the **publishable** key (the
+  `NEXT_PUBLIC_SUPABASE_*` variables, else the public defaults; it refuses a secret or service_role key), then
+  `computeBoard` with the committed file as yesterday's board. Keys the dataset doesn't have (a closed restaurant, a
+  junk key: saves are checked by format only) stay in the fit and never reach the file. Deterministic (the same
+  aggregates and the same yesterday give the same bytes; no wall-clock stamp), written only on a change. It exits 1,
+  writes nothing and keeps yesterday's board on: a failed or odd read, another method's aggregates, aggregates older
+  than the board or none after one, counted lists down by more than 20% beyond the owner's voids logged since the
+  board (`--allow-drop`, the workflow's manual `allow_drop` input, for a real reset), a fit that did not converge
+  (`LadderFitError`); an unreadable board file or one of another method stops it too (deleting the file restarts the
+  ladder: the next board takes its scores as they are). Aggregates as of the board's own day are a quiet day (the
+  database publishes only once 20 counted lists changed): exit 0, nothing written. **`.github/workflows/peoples-top.yml`**
+  runs it daily at 10:00 UTC (and on `workflow_dispatch`): checks out `main`, Node 22, no npm install, no secrets
+  (`permissions: contents: write`), keeps the aggregates it read as the `ranker-board-inputs` artifact (90 days; their
+  SHA-256 is `inputsSha256`), and if the file changed commits "Update People's Top 10" as `github-actions[bot]` and
+  pushes to `main` (three tries, rebasing), which redeploys. The same rules as the People's Price snapshot: it runs only
+  once merged to the default branch, GitHub disables it after 60 days without repository activity (`gh workflow enable
+  peoples-top.yml`), and **after the merge the file belongs to the workflow**: the build branch never edits,
+  regenerates or commits `data/peoples_top.json` (merge `main` in; run the workflow by hand to refresh). Owner actions
+  (hold, clear, void) reach the board only with the next publication. Tests: `test/ladder.test.ts` (weights, fit, the
+  surge rule, every guard), `test/ladder-golden-*.test.ts` (the design's four attack scenarios replayed from their
+  lists through `refreshInputs` and `computeBoard`: the simulator's surge weights bit for bit, its flags, surge support
+  and Top 10 on every one of 149 daily boards, scores within 1e-6; fixtures in `test/fixtures/patty-ladder/`, written
+  by the design's `check/dump_golden.py`), `test/peoples-top-snapshot.test.ts` (Supabase faked). Changing a parameter
+  means re-running the design's simulation gate (FINAL.md 12 B) and bumping `PARAMS.version` with the database's
+  `params_version`; the script refuses aggregates of another method.
 
 ## Context.dev (web data)
 

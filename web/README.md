@@ -70,6 +70,7 @@ Other scripts:
 | `npm run check:seo [-- --site https://…]` | After a build: check `out/` (titles, descriptions, canonicals, JSON-LD, sitemap, robots, llms.txt, CSV, internal links); see "Search engines and AI assistants" |
 | `npm run indexnow [-- --dry-run] [-- --site https://…]` | After a production deploy: submit the live sitemap to IndexNow |
 | `node scripts/snapshot-peoples-price.mjs [--out PATH]` | Read the People's Price from Supabase (read-only GETs) into `../data/peoples_price.json`; the daily workflow runs it on `main` (see "The People's Price in the static HTML") |
+| `node scripts/snapshot-peoples-top.mjs [--out PATH] [--inputs-out PATH] [--allow-drop]` | Compute the day's People's Top 10 (the Patty Ladder) from the public aggregates in Supabase (read-only GETs) into `../data/peoples_top.json`; the daily workflow runs it on `main` (see "The People's Top 10 (daily board)") |
 
 ## What's it worth? (Supabase)
 
@@ -182,6 +183,60 @@ Supabase burger_worth_hist ──(read-only GET, publishable key)──> scripts
   from the snapshot and dated in its lede. It exists only once 10 menus have a verdict (3+ answers): until then the route (an
   optional catch-all, because a static export can't build zero pages) builds only the `/_none` 404 placeholder, and the sitemap,
   llms.txt, the footer's Rankings, "More burger rankings." and the People's Price page don't mention it (`hasBestValuePage()`).
+
+### The People's Top 10 (daily board)
+
+User decisions 2026-09-25/26: a **force ranker** replaces the crowd pricing above (the pages still show "What's it worth?"
+until the ranker's page ships; nothing on the site reads the board yet). Each visitor saves one strict ranking of 3 to 25
+burgers (Supabase: `save_ranking`, one list per browser and per connection; see [`../supabase/README.md`](../supabase/README.md)),
+and the crowd's ranking is **the Patty Ladder**. In one sentence, the one the page will carry: "Every list turns into
+head-to-head wins, with your #1 counting most; a burger you left off never loses, and a burger climbs only as far as
+enough different lists back it up."
+
+```
+Supabase ranker lists ──(pg_cron, 00:20 New York: surge damping, duplicate collapse, public aggregates)──> rpc/ranker_board_inputs
+rpc/ranker_board_inputs ──(read-only GET, publishable key)──> scripts/snapshot-peoples-top.mjs + src/lib/ladder.mjs ──> ../data/peoples_top.json
+   (.github/workflows/peoples-top.yml, 10:00 UTC daily: commits it to main when it changed ──> Vercel production deploy)
+```
+
+- **The method** (`src/lib/ladder.mjs`, a port of the ranker design's reference `ladder.mjs`; plain JS with no imports, so
+  the workflow needs no npm install): `computeBoard(inputs, yesterday)` turns each list into head-to-head matchups (the burger
+  at place p beats every burger below it with weight 0.8^(p-1)/(k-1), times the list's surge weight), fits strengths
+  (Bradley-Terry with one virtual win and one loss against an average burger; damped Newton to 1e-10, at most 100
+  iterations, else `LadderFitError`), scores each burger cautiously (θ - max(0, sd - 0.2)), moves the published score at
+  most 0.25 a day (frozen while the burger is surging or held by the owner), ranks burgers on at least
+  clamp(ceil(0.5% of weighted lists), 5, 50) weighted lists from half as many networks (80% of that to stay ranked), lists
+  the rest with 3+ as Rising ("needs N more lists"), and seats the Top 10: incumbents stay while ranked; a newcomer needs
+  two boards running in the computed ten, to beat the weakest seat by 0.05 when full, and no surge review or hold.
+  `refreshInputs(lists, {asOf, held, cleared})` is the JS twin of the nightly database refresh (for tests and audits),
+  `buildAggregates(lists)` the aggregates alone.
+- **The file** `../data/peoples_top.json`: `version`, `method` (`patty-ladder/1`), `params`, `asOf` (the last New York save
+  day counted), `refreshedAt`, `inputsSha256` (the SHA-256 of the aggregates' response body), `totalLists`, `countedLists`,
+  `weightedLists`, `gate`, `early` (fewer than 500 lists), `iterations`, `top10`, `computed10` and `rows` (one per burger in
+  the fit that the dataset has, ranked rows in board order, then rising, then listed: `key, tier, rank, score, theta, sd,
+  phi, raw, lists, weighted, firsts, networks, needs, surging, inconsistent, held, review, frozen, aheadP, closeToNext`).
+  Two-space JSON with one row per line, so a day's diff reads burger by burger. Before the first publication it is the
+  empty early board. Yesterday's file is the ladder's only memory: never edit it by hand.
+- **The writer** (`scripts/snapshot-peoples-top.mjs`): GETs `rpc/ranker_board_inputs` with the publishable key (it refuses
+  a secret or service_role key), checks the reply, runs `computeBoard` with the committed board as yesterday, keeps only the
+  dataset's menu keys in the file (other keys stay in the fit), and writes the file only when it changes (deterministic:
+  no wall-clock stamp). A quiet day (aggregates as of the board's own day: the database publishes only once 20 lists
+  changed) writes nothing. It exits 1, writes nothing and keeps yesterday's board on a failed or odd read, another method's
+  aggregates, aggregates older than the board or none after one, counted lists down by more than 20% beyond the owner's
+  logged voids (`--allow-drop` overrides), or a fit that did not converge. `--inputs-out PATH` saves the aggregates read.
+- **The workflow** (`../.github/workflows/peoples-top.yml`): daily at 10:00 UTC and on `workflow_dispatch` (with an
+  `allow_drop` input); checks out `main`, Node 22, runs the writer, keeps the aggregates as the `ranker-board-inputs`
+  artifact for 90 days, and if the file changed commits "Update People's Top 10" as `github-actions[bot]` and pushes to
+  `main` (`permissions: contents: write`, no secrets). It runs only from the default branch. **Once merged, the file belongs
+  to it: branches never edit or commit `data/peoples_top.json`** (merge `main` in to get the latest). GitHub disables the
+  schedule after 60 days without repository activity; re-enable it with `gh workflow enable peoples-top.yml`.
+- **Tests:** `test/ladder.test.ts` (weights, the fit, the surge rule as the database applies it, the cautious score, step,
+  freeze, gate, keep band, network floor, Rising, seats, review bar, hold, early label, rounding, determinism, the refusal
+  of an unconverged fit); `test/ladder-golden-*.test.ts` replay the design's four attack scenarios (a one-day burst, a
+  trickle, the trickle then three honest weeks, a burial; seed 1000, 149 daily boards) from their lists and must match the
+  design's simulator: surge weights bit for bit, the same surge flags, surge support and Top 10 every day, scores within
+  1e-6 (fixtures in `test/fixtures/patty-ladder/`, gzipped); `test/peoples-top-snapshot.test.ts` covers the writer with
+  Supabase faked.
 
 ## Analytics (PostHog)
 
