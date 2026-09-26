@@ -701,3 +701,18 @@ Not added, or left unpriced:
   its site shows only a farewell and Yelp marks it closed. It stays unpriced; deleting the row is the user's call.
 - No longer serving a burger: Little Fino (The William Vale, Williamsburg) is now a morning café (7-11am) with no
   burger on its menu.
+
+## Deleted: Bandits and the old Lori Jayne row (2026-09-26, user decision)
+
+Row numbers are data rows of the list before this deletion (1,127 rows; 1,125 after). The user approved deleting
+these two rows on 2026-09-26. Each was checked by name and key against `data/restaurants.json` first: both were
+unpriced (no burger, no menu key, so no People's Top 10 list or ranker key named them), no correction, `menu_urls.json`
+entry or `data/best_burgers.json` place named them, and after `pipeline sources` + `build` every other restaurant id,
+chain key, price and area summary is unchanged (only later rows' `csv_row` numbers moved up).
+
+- **199** Bandits Burger + Dive (West Village, Manhattan; `camis:50108717`, 44 Bedford St): closed. Its site shows only
+  a farewell and Yelp marks it closed (see "Best-burger list additions, one publisher is enough" above).
+- **434** Lori Jayne (Bushwick, Brooklyn; `camis:50123168`, ALPHAVILLE / LORI JAYNE, 140 Wilson Ave): Lori Jayne left
+  Alphaville in September 2025 and now cooks inside Danger Danger; row **1,118** (formerly 1,120) Lori Jayne at Danger
+  Danger stays, with its id `lori-jayne-at-danger-danger-bushwick-north` and hand-checked LJ Burger, and it still does
+  not match the Alphaville permit (`csv_unmatched`: not at the address the row names).

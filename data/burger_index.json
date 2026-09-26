@@ -1,6 +1,6 @@
 {
  "version": 2,
- "generated_at": "2026-09-26T04:49:23Z",
+ "generated_at": "2026-09-26T16:33:55Z",
  "stats": {
   "restaurants_priced": 595,
   "index_median": 20.0,
@@ -2367,14 +2367,6 @@
     "description": "cajun beef burger, roasted pepper, portabella, goat cheese, bacon, quinoa crusted onion ring, chipotle mayo, french fries"
    },
    "hand_check": null
-  },
-  {
-   "id": "bandits-burger-dive-west-village",
-   "name": "Bandits Burger + Dive",
-   "address": "44 Bedford Street",
-   "neighborhood_slug": "west-village",
-   "index_price": null,
-   "burger": null
   },
   {
    "id": "banks-tavern-greenpoint",
@@ -10047,14 +10039,6 @@
    "hand_check": {
     "checked_on": "2026-09-25"
    }
-  },
-  {
-   "id": "lori-jayne-bushwick-south",
-   "name": "Lori Jayne",
-   "address": "140 Wilson Avenue",
-   "neighborhood_slug": "bushwick-south",
-   "index_price": null,
-   "burger": null
   },
   {
    "id": "lotos-club-grill-room-upper-east-side",

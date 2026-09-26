@@ -185,7 +185,7 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
   **Owned by the daily workflow on `main` once merged: never edit, regenerate or commit it on a branch**, and never
   hand-edit it anywhere: it is the ladder's only memory (yesterday's scores, tiers and seats). See "People's Top 10
   snapshot" under "Website". Not a pipeline output; `pipeline build` never touches it.
-- `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,127 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, the 2026-09-25 deletions and the 2026-09-25 best-burger-list additions (two rounds), see `data/list_changes_2026-09-23.md`: `name, neighborhood,
+- `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,125 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, the 2026-09-25 deletions, the 2026-09-25 best-burger-list additions (two rounds) and the 2026-09-26 deletions (Bandits Burger + Dive, closed, and the old Lori Jayne row at Alphaville), see `data/list_changes_2026-09-23.md`: `name, neighborhood,
   borough, website, menu_url, notes, source` where `source` is `pilot-100|uptown|downtown|outer|dohmh-diner-pub|dohmh-hamburgers|best-lists-2026-09`). It's the user's data:
   don't edit it without their approval; report duplicates (`report.csv_duplicate_matches`), unmatched rows (`report.csv_unmatched`),
   ambiguous rows (`report.csv_ambiguous`) and closed places (`report.csv_address_now_other_business`,
