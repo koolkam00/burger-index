@@ -356,8 +356,12 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   `output: "export"`). Set `NEXT_PUBLIC_SITE_URL` only once there is a custom domain: until then the build uses the
   `VERCEL_PROJECT_PRODUCTION_URL` Vercel provides (the site launches on its `*.vercel.app` address). The site has no
   Content-Security-Policy.
-- **Refresh the live site:** `pipeline run` (spends credits) → `pipeline build` → commit `data/burger_index.json` →
-  deploy → `cd web && SITE_URL=https://<production host> npm run indexnow` (tells Bing and the other IndexNow engines).
+- **Refresh the live site:** `pipeline run` (spends credits) → `pipeline build` → when the priced menus changed,
+  `node web/scripts/ranker-keys-migration.mjs --write` (a new `supabase/migrations/<version>_ranker_keys.sql` setting the
+  ranker's allowed keys to the dataset's menu keys; `web/test/ranker-keys.test.ts` fails until it is written) and apply
+  it to the live project (the Supabase connector's `apply_migration`, name `ranker_keys`: no secret key) → commit
+  `data/burger_index.json` and the migration → deploy → `cd web && SITE_URL=https://<production host> npm run indexnow`
+  (tells Bing and the other IndexNow engines). Until the sync is applied, visitors can't save the new burgers.
 - **People's Top 10 snapshot (the force ranker, user decisions 2026-09-25/26).** Visitors
   save one ranked list of 3-25 burgers (Supabase, `supabase/README.md`); the crowd's ranking is **the Patty Ladder**
   (the ranker design's `FINAL.md`, with its reference `ladder.mjs` and simulator `sim.py`), computed once a day from
@@ -378,15 +382,19 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   publication it is the empty early board. `web/scripts/snapshot-peoples-top.mjs` writes it: a read-only GET of
   `rpc/ranker_board_inputs` (and of `ranker_actions` when the lists fell) with the **publishable** key (the
   `NEXT_PUBLIC_SUPABASE_*` variables, else the public defaults; it refuses a secret or service_role key), then
-  `computeBoard` with the committed file as yesterday's board. Keys the dataset doesn't have (a closed restaurant, a
-  junk key: saves are checked by format only) stay in the fit and never reach the file. Deterministic (the same
+  `computeBoard` with the committed file as yesterday's board. Keys the dataset no longer has (a closed restaurant;
+  saves accept only the dataset's menu keys, `ranker_private.ranker_keys`) stay in the fit and never reach the file. Deterministic (the same
   aggregates and the same yesterday give the same bytes; no wall-clock stamp), written only on a change. It exits 1,
   writes nothing and keeps yesterday's board on: a failed or odd read, another method's aggregates, aggregates older
-  than the board or none after one, counted lists down by more than 20% beyond the owner's voids logged since the
-  board (`--allow-drop`, the workflow's manual `allow_drop` input, for a real reset), a fit that did not converge
+  than the board or none after one, counted lists down by more than 20% beyond the published lists the owner voided
+  since the board (each void logs how many of its lists were in the published aggregates; `--allow-drop`, the
+  workflow's manual `allow_drop` input, for a real reset), a fit that did not converge
   (`LadderFitError`); an unreadable board file or one of another method stops it too (deleting the file restarts the
   ladder: the next board takes its scores as they are). Aggregates as of the board's own day are a quiet day (the
-  database publishes only once 20 counted lists changed): exit 0, nothing written. **`.github/workflows/peoples-top.yml`**
+  database publishes only once 20 counted lists changed): exit 0, nothing written. Each new board also prints the
+  owner's watch as GitHub warnings (annotations on the run): "Burial watch" for a burger whose raw score fell more than
+  0.5 since the committed board, "Inconsistent record" for phi ≥ 2.5 (FINAL.md 6; no effect on the board).
+  **`.github/workflows/peoples-top.yml`**
   runs it daily at 10:00 UTC (and on `workflow_dispatch`): checks out `main`, Node 22, no npm install, no secrets
   (`permissions: contents: write`), keeps the aggregates it read as the `ranker-board-inputs` artifact (90 days; their
   SHA-256 is `inputsSha256`), and if the file changed commits "Update People's Top 10" as `github-actions[bot]` and
