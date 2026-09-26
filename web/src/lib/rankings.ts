@@ -16,7 +16,7 @@
 // many of its locations the list covers. The order is menusByIndexPrice / menusByIndexPriceDesc, the
 // same as every cheapest and priciest list on the site. Pure and client-safe.
 import { BOROUGH_META, boroughInProse, boroughMeta, inNeighborhood, type BoroughMeta } from "./boroughs";
-import { formatPrice } from "./format";
+import { formatCount, formatPrice } from "./format";
 import { menusByIndexPrice, menusByIndexPriceDesc, pricedMenus, type Menu } from "./menus";
 import type { PricedRestaurant } from "./schema";
 import { hasStyle, MIN_STYLE_MENUS, STYLES, type BurgerStyle } from "./styles";
@@ -219,6 +219,25 @@ export function rankMenus(restaurants: readonly PricedRestaurant[], spec: Rankin
   const cap = rankingCap(matching.length);
   const cut = ranked.length > cap ? ranked[cap - 1].rank : Infinity;
   return { rows: ranked.filter((m) => m.rank <= cut), total: matching.length, spots };
+}
+
+/** The kicker ticket over each kind of list (the page's ticket and its share image's overline). */
+export const RANKING_TICKETS: Record<RankingKind, string> = {
+  cheapest: "Cheapest on the counter",
+  priciest: "Top shelf",
+  under: "Catch of the day",
+  style: "Off the grill",
+};
+
+/**
+ * How many there are, under the table: the rows are distinct menus (a chain once), so they are counted as
+ * "menus" ("The 25 cheapest of 531 menus in NYC.", "All 90 menus on this list, cheapest first."); "burger
+ * spots" always counts locations.
+ */
+export function rankingCountLine(spec: RankingSpec, ranking: Pick<Ranking, "rows" | "total">): string {
+  const shown = formatCount(ranking.rows.length);
+  if (spec.kind === "under" || spec.kind === "style") return `All ${shown} menus on this list, cheapest first.`;
+  return `The ${shown} ${spec.kind === "cheapest" ? "cheapest" : "most expensive"} of ${formatCount(ranking.total)} menus ${rankingIn(spec)}.`;
 }
 
 /** The rows that share first place (the cheapest or the most expensive, to the cent). */

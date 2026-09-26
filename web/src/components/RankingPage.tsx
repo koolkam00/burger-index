@@ -10,24 +10,33 @@ import Link from "next/link";
 import { endSentence, segmentsText, styleSentence, underSentence } from "@/lib/answers";
 import { BOROUGHS_HREF, SITE_NAME } from "@/lib/site";
 import { getGeneratedAt, getPricedRestaurants, getStats } from "@/lib/data";
-import { formatCount, formatMonthYear } from "@/lib/format";
+import { formatMonthYear } from "@/lib/format";
 import { breadcrumbNode, itemListNode, type Crumb } from "@/lib/jsonld";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
 import { hasBestValuePage } from "@/lib/peoples-price-data";
-import { explorerHref, rankingIn, rankingName, rankingPath, rankingPlace, rankingShortName, rankingSpecs, rankMenus, topTied, type RankingSpec } from "@/lib/rankings";
+import {
+  explorerHref,
+  RANKING_TICKETS,
+  rankingCountLine,
+  rankingIn,
+  rankingName,
+  rankingPath,
+  rankingPlace,
+  rankingShortName,
+  rankingSpecs,
+  rankMenus,
+  topTied,
+  type RankingSpec,
+} from "@/lib/rankings";
 import { rankingSeo } from "@/lib/seo";
+import { shareImage } from "@/lib/share-cards";
 import { Anchor, Net, OrderBell, Spatula } from "./icons/nautical";
 import { JsonLd } from "./JsonLd";
 import { RankingLinks, RankingTable } from "./Rankings";
 import { EmptyState, PageHeader, SectionHeading } from "./ui";
 
-/** The kicker ticket over each kind of list (a callout kicker from the home cards, or the section's). */
-const TICKET = {
-  cheapest: { text: "Cheapest on the counter", icon: OrderBell },
-  priciest: { text: "Top shelf", icon: Anchor },
-  under: { text: "Catch of the day", icon: Net },
-  style: { text: "Off the grill", icon: Spatula },
-} as const;
+/** The kicker ticket's icon over each kind of list (its text: rankings.ts RANKING_TICKETS). */
+const TICKET_ICON = { cheapest: OrderBell, priciest: Anchor, under: Net, style: Spatula } as const;
 
 function crumbsFor(spec: RankingSpec): Crumb[] {
   const short = { label: rankingShortName(spec) };
@@ -56,7 +65,8 @@ export function rankingMetadata(spec: RankingSpec): Metadata {
     spots,
     generatedAt: getGeneratedAt(),
   });
-  return pageMetadata({ ...seo, path: rankingPath(spec) });
+  const path = rankingPath(spec);
+  return pageMetadata({ ...seo, path, image: shareImage(path) });
 }
 
 export function RankingPage({ spec }: { spec: RankingSpec }) {
@@ -77,12 +87,8 @@ export function RankingPage({ spec }: { spec: RankingSpec }) {
   );
   // The rows are distinct menus (a chain once), so they are counted as "menus"; "burger spots" always
   // counts locations (the lede's "At 96 burger spots", as /burgers counts them).
-  const count =
-    spec.kind === "under" || spec.kind === "style"
-      ? `All ${formatCount(rows.length)} menus on this list, cheapest first.`
-      : `The ${formatCount(rows.length)} ${spec.kind === "cheapest" ? "cheapest" : "most expensive"} of ${formatCount(total)} menus ${inPlace}.`;
+  const count = rankingCountLine(spec, { rows, total });
   const explorer = explorerHref(spec);
-  const ticket = TICKET[spec.kind];
 
   return (
     <>
@@ -98,7 +104,7 @@ export function RankingPage({ spec }: { spec: RankingSpec }) {
             : null,
         ]}
       />
-      <PageHeader crumbs={crumbs} ticket={ticket.text} ticketIcon={ticket.icon} title={`${name}.`} lede={answer} />
+      <PageHeader crumbs={crumbs} ticket={RANKING_TICKETS[spec.kind]} ticketIcon={TICKET_ICON[spec.kind]} title={`${name}.`} lede={answer} />
       <div className="wrap">
         <section className="mt-2" aria-label={name}>
           {rows.length ? (

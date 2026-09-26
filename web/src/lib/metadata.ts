@@ -10,7 +10,7 @@ import { resolveSiteUrl } from "./site-url";
  */
 export const SITE_URL = resolveSiteUrl(process.env).url;
 
-export const OG_IMAGE = {
+export const OG_IMAGE: SocialImage = {
   url: "/og.png",
   width: 1200,
   height: 630,
@@ -32,11 +32,14 @@ export function fullTitle(title: string): string {
   return title.includes(SITE_NAME) || title.length + SUFFIX.length > TITLE_MAX ? title : `${title}${SUFFIX}`;
 }
 
+export type SocialImage = { url: string; width: number; height: number; alt: string };
+
 /**
  * Title, description, canonical and social tags for one page. The title is final (absolute): the
  * suffix is added here only when it fits, so the layout's template never pushes it past TITLE_MAX.
+ * `image` is the page's own share image (lib/share-cards.ts shareImage), else the site's /og.png.
  */
-export function pageMetadata({ title, description, path }: { title: string; description: string; path: string }): Metadata {
+export function pageMetadata({ title, description, path, image = OG_IMAGE }: { title: string; description: string; path: string; image?: SocialImage }): Metadata {
   const full = fullTitle(title);
   return {
     title: { absolute: full },
@@ -49,13 +52,13 @@ export function pageMetadata({ title, description, path }: { title: string; desc
       title: full,
       description,
       url: path,
-      images: [OG_IMAGE],
+      images: [image],
     },
     twitter: {
       card: "summary_large_image",
       title: full,
       description,
-      images: [OG_IMAGE.url],
+      images: [{ url: image.url, alt: image.alt }],
     },
   };
 }

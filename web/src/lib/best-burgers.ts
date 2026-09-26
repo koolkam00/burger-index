@@ -11,13 +11,19 @@
 //
 // Our menu price and burger come from the dataset (a place's restaurant_id); a place without a price has
 // no page and shows "Not priced". Pure and client-safe: types only from ./schema.
-import { formatDate, formatPrice, theBurger } from "./format";
+import { formatCount, formatDate, formatPrice, theBurger } from "./format";
 import { joinList, menuKey } from "./menus";
 import type { AreaSummary, Borough, PricedRestaurant, Restaurant } from "./schema";
 
 export const BEST_BURGERS_PATH = "/best-burgers";
 /** The page's name (its H1 without the period, its ItemList and every link to it). */
 export const BEST_BURGERS_NAME = "The most-recommended burgers in NYC";
+/** The page's kicker ticket (and its share image's overline). */
+export const BEST_BURGERS_TICKET = "Critics' catch";
+/** The count under the list: "All 36 places on this list, most publications first." */
+export function bestBurgersCountLine(places: number): string {
+  return `All ${formatCount(places)} places on this list, most publications first.`;
+}
 /** Distinct publishers a place needs to be on the page. */
 export const MIN_PUBLISHERS = 2;
 

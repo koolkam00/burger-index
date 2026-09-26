@@ -32,6 +32,7 @@ import { pageMetadata, SITE_URL } from "@/lib/metadata";
 import { neighborhoodRankingPair } from "@/lib/ranking-routes";
 import { rankingName, rankingPath, topTied, withRanks } from "@/lib/rankings";
 import { neighborhoodSeo } from "@/lib/seo";
+import { shareImage } from "@/lib/share-cards";
 import { atLeastOneParam, PLACEHOLDER_PARAM } from "@/lib/site";
 
 export const dynamicParams = false;
@@ -67,7 +68,8 @@ export async function generateMetadata({ params }: PageProps<"/neighborhoods/[sl
     only: c.menus === 1 && cheapest[0] ? { restaurant: cheapest[0].restaurant.name, burger: cheapest[0].restaurant.burger.name } : null,
     generatedAt: getGeneratedAt(),
   });
-  return pageMetadata({ ...seo, path: `/neighborhoods/${n.slug}` });
+  const path = `/neighborhoods/${n.slug}`;
+  return pageMetadata({ ...seo, path, image: shareImage(path) });
 }
 
 export default async function NeighborhoodPage({ params }: PageProps<"/neighborhoods/[slug]">) {

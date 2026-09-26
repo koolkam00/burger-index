@@ -3,15 +3,16 @@ import { Net, Spyglass } from "@/components/icons/nautical";
 import { JsonLd } from "@/components/JsonLd";
 import { RankingLinks } from "@/components/Rankings";
 import { PageHeader, SectionHeading } from "@/components/ui";
-import { BEST_BURGERS_NAME, BEST_BURGERS_PATH, bestBurgersLede, leaders } from "@/lib/best-burgers";
+import { BEST_BURGERS_NAME, BEST_BURGERS_PATH, BEST_BURGERS_TICKET, bestBurgersCountLine, bestBurgersLede, leaders } from "@/lib/best-burgers";
 import { getBestBurgers, getBestBurgersYears, getBestLists } from "@/lib/best-burgers-data";
 import { getGeneratedAt, getPricedRestaurants, getStats } from "@/lib/data";
-import { formatCount, formatMonthYear, pluralize } from "@/lib/format";
+import { formatMonthYear, pluralize } from "@/lib/format";
 import { breadcrumbNode, itemListNode } from "@/lib/jsonld";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
 import { getSnapshotFigures, hasBestValuePage } from "@/lib/peoples-price-data";
 import { rankingSpecs } from "@/lib/rankings";
 import { bestBurgersSeo } from "@/lib/seo";
+import { shareImage } from "@/lib/share-cards";
 import { SITE_NAME } from "@/lib/site";
 
 const entries = getBestBurgers();
@@ -30,6 +31,7 @@ export const metadata = pageMetadata({
     generatedAt: getGeneratedAt(),
   }),
   path: BEST_BURGERS_PATH,
+  image: shareImage(BEST_BURGERS_PATH),
 });
 
 /** "2024–2026" (an en dash, as in the ranking note). */
@@ -59,12 +61,12 @@ export default function BestBurgersPage() {
             : null,
         ]}
       />
-      <PageHeader crumbs={crumbs} ticket="Critics' catch" ticketIcon={Net} title={`${BEST_BURGERS_NAME}.`} lede={bestBurgersLede(entries, formatMonthYear(getGeneratedAt()))} />
+      <PageHeader crumbs={crumbs} ticket={BEST_BURGERS_TICKET} ticketIcon={Net} title={`${BEST_BURGERS_NAME}.`} lede={bestBurgersLede(entries, formatMonthYear(getGeneratedAt()))} />
       <div className="wrap">
         <section className="mt-2" aria-label={BEST_BURGERS_NAME}>
           <p className="t-ui-m mb-4 text-balance">Ranked by how many publications named each place on a best-burger list in {span}.</p>
           <BestBurgerList entries={entries} median={getStats().index_median} peoples={peoples} />
-          <p className="t-ui-s muted mt-3">All {formatCount(entries.length)} places on this list, most publications first.</p>
+          <p className="t-ui-s muted mt-3">{bestBurgersCountLine(entries.length)}</p>
         </section>
 
         <section className="section" aria-labelledby="the-lists">

@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     url: "/",
     images: [OG_IMAGE],
   },
-  twitter: { card: "summary_large_image", images: [OG_IMAGE.url] },
+  twitter: { card: "summary_large_image", images: [{ url: OG_IMAGE.url, alt: OG_IMAGE.alt }] },
   alternates: { canonical: "/" },
 };
 
