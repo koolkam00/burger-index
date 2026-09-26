@@ -6,7 +6,7 @@
 // praise. Pure and client-safe.
 import { normalize, queryTokens } from "./explorer";
 import { formatMonthYear, formatPrice } from "./format";
-import type { PricerData } from "./pricer";
+import type { MenuListData } from "./menu-list";
 import type { Borough } from "./schema";
 import { versus } from "./seo";
 
@@ -70,10 +70,10 @@ export function badgeSnippet(d: { site: string; id: string; name: string; text: 
 export type BadgeSpot = { id: string; name: string; hood: string | null; borough: Borough; price: number };
 
 /**
- * Every priced location from the home pricer's /data/pricer.json (a menu's price is each of its
- * locations' price), which the badge page fetches when it needs the list, by name.
+ * Every priced location from /data/menus.json (lib/menu-list; a menu's price is each of its locations'
+ * price), which the badge page fetches when it needs the list, by name.
  */
-export function badgeSpots(data: PricerData): BadgeSpot[] {
+export function badgeSpots(data: Pick<MenuListData, "menus">): BadgeSpot[] {
   return data.menus
     .flatMap((m) => m.spots.map((s) => ({ id: s.id, name: s.name, hood: s.hood, borough: s.borough, price: m.price })))
     .sort((a, b) => a.name.localeCompare(b.name) || (a.id < b.id ? -1 : 1));

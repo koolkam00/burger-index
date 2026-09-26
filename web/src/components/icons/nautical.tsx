@@ -208,19 +208,16 @@ export function Buoy(props: IconProps) {
 }
 
 /**
- * The galley scales: a hanging balance, a post with a knob on top, a level beam and two pans on
- * cords, on a flat foot. Marks "What's it worth?" (the People's Price menu row, its ticket and the
- * "What's it worth?" kickers).
+ * A rope ladder (a ship's Jacob's ladder): two ropes hanging from a rail, with three wooden rungs. Marks the
+ * burger ranker and the People's Top 10 (the header's "Rank your burgers", the ranker's kicker, the People's
+ * Top 10 ticket and menu row): burgers climb it.
  */
-export function Scales(props: IconProps) {
+export function RopeLadder(props: IconProps) {
   return (
     <Svg {...props}>
-      <circle cx="12" cy="3.4" r="1.3" strokeWidth={1.5} />
-      <path d="M12 4.7V20.5" />
-      <path d="M8 20.5h8" />
-      <path d="M4.5 7.5h15" />
-      <path d="M4.5 7.5L2.2 13.5M4.5 7.5l2.3 6M19.5 7.5l-2.3 6M19.5 7.5l2.3 6" strokeWidth={1.5} />
-      <path d="M1.8 13.5h5.4a2.7 2.7 0 0 1-5.4 0zM16.8 13.5h5.4a2.7 2.7 0 0 1-5.4 0z" />
+      <path d="M3.5 3h17" />
+      <path d="M7.5 3c-.5 3 .5 6 0 9s.5 6 0 9M16.5 3c.5 3-.5 6 0 9s-.5 6 0 9" />
+      <path d="M7.9 8h8.2M7.6 13h8.8M7.8 18h8.4" strokeWidth={2.5} />
     </Svg>
   );
 }

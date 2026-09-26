@@ -1,9 +1,8 @@
-// The anonymous voter id: one random UUID per browser, made the first time it answers "What's it
-// worth?" (no sign-in); the backend keeps one answer per voter id per menu. It lives in localStorage
-// under "burger-index-voter" (the key keeps its old name for good: renaming it would lose every returning
-// visitor's answers). Storage can be missing or throw (private windows, blocked site data,
-// previews), so every access is wrapped: when it fails, the id lives in memory for this page view
-// instead, and answering still works.
+// The anonymous voter id: one random UUID per browser, made the first time it saves a burger ranking (no
+// sign-in); the backend keeps one list per voter id. It lives in localStorage under "burger-index-voter"
+// (the key keeps the name the retired "What's it worth?" gave it, so a returning browser keeps its id).
+// Storage can be missing or throw (private windows, blocked site data, previews), so every access is
+// wrapped: when it fails, the id lives in memory for this page view instead, and saving still works.
 export const VOTER_KEY = "burger-index-voter";
 
 /** Any RFC 4122 UUID (crypto.randomUUID makes v4). */

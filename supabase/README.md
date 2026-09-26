@@ -204,8 +204,19 @@ The Patty Ladder replaces all crowd pricing. The `patty_ladder` migration revoke
 `cast_worth`, `my_worth` and `burger_worth_hist` and took `burger_worth_hist` out of the realtime publication, so
 no new answers arrive. **Nothing was deleted:** `burger_worth`, `burger_worth_hist` and `burger_vote_rate` keep
 their rows (1 answer on 2026-09-26), and the old read policy is still there; granting the privileges back would
-reopen it. Until the site stops calling them, those calls fail with 401, and the `peoples-price.yml` workflow's
-read fails (it exits 1 and writes nothing) until it is removed.
+reopen it. The site no longer calls them (2026-09-26: the pricer, the WorthPicker, `/peoples-price` and the People's
+Price snapshot are gone from `web/`, and the `peoples-price.yml` workflow and `data/peoples_price.json` were deleted).
+
+## The site
+
+The home page's ranker (`web/src/components/ranker/Ranker.tsx`, state in `web/src/lib/ranker-store.ts`, calls in
+`web/src/lib/ranker-api.ts`) is the only client: it keeps the voter id in `localStorage` (`burger-index-voter`, made on the
+first save), loads `get_my_ranking` on mount when the browser has one, and calls `save_ranking` and `delete_ranking` when
+the visitor saves or deletes. It shows each status in plain words: `active` ("Saved. It counts from Sep 27, 2026.", or
+"Counted in the People's Top 10." once `in_board`), `replaced` ("Not counted: a newer list was saved from this connection.
+Save again to count this one.", with "Save again"), `void` ("Not counted."); a `deleted` list shows as none. Each refusal's
+`hint` maps to the same words as the `message` above, and "Save" can be pressed again after any refusal. It never
+reads the aggregates: the People's Top 10 page is built from the daily board (`data/peoples_top.json`).
 
 ## Site configuration
 

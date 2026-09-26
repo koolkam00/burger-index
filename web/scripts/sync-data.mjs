@@ -6,16 +6,15 @@
 // 2. Validates the dataset against contract/burger_index.schema.json. Invalid data fails the build.
 // 3. Copies ../data/best_burgers.json (the /best-burgers page's curated lists, committed) to
 //    src/data/best_burgers.json; src/lib/best-burgers-data.ts checks it against the dataset at build.
-// 4. Copies ../data/peoples_price.json (the People's Price snapshot, committed by the daily workflow on main:
-//    scripts/snapshot-peoples-price.mjs) to src/data/peoples_price.json. A missing or unreadable snapshot never
-//    fails the build: an empty one is written instead (the pages then show the live numbers only), with a warning.
-//    src/lib/peoples-price-data.ts checks every entry at build.
+// 4. Copies ../data/peoples_top.json (the People's Top 10 board, committed by the daily workflow on main:
+//    scripts/snapshot-peoples-top.mjs) to src/data/peoples_top.json. A missing or unreadable board never fails the
+//    build: the empty early board is written instead, with a warning. src/lib/peoples-top-data.ts checks it at build.
 // 5. Copies the MapLibre worker modules into public/vendor/maplibre/ (served same-origin).
 
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { readSnapshotText, renderSnapshot } from "./snapshot-peoples-price.mjs";
+import { emptyBoard, readBoardText, renderBoard } from "./snapshot-peoples-top.mjs";
 import { validateDataset } from "./validate-contract.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -62,21 +61,22 @@ if (!existsSync(BEST_BURGERS)) {
 copyFileSync(BEST_BURGERS, join(OUT_DIR, "best_burgers.json"));
 console.log(`✓ best burgers: ${relative(web, BEST_BURGERS)} → ${relative(web, join(OUT_DIR, "best_burgers.json"))}`);
 
-const PEOPLES_PRICE = join(web, "..", "data", "peoples_price.json");
-const PEOPLES_PRICE_OUT = join(OUT_DIR, "peoples_price.json");
-const snapshotText = existsSync(PEOPLES_PRICE) ? readFileSync(PEOPLES_PRICE, "utf8") : null;
-const snapshot = readSnapshotText(snapshotText);
-if (snapshot) {
-  writeFileSync(PEOPLES_PRICE_OUT, snapshotText);
+const PEOPLES_TOP = join(web, "..", "data", "peoples_top.json");
+const PEOPLES_TOP_OUT = join(OUT_DIR, "peoples_top.json");
+const boardText = existsSync(PEOPLES_TOP) ? readFileSync(PEOPLES_TOP, "utf8") : null;
+const board = readBoardText(boardText);
+if (board) {
+  writeFileSync(PEOPLES_TOP_OUT, boardText);
+  const ranked = board.rows.filter((r) => r.tier === "ranked").length;
   console.log(
-    `✓ People's Price: ${relative(web, PEOPLES_PRICE)} → ${relative(web, PEOPLES_PRICE_OUT)} ` +
-      `(${Object.keys(snapshot.menus).length} answered ${Object.keys(snapshot.menus).length === 1 ? "menu" : "menus"}, as of ${snapshot.generatedAt ?? "never"})`,
+    `✓ People's Top 10: ${relative(web, PEOPLES_TOP)} → ${relative(web, PEOPLES_TOP_OUT)} ` +
+      `(${board.totalLists} ${board.totalLists === 1 ? "list" : "lists"}, ${ranked} ranked, as of ${board.asOf ?? "never"})`,
   );
 } else {
-  writeFileSync(PEOPLES_PRICE_OUT, renderSnapshot({ generatedAt: null, menus: {} }));
+  writeFileSync(PEOPLES_TOP_OUT, renderBoard(emptyBoard()));
   console.warn(
-    `! People's Price: ${relative(web, PEOPLES_PRICE)} is ${snapshotText === null ? "missing" : "not a snapshot"}; ` +
-      "the pages show the live numbers only (`node scripts/snapshot-peoples-price.mjs` reads them).",
+    `! People's Top 10: ${relative(web, PEOPLES_TOP)} is ${boardText === null ? "missing" : "not a board"}; ` +
+      "the page shows the empty early board (`node scripts/snapshot-peoples-top.mjs` writes it).",
   );
 }
 

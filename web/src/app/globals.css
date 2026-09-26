@@ -1896,15 +1896,15 @@
     vertical-align: 0.2em;
   }
   /* In the header the wordmark may wrap onto two lines rather than run under the search button
-     (at 320px, or with larger text spacing); below 375px it also steps down to 17px, so at 360px its
-     words still end before the search button. */
+     (at 320px, or with larger text spacing); below 400px it also steps down to 17px (and "Rank your
+     burgers" to 14px, see .rank-cta), so at 360px and 375px its words still end before the search button. */
   .home-link .wordmark {
     min-width: 0;
   }
   .home-link .t-wordmark {
     white-space: normal;
   }
-  @media (max-width: 374px) {
+  @media (max-width: 399px) {
     .home-link .t-wordmark {
       font-size: 17px;
     }
@@ -2323,303 +2323,14 @@
     height: 64px;
   }
 
-  /* ---- WorthPicker ("What would you pay?"): a rope slider with a brass knob, an order ticket -- */
-  .worth-card {
-    padding: 16px;
-  }
-  @media (min-width: 768px) {
-    .worth-card {
-      padding: 24px;
-    }
-  }
-  .worth-form {
-    min-width: 0;
-  }
-  .worth-label {
-    display: block;
-    color: var(--ink);
-  }
-  /* The readout: a lone number, so the sign face is allowed (it never aligns with anything). */
-  .worth-readout {
-    margin: 6px 0 2px;
-    font-family: var(--font-display);
-    font-weight: 400;
-    font-synthesis-weight: none;
-    font-size: 56px;
-    line-height: 1;
-    color: var(--ink);
-  }
-  @media (min-width: 768px) {
-    .worth-readout {
-      font-size: 72px;
-    }
-  }
-  /* Native range input: the track is a length of rope (with an input-boundary edge), the thumb a
-     brass lever knob with a rivet. Keyboard: arrows ±$1, Page Up/Down, Home/End (the browser's). */
-  .worth-range {
-    -webkit-appearance: none;
-    appearance: none;
-    display: block;
-    width: 100%;
-    max-width: 560px;
-    height: 44px;
-    margin: 0;
-    background: transparent;
-    cursor: pointer;
-  }
-  .worth-range:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-  .worth-range::-webkit-slider-runnable-track {
-    box-sizing: border-box;
-    height: 12px;
-    border: 1.5px solid var(--line-strong);
-    border-radius: 6px;
-    background: var(--rope);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.35),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.25);
-  }
-  .worth-range::-moz-range-track {
-    box-sizing: border-box;
-    height: 12px;
-    border: 1.5px solid var(--line-strong);
-    border-radius: 6px;
-    background: var(--rope);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.35),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.25);
-  }
-  .worth-range::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    box-sizing: border-box;
-    width: 30px;
-    height: 30px;
-    margin-top: -10.5px; /* centers the knob on the track's 9px content box */
-    border: 3px solid var(--brass-lo);
-    border-radius: 50%;
-    background:
-      radial-gradient(circle at 35% 30%, var(--brass-hi) 0 22%, transparent 27%),
-      radial-gradient(circle, var(--brass-lo) 0 2.6px, transparent 3.2px),
-      var(--brass);
-    box-shadow: 0 3px 0 var(--block);
-  }
-  .worth-range::-moz-range-thumb {
-    box-sizing: border-box;
-    width: 30px;
-    height: 30px;
-    border: 3px solid var(--brass-lo);
-    border-radius: 50%;
-    background:
-      radial-gradient(circle at 35% 30%, var(--brass-hi) 0 22%, transparent 27%),
-      radial-gradient(circle, var(--brass-lo) 0 2.6px, transparent 3.2px),
-      var(--brass);
-    box-shadow: 0 3px 0 var(--block);
-  }
-  .worth-range:disabled::-webkit-slider-thumb {
-    box-shadow: none;
-  }
-  .worth-range:disabled::-moz-range-thumb {
-    box-shadow: none;
-  }
-  /* "$5" and "$75" start just below the slider's focus ring (3px ring + 2px offset), never under it. */
-  .worth-scale {
-    display: flex;
-    justify-content: space-between;
-    max-width: 560px;
-    margin-top: 4px;
-  }
-  .worth-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 12px 16px;
-    margin-top: 16px;
-  }
-  /* "Order up!": the primary button as an order ticket, with a perforated stub on the left. */
-  .worth-order {
-    padding-left: 30px;
-  }
-  .worth-order::after {
-    content: "";
-    position: absolute;
-    left: 12px;
-    top: 8px;
-    bottom: 8px;
-    border-left: 2px dotted currentColor;
-    opacity: 0.5;
-  }
-  .worth-status {
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    flex: 1 1 220px;
-    min-width: 0;
-    min-height: 1.35em;
-    margin: 0;
-  }
-  /* "Couldn't load your saved answer." keeps its "Try again" right after it, not at the far end. */
-  .worth-status.is-retry {
-    flex: 0 1 auto;
-  }
-  .worth-status-icon {
-    width: 16px;
-    height: 16px;
-    flex: none;
-    margin-top: 1px;
-    color: var(--err-icon);
-  }
-
-  /* ---- People's Price summary (a data zone: flat) -------------------------------------------- */
-  .worth-results {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1.5px solid var(--line);
-    min-width: 0;
-  }
-  .worth-facts {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px 20px;
-    margin: 0;
-  }
-  .worth-fact {
-    min-width: 0;
-  }
-  .worth-fact dd {
-    margin: 0;
-  }
-  .worth-fact-main {
-    grid-column: 1 / -1;
-  }
-  @media (min-width: 640px) {
-    .worth-facts {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-    .worth-fact-main {
-      grid-column: auto;
-    }
-  }
-  .worth-verdict {
-    display: inline-flex;
-    align-items: center;
-    min-height: 32px;
-    margin-top: 16px;
-    padding: 4px 12px;
-    border: 1.5px solid var(--line-strong);
-    border-radius: 8px;
-    background: var(--surface-2);
-    color: var(--ink);
-    font-weight: 700;
-  }
-  .worth-verdict.is-pending {
-    color: var(--ink-muted);
-    font-weight: 500;
-  }
-
-  /* ---- Answer distribution: $5 buckets, flat driftwood bars, the menu price as an ink line --- */
-  .worth-spread {
-    margin: 20px 0 0;
-    min-width: 0;
-  }
-  .worth-spread-cap {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 4px 16px;
-    margin-bottom: 8px;
-  }
-  .spread-plot {
-    position: relative;
-    max-width: 560px;
-  }
-  .spread-band {
-    position: relative;
-    height: 22px;
-  }
-  .spread-mark-label {
-    position: absolute;
-    top: 0;
-    font-weight: 600;
-    color: var(--ink);
-    white-space: nowrap;
-  }
-  .spread-bars {
-    position: relative;
-    display: grid;
-    grid-template-columns: repeat(14, minmax(0, 1fr));
-    gap: 2px;
-    align-items: end;
-    height: 72px;
-    border-bottom: 1px solid var(--axis);
-  }
-  @media (min-width: 768px) {
-    .spread-bars {
-      height: 88px;
-    }
-  }
-  .spread-col {
-    display: flex;
-    align-items: flex-end;
-    height: 100%;
-    min-width: 0;
-  }
-  .spread-bar {
-    display: block;
-    width: 100%;
-    min-height: 2px;
-    border-radius: 4px 4px 0 0;
-    background: var(--bar);
-  }
-  .spread-bar.is-mine {
-    background: var(--ink);
-  }
-  /* The menu-price line: ink with a 2px paper halo, so it still reads where it crosses an ink bar
-     (the visitor's own range). */
-  .spread-mark {
-    position: absolute;
-    top: -2px;
-    bottom: 0;
-    width: 2px;
-    background: var(--ink);
-    box-shadow:
-      2px 0 0 var(--surface),
-      -2px 0 0 var(--surface);
-  }
-  .spread-axis {
-    position: relative;
-    height: 20px;
-  }
-  .spread-axis > span {
-    position: absolute;
-    top: 4px;
-    white-space: nowrap;
-  }
-  .spread-key {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 6px;
-  }
-  .spread-key-swatch {
-    width: 12px;
-    height: 12px;
-    flex: none;
-    border-radius: 3px;
-    background: var(--ink);
-  }
-
-  /* ---- The pricer hero: the home page's first screen (DESIGN.md "The pricer hero") ----------- */
-  /* The band is shorter on top than an inner page's, so a 375x667 phone sees the picker's first
-     choices under the H1, the median sentence and the source line. */
+  /* ---- The ranker hero: the home page's first screen (DESIGN.md "The ranker hero") ------------ */
+  /* The band is shorter on top than an inner page's, so a 375x667 phone sees the ranker's search under the H1,
+     the median sentence and the source line. */
   .hero-home {
     padding-top: calc(var(--awning-h) + 20px);
-    /* No scroll anchoring in the hero: when the pricer grows (its skeleton becomes a burger, a burger
-       is swapped as my_worth arrives, the reveal), a browser anchored on the board below would scroll
-       the pricer up under the sticky nav right after "Price a burger" brought it into view. */
+    /* No scroll anchoring in the hero: when the ranker grows (its skeleton becomes a list, a search lists its
+       matches), a browser anchored on the board below would scroll the ranker up under the sticky nav right
+       after "Rank your burgers" brought it into view. */
     overflow-anchor: none;
   }
   @media (min-width: 768px) {
@@ -2627,7 +2338,7 @@
       padding-top: calc(var(--awning-h) + 48px);
     }
   }
-  /* The Order Board hangs below the pricer, centered in the water. */
+  /* The Order Board hangs below the ranker, centered in the water. */
   .hero-board {
     max-width: 760px;
     margin: 48px auto 0;
@@ -2637,7 +2348,7 @@
       margin-top: 64px;
     }
   }
-  /* Two links under the board, clear of its life ring: the People's Price and the most-recommended burgers. */
+  /* Two links under the board, clear of its life ring: the People's Top 10 and the most-recommended burgers. */
   .hero-links {
     display: flex;
     flex-wrap: wrap;
@@ -2646,144 +2357,246 @@
     margin-top: 44px;
   }
   /* The card: menu-card paper on the water (text never sits on the water itself). */
-  .pricer {
+  .ranker {
     position: relative;
     min-width: 0;
     padding: 16px;
     color: var(--ink);
   }
   @media (min-width: 768px) {
-    .pricer {
+    .ranker {
       padding: 24px;
     }
   }
-  .pricer:focus {
+  .ranker:focus {
     outline: none;
   }
-  .pricer:focus-visible {
+  .ranker:focus-visible {
     outline: 3px solid var(--focus);
     outline-offset: 4px;
+    box-shadow: var(--shadow-block), 0 0 0 11px var(--focus-halo);
   }
-  .pricer-bar {
+  .ranker-bar {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 8px 16px;
+    gap: 4px 16px;
     min-height: 32px;
   }
-  .pricer-bar .kicker {
+  .ranker-bar .kicker {
     margin: 0;
   }
-  .pricer-area {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px 12px;
-    min-width: 0;
-    margin: 0;
-  }
-  .pricer-area-name {
+  .ranker-board-link {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    min-width: 0;
+    gap: 4px;
+    min-height: 44px;
   }
-  .pricer-title {
-    margin-top: 10px;
+  .ranker-title {
+    margin-top: 6px;
   }
-  .pricer-title:focus {
+  .ranker-title:focus {
     outline: none;
   }
-  .pricer-title:focus-visible {
+  .ranker-title:focus-visible {
     outline: 3px solid var(--focus);
     outline-offset: 2px;
     border-radius: 4px;
   }
-  .pricer-anywhere {
-    width: 100%;
+  /* A warning line: the icon beside the words, in --err-icon (the words stay --ink). */
+  .status-icon {
+    width: 16px;
+    height: 16px;
+    flex: none;
+    margin-top: 2px;
+    color: var(--err-icon);
   }
-  @media (min-width: 640px) {
-    .pricer-anywhere {
-      width: auto;
-    }
-  }
-  .pricer-boroughs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px 8px;
-  }
-  .pricer-hood {
-    display: flex;
-    gap: 8px;
-    max-width: 480px;
-  }
-  .pricer-hood .input {
-    flex: 1 1 auto;
-    min-width: 0;
-    height: 48px;
-    text-overflow: ellipsis;
-  }
-  .pricer-form,
-  .pricer-reveal {
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1.5px solid var(--line);
-    min-width: 0;
-  }
-  /* The reveal (a data zone: flat): four facts, two per row on a phone, four from 640px. */
-  .pricer-facts {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px 20px;
-    margin: 0;
-  }
-  @media (min-width: 640px) {
-    .pricer-facts {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-  }
-  .pricer-fact {
-    min-width: 0;
-  }
-  .pricer-fact dd {
-    margin: 0;
-  }
-  .pricer-next {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 16px 20px;
-    margin-top: 20px;
-  }
-  .pricer-alert {
-    display: flex;
+  .ranker-alert {
+    display: inline-flex;
     align-items: flex-start;
     gap: 6px;
   }
-  .pricer-alert .worth-status-icon {
-    margin-top: 3px;
+  .ranker-status {
+    min-height: 1.35em;
+    color: var(--ink);
   }
-  .pricer-skeleton {
-    margin-top: 16px;
+  /* Search matches: the restaurant over its burger and where, the menu price, "Add". */
+  .ranker-hits {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    max-width: 36rem;
   }
-  /* A returning visitor's saved area (html.pricer-saved, set in <head>) takes them straight to a
-     burger once the pricer mounts: until then the picker gives way to a skeleton, so it never flashes. */
-  .pricer-boot {
+  .ranker-hit {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "what what"
+      "price add";
+    align-items: center;
+    gap: 6px 12px;
+    min-height: 56px;
+    padding: 10px 0;
+    border-bottom: 1.5px solid var(--line);
+  }
+  .ranker-hit > :first-child {
+    grid-area: what;
+  }
+  .ranker-hit > .price-chip {
+    grid-area: price;
+    justify-self: start;
+  }
+  .ranker-add {
+    grid-area: add;
+  }
+  @media (min-width: 480px) {
+    .ranker-hit {
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      grid-template-areas: "what price add";
+    }
+  }
+  /* The visitor's list: the rank, the burger, and the move up / move down / remove controls. */
+  .ranker-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: 2px solid var(--line);
+    border-radius: var(--radius-3);
+    background: var(--surface);
+    overflow: clip;
+  }
+  /* On a phone the controls sit under the burger, so its name keeps the row's width; from 480px they sit at
+     the row's end. */
+  .ranker-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    grid-template-areas:
+      "rank what"
+      ". ctls";
+    align-items: center;
+    gap: 6px 10px;
+    min-height: 56px;
+    padding: 8px 10px;
+    border-top: 1.5px solid var(--line);
+  }
+  .ranker-rank {
+    grid-area: rank;
+  }
+  .ranker-what {
+    grid-area: what;
+  }
+  .ranker-ctls {
+    grid-area: ctls;
+  }
+  @media (min-width: 480px) {
+    .ranker-row {
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      grid-template-areas: "rank what ctls";
+      padding: 8px 8px 8px 10px;
+    }
+  }
+  .ranker-list > .ranker-row:first-child {
+    border-top: 0;
+  }
+  .ranker-list.is-saved .ranker-row {
+    grid-template-columns: 28px minmax(0, 1fr);
+    grid-template-areas: "rank what";
+    padding-inline: 12px;
+  }
+  /* The rule between #10 and #11: the list is "your top 10", with room for more. */
+  .ranker-row.is-first-extra {
+    border-top: 2px solid var(--line-strong);
+    padding-top: 30px;
+  }
+  .ranker-extra-rule {
+    position: absolute;
+    top: 8px;
+    left: 12px;
+  }
+  .ranker-rank {
+    font-family: var(--font-ui);
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums lining-nums;
+    text-align: right;
+  }
+  .ranker-what {
+    min-width: 0;
+  }
+  .ranker-ctls {
+    display: flex;
+    gap: 4px;
+  }
+  .ranker-ctl {
+    width: 40px;
+    height: 40px;
+    border: 1.5px solid var(--line-strong);
+    background: var(--surface);
+  }
+  .ranker-ctl[aria-disabled="true"] {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .ranker-ctl[aria-disabled="true"]:hover {
+    background: var(--surface);
+  }
+  @media (min-width: 640px) {
+    .ranker-row {
+      grid-template-columns: 32px minmax(0, 1fr) auto;
+      gap: 8px 12px;
+      padding-inline: 12px 8px;
+    }
+    .ranker-list.is-saved .ranker-row {
+      grid-template-columns: 32px minmax(0, 1fr);
+      padding-inline: 16px;
+    }
+  }
+  .ranker-empty {
+    padding: 14px 16px;
+    border: 2px dashed var(--line-strong);
+    border-radius: var(--radius-3);
+  }
+  .ranker-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 16px;
+  }
+  .ranker-confirm {
+    padding-top: 16px;
+    border-top: 1.5px solid var(--line);
+  }
+  /* A browser with a saved list (html.ranker-saved, set in <head>) sees a skeleton, not an empty list, until
+     the ranker mounts and loads it. */
+  .ranker-boot {
     display: none;
   }
-  html.pricer-saved .pricer[data-boot] .pricer-choose {
+  html.ranker-saved .ranker[data-boot] .ranker-body {
     display: none;
   }
-  html.pricer-saved .pricer[data-boot] .pricer-boot {
+  html.ranker-saved .ranker[data-boot] .ranker-boot {
     display: block;
   }
+  .ranker-skeleton {
+    margin-top: 8px;
+  }
 
-  /* ---- "Price a burger": the header's call to action, a primary button on the planks -------- */
-  .price-cta {
+  /* ---- "Rank your burgers": the header's call to action, a primary button on the planks ------ */
+  .rank-cta {
     height: 40px;
     padding: 0 14px;
     font-size: 15px;
+  }
+  /* Below 400px the label steps down to 14px, so the search button, the label and Menu fit beside the
+     wordmark (measured at 320, 360, 375 and 399px). */
+  @media (max-width: 399px) {
+    .rank-cta {
+      padding: 0 10px;
+      font-size: 14px;
+    }
   }
   .sheet-actions {
     display: flex;
@@ -2795,12 +2608,13 @@
     flex: 1 1 auto;
   }
   /* Below 360px (under the 375px design base) the header keeps the life ring and drops the words, so
-     "Price a burger" and "Menu" never run over them; the home link keeps its accessible name. */
+     "Rank your burgers" and "Menu" never run over them; the home link keeps its accessible name. */
   @media (max-width: 359px) {
     .home-link .t-wordmark {
       display: none;
     }
   }
+
 
   /* ---- The most-recommended burgers (a data zone; DESIGN.md "The most-recommended burgers page") ---- */
   .best-shell {
@@ -2935,200 +2749,99 @@
     }
   }
 
-  /* ---- The People's Price boards (a data zone) ------------------------------------------------ */
-  .worth-meta {
+  /* ---- The People's Top 10 (a data zone; DESIGN.md "The People's Top 10 page") ---------------- */
+  .ptop-meta {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 8px 12px;
     min-height: 24px;
-    margin-bottom: 12px;
+    margin: 0;
   }
-  .badge-live {
-    background: var(--ok-bg);
+  .ptop-early {
+    background: var(--surface-2);
     color: var(--ink);
     font-weight: 600;
-    border-color: transparent;
   }
-  .live-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--ok-icon);
-    flex: none;
-  }
-  .worth-board-shell {
+  .ptop-shell {
     background: var(--surface);
     border: 2px solid var(--line);
     border-radius: var(--radius-3);
     box-shadow: var(--shadow-block);
     overflow: clip;
   }
-  .worth-board {
-    position: relative;
+  .ptop-board {
     margin: 0;
     padding: 0;
     list-style: none;
   }
-  .worth-row,
-  .worth-board-head {
+  .ptop-row {
     display: grid;
-    grid-template-columns: 32px minmax(0, 1fr);
-    grid-template-areas:
-      "rank what"
-      "rank facts";
+    grid-template-columns: 40px minmax(0, 1fr) auto;
     column-gap: 12px;
-    row-gap: 8px;
     align-items: start;
     padding: 14px 12px;
-  }
-  .is-unranked .worth-row,
-  .is-unranked .worth-board-head {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      "what"
-      "facts";
-  }
-  .worth-board-head {
-    display: none;
-  }
-  .worth-row {
-    background: var(--surface);
     border-top: 1.5px solid var(--line);
   }
-  .worth-board > .worth-row:first-child {
+  .ptop-board > .ptop-row:first-child {
     border-top: 0;
   }
-  .worth-row-skeleton {
-    grid-template-areas: "rank what";
+  .ptop-board.is-rising .ptop-row {
+    grid-template-columns: minmax(0, 1fr) auto;
   }
-  .worth-rank {
-    grid-area: rank;
+  .ptop-rank {
     font-family: var(--font-ui);
     font-weight: 700;
     font-size: 20px;
     line-height: 1.2;
     font-variant-numeric: tabular-nums lining-nums;
     text-align: right;
-  }
-  .worth-what {
-    grid-area: what;
-    min-width: 0;
-  }
-  .worth-facts-row {
-    grid-area: facts;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 4px 16px;
-    min-width: 0;
-  }
-  .worth-cell {
-    margin: 0;
-    min-width: 0;
     white-space: nowrap;
   }
-  /* Each fact's own label ("Menu", "People's"): shown on phones, read by screen readers on desktop,
-     where the header row names the columns. */
-  .worth-k {
-    margin-right: 2px;
-    font-family: var(--font-ui);
-    font-weight: 700;
-    font-size: 12px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+  /* "≈": too close to call with the row above (a mark, never a color). */
+  .ptop-close {
+    margin-right: 3px;
+    font-weight: 600;
+    font-size: 15px;
     color: var(--ink-muted);
+  }
+  .ptop-what {
+    min-width: 0;
+  }
+  .ptop-lists {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    margin-top: 2px;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  /* "Under review" / "Checking a surge of lists": a flat tag, never red or green. */
+  .ptop-flag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 1px 8px;
+    border: 1.5px solid var(--line-strong);
+    border-radius: 6px;
+    background: var(--surface-2);
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .ptop-price {
+    padding-top: 1px;
+  }
+  @media (min-width: 640px) {
+    .ptop-row {
+      grid-template-columns: 44px minmax(0, 1fr) auto;
+      column-gap: 16px;
+      padding-inline: 16px;
+    }
   }
   .skel {
     display: block;
     border-radius: 6px;
     background: var(--surface-2);
-  }
-  @media (min-width: 640px) {
-    .worth-row,
-    .worth-board-head {
-      padding-inline: 16px;
-      column-gap: 16px;
-    }
-  }
-  @media (min-width: 1024px) {
-    .worth-row,
-    .worth-board-head {
-      grid-template-columns: 44px minmax(0, 1fr) 96px 96px 200px 104px;
-      grid-template-areas: "rank what menu people verdict count";
-      align-items: center;
-    }
-    .is-unranked .worth-row,
-    .is-unranked .worth-board-head {
-      grid-template-columns: minmax(0, 1fr) 96px 96px 200px 104px;
-      grid-template-areas: "what menu people verdict count";
-    }
-    .worth-row-skeleton {
-      grid-template-areas: "rank what menu people verdict count";
-    }
-    .worth-facts-row {
-      display: contents;
-    }
-    .wa-menu {
-      grid-area: menu;
-    }
-    .wa-people {
-      grid-area: people;
-    }
-    .wa-verdict {
-      grid-area: verdict;
-    }
-    .wa-count {
-      grid-area: count;
-    }
-    .worth-cell.num {
-      text-align: right;
-    }
-    .worth-k {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
-    .worth-board-head {
-      display: grid;
-      padding-block: 12px;
-      background: var(--surface-2);
-      border-bottom: 2px solid var(--line-strong);
-    }
-    /* Header cells keep the label type (the rank cell would otherwise take the rank numerals'). */
-    .worth-board-head > * {
-      font: inherit;
-      letter-spacing: inherit;
-    }
-  }
-
-  /* "Needs a few more answers": a compact two-column list of links. */
-  .worth-needs {
-    display: grid;
-    column-gap: 32px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-  @media (min-width: 640px) {
-    .worth-needs {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-  .worth-needs > li {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    min-height: 48px;
-    padding: 8px 0;
-    border-bottom: 1.5px solid var(--line);
   }
 }
 

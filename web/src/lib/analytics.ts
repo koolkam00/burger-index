@@ -11,23 +11,19 @@
 // /burgers search query, trimmed, lowercased and cut to 60 characters; the full query in the page URL
 // (?q=) is masked in every URL PostHog records, and session recordings mask it in the search boxes
 // (every input) and where a "No burgers match" message echoes it (class ph-mask). The voter id never
-// reaches an event.
+// reaches an event, and a ranking's events carry its length and menu keys, never the list itself.
 import type { CaptureResult, PostHog, PostHogConfig } from "posthog-js";
 import type { Filters } from "./explorer";
 import type { PriceSource } from "./schema";
 
-/** Where a burger search happened: the /burgers explorer or "Find a burger" on the People's Price page. */
-export type SearchSurface = "burgers" | "peoples_price";
+/** Where a burger search happened: the /burgers explorer. */
+export type SearchSurface = "burgers";
 /** The /burgers controls: each filter, the sort (select or column header) and "Clear all". */
 export type FilterName = "borough" | "neighborhood" | "price" | "sort" | "clear_all";
-/** The People's Price page lists a row can be clicked in. */
-export type BoardName = "bargains" | "overpriced" | "most_answered" | "needs_answers" | "find";
-/** Where an answer to "What's it worth?" was given: a restaurant page's picker or the home pricer. */
-export type WorthSurface = "restaurant" | "home_pricer";
 /** What a "Copy" button copied: a badge's HTML or image address, or the press kit's credit line. */
 export type SnippetKind = "badge_html" | "badge_image" | "citation";
-/** The home pricer's area kinds (lib/pricer areaType). */
-export type PricerAreaType = "anywhere" | "borough" | "neighborhood";
+/** Where a link to the People's Top 10 was followed from. */
+export type PeoplesTopSurface = "nav" | "menu_sheet" | "ranker" | "home";
 
 type LinkClick = {
   restaurant_id: string;
@@ -42,33 +38,16 @@ export type AnalyticsEvents = {
   burger_search: { surface: SearchSurface; query: string; results: number };
   /** One /burgers control changed; `results` is the burger count it leaves. */
   burger_filter_changed: { filter: FilterName; value: string | null; results: number };
-  /** An answer to "What would you pay?", sent once it is saved. */
-  worth_answered: {
-    menu_key: string;
-    restaurant_id: string;
-    dollars: number;
-    menu_price: number;
-    /** True: no earlier answer; false: it replaced one; null: unknown (the browser's saved answers hadn't loaded). */
-    first_answer: boolean | null;
-    /** The answer this one replaced (only when it changed one). */
-    previous_dollars?: number;
-    /** Where it was given: a restaurant page ("restaurant") or the home pricer ("home_pricer"). */
-    surface: WorthSurface;
-    /** The menu price was hidden when the visitor answered (the home pricer), or on the page (a restaurant page). */
-    price_hidden: boolean;
-  };
-  /** The home pricer: an area picked ("nyc" for anywhere, else the borough or neighborhood slug). */
-  pricer_area_selected: { area_type: PricerAreaType; area: string };
-  /** The home pricer: "Skip" on a burger. */
-  pricer_skipped: { menu_key: string };
-  /** The home pricer: "Next burger" after a reveal; the burgers answered there this session so far. */
-  pricer_next_clicked: { count_this_session: number };
-  /** The home pricer ran out of burgers in an area (the same area value as pricer_area_selected). */
-  pricer_exhausted: { area: string };
-  /** The header's (or the menu sheet's) "Price a burger", from the page it was clicked on (path only). */
-  price_a_burger_clicked: { from_path: string };
-  /** A row of a People's Price list followed to its restaurant's slider. */
-  peoples_price_board_clicked: { board: BoardName; menu_key: string; restaurant_id: string; rank: number | null; position: number };
+  /** The home ranker: the first change to a list (a new one, or the saved one being edited). */
+  ranking_started: { edited: boolean };
+  /** The home ranker: a burger added to the list, at `position` (1-based, the list's new length). */
+  ranking_item_added: { menu_key: string; position: number };
+  /** The home ranker: a list saved (`edited`: it replaced this browser's saved list), with its length. */
+  ranking_saved: { length: number; edited: boolean };
+  /** The home ranker: this browser's list deleted. */
+  ranking_deleted: { length: number };
+  /** A link to the People's Top 10 followed (the header's nav or menu sheet, the ranker, under the home board). */
+  peoples_top_clicked: { surface: PeoplesTopSurface; from_path: string };
   /** A map pin's popup opened: tapped, or opened for /map?r=<id> ("See it on the map"). */
   map_pin_opened: { restaurant_id: string; source: "pin" | "link" };
   /** The restaurant link inside a map popup. */
@@ -122,33 +101,7 @@ export function filterValue(filter: FilterName, f: Filters): string | null {
   }
 }
 
-/**
- * The worth_answered properties for a saved answer; `previous` is the answer it replaced (null: none,
- * undefined: unknown).
- */
-export function worthAnsweredProps(a: {
-  menuKey: string;
-  restaurantId: string;
-  dollars: number;
-  menuPrice: number;
-  previous: number | null | undefined;
-  surface: WorthSurface;
-  priceHidden: boolean;
-}): AnalyticsEvents["worth_answered"] {
-  const previous = a.previous;
-  return {
-    menu_key: a.menuKey,
-    restaurant_id: a.restaurantId,
-    dollars: a.dollars,
-    menu_price: a.menuPrice,
-    first_answer: previous === undefined ? null : previous === null,
-    ...(typeof previous === "number" && previous !== a.dollars ? { previous_dollars: previous } : {}),
-    surface: a.surface,
-    price_hidden: a.priceHidden,
-  };
-}
-
-/** The page a "Price a burger" click came from: its path only (no query, no hash: the /burgers search text stays out). */
+/** The page a click came from: its path only (no query, no hash: the /burgers search text stays out). */
 export function fromPath(pathname: string | null | undefined): string {
   const path = (pathname ?? "").split(/[?#]/)[0];
   return path.startsWith("/") ? path : "/";

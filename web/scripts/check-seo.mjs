@@ -13,7 +13,7 @@
 // word what the block shows, and home, borough and neighborhood pages have one. The footer carries the
 // source line, the CSV link with its CC BY 4.0 license link and the NYC ranking links on every page.
 // Titles and descriptions unique. The sitemap lists exactly the pages, each dated by the data it shows (the
-// snapshot's date where the People's Price is in the HTML); robots.txt, llms.txt (every link
+// People's Top 10 board's date where the board is in the HTML); robots.txt, llms.txt (every link
 // resolves, the license named) and the CSV (one row per priced restaurant, equal to the dataset) are
 // checked, and so is every internal link (no broken targets, no page without an inbound link).
 // Honest wording (user decision 2026-09-25): each spot publishes its priciest burger, so no page text,
@@ -28,11 +28,12 @@
 // from ../data/best_burgers.json (every place on it, one publisher is enough): its groups ("Named by 10
 // publications", their place counts), their rows in order, menu prices, every list link and its ItemList;
 // no title, description or H1 says "best burger(s)" in our own voice.
-// The People's Price snapshot (../data/peoples_price.json, user decision 2026-09-25) is in the static HTML:
-// every restaurant page whose menu has 3+ answers says "People's Price $22 from 14 answers, as of Sep 25, 2026."
-// (and no other does), each /best-burgers row carries its menu's snapshot numbers, /peoples-price is dated and
-// its "Most answered" board matches, and /best-value-burgers exists exactly when 10+ menus have a verdict, its
-// rows recomputed here; until then nothing links it and only its 404 placeholder (/_none, noindex) is built.
+// The People's Top 10 (user decisions 2026-09-25/26) is recomputed from ../data/peoples_top.json and the dataset:
+// its seats (a seat whose burger left the dataset goes to the best ranked burger not under review), the rest of the
+// ranking and Rising, row for row with their ranks, list counts and links; its ItemList; "Early results" exactly
+// while the board is early; the one-liner; and each /best-burgers row's People's rank. Crowd pricing is gone for
+// good (user decision 2026-09-26): no page, llms.txt or JSON-LD says "People's Price" or "What's it worth", and
+// /peoples-price, /best-value-burgers and /data/pricer.json are not built. The home page carries the ranker's region.
 // Sharing and link-building (user decisions 2026-09-25, stage 4): every restaurant, neighborhood, borough,
 // ranking and style page and /best-burgers names its own 1200×630 share image (/og/<path>.png, a PNG of that
 // size that exists, used by no other page, its alt naming the page's burger or area and price); every other
@@ -48,14 +49,14 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { histMedian, readSnapshotText } from "./snapshot-peoples-price.mjs";
+import { readBoardText } from "./snapshot-peoples-top.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const WEB = join(here, "..");
 const OUT = join(WEB, "out");
 const DATASET = join(WEB, "..", "data", "burger_index.json");
 const BEST = join(WEB, "..", "data", "best_burgers.json");
-const PEOPLE = join(WEB, "..", "data", "peoples_price.json");
+const PEOPLE_TOP = join(WEB, "..", "data", "peoples_top.json");
 
 const args = process.argv.slice(2);
 const expectSite = (() => {
@@ -144,7 +145,8 @@ const CITY_RANKING_PATHS = ["/cheapest-burgers", "/most-expensive-burgers", "/bu
 const PRESS_PATH = "/press";
 const BADGE_PATH = "/badge";
 const CONTACT_URL = "https://github.com/koolkam00/burger-index/issues";
-const FOOTER_PATHS = [...CITY_RANKING_PATHS, BEST_PATH, PRESS_PATH, BADGE_PATH];
+const PEOPLES_TOP_PATH = "/peoples-top-10";
+const FOOTER_PATHS = [...CITY_RANKING_PATHS, BEST_PATH, PEOPLES_TOP_PATH, PRESS_PATH, BADGE_PATH];
 /** Distinct priced menus a neighborhood needs for its own two lists (src/lib/rankings.ts MIN_NEIGHBORHOOD_MENUS). */
 const MIN_NEIGHBORHOOD_MENUS = 10;
 /** Distinct menus a style needs for a page (src/lib/styles.ts MIN_STYLE_MENUS). */
@@ -264,55 +266,34 @@ for (const l of best?.lists ?? []) {
   if (/upper cut|world'?s (101|25) best/i.test(`${l.publisher} ${l.title}`)) err(`best_burgers.json: list ${l.id} is an Upper Cut Media House list`);
 }
 
-// ---- the People's Price snapshot, recomputed from ../data/peoples_price.json ---------------------------
+// ---- the People's Top 10, recomputed from ../data/peoples_top.json ----------------------------------------
 
-const snap = readSnapshotText(existsSync(PEOPLE) ? readFileSync(PEOPLE, "utf8") : null) ?? { generatedAt: null, menus: {} };
-if (!existsSync(PEOPLE)) warn("../data/peoples_price.json not found: the pages carry no People's Price snapshot");
-/** Answers a menu needs for a verdict, and so for the People's Price sentence (src/lib/worth.ts MIN_VERDICT_ANSWERS). */
-const MIN_VERDICT_ANSWERS = 3;
-const BEST_VALUE_PATH = "/best-value-burgers";
-/** src/lib/peoples-price.ts BEST_VALUE_MIN_VERDICTS and BEST_VALUE_MIN_GAP. */
-const BEST_VALUE_MIN_VERDICTS = 10;
-const BEST_VALUE_MIN_GAP = 10;
-const asOfDay = snap.generatedAt
-  ? new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", year: "numeric" }).format(new Date(snap.generatedAt))
-  : null;
-const answersText = (n) => `${count(n)} answer${n === 1 ? "" : "s"}`;
+const board = readBoardText(existsSync(PEOPLE_TOP) ? readFileSync(PEOPLE_TOP, "utf8") : null);
+if (!board) err("../data/peoples_top.json is missing or not a board");
 const allMenus = distinctMenus(priced);
-/** menu key -> { answers, people } for the dataset's answered menus (the People's Price: the median, half up). */
-const crowd = new Map();
-if (snap.generatedAt) {
-  const known = new Set(allMenus.map((m) => m.key));
-  for (const [key, e] of Object.entries(snap.menus)) {
-    const hist = e?.hist && typeof e.hist === "object" ? e.hist : {};
-    const total = Object.values(hist).reduce((n, v) => n + v, 0);
-    if (e?.answers !== total || e?.median !== histMedian(hist)) err(`peoples_price.json: ${key}'s answers or median don't match its histogram`);
-    else if (known.has(key) && total > 0) crowd.set(key, { answers: total, people: Math.floor(histMedian(hist) + 0.5) });
+const menuByKey = new Map(allMenus.map((m) => [m.key, m]));
+const ONE_LINER =
+  "Every list turns into head-to-head wins, with your #1 counting most; a burger you left off never loses, and a burger climbs only as far as enough different lists back it up.";
+/** The board as the page must show it: seats, then the rest of the ranking, then Rising (src/lib/peoples-top.ts). */
+const topView = (() => {
+  const rows = (board?.rows ?? []).filter((r) => menuByKey.has(r.key));
+  const ranked = rows.filter((r) => r.tier === "ranked");
+  const seats = (board?.top10 ?? []).map((k) => ranked.find((r) => r.key === k)).filter(Boolean);
+  const dropped = (board?.top10.length ?? 0) - seats.length;
+  if (dropped > 0) {
+    seats.push(...ranked.filter((r) => !seats.includes(r) && !r.review && !r.held).slice(0, dropped));
+    seats.sort((a, b) => b.score - a.score || b.theta - a.theta || byKeyOrder(a, b));
   }
-}
-const peopleSentence = (c) => `People's Price $${count(c.people)} from ${answersText(c.answers)}, as of ${asOfDay}.`;
-/** The best-value rows (ranked like the People's Price bargains board), or null while the page must not exist. */
-const verdictMenus = allMenus.filter((m) => (crowd.get(m.key)?.answers ?? 0) >= MIN_VERDICT_ANSWERS);
-const bestValueRows = (() => {
-  if (verdictMenus.length < BEST_VALUE_MIN_VERDICTS) return null;
-  const EPS = 1e-9;
-  const rows = verdictMenus
-    .map((m) => {
-      const c = crowd.get(m.key);
-      return { ...m, ...c, gap: c.people >= m.price ? (c.people / m.price - 1) * 100 : -(m.price / c.people - 1) * 100 };
-    })
-    .filter((x) => x.gap > 0 && Math.round(x.gap) >= BEST_VALUE_MIN_GAP)
-    .sort((a, b) => (Math.abs(b.gap - a.gap) > EPS ? b.gap - a.gap : 0) || b.answers - a.answers || a.r.name.localeCompare(b.r.name) || byKeyOrder(a, b));
-  rows.forEach((x, i) => (x.rank = i && Math.abs(rows[i - 1].gap - x.gap) <= EPS ? rows[i - 1].rank : i + 1));
-  return rows;
+  const order = [...seats, ...ranked.filter((r) => !seats.includes(r))].map((r, i) => ({ ...r, rank: i + 1, m: menuByKey.get(r.key) }));
+  return { seats: order.slice(0, seats.length), ranked: order, rising: rows.filter((r) => r.tier === "rising").map((r) => ({ ...r, m: menuByKey.get(r.key) })) };
 })();
-if (bestValueRows) FOOTER_PATHS.push(BEST_VALUE_PATH);
+const boardTime = board && (board.refreshedAt ?? board.asOf) ? new Date(board.refreshedAt ?? board.asOf).getTime() : null;
 
 // ---- pages ---------------------------------------------------------------------------------------
 
 // A route with nothing to build yet builds one placeholder, the 404 (src/lib/site.ts PLACEHOLDER_PARAM:
-// /best-value-burgers/_none until 10 menus have a verdict). It is not a page: noindex, never in the sitemap,
-// linked from nowhere (the link check below finds a link to it broken).
+// /restaurants/_none before the first scrape). It is not a page: noindex, never in the sitemap, linked from
+// nowhere (the link check below finds a link to it broken).
 const isPlaceholder = (f) => /(^|\/)_none\.html$/.test(relative(OUT, f));
 for (const f of walk(OUT).filter((x) => x.endsWith(".html") && isPlaceholder(x))) {
   if (!readFileSync(f, "utf8").includes('<meta name="robots" content="noindex"/>')) err(`${relative(OUT, f)}: a placeholder that is not noindex`);
@@ -474,7 +455,7 @@ for (const p of pages) {
       });
     }
   } else {
-    checkBreadcrumbs(p, /^\/(restaurants|neighborhoods|boroughs)\//.test(path) || RANKING_PATH.test(path) || STYLE_PATH.test(path) || path === BEST_PATH || path === BEST_VALUE_PATH);
+    checkBreadcrumbs(p, /^\/(restaurants|neighborhoods|boroughs)\//.test(path) || RANKING_PATH.test(path) || STYLE_PATH.test(path) || path === BEST_PATH || path === PEOPLES_TOP_PATH);
   }
 
   const rest = /^\/restaurants\/([^/]+)$/.exec(path);
@@ -500,12 +481,6 @@ for (const p of pages) {
     const block = /<section id="burger"[^>]*>(.*?)<\/section>/s.exec(html)?.[1] ?? "";
     if (!text(block).includes(r.burger.name)) err(`${path}: burger name not in the burger block`);
     if (!block.includes(`>${money(r.index_price)}<`)) err(`${path}: price ${money(r.index_price)} not in the burger block`);
-    // The People's Price sentence: exactly the menus with 3+ answers in the snapshot.
-    const c = crowd.get(r.chain ? `chain:${r.chain}` : r.id);
-    const worth = text(/<section id="worth"[^>]*>(.*?)<\/section>/s.exec(html)?.[1] ?? "");
-    if (c && c.answers >= MIN_VERDICT_ANSWERS) {
-      if (!worth.includes(peopleSentence(c))) err(`${path}: no "${peopleSentence(c)}" in the worth section`);
-    } else if (/People's Price \$\d+ from \d/.test(worth)) err(`${path}: a People's Price sentence for a menu with ${c?.answers ?? 0} answers`);
   }
 
   const hood = /^\/neighborhoods\/([^/]+)$/.exec(path);
@@ -664,12 +639,12 @@ for (const p of pages) {
       if (!row) return;
       for (const l of e.lists) if (!row.hrefs.includes(l.url)) err(`${path}: ${e.name}'s row does not link ${l.id} (${l.url})`);
       if (row.hrefs.length !== e.lists.length) err(`${path}: ${e.name}'s row links ${row.hrefs.length} lists, the data ${e.lists.length}`);
-      // Its People's Price from the snapshot: the sentence's words with 3+ answers, "$30 2 answers" with fewer.
-      const c = e.r ? crowd.get(e.r.chain ? `chain:${e.r.chain}` : e.r.id) : null;
-      if (c) {
-        const want = c.answers >= MIN_VERDICT_ANSWERS ? peopleSentence(c).replace(/\.$/, "") : `People's Price $${count(c.people)} ${answersText(c.answers)}`;
+      // Its People's rank from the board: "#3 on 143 lists" where its menu is ranked, nothing otherwise.
+      const ranked = e.r ? topView.ranked.find((x) => x.key === (e.r.chain ? `chain:${e.r.chain}` : e.r.id)) : null;
+      if (ranked) {
+        const want = `People's rank #${ranked.rank} on ${count(ranked.lists)} ${ranked.lists === 1 ? "list" : "lists"}`;
         if (!row.text.includes(want)) err(`${path}: ${e.name}'s row lacks "${want}"`);
-      } else if (/ from \d+ answers?, as of /.test(row.text)) err(`${path}: ${e.name}'s row has a People's Price its menu doesn't`);
+      } else if (/People's rank/.test(row.text)) err(`${path}: ${e.name}'s row has a People's rank its menu doesn't`);
     });
     for (const l of best?.lists ?? []) if (!html.includes(`href="${l.url.replace(/&/g, "&amp;")}"`)) err(`${path}: list ${l.id} is not linked`);
     const list = one(p, "ItemList");
@@ -682,47 +657,47 @@ for (const p of pages) {
     p.bestRows = rows.length;
   }
 
-  // The People's Price page: dated by the snapshot, its "Most answered" board as the snapshot has it.
-  if (path === "/peoples-price" && snap.generatedAt) {
-    if (!text(html).includes(`As of ${asOfDay}`)) err(`${path}: no "As of ${asOfDay}"`);
-    const want = allMenus
-      .filter((m) => crowd.has(m.key))
-      .map((m) => ({ ...m, ...crowd.get(m.key) }))
-      .sort((a, b) => b.answers - a.answers || a.r.name.localeCompare(b.r.name) || byKeyOrder(a, b))
-      .slice(0, 10)
-      .map((m) => `${m.r.name} $${count(m.people)} ${answersText(m.answers)}`);
-    const board = /<section[^>]*aria-labelledby="answered"[^>]*>(.*?)<\/section>/s.exec(html)?.[1] ?? "";
-    const got = [...board.matchAll(/<li class="worth-row"[^>]*>(.*?)<\/li>/gs)].map(([, li]) => {
-      const cell = (cls) => text(new RegExp(`<p class="worth-cell ${cls}[^"]*">(.*?)</p>`, "s").exec(li)?.[1] ?? "");
-      return `${text(/<a\b[^>]*>(.*?)<\/a>/s.exec(li)?.[1] ?? "")} ${cell("wa-people").replace(/^People's /, "")} ${cell("wa-count")}`;
-    });
-    if (!want.length && !text(html).includes("Nobody has named a price yet.")) err(`${path}: no answers in the snapshot, but no "Nobody has named a price yet."`);
-    if (want.join("\n") !== got.join("\n")) err(`${path}: "Most answered" differs from the snapshot:\n    page     ${got.slice(0, 3).join(" | ")}\n    snapshot ${want.slice(0, 3).join(" | ")}`);
-    p.answeredRows = got.length;
-  }
-
-  // Best value burgers: the snapshot's menus 10% or more above their menu price, ranked by the gap.
-  if (path === BEST_VALUE_PATH) {
+  // The People's Top 10: the board's rows, as recomputed above.
+  if (path === PEOPLES_TOP_PATH) {
     const h1 = text((/<h1[^>]*>(.*?)<\/h1>/s.exec(html) ?? ["", ""])[1]);
-    if (h1 !== "Best value burgers in NYC.") err(`${path}: h1 "${h1}"`);
-    const lede = text(/<p class="t-lede[^"]*">(.*?)<\/p>/s.exec(html)?.[1] ?? "");
-    if (!lede.includes(`as of ${asOfDay})`)) err(`${path}: lede "${lede}" is not dated ${asOfDay}`);
-    const board = /<ol class="worth-board"[^>]*>(.*?)<\/ol>/s.exec(html)?.[1] ?? "";
-    const rows = [...board.matchAll(/<li class="worth-row"[^>]*>(.*?)<\/li>/gs)].map(([, li]) => {
-      const cell = (cls) => text(new RegExp(`<p class="worth-cell ${cls}[^"]*">(.*?)</p>`, "s").exec(li)?.[1] ?? "");
-      const link = /<a\b[^>]*href="(\/restaurants\/[^"]+)"[^>]*>(.*?)<\/a>/s.exec(li);
-      return `${text(/<span class="worth-rank">(.*?)<\/span>\s*<div/s.exec(li)?.[1] ?? "").replace(/^Rank /, "")}. ${link ? text(link[2]) : ""} <${link ? decode(link[1]) : ""}> ${cell("wa-menu")} ${cell("wa-people")} ${cell("wa-verdict")} ${cell("wa-count")}`;
+    if (h1 !== "The People's Top 10.") err(`${path}: h1 "${h1}"`);
+    const body = text(html.replace(/<script\b[^>]*>.*?<\/script>/gs, " "));
+    if (!body.includes(ONE_LINER)) err(`${path}: no one-liner`);
+    if (board?.early !== body.includes("Early results")) err(`${path}: "Early results" ${board?.early ? "missing" : "shown"} (the board is ${board?.early ? "" : "not "}early)`);
+    const rowsOf = (listHtml) =>
+      [...listHtml.matchAll(/<li class="ptop-row">(.*?)<\/li>/gs)].map(([, li]) => {
+        const link = /<a\b[^>]*href="(\/restaurants\/[^"]+)"[^>]*>(.*?)<\/a>/s.exec(li);
+        return {
+          rank: +(/Number <\/span>(?:<!-- -->)?(\d+)/.exec(li)?.[1] ?? NaN),
+          name: link ? text(link[2]) : null,
+          path: link ? decode(link[1]) : null,
+          lists: text(/<p class="t-ui-s ptop-lists">(.*?)<\/p>/s.exec(li)?.[1] ?? ""),
+        };
+      });
+    const boards = [...html.matchAll(/<(ol|ul) class="ptop-board[^"]*" aria-label="([^"]*)">(.*?)<\/\1>/gs)].map(([, , label, inner]) => ({ label, rows: rowsOf(inner) }));
+    const rankedShown = boards.filter((b) => b.label !== "Rising").flatMap((b) => b.rows);
+    const risingShown = boards.find((b) => b.label === "Rising")?.rows ?? [];
+    const listsWord = (r) => `On ${count(r.lists)} ${r.lists === 1 ? "list" : "lists"}`;
+    const fmt = (x) => `${Number.isNaN(x.rank) ? "" : `${x.rank}. `}${x.name} <${x.path}> ${x.lists}`;
+    const wantRanked = topView.ranked.map((r) => ({ rank: r.rank, name: r.m.r.name, path: `/restaurants/${r.m.r.id}`, lists: `${listsWord(r)}${r.firsts ? ` · #1 on ${count(r.firsts)}` : ""}${r.held ? "Under review" : r.review ? "Checking a surge of lists" : ""}` }));
+    if (rankedShown.map(fmt).join("\n") !== wantRanked.map(fmt).join("\n")) err(`${path}: ranked rows differ from the board:\n    page  ${rankedShown.slice(0, 3).map(fmt).join(" | ")}\n    board ${wantRanked.slice(0, 3).map(fmt).join(" | ")}`);
+    const wantRising = topView.rising.map((r) => {
+      const n = Math.max(1, r.needs);
+      return { rank: NaN, name: r.m.r.name, path: `/restaurants/${r.m.r.id}`, lists: `${listsWord(r)} · needs ${count(n)} more ${n === 1 ? "list" : "lists"}${r.held ? "Under review" : r.review ? "Checking a surge of lists" : ""}` };
     });
-    const want = (bestValueRows ?? []).map(
-      (x) => `${x.rank}. ${x.r.name} </restaurants/${x.r.id}#worth> Menu ${money(x.price)} People's $${count(x.people)} A bargain by ${Math.round(x.gap)}% ${answersText(x.answers)}`,
-    );
-    if (rows.join("\n") !== want.join("\n")) err(`${path}: rows differ from the snapshot:\n    page     ${rows.slice(0, 3).join(" | ")}\n    snapshot ${want.slice(0, 3).join(" | ")}`);
-    if (bestValueRows?.length) {
-      const list = one(p, "ItemList");
-      checkItemList(p, list, bestValueRows.map((x) => ({ name: x.r.name, path: `/restaurants/${x.r.id}` })), "best value list");
-      if (list && list.name !== h1.replace(/\.$/, "")) err(`${path}: ItemList "${list.name}" ≠ h1`);
-    } else if (ofType(p, "ItemList").length) err(`${path}: an ItemList for an empty list`);
-    p.bestValueRows = rows.length;
+    if (risingShown.map(fmt).join("\n") !== wantRising.map(fmt).join("\n")) err(`${path}: Rising rows differ from the board`);
+    const seatsTitle = text(/<h2 id="top-10"[^>]*>(.*?)<\/h2>/s.exec(html)?.[1] ?? "");
+    const n = topView.seats.length;
+    const wantTitle = n >= 10 ? "The top 10." : n === 1 ? "The top burger so far." : n ? `The top ${n} so far.` : "The top 10.";
+    if (seatsTitle !== wantTitle) err(`${path}: the seats' heading "${seatsTitle}", expected "${wantTitle}"`);
+    if (!n && !body.includes(`The ladder starts when burgers are on ${count(board?.gate ?? 5)} lists each (${count(board?.totalLists ?? 0)} ${(board?.totalLists ?? 0) === 1 ? "list" : "lists"} so far).`)) err(`${path}: nothing ranked, but no ladder-start sentence`);
+    const list = ofType(p, "ItemList")[0];
+    if (wantRanked.length) {
+      checkItemList(p, list, wantRanked, "People's Top 10");
+      if (list && list.name !== "The People's Top 10") err(`${path}: ItemList "${list?.name}"`);
+    } else if (list) err(`${path}: an ItemList for an empty board`);
+    p.topRows = rankedShown.length;
+    p.risingRows = risingShown.length;
   }
 
   // Our own voice never calls a burger the best: the titles, descriptions and H1s, less the restaurants'
@@ -787,9 +762,17 @@ for (const [key] of hoodsWithLists) {
   for (const base of ["/cheapest-burgers", "/most-expensive-burgers"]) if (!pages.some((p) => p.path === `${base}/${key}`)) err(`missing ${base}/${key}`);
 }
 if (!pages.some((p) => p.path === BEST_PATH)) err(`missing ${BEST_PATH}`);
-const hasBestValue = pages.some((p) => p.path === BEST_VALUE_PATH);
-if (bestValueRows && !hasBestValue) err(`missing ${BEST_VALUE_PATH}: ${verdictMenus.length} menus have a verdict (it needs ${BEST_VALUE_MIN_VERDICTS})`);
-if (!bestValueRows && hasBestValue) err(`${BEST_VALUE_PATH} exists, but only ${verdictMenus.length} menus have a verdict (it needs ${BEST_VALUE_MIN_VERDICTS})`);
+if (!pages.some((p) => p.path === PEOPLES_TOP_PATH)) err(`missing ${PEOPLES_TOP_PATH}`);
+// Crowd pricing is gone (user decision 2026-09-26): not a page, not a file, not a word.
+for (const gone of ["/peoples-price", "/best-value-burgers", "/data/pricer.json"]) {
+  if (outFile(gone) || existsSync(join(OUT, gone.slice(1)))) err(`${gone} is still built`);
+}
+for (const p of pages) {
+  const words = `${text(p.html.replace(/<script\b[^>]*>.*?<\/script>/gs, " "))} ${p.title} ${p.description} ${JSON.stringify(p.ld)}`;
+  if (/People's Price|What's it worth|Price a burger/i.test(words)) err(`${p.path}: still mentions crowd pricing ("People's Price", "What's it worth" or "Price a burger")`);
+}
+const home = pages.find((p) => p.path === "/");
+if (home && !/<div id="rank" role="region" aria-labelledby="rank-title"/.test(home.html)) err("/: no ranker region (#rank)");
 
 // ---- uniqueness and lengths ----------------------------------------------------------------------
 
@@ -814,7 +797,7 @@ for (const p of pages) if (p.description.length > 160) err(`${p.path}: descripti
 
 /** The page's own share image, by page type; every other page uses the site's /og.png. */
 function expectedImage(path) {
-  const own = /^\/(restaurants|neighborhoods|boroughs)\/[^/]+$/.test(path) || RANKING_PATH.test(path) || STYLE_PATH.test(path) || path === BEST_PATH;
+  const own = /^\/(restaurants|neighborhoods|boroughs)\/[^/]+$/.test(path) || RANKING_PATH.test(path) || STYLE_PATH.test(path) || path === BEST_PATH || path === PEOPLES_TOP_PATH;
   return own ? `/og${path}.png` : "/og.png";
 }
 /** [width, height] of a PNG file, or null. */
@@ -1001,21 +984,18 @@ for (const l of locs) if (!pageUrls.has(l)) err(`sitemap lists ${l}, which is no
 for (const u of pageUrls) if (!locs.includes(u)) err(`sitemap misses ${u}`);
 if (new Set(locs).size !== locs.length) err("sitemap lists a URL twice");
 for (const l of locs) if (/\.(png|svg|jpe?g|csv|json|txt)$/i.test(l)) err(`sitemap lists a file: ${l}`);
-// lastmod: a page whose static HTML changes with the People's Price snapshot (/peoples-price, /best-value-burgers,
-// /best-burgers, a restaurant page with the People's Price sentence) carries the later of the dataset's and the
-// snapshot's dates; every other page the dataset's.
+// lastmod: a page whose static HTML changes with the People's Top 10 board (/peoples-top-10, and /best-burgers with
+// each row's People's rank) carries the later of the dataset's and the board's dates; every other page the dataset's.
 const lastmods = new Map([...sitemap.matchAll(/<url>\s*<loc>([^<]+)<\/loc>\s*<lastmod>([^<]+)<\/lastmod>/g)].map((m) => [decode(m[1]), m[2]]));
 const dataTime = new Date(data.generated_at).getTime();
-const crowdTime = snap.generatedAt ? Math.max(dataTime, new Date(snap.generatedAt).getTime()) : dataTime;
+const crowdTime = boardTime !== null ? Math.max(dataTime, boardTime) : dataTime;
 for (const p of pages) {
   const lastmod = lastmods.get(p.url);
   if (!lastmod) {
     if (locs.includes(p.url)) err(`sitemap: ${p.path} has no lastmod`);
     continue;
   }
-  const r = byId.get(/^\/restaurants\/(.+)$/.exec(p.path)?.[1]);
-  const withSnapshot = ["/peoples-price", BEST_VALUE_PATH, BEST_PATH].includes(p.path) || (r && (crowd.get(r.chain ? `chain:${r.chain}` : r.id)?.answers ?? 0) >= MIN_VERDICT_ANSWERS);
-  const want = withSnapshot ? crowdTime : dataTime;
+  const want = [PEOPLES_TOP_PATH, BEST_PATH].includes(p.path) ? crowdTime : dataTime;
   if (new Date(lastmod).getTime() !== want) err(`sitemap: ${p.path} lastmod ${lastmod}, expected ${new Date(want).toISOString()}`);
 }
 
@@ -1028,6 +1008,7 @@ if (disallows.some((d) => d !== "/ingest/")) err(`robots.txt disallows more than
 
 const llms = readFileSync(join(OUT, "llms.txt"), "utf8");
 overclaims("llms.txt", llms);
+if (/People's Price|What's it worth/i.test(llms)) err("llms.txt still mentions the People's Price");
 if (!new RegExp(`\\[Burger prices \\(CSV\\)\\]\\(${site}/data/burger-prices\\.csv\\):[^\\n]*License: CC BY 4\\.0 \\(${LICENSE_URL.replace(/[./]/g, "\\$&")}\\)`).test(llms)) err("llms.txt: the CSV link does not name its license (CC BY 4.0)");
 // The ranking notes count like the pages: burger spots are locations, menus count a chain once.
 for (const path of CITY_RANKING_PATHS) {
@@ -1038,7 +1019,7 @@ for (const path of CITY_RANKING_PATHS) {
 }
 const llmsLinks = [...llms.matchAll(/\]\((https?:\/\/[^)\s]+)\)/g)].map((m) => m[1]);
 for (const p of pages) {
-  if ((RANKING_PATH.test(p.path) || STYLE_PATH.test(p.path) || p.path === BEST_PATH || p.path === BEST_VALUE_PATH) && !llmsLinks.includes(p.url)) err(`llms.txt does not link ${p.path}`);
+  if ((RANKING_PATH.test(p.path) || STYLE_PATH.test(p.path) || p.path === BEST_PATH || p.path === PEOPLES_TOP_PATH) && !llmsLinks.includes(p.url)) err(`llms.txt does not link ${p.path}`);
 }
 for (const path of [PRESS_PATH, BADGE_PATH]) if (!llmsLinks.includes(`${site}${path}`)) err(`llms.txt does not link ${path}`);
 if (EMAIL.test(llms)) err("llms.txt carries an email address");
@@ -1123,9 +1104,8 @@ const stylePages = pages.filter((p) => p.styleRows !== undefined);
 console.log(`style pages: ${stylePages.map((p) => `${p.path} ${p.styleRows}`).join(", ")} · best-burgers rows: ${pages.find((p) => p.path === BEST_PATH)?.bestRows ?? 0}`);
 console.log(`Q&A blocks: ${pages.filter((p) => p.faqs).length} pages, ${pages.reduce((n, p) => n + (p.faqs ?? 0), 0)} questions`);
 console.log(
-  `People's Price snapshot: ${asOfDay ? `as of ${asOfDay}` : "none"} · answered menus ${crowd.size}, with a verdict ${verdictMenus.length} · ` +
-    `restaurant pages with the sentence ${[...crowd].filter(([, c]) => c.answers >= MIN_VERDICT_ANSWERS).reduce((n, [key]) => n + allMenus.find((m) => m.key === key).locations, 0)} · ` +
-    (hasBestValue ? `${BEST_VALUE_PATH}: ${pages.find((p) => p.path === BEST_VALUE_PATH).bestValueRows} rows` : `no ${BEST_VALUE_PATH} (needs ${BEST_VALUE_MIN_VERDICTS} verdicts)`),
+  `People's Top 10: ${board?.asOf ? `as of ${board.asOf}` : "no board yet"} · ${count(board?.totalLists ?? 0)} lists · ` +
+    `${pages.find((p) => p.path === PEOPLES_TOP_PATH)?.topRows ?? 0} ranked rows, ${pages.find((p) => p.path === PEOPLES_TOP_PATH)?.risingRows ?? 0} rising${board?.early ? " · early results" : ""}`,
 );
 console.log(
   `share images: ${ogFiles.length} (${(ogBytes / 1048576).toFixed(1)} MB, ${ogFiles.length ? Math.round(ogBytes / ogFiles.length / 1024) : 0} KB each on average) · badges: ${badgeFiles.length} (${(badgeBytes / 1048576).toFixed(1)} MB) · ` +

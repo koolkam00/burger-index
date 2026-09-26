@@ -2,14 +2,14 @@
 
 // The badge page's finder (DESIGN.md "Price badge"): the badge of the restaurant in `?r=<id>` (a restaurant
 // page's "Get its price badge" link), else the example, then "Find your restaurant". The list of priced
-// restaurants comes from the home pricer's static /data/pricer.json, fetched only when it is needed (a
+// restaurants comes from the static /data/menus.json (lib/menu-list), fetched only when it is needed (a
 // `?r=` other than the example, or a search), so the page's HTML carries one badge.
 import { Search, TriangleAlert, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useId, useMemo, useState } from "react";
 import { badgeSpots, searchBadgeSpots, type BadgeSpot } from "@/lib/badge";
 import { formatCount, pluralize } from "@/lib/format";
-import { PRICER_DATA_PATH, type PricerData } from "@/lib/pricer";
+import { MENU_LIST_PATH, parseMenuList } from "@/lib/menu-list";
 import { BADGE_TITLE_ID, BadgePreview, type BadgeContext } from "./BadgePreview";
 
 const MAX_HITS = 8;
@@ -28,9 +28,9 @@ export function BadgeFinder({ example, context }: { example: BadgeSpot; context:
   useEffect(() => {
     if (!needList || (list && "spots" in list)) return;
     let alive = true;
-    fetch(PRICER_DATA_PATH)
-      .then((res) => (res.ok ? (res.json() as Promise<PricerData>) : Promise.reject(new Error(`HTTP ${res.status}`))))
-      .then((data) => alive && setList({ spots: badgeSpots(data) }))
+    fetch(MENU_LIST_PATH)
+      .then((res) => (res.ok ? (res.json() as Promise<unknown>) : Promise.reject(new Error(`HTTP ${res.status}`))))
+      .then((data) => alive && setList({ spots: badgeSpots(parseMenuList(data)) }))
       .catch(() => alive && setList({ failed: true }));
     return () => {
       alive = false;
@@ -145,7 +145,7 @@ function LoadFailed({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="panel p-4 md:p-6">
       <p className="t-ui-m flex items-start gap-2" role="alert">
-        <TriangleAlert className="worth-status-icon mt-0.5 size-4 flex-none" strokeWidth={2} aria-hidden="true" />
+        <TriangleAlert className="status-icon mt-0.5 size-4 flex-none" strokeWidth={2} aria-hidden="true" />
         Couldn&rsquo;t reach the counter. Check your connection and try again.
       </p>
       <button type="button" className="btn btn-secondary btn-sm mt-3" onClick={onRetry}>

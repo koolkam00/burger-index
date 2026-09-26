@@ -3,20 +3,19 @@ import { BADGE_PAGE_PATH } from "@/lib/badge";
 import { BEST_BURGERS_NAME, BEST_BURGERS_PATH } from "@/lib/best-burgers";
 import { CSV_LICENSE, CSV_PATH } from "@/lib/csv";
 import { formatDate } from "@/lib/format";
-import { BEST_VALUE_NAME, BEST_VALUE_PATH } from "@/lib/peoples-price";
 import { PRESS_NAME, PRESS_PATH } from "@/lib/press";
 import { CITY_RANKINGS, rankingName, rankingPath } from "@/lib/rankings";
 import { sourceLine } from "@/lib/seo";
-import { NAV } from "@/lib/site";
+import { NAV, PEOPLES_TOP_NAME, PEOPLES_TOP_PATH } from "@/lib/site";
 import { UseSystemTheme } from "./theme";
 import { Wordmark } from "./Wordmark";
 
 /**
  * The deck: a rope rail, then dark stained deck planks. The source line, the non-affiliation line, the
- * CSV link with its license and the NYC ranking pages ship on every page (with the best value burgers while
- * that page exists: `bestValue`).
+ * CSV link with its license and the NYC ranking pages (with the most-recommended burgers and the People's
+ * Top 10) ship on every page.
  */
-export function SiteFooter({ generatedAt, bestValue = false }: { generatedAt: string; bestValue?: boolean }) {
+export function SiteFooter({ generatedAt }: { generatedAt: string }) {
   return (
     <footer className="site-footer atmo">
       <span className="rope rope-flat" aria-hidden="true" />
@@ -71,7 +70,7 @@ export function SiteFooter({ generatedAt, bestValue = false }: { generatedAt: st
                 </li>
               </ul>
             </nav>
-            {/* The NYC ranking pages and the most-recommended burgers; each borough's lists are linked from its
+            {/* The NYC ranking pages, the most-recommended burgers and the People's Top 10; each borough's lists are linked from its
                 borough page and every ranking page, each neighborhood's from its neighborhood page. */}
             <nav aria-labelledby="footer-rankings" className="mt-8">
               <h2 id="footer-rankings" className="t-label deck-muted">
@@ -91,13 +90,11 @@ export function SiteFooter({ generatedAt, bestValue = false }: { generatedAt: st
                     {BEST_BURGERS_NAME}
                   </Link>
                 </li>
-                {bestValue ? (
-                  <li className="text-balance">
-                    <Link className="deck-link" href={BEST_VALUE_PATH}>
-                      {BEST_VALUE_NAME}
-                    </Link>
-                  </li>
-                ) : null}
+                <li className="text-balance">
+                  <Link className="deck-link" href={PEOPLES_TOP_PATH}>
+                    {PEOPLES_TOP_NAME}
+                  </Link>
+                </li>
               </ul>
             </nav>
           </div>

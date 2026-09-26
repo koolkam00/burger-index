@@ -6,7 +6,7 @@
 // Copy rules (DESIGN.md "Voice & Copy"): numbers and plain labels, no methodology, no quality words.
 // Titles aim at 60 characters or fewer, descriptions at 150–160 (DESCRIPTION_MAX is a hard cap).
 import { boroughInProse, inNeighborhoodPlace, neighborhoodInProse, neighborhoodPreposition } from "./boroughs";
-import { formatCount, formatMonthYear, formatPrice, pctDiff, pluralize, theBurger } from "./format";
+import { formatCount, formatDate, formatMonthYear, formatPrice, pctDiff, pluralize, theBurger } from "./format";
 import { rankingShortName } from "./rankings";
 import type { Borough } from "./schema";
 
@@ -152,13 +152,22 @@ export function neighborhoodsSeo(d: {
   return { title, description: assemble(lead, [ends, "The median, cheapest and priciest in each.", updated(d.generatedAt)]) };
 }
 
-export function peoplesPriceSeo(d: { menus: number; median: number | null }): Seo {
+/**
+ * The People's Top 10 (lib/peoples-top.ts): "The People's Top 10: the burgers NYC visitors rank highest" and "The NYC
+ * burgers visitors rank highest, from 1,284 lists. #1 Emily, #2 …, #3 …. As of Sep 27, 2026." Visitors' opinion,
+ * reported as theirs: no quality words of our own.
+ */
+export function peoplesTopSeo(d: { leaders: readonly string[]; lists: number; asOf: string | null }): Seo {
+  const lead = d.leaders.length
+    ? `The NYC burgers visitors rank highest on The Burger Index, from ${pluralize(d.lists, "list")}.`
+    : "The NYC burgers visitors rank highest on The Burger Index, from their own top-10 lists.";
+  const top = d.leaders.slice(0, 3).map((name, i) => `#${i + 1} ${name}`);
   return {
-    title: "The People's Price: what visitors would pay for NYC burgers",
-    description: assemble(`What visitors would pay for ${pluralize(d.menus, "New York burger")}, next to what the menus charge.`, [
-      d.median !== null ? `The Burger Index: ${money(d.median)}.` : null,
-      "Biggest bargains, most overpriced and most answered.",
-      "Name your price for any burger.",
+    title: pickTitle(["The People's Top 10: the burgers NYC visitors rank highest", "The People's Top 10: NYC burgers visitors rank highest", "The People's Top 10"]),
+    description: assemble(lead, [
+      top.length ? [`${top.join(", ")}.`, `${top.slice(0, 2).join(", ")}.`, `${top[0]}.`] : "Updated daily.",
+      d.asOf ? `As of ${formatDate(d.asOf)}.` : null,
+      "Add your own top 10.",
     ]),
   };
 }
@@ -371,31 +380,6 @@ export function bestBurgersSeo(d: { name: string; places: number; leaders: reado
     description: assemble(
       `${pluralize(d.places, "NYC burger place")} ranked by how many publications named each on a best-burger list in ${d.years.from}–${d.years.to}, with the menu price.`,
       [lead, updated(d.generatedAt)],
-    ),
-  };
-}
-
-/**
- * The best value burgers (lib/peoples-price bestValue): "Best value burgers in NYC (Sep 2026)" and "12 NYC burgers
- * whose People's Price, what visitors would pay, is 10% or more above the menu price. Emily leads: People's
- * Price $31, menu price $24.00. People's Price as of Sep 25, 2026." The month and date are the snapshot's.
- */
-export function bestValueSeo(d: {
-  name: string;
-  minGap: number;
-  rows: ReadonlyArray<{ name: string; people: number | null; price: number }>;
-  asOf: string;
-  asOfDay: string;
-}): Seo {
-  const mon = formatMonthYear(d.asOf, { short: true });
-  const top = d.rows[0];
-  return {
-    title: pickTitle([`${d.name} (${mon})`, d.name]),
-    description: assemble(
-      d.rows.length
-        ? `${pluralize(d.rows.length, "NYC burger")} whose People's Price, what visitors would pay, is ${d.minGap}% or more above the menu price.`
-        : `NYC burgers whose People's Price, what visitors would pay, is ${d.minGap}% or more above the menu price. None yet.`,
-      [top && top.people !== null ? `${top.name} leads: People's Price $${formatCount(top.people)}, menu price ${money(top.price)}.` : null, `People's Price as of ${d.asOfDay}.`],
     ),
   };
 }

@@ -5,8 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type ComponentType, type MouseEvent } from "react";
 import { fromPath, track } from "@/lib/analytics";
-import { isRankingPath, NAV, PRICER_FOCUS_EVENT, PRICER_HREF } from "@/lib/site";
-import { Buoy, CompassRose, LifeRing, Scales, ShipWheel, Spyglass, type IconProps } from "./icons/nautical";
+import { isRankingPath, NAV, PEOPLES_TOP_PATH, RANKER_FOCUS_EVENT, RANKER_HREF } from "@/lib/site";
+import { Buoy, CompassRose, LifeRing, RopeLadder, ShipWheel, Spyglass, type IconProps } from "./icons/nautical";
 import { ThemeToggle } from "./theme";
 import { Wordmark } from "./Wordmark";
 
@@ -23,7 +23,7 @@ function isActive(pathname: string, href: string): boolean {
 const SHEET_ICON: Record<string, ComponentType<IconProps>> = {
   "/": LifeRing,
   "/burgers": Spyglass,
-  "/peoples-price": Scales,
+  [PEOPLES_TOP_PATH]: RopeLadder,
   "/map": CompassRose,
   "/neighborhoods": Buoy,
 };
@@ -49,15 +49,19 @@ export function SiteHeader() {
   };
 
   /**
-   * "Price a burger" (the header's and the menu sheet's): links to the home pricer (/#price). On the
-   * home page it scrolls to the pricer and focuses it instead (after the sheet has handed focus back).
+   * "Rank your burgers" (the header's and the menu sheet's): links to the home ranker (/#rank). On the home
+   * page it scrolls to the ranker and focuses it instead (after the sheet has handed focus back).
    */
-  const priceClick = (e: MouseEvent<HTMLAnchorElement>) => {
-    track("price_a_burger_clicked", { from_path: fromPath(pathname) });
+  const rankClick = (e: MouseEvent<HTMLAnchorElement>) => {
     sheetRef.current?.close();
     if (pathname !== "/" || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     e.preventDefault();
-    requestAnimationFrame(() => window.dispatchEvent(new Event(PRICER_FOCUS_EVENT)));
+    requestAnimationFrame(() => window.dispatchEvent(new Event(RANKER_FOCUS_EVENT)));
+  };
+
+  /** A nav link followed: the People's Top 10 is reported (peoples_top_clicked), the others aren't. */
+  const navClick = (href: string, surface: "nav" | "menu_sheet") => {
+    if (href === PEOPLES_TOP_PATH) track("peoples_top_clicked", { surface, from_path: fromPath(pathname) });
   };
 
   return (
@@ -73,7 +77,7 @@ export function SiteHeader() {
             <ul className="flex h-full items-center gap-1 xl:gap-2">
               {NAV.map((item) => (
                 <li key={item.href}>
-                  <Link href={item.href} className="nav-link" aria-current={isActive(pathname, item.href) ? "page" : undefined}>
+                  <Link href={item.href} className="nav-link" aria-current={isActive(pathname, item.href) ? "page" : undefined} onClick={() => navClick(item.href, "nav")}>
                     {item.label}
                   </Link>
                 </li>
@@ -82,7 +86,7 @@ export function SiteHeader() {
           </nav>
 
           <div className="flex flex-none items-center gap-1 sm:gap-2">
-            {/* One-tap search at every width (user decision 2026-09-25), next to "Price a burger"; the menu
+            {/* One-tap search at every width (user decision 2026-09-25), next to "Rank your burgers"; the menu
                 sheet keeps its own "Search" below sm. */}
             <Link href="/burgers#search" className="wood-btn search-btn" aria-label="Search burgers" title="Search burgers" onClick={searchClick}>
               <Search strokeWidth={2} aria-hidden="true" />
@@ -90,9 +94,9 @@ export function SiteHeader() {
             <span className="hidden sm:inline-flex">
               <ThemeToggle />
             </span>
-            <Link href={PRICER_HREF} className="btn btn-primary price-cta" onClick={priceClick}>
-              <Scales className="hidden sm:block" aria-hidden="true" />
-              Price a burger
+            <Link href={RANKER_HREF} className="btn btn-primary rank-cta" onClick={rankClick}>
+              <RopeLadder className="hidden sm:block" aria-hidden="true" />
+              Rank your burgers
             </Link>
             {/* A wheel alone is not a recognizable menu icon, so the word "Menu" is shown too. */}
             <button type="button" className="wood-btn menu-btn lg:hidden" aria-haspopup="dialog" onClick={() => sheetRef.current?.showModal()}>
@@ -122,9 +126,9 @@ export function SiteHeader() {
           </div>
           <nav aria-label="Main" className="wrap flex-1 overflow-y-auto pb-4">
             <div className="sheet-actions">
-              <Link href={PRICER_HREF} className="btn btn-primary btn-lg sheet-cta" onClick={priceClick}>
-                <Scales aria-hidden="true" />
-                Price a burger
+              <Link href={RANKER_HREF} className="btn btn-primary btn-lg sheet-cta" onClick={rankClick}>
+                <RopeLadder aria-hidden="true" />
+                Rank your burgers
               </Link>
               <Link href="/burgers#search" className="btn btn-secondary btn-lg sm:hidden" onClick={searchClick}>
                 <Search strokeWidth={2} aria-hidden="true" />
@@ -141,7 +145,10 @@ export function SiteHeader() {
                       href={item.href}
                       className="sheet-link t-display-s"
                       aria-current={isActive(pathname, item.href) ? "page" : undefined}
-                      onClick={() => sheetRef.current?.close()}
+                      onClick={() => {
+                        navClick(item.href, "menu_sheet");
+                        sheetRef.current?.close();
+                      }}
                     >
                       <span className="sheet-label min-w-0">{item.label}</span>
                       <span className="menu-leader" aria-hidden="true" />

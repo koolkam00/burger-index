@@ -70,7 +70,7 @@ export type BestEntry = {
   /** The priced restaurant (it has a page), or null when the place has no menu price. */
   restaurant: PricedRestaurant | null;
   neighborhood: BestNeighborhood | null;
-  /** The People's Price key (menus.ts menuKey) of a priced place. */
+  /** The menu key (menus.ts menuKey) of a priced place: its People's Top 10 key. */
   menuKey: string | null;
 };
 

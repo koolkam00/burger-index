@@ -3,8 +3,8 @@
 // site origin and plain values, so the tests can check the shapes without a build.
 //
 // Rules (user decisions 2026-09-25): the markup restates what the page shows (names, prices, links),
-// never more; the People's Price (visitors' answers) is never marked up as a Review, Rating or
-// AggregateRating; the Dataset (the public CSV) carries its license, CC BY 4.0 (lib/csv.ts CSV_LICENSE).
+// never more; the People's Top 10 (visitors' rankings) is never marked up as a Review, Rating or
+// AggregateRating, only as an ItemList; the Dataset (the public CSV) carries its license, CC BY 4.0 (lib/csv.ts CSV_LICENSE).
 import { CSV_LICENSE } from "./csv";
 import { SITE_NAME } from "./site";
 
