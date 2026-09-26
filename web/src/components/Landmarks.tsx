@@ -4,7 +4,6 @@
 import { MapPin } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { segmentsText } from "@/lib/answers";
 import { BOROUGH_META } from "@/lib/boroughs";
 import { getGeneratedAt, getStats } from "@/lib/data";
 import { formatMonthYear } from "@/lib/format";
@@ -47,6 +46,7 @@ export function landmarkMetadata(page: LandmarkPage): Metadata {
   const named = (s: LandmarkSpot) => ({ name: s.restaurant.name, price: s.restaurant.index_price });
   const seo = landmarkSeo({
     near: page.landmark.near,
+    short: page.landmark.short,
     spots: page.spots.length,
     radius: RADIUS_WORDS,
     walk: WALK_WORDS,
@@ -163,7 +163,7 @@ export function LandmarkPageView({ page }: { page: LandmarkPage }) {
   const title = landmarkTitle(landmark);
   const path = landmarkPath(landmark);
   const crumbs = crumbsFor(page);
-  const answer = segmentsText(landmarkSentence(landmark, spots, month));
+  const answer = landmarkSentence(landmark, spots, month);
 
   return (
     <>

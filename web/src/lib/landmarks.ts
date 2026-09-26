@@ -7,9 +7,11 @@
 // two rows, and "burger spots" counts them (as it does everywhere on the site). Each spot publishes one burger, its
 // priciest (CLAUDE.md "One burger per restaurant"), so the copy says "their priciest burgers run from … to …", never
 // "the cheapest burger near …" (user decision 2026-09-25, honest wording). Distances are as the crow flies, from
-// the landmark's point to the restaurant's coordinates; a restaurant without coordinates is never on a list.
+// the landmark's point to the restaurant's coordinates. A priced restaurant without coordinates (a restaurant-list row
+// that DOHMH doesn't match, or a DOHMH record without a location) can't be measured, so it is never on a list, and no
+// line claims "all" the spots near a landmark (the count line is the plain count: DESIGN.md "No methodology copy" rules
+// out a note saying why). A DOHMH record without a location gets its coordinates in pipeline/data/dohmh_overrides.json.
 // Pure and client-safe (the map reads landmarkBySlug and landmarkBounds).
-import type { Segment } from "./answers";
 import { BOROUGH_META } from "./boroughs";
 import { formatCount, formatPrice, pluralize } from "./format";
 import { LANDMARK_RADIUS_KM, LANDMARK_RADIUS_MILES, LANDMARKS, MIN_LANDMARK_SPOTS, type Landmark } from "./landmarks.mjs";
@@ -96,26 +98,28 @@ export function priceEnds(spots: readonly LandmarkSpot[]): { low: LandmarkSpot; 
   return { low, high };
 }
 
-const link = (s: LandmarkSpot): Segment => ({ text: s.restaurant.name, href: `/restaurants/${s.restaurant.id}` });
-
 /**
- * The page's one-line answer (its lede): "36 burger spots within half a mile of Times Square, about a 10-minute walk;
- * their priciest burgers run from $12.65 at … to $34.00 at … (September 2026)." Each spot's priciest burger, never
- * "the cheapest burger near …".
+ * The page's one-line answer (its lede, plain text like the ranking pages' ledes: the table links every spot):
+ * "36 burger spots within half a mile of Times Square, about a 10-minute walk; their priciest burgers run from $12.65
+ * at … to $34.00 at … (September 2026)." Each spot's priciest burger, never "the cheapest burger near …".
  */
-export function landmarkSentence(l: Pick<Landmark, "near">, spots: readonly LandmarkSpot[], month: string): Segment[] {
+export function landmarkSentence(l: Pick<Landmark, "near">, spots: readonly LandmarkSpot[], month: string): string {
   const where = `within ${RADIUS_WORDS} of ${l.near}, ${WALK_WORDS}`;
   const ends = priceEnds(spots);
-  if (!ends) return [`No burger spot ${where} (${month}).`];
-  if (spots.length === 1) return [`One burger spot ${where}: `, link(ends.low), `, whose priciest burger is ${money(ends.low.restaurant.index_price)} (${month}).`];
+  if (!ends) return `No burger spot ${where} (${month}).`;
+  const [low, high] = [ends.low.restaurant, ends.high.restaurant];
+  if (spots.length === 1) return `One burger spot ${where}: ${low.name}, whose priciest burger is ${money(low.index_price)} (${month}).`;
   const head = `${pluralize(spots.length, "burger spot")} ${where}; their priciest burgers `;
-  if (cents(ends.low.restaurant.index_price) === cents(ends.high.restaurant.index_price)) return [`${head}all cost ${money(ends.low.restaurant.index_price)} (${month}).`];
-  return [`${head}run from ${money(ends.low.restaurant.index_price)} at `, link(ends.low), ` to ${money(ends.high.restaurant.index_price)} at `, link(ends.high), ` (${month}).`];
+  if (cents(low.index_price) === cents(high.index_price)) return `${head}all cost ${money(low.index_price)} (${month}).`;
+  return `${head}run from ${money(low.index_price)} at ${low.name} to ${money(high.index_price)} at ${high.name} (${month}).`;
 }
 
-/** Under the table, and on the share image: "All 36 burger spots within half a mile, nearest first." */
+/**
+ * Under the table, and on the share image: "36 burger spots within half a mile, nearest first." Never "All 36 …" or
+ * "the one …": a priced spot without coordinates can't be measured (see the top of this file).
+ */
 export function landmarkCountLine(spots: number): string {
-  return spots === 1 ? `The one burger spot within ${RADIUS_WORDS}.` : `All ${formatCount(spots)} burger spots within ${RADIUS_WORDS}, nearest first.`;
+  return spots === 1 ? `One burger spot within ${RADIUS_WORDS}.` : `${formatCount(spots)} burger spots within ${RADIUS_WORDS}, nearest first.`;
 }
 
 /** A hub row's sub-line: "36 burger spots · priciest burgers $12.65–$34.00". */

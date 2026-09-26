@@ -306,9 +306,14 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   hub) and `/burgers-near/<landmark>`: every priced burger spot (location) within **half a mile** (0.804672 km as the crow
   flies, "about a 10-minute walk") of a NYC landmark, nearest first, with its distance ("0.3 mi"), priciest burger, price chip,
   neighborhood and source badge. The landmarks and their points (each landmark's Wikipedia coordinates, the article named in a
-  comment) are in `web/src/lib/landmarks.mjs`, plain JS that `check-seo.mjs` reads too; places that are effectively one are one
-  landmark (Penn Station and Madison Square Garden, the World Trade Center and the 9/11 Memorial, City Hall and the Brooklyn
-  Bridge, Chelsea Market and the High Line, Columbus Circle and Central Park South). A landmark has a page only with **5+
+  comment) are in `web/src/lib/landmarks.mjs`, plain JS that `check-seo.mjs` reads too; places that are effectively one point
+  are one landmark (Penn Station and Madison Square Garden, the World Trade Center and the 9/11 Memorial), and a page names
+  only the place its point measures (Columbus Circle, Chelsea Market, City Hall: Central Park South, the High Line and the
+  Brooklyn Bridge run on past the half mile, so they have no page). A priced restaurant without coordinates can't be
+  measured, so it is on no list and the count line is the plain "36 burger spots within half a mile" (never "All 36"); a
+  DOHMH record without a location gets hand-checked coordinates in `pipeline/data/dohmh_overrides.json` (coordinates only,
+  never a zipcode or NTA, which would move its id). Every title carries the spot count and the month (`short` in
+  `landmarks.mjs` for a long name). A landmark has a page only with **5+
   spots** (`landmarksWithPages` in `src/lib/landmarks.ts`: 17 today; DUMBO 2, Yankee Stadium 1, Citi Field and Coney Island
   0 have none until the dataset has more). The lede: "36 burger spots within half a mile of Times Square, about a 10-minute
   walk; their priciest burgers run from $12.65 at … to $34.00 at … (September 2026)."; never "the cheapest burger near …"

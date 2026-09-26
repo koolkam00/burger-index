@@ -48,7 +48,7 @@
 // landmarks' points (src/lib/landmarks.mjs, the one input shared with the site): the priced spots within half a mile
 // (as the crow flies, haversine), nearest first, row for row with their distance, name, link and price; exactly the
 // landmarks with 5+ such spots have a page; the H1, the one-line answer (the spot count and the priciest burgers'
-// ends, named), the count line, every "N burger spots" in the title and description, the ItemList, the map link
+// ends, named), the count line, the title's count and month, every "N burger spots" in the title and description, the ItemList, the map link
 // and the share image. The hub (/burgers-near) lists every landmark page in borough order with its count and range,
 // and is linked from every page's footer, the sitemap and llms.txt; no page says "cheapest burger(s) near".
 // Exit 1 on any error; warnings are printed and don't fail.
@@ -781,9 +781,13 @@ for (const p of pages) {
       checkItemList(p, list, wantRows, "landmark table");
       if (list && list.name !== h1.replace(/\.$/, "")) err(`${path}: ItemList "${list.name}" ≠ h1 "${h1}"`);
       const countLine = text(/<\/table>\s*<\/div>\s*<p class="t-ui-s muted mt-3">(.*?)<\/p>/s.exec(html)?.[1] ?? "");
-      if (countLine !== `All ${count(spots.length)} burger spots within half a mile, nearest first.`) err(`${path}: count line "${countLine}"`);
+      // Never "All N …": a priced spot without coordinates can't be measured, so the line is the plain count.
+      if (countLine !== `${count(spots.length)} burger spots within half a mile, nearest first.`) err(`${path}: count line "${countLine}"`);
       if (!html.includes(`href="/map?near=${l.slug}"`)) err(`${path}: no map link (/map?near=${l.slug})`);
       if (!p.description.includes(`within half a mile of ${l.near}`)) err(`${path}: description "${p.description}" does not say within half a mile of ${l.near}`);
+      // The title carries the spot count and the month (a long name gives way to its short form, landmarks.mjs `short`).
+      const monthShort = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", year: "numeric" }).format(new Date(data.generated_at));
+      if (!p.title.includes(`: ${count(spots.length)} `) || !p.title.includes(`(${monthShort})`)) err(`${path}: title "${p.title}" lacks the spot count or the month`);
       // "Burger spots" are locations: every count next to them in the title, description, lede and count line is this list's.
       for (const [where, str] of [["<title>", p.title], ["description", p.description], ["lede", lede], ["count line", countLine]]) {
         for (const m of str.matchAll(/\b(\d[\d,]*) (?:NYC )?burger spots?\b/g)) if (m[1] !== count(spots.length)) err(`${path} ${where}: "${m[0]}", but ${count(spots.length)} spots are within half a mile`);

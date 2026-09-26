@@ -365,12 +365,15 @@ export function rankingSeo(d: RankingSeoInput): Seo {
 /**
  * A landmark page (lib/landmarks.ts): "Burgers near Times Square: 36 burger spots (Sep 2026)" and "36 burger spots
  * within half a mile of Times Square (September 2026). Their priciest burgers run from $12.65 at … to $34.00 at …."
- * (the walk, "about a 10-minute walk", when it fits too). Spots and their priciest burger, never "the cheapest burger
- * near …".
+ * (the walk, "about a 10-minute walk", when it fits too). A long name gives way to its short form in the title, so the
+ * title keeps the count and the month: "Burgers near Penn Station & MSG: 33 burger spots (Sep 2026)". Spots and their
+ * priciest burger, never "the cheapest burger near …".
  */
 export function landmarkSeo(d: {
   /** The landmark in a sentence (landmarks.mjs `near`): "Times Square", "the Empire State Building". */
   near: string;
+  /** The shorter form for the title (landmarks.mjs `short`): "Penn Station & MSG". */
+  short?: string;
   spots: number;
   /** "half a mile", "about a 10-minute walk" (landmarks.ts RADIUS_WORDS, WALK_WORDS). */
   radius: string;
@@ -393,7 +396,12 @@ export function landmarkSeo(d: {
   const pairs: Array<[string, string | null]> = named && bare ? [[withWalk, named], [withoutWalk, named], [withWalk, bare], [withoutWalk, bare]] : [[withWalk, null]];
   const [lead, ends] = pairs.find(([l, e]) => l.length + (e ? 1 + e.length : 0) <= DESCRIPTION_MAX) ?? pairs[pairs.length - 1];
   return {
-    title: pickTitle([`${name}: ${pluralize(d.spots, "burger spot")} (${mon})`, `${name}: ${pluralize(d.spots, "spot")} (${mon})`, `${name} (${mon})`, name]),
+    title: pickTitle([
+      ...[name, d.short && `Burgers near ${d.short}`].flatMap((n) => (n ? [`${n}: ${pluralize(d.spots, "burger spot")} (${mon})`, `${n}: ${pluralize(d.spots, "spot")} (${mon})`] : [])),
+      `${name} (${mon})`,
+      d.short && `Burgers near ${d.short} (${mon})`,
+      name,
+    ]),
     description: assemble(lead, [ends, ["Nearest first, with each spot's burger, price and distance.", "Nearest first."]]),
   };
 }

@@ -4,12 +4,14 @@
 //
 // Each point is the landmark's coordinates as Wikipedia gives them (the article's primary coordinates, read on
 // 2026-09-26 from en.wikipedia.org/api/rest_v1/page/summary/<article>); the comment names the article, and what the
-// point is where the page covers two neighboring places. A page lists the priced burger spots within
-// LANDMARK_RADIUS_MILES of its point, as the crow flies, and exists only when at least MIN_LANDMARK_SPOTS are that
-// close (src/lib/landmarks.ts landmarksWithPages): DUMBO, Yankee Stadium, Citi Field and Coney Island have fewer today,
-// so they have no page until the dataset has more spots there. Places that are effectively one are one landmark
-// (Penn Station lies under Madison Square Garden; the 9/11 Memorial is the World Trade Center site; the Brooklyn
-// Bridge's Manhattan walkway starts at City Hall Park; the High Line runs along Chelsea Market's west side).
+// point is where the page covers two places. A page lists the priced burger spots within LANDMARK_RADIUS_MILES of
+// its point, as the crow flies, and exists only when at least MIN_LANDMARK_SPOTS are that close
+// (src/lib/landmarks.ts landmarksWithPages): DUMBO, Yankee Stadium, Citi Field and Coney Island have fewer today, so
+// they have no page until the dataset has more spots there. Places that are effectively one point are one landmark
+// (Penn Station lies under Madison Square Garden; the 9/11 Memorial is the World Trade Center site). A page names only
+// the place its one point measures: a long place (the High Line, 2.3 km; Central Park South, 0.8 km; the Brooklyn
+// Bridge, 1.8 km) is not within half a mile of one point along its length, so Chelsea Market, Columbus Circle and City
+// Hall are pages of their own names, and those long places have none.
 //
 // Slugs are URLs (/burgers-near/<slug>): never rename one without a redirect.
 
@@ -22,6 +24,8 @@
  * @property {string} slug the page's path segment: /burgers-near/<slug>
  * @property {string} name the landmark as a list row or breadcrumb: "Times Square", "Empire State Building"
  * @property {string} near the landmark inside a sentence, with its article: "Times Square", "the Empire State Building"
+ * @property {string} [short] a shorter `near` for the page's title, when `near` leaves no room there for the spot count
+ *   and the month: "Penn Station & MSG"
  * @property {LandmarkBorough} borough
  * @property {number} lat
  * @property {number} lng
@@ -43,6 +47,7 @@ export const LANDMARKS = Object.freeze([
     slug: "penn-station-madison-square-garden",
     name: "Penn Station and Madison Square Garden",
     near: "Penn Station and Madison Square Garden",
+    short: "Penn Station & MSG",
     borough: "Manhattan",
     lat: 40.75055556,
     lng: -73.99361111,
@@ -64,41 +69,21 @@ export const LANDMARKS = Object.freeze([
     slug: "world-trade-center",
     name: "World Trade Center and 9/11 Memorial",
     near: "the World Trade Center and the 9/11 Memorial",
+    short: "the World Trade Center",
     borough: "Manhattan",
     lat: 40.71166667,
     lng: -74.01361111,
   },
-  // Wikipedia "New York City Hall" (the Brooklyn Bridge's Manhattan walkway starts at the east side of City Hall Park).
-  {
-    slug: "city-hall-brooklyn-bridge",
-    name: "City Hall and the Brooklyn Bridge",
-    near: "City Hall and the Brooklyn Bridge",
-    borough: "Manhattan",
-    lat: 40.7127,
-    lng: -74.0059,
-  },
-  // Wikipedia "Columbus Circle" (Central Park South runs east from it).
-  {
-    slug: "columbus-circle",
-    name: "Columbus Circle and Central Park South",
-    near: "Columbus Circle and Central Park South",
-    borough: "Manhattan",
-    lat: 40.769,
-    lng: -73.982,
-  },
+  // Wikipedia "New York City Hall".
+  { slug: "city-hall", name: "City Hall", near: "City Hall", borough: "Manhattan", lat: 40.7127, lng: -74.0059 },
+  // Wikipedia "Columbus Circle".
+  { slug: "columbus-circle", name: "Columbus Circle", near: "Columbus Circle", borough: "Manhattan", lat: 40.769, lng: -73.982 },
   // Wikipedia "Lincoln Center".
   { slug: "lincoln-center", name: "Lincoln Center", near: "Lincoln Center", borough: "Manhattan", lat: 40.7725, lng: -73.9839 },
   // Wikipedia "Metropolitan Museum of Art" (the museum itself: Museum Mile runs on for 2 km, beyond the radius).
   { slug: "the-met", name: "The Met", near: "the Met", borough: "Manhattan", lat: 40.7794, lng: -73.9631 },
-  // Wikipedia "Chelsea Market" (the High Line runs along its west side).
-  {
-    slug: "chelsea-market-high-line",
-    name: "Chelsea Market and the High Line",
-    near: "Chelsea Market and the High Line",
-    borough: "Manhattan",
-    lat: 40.7425,
-    lng: -74.00611111,
-  },
+  // Wikipedia "Chelsea Market".
+  { slug: "chelsea-market", name: "Chelsea Market", near: "Chelsea Market", borough: "Manhattan", lat: 40.7425, lng: -74.00611111 },
   // Wikipedia "Vessel (structure)" (the centerpiece of Hudson Yards' public square).
   { slug: "hudson-yards", name: "Hudson Yards", near: "Hudson Yards", borough: "Manhattan", lat: 40.7538, lng: -74.0022 },
   // Wikipedia "Barclays Center".
@@ -110,6 +95,7 @@ export const LANDMARKS = Object.freeze([
     slug: "bedford-avenue-williamsburg",
     name: "Bedford Avenue L stop, Williamsburg",
     near: "the Bedford Avenue L stop in Williamsburg",
+    short: "the Bedford Ave L",
     borough: "Brooklyn",
     lat: 40.71772,
     lng: -73.95756,
