@@ -356,6 +356,31 @@ export function bestBurgersSeo(d: { name: string; places: number; leaders: reado
   };
 }
 
+/**
+ * The best value burgers (lib/peoples-price bestValue): "Best value burgers in NYC (Sep 2026)" and "12 NYC burgers
+ * whose People's Price, what visitors would pay, is 10% or more above the menu price. Emily leads: People's
+ * Price $31, menu price $24.00. People's Price as of Sep 25, 2026." The month and date are the snapshot's.
+ */
+export function bestValueSeo(d: {
+  name: string;
+  minGap: number;
+  rows: ReadonlyArray<{ name: string; people: number | null; price: number }>;
+  asOf: string;
+  asOfDay: string;
+}): Seo {
+  const mon = formatMonthYear(d.asOf, { short: true });
+  const top = d.rows[0];
+  return {
+    title: pickTitle([`${d.name} (${mon})`, d.name]),
+    description: assemble(
+      d.rows.length
+        ? `${pluralize(d.rows.length, "NYC burger")} whose People's Price, what visitors would pay, is ${d.minGap}% or more above the menu price.`
+        : `NYC burgers whose People's Price, what visitors would pay, is ${d.minGap}% or more above the menu price. None yet.`,
+      [top && top.people !== null ? `${top.name} leads: People's Price $${formatCount(top.people)}, menu price ${money(top.price)}.` : null, `People's Price as of ${d.asOfDay}.`],
+    ),
+  };
+}
+
 // ---- restaurants ---------------------------------------------------------------------------------
 
 export type RestaurantSeoInput = {

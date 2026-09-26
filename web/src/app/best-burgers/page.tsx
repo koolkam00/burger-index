@@ -9,6 +9,7 @@ import { getGeneratedAt, getPricedRestaurants, getStats } from "@/lib/data";
 import { formatCount, formatMonthYear, pluralize } from "@/lib/format";
 import { breadcrumbNode, itemListNode } from "@/lib/jsonld";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
+import { getSnapshotFigures, hasBestValuePage } from "@/lib/peoples-price-data";
 import { rankingSpecs } from "@/lib/rankings";
 import { bestBurgersSeo } from "@/lib/seo";
 import { SITE_NAME } from "@/lib/site";
@@ -16,6 +17,8 @@ import { SITE_NAME } from "@/lib/site";
 const entries = getBestBurgers();
 const years = getBestBurgersYears();
 const top = leaders(entries);
+/** Each priced place's People's Price in the daily snapshot, prerendered (lib/peoples-price). */
+const peoples = Object.fromEntries(entries.flatMap((e) => (e.menuKey ? [[e.menuKey, getSnapshotFigures(e.menuKey)]] : [])));
 
 export const metadata = pageMetadata({
   ...bestBurgersSeo({
@@ -60,7 +63,7 @@ export default function BestBurgersPage() {
       <div className="wrap">
         <section className="mt-2" aria-label={BEST_BURGERS_NAME}>
           <p className="t-ui-m mb-4 text-balance">Ranked by how many publications named each place on a best-burger list in {span}.</p>
-          <BestBurgerList entries={entries} median={getStats().index_median} />
+          <BestBurgerList entries={entries} median={getStats().index_median} peoples={peoples} />
           <p className="t-ui-s muted mt-3">All {formatCount(entries.length)} places on this list, most publications first.</p>
         </section>
 
@@ -74,7 +77,7 @@ export default function BestBurgersPage() {
         <section className="section" aria-labelledby="more-rankings">
           <SectionHeading id="more-rankings" title="More burger rankings." />
           <div className="mt-6">
-            <RankingLinks current={BEST_BURGERS_PATH} available={rankingSpecs(getPricedRestaurants())} />
+            <RankingLinks current={BEST_BURGERS_PATH} available={rankingSpecs(getPricedRestaurants())} bestValue={hasBestValuePage()} />
           </div>
         </section>
       </div>

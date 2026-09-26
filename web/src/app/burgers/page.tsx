@@ -11,6 +11,7 @@ import { formatCount, formatPrice } from "@/lib/format";
 import { breadcrumbNode } from "@/lib/jsonld";
 import { menusByIndexPrice, menusByIndexPriceDesc } from "@/lib/menus";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
+import { hasBestValuePage } from "@/lib/peoples-price-data";
 import { rankingSpecs } from "@/lib/rankings";
 import { burgersSeo } from "@/lib/seo";
 import { SITE_NAME } from "@/lib/site";
@@ -59,7 +60,7 @@ export default function BurgersPage() {
         <section className="section" aria-labelledby="rankings">
           <SectionHeading id="rankings" title="Burger rankings." />
           <div className="mt-6">
-            <RankingLinks available={rankingSpecs(getPricedRestaurants())} />
+            <RankingLinks available={rankingSpecs(getPricedRestaurants())} bestValue={hasBestValuePage()} />
           </div>
         </section>
       </div>

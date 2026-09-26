@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { getGeneratedAt, getIndexMedian } from "@/lib/data";
 import { formatPrice } from "@/lib/format";
 import { OG_IMAGE, SITE_URL } from "@/lib/metadata";
+import { hasBestValuePage } from "@/lib/peoples-price-data";
 import { SITE_NAME } from "@/lib/site";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme-script";
 import "./globals.css";
@@ -69,7 +70,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main id="main" tabIndex={-1} className="outline-none">
           {children}
         </main>
-        <SiteFooter generatedAt={getGeneratedAt()} />
+        <SiteFooter generatedAt={getGeneratedAt()} bestValue={hasBestValuePage()} />
       </body>
     </html>
   );

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/JsonLd";
+import { PeoplesPriceNote } from "@/components/worth/PeoplesPriceNote";
 import { WorthPicker } from "@/components/worth/WorthPicker";
 import { repeatedNames } from "@/components/RestaurantBits";
 import { OutboundLink, SeeOnMapLink } from "@/components/RestaurantLinks";
@@ -24,6 +25,7 @@ import { breadcrumbNode, restaurantNode } from "@/lib/jsonld";
 import { PRICE_SOURCE_LABEL } from "@/lib/labels";
 import { hasOtherMenus, menuKey, menusByIndexPrice } from "@/lib/menus";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
+import { getSnapshotFigures } from "@/lib/peoples-price-data";
 import type { PricedRestaurant } from "@/lib/schema";
 import { restaurantSeo, sharedTitleIds } from "@/lib/seo";
 import { atLeastOneParam, BOROUGHS_HREF, PLACEHOLDER_PARAM } from "@/lib/site";
@@ -215,11 +217,13 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
         {r.hand_check ? <HandCheckNote checkedOn={r.hand_check.checked_on} /> : null}
 
         {/* "What's it worth?": visitors name their price for the menu's burger (a chain's locations
-            share one menu, so one People's Price). The board links here by the section's id. */}
+            share one menu, so one People's Price). The board links here by the section's id. Under the card,
+            the People's Price sentence from the daily snapshot (3+ answers), in the static HTML. */}
         <section id={WORTH_ANCHOR} className="section" aria-labelledby="worth-title">
           <SectionHeading id="worth-title" kicker="What's it worth?" icon={Scales} title="What would you pay?" />
           <div className="mt-6 max-w-3xl">
             <WorthPicker menuKey={menuKey(r)} restaurantId={r.id} burger={burger.name} price={price} />
+            <PeoplesPriceNote menuKey={menuKey(r)} snapshot={getSnapshotFigures(menuKey(r))} />
           </div>
         </section>
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BEST_BURGERS_NAME, BEST_BURGERS_PATH } from "@/lib/best-burgers";
 import { CSV_LICENSE, CSV_PATH } from "@/lib/csv";
 import { formatDate } from "@/lib/format";
+import { BEST_VALUE_NAME, BEST_VALUE_PATH } from "@/lib/peoples-price";
 import { CITY_RANKINGS, rankingName, rankingPath } from "@/lib/rankings";
 import { sourceLine } from "@/lib/seo";
 import { NAV } from "@/lib/site";
@@ -10,9 +11,10 @@ import { Wordmark } from "./Wordmark";
 
 /**
  * The deck: a rope rail, then dark stained deck planks. The source line, the non-affiliation line, the
- * CSV link with its license and the NYC ranking pages ship on every page.
+ * CSV link with its license and the NYC ranking pages ship on every page (with the best value burgers while
+ * that page exists: `bestValue`).
  */
-export function SiteFooter({ generatedAt }: { generatedAt: string }) {
+export function SiteFooter({ generatedAt, bestValue = false }: { generatedAt: string; bestValue?: boolean }) {
   return (
     <footer className="site-footer atmo">
       <span className="rope rope-flat" aria-hidden="true" />
@@ -76,6 +78,13 @@ export function SiteFooter({ generatedAt }: { generatedAt: string }) {
                     {BEST_BURGERS_NAME}
                   </Link>
                 </li>
+                {bestValue ? (
+                  <li className="text-balance">
+                    <Link className="deck-link" href={BEST_VALUE_PATH}>
+                      {BEST_VALUE_NAME}
+                    </Link>
+                  </li>
+                ) : null}
               </ul>
             </nav>
           </div>

@@ -13,6 +13,7 @@ import { getGeneratedAt, getPricedRestaurants, getStats } from "@/lib/data";
 import { formatCount, formatMonthYear } from "@/lib/format";
 import { breadcrumbNode, itemListNode, type Crumb } from "@/lib/jsonld";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
+import { hasBestValuePage } from "@/lib/peoples-price-data";
 import { explorerHref, rankingIn, rankingName, rankingPath, rankingPlace, rankingShortName, rankingSpecs, rankMenus, topTied, type RankingSpec } from "@/lib/rankings";
 import { rankingSeo } from "@/lib/seo";
 import { Anchor, Net, OrderBell, Spatula } from "./icons/nautical";
@@ -121,7 +122,7 @@ export function RankingPage({ spec }: { spec: RankingSpec }) {
         <section className="section" aria-labelledby="more-rankings">
           <SectionHeading id="more-rankings" title="More burger rankings." />
           <div className="mt-6">
-            <RankingLinks current={path} available={rankingSpecs(restaurants)} neighborhood={spec.neighborhood} />
+            <RankingLinks current={path} available={rankingSpecs(restaurants)} neighborhood={spec.neighborhood} bestValue={hasBestValuePage()} />
           </div>
         </section>
       </div>

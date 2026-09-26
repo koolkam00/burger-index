@@ -3,10 +3,12 @@ import { getBestBurgers, getBestBurgersYears } from "@/lib/best-burgers-data";
 import { getBoroughs, getGeneratedAt, getMenuCounts, getNeighborhoodPages, getPricedRestaurants, getStats, rankedNeighborhoods } from "@/lib/data";
 import { CSV_LICENSE, CSV_PATH } from "@/lib/csv";
 import { llmsTxt } from "@/lib/llms";
-import { formatCount, formatPrice, spreadEnds } from "@/lib/format";
+import { formatCount, formatDate, formatPrice, spreadEnds } from "@/lib/format";
 import { menusByIndexPrice, menusByIndexPriceDesc, type Menu } from "@/lib/menus";
 import { rankingName, rankingPath, rankingSpecs, rankMenus, type RankingSpec } from "@/lib/rankings";
 import { SITE_URL } from "@/lib/metadata";
+import { BEST_VALUE_MIN_GAP, BEST_VALUE_NAME, BEST_VALUE_PATH } from "@/lib/peoples-price";
+import { getBestValue } from "@/lib/peoples-price-data";
 import { sourceLine } from "@/lib/seo";
 
 // Static export writes this to out/llms.txt (llmstxt.org): the headline numbers, the date and links.
@@ -44,6 +46,15 @@ function bestBurgersNote(): string {
   return `${formatCount(entries.length)} places ranked by how many publications named them on a best-burger list in ${years.from}–${years.to}, with the menu price${lead}`;
 }
 
+/** "12 burgers whose People's Price (what visitors would pay) is 10% or more above the menu price, as of Sep 25, 2026; Emily leads: People's Price $31, menu price $24.00" */
+function bestValueNote(): string | undefined {
+  const bv = getBestValue();
+  if (!bv) return undefined;
+  const top = bv.rows[0];
+  const lead = top && top.people !== null ? `; ${top.name} leads: People's Price $${formatCount(top.people)}, menu price ${formatPrice(top.price, { cents: "always" })}` : "";
+  return `${formatCount(bv.rows.length)} ${bv.rows.length === 1 ? "burger" : "burgers"} whose People's Price (what visitors would pay) is ${BEST_VALUE_MIN_GAP}% or more above the menu price, as of ${formatDate(bv.asOf)}${lead}`;
+}
+
 export function GET() {
   const stats = getStats();
   const restaurants = getPricedRestaurants();
@@ -76,6 +87,7 @@ export function GET() {
         links: [
           ...rankingSpecs(restaurants).map((spec) => ({ title: rankingName(spec), path: rankingPath(spec), note: rankingNote(spec, restaurants) })),
           { title: BEST_BURGERS_NAME, path: BEST_BURGERS_PATH, note: bestBurgersNote() },
+          ...(getBestValue() ? [{ title: BEST_VALUE_NAME, path: BEST_VALUE_PATH, note: bestValueNote() }] : []),
         ],
       },
     ],

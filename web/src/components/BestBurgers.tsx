@@ -1,12 +1,14 @@
 // The most-recommended burgers (DESIGN.md "The most-recommended burgers page"): one row per place, in rank
 // order, a data zone. Each row: the rank, the place (linked to its restaurant page when it has a price),
 // its neighborhood and how many publications named it; the menu price and burger (linked to the page's
-// burger block) or "Not priced"; the People's Price (client, read-only); and every list that names it,
+// burger block) or "Not priced"; the People's Price (the daily snapshot's, prerendered, then live and
+// read-only in the browser); and every list that names it,
 // with its publisher and date. The lists' own words are never shown: titles, names and dates only.
 // Server-safe: the page passes the ranked entries (lib/best-burgers-data.ts).
 import Link from "next/link";
 import { formatListDate, type BestEntry, type BestList } from "@/lib/best-burgers";
 import { formatCount, pluralize } from "@/lib/format";
+import type { PeoplesPriceFigures } from "@/lib/peoples-price";
 import { PeoplesPriceFact, PeoplesPriceLoader } from "./worth/PeoplesPriceFact";
 import { PriceChip } from "./ui";
 
@@ -27,7 +29,11 @@ function SourceLine({ list, burger }: { list: BestList; burger: string | null })
   );
 }
 
-export function BestBurgerList({ entries, median }: { entries: readonly BestEntry[]; median: number | null }) {
+/**
+ * `peoples` holds each priced place's People's Price figures from the daily snapshot (by menu key; none without
+ * a snapshot): prerendered, then replaced by the live numbers.
+ */
+export function BestBurgerList({ entries, median, peoples }: { entries: readonly BestEntry[]; median: number | null; peoples: Readonly<Record<string, PeoplesPriceFigures | null>> }) {
   const keys = [...new Set(entries.flatMap((e) => (e.menuKey ? [e.menuKey] : [])))];
   return (
     <div className="best-shell">
@@ -73,7 +79,7 @@ export function BestBurgerList({ entries, median }: { entries: readonly BestEntr
               </div>
               {r && e.menuKey ? (
                 <div className="best-people min-w-0">
-                  <PeoplesPriceFact menuKey={e.menuKey} menuPrice={r.index_price} restaurantId={r.id} labelId={`people-${e.key}`} />
+                  <PeoplesPriceFact menuKey={e.menuKey} restaurantId={r.id} labelId={`people-${e.key}`} snapshot={peoples[e.menuKey] ?? null} />
                 </div>
               ) : null}
               <div className="best-sources min-w-0">
