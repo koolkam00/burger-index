@@ -392,3 +392,25 @@ test("a restaurant page's add to a full list says so; a failed load waits for 'T
   assert.deepEqual(s.draft, ["a"]);
   assert.deepEqual(s.linkAdd, { key: "a", kind: "added", position: 1 });
 });
+
+test("a link's add is said once per outcome: a ranker that mounts again (a return to home) finds it already said", async () => {
+  const { store } = setup();
+  await started(store);
+  store.addFromLink("c");
+  const added = store.getSnapshot().linkAdd;
+  assert.deepEqual(added, { key: "c", kind: "added", position: 1 });
+  assert.equal(store.claimLinkAdd(added!), true, "the first ranker to ask says it (and tracks it)");
+  assert.equal(store.claimLinkAdd(added!), false, "a remounted ranker, or the effect again: shown on the card, not said again");
+  assert.deepEqual(store.getSnapshot().linkAdd, added, "the note stays on the card");
+  // the same link again is a new outcome (already there): said once
+  store.addFromLink("c");
+  const again = store.getSnapshot().linkAdd;
+  assert.deepEqual(again, { key: "c", kind: "already", position: 1 });
+  assert.equal(store.claimLinkAdd(added!), false, "an outcome no longer current is never said");
+  assert.equal(store.claimLinkAdd(again!), true);
+  assert.equal(store.claimLinkAdd(again!), false);
+  // a change clears the note: nothing left to say
+  store.add("a");
+  assert.equal(store.getSnapshot().linkAdd, null);
+  assert.equal(store.claimLinkAdd(again!), false);
+});

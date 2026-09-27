@@ -115,16 +115,17 @@ export function linkAddOutcome(list: readonly string[], key: string, known: (key
 /**
  * The card's line (and the announcement) for a link's add: "Emily added at #4. 4 burgers on your list." (to a saved
  * list, which is now being edited: "Emily added at #5. Save changes to keep it."), "Emily is already on your list, at #2.",
- * "Your list is full: 25 burgers. Remove one to add Emily." or "That burger is no longer on the Burger Index."
+ * "Your list is full: 25 burgers. Remove one to add Emily." (in the saved view, which has no remove buttons: "Your list is
+ * full: 25 burgers. Edit your list and remove one to add Emily.") or "That burger is no longer on the Burger Index."
  */
-export function linkAddText(r: LinkAdd, label: string, editingSaved: boolean): string {
+export function linkAddText(r: LinkAdd, label: string, editingSaved: boolean, view: "edit" | "saved" = "edit"): string {
   switch (r.kind) {
     case "added":
       return editingSaved ? `${label} added at #${r.position}. Save changes to keep it.` : `${label} added at #${r.position}. ${pluralize(r.position, "burger")} on your list.`;
     case "already":
       return `${label} is already on your list, at #${r.position}.`;
     case "full":
-      return `Your list is full: ${MAX_ITEMS} burgers. Remove one to add ${label}.`;
+      return `Your list is full: ${MAX_ITEMS} burgers. ${view === "saved" ? "Edit your list and remove" : "Remove"} one to add ${label}.`;
     case "gone":
       return "That burger is no longer on the Burger Index.";
   }

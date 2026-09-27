@@ -263,6 +263,10 @@ test("adding from a link: at the end when there is room, else it says why; the w
   assert.equal(linkAddText({ key: "sals", kind: "added", position: 6 }, "Sal's", true), "Sal's added at #6. Save changes to keep it.");
   assert.equal(linkAddText({ key: "sals", kind: "already", position: 2 }, "Sal's", true), "Sal's is already on your list, at #2.");
   assert.equal(linkAddText({ key: "sals", kind: "full" }, "Sal's", false), "Your list is full: 25 burgers. Remove one to add Sal's.");
+  // the saved view has no remove buttons: it says to edit first
+  assert.equal(linkAddText({ key: "sals", kind: "full" }, "Sal's", false, "edit"), "Your list is full: 25 burgers. Remove one to add Sal's.");
+  assert.equal(linkAddText({ key: "sals", kind: "full" }, "Sal's", false, "saved"), "Your list is full: 25 burgers. Edit your list and remove one to add Sal's.");
+  assert.equal(linkAddText({ key: "sals", kind: "already", position: 2 }, "Sal's", true, "saved"), "Sal's is already on your list, at #2.");
   assert.equal(linkAddText({ key: "gone", kind: "gone" }, "A burger no longer listed", false), "That burger is no longer on the Burger Index.");
 });
 

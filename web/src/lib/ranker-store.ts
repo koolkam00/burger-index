@@ -108,6 +108,11 @@ export type RankerStore = {
    * list is then being edited). `linkAdd` says what happened.
    */
   addFromLink(key: string): void;
+  /**
+   * The ranker says and tracks a link's add once: true the first time it asks about the current `linkAdd`, false after
+   * (the ranker mounted again on a return to home, or its effect ran twice) and for an outcome no longer current.
+   */
+  claimLinkAdd(outcome: LinkAdd): boolean;
   /** Edit the saved list. */
   edit(): void;
   /** Drop the changes and show the saved list again. */
@@ -156,6 +161,8 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
   /** A burger a link asked to add, waiting for the burgers and the saved list. */
   let pendingAdd: string | null = null;
   let linkAdd: LinkAdd | null = null;
+  /** The ranker has said (and tracked) `linkAdd`. Kept here, not in the component, so a remount doesn't say it again. */
+  let linkAddSaid = false;
 
   const isDirty = () => (saved ? !sameList(draft, saved.items) : draft.length > 0);
   const snapshotOf = (): RankerSnapshot => ({ started, menus, burgers, mine, saved, view, draft, dirty: isDirty(), busy, failure, notice, confirmDelete, linkAdd });
@@ -223,6 +230,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     const outcome = linkAddOutcome(draft, key, (k) => burgers.has(k));
     if (outcome.kind === "added") change([...draft, key]);
     linkAdd = outcome;
+    linkAddSaid = false;
     emit();
   }
 
@@ -317,6 +325,12 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
       if (!isMenuKey(key)) return;
       pendingAdd = key;
       settleLinkAdd();
+    },
+
+    claimLinkAdd(outcome) {
+      if (outcome !== linkAdd || linkAddSaid) return false;
+      linkAddSaid = true;
+      return true;
     },
 
     edit() {

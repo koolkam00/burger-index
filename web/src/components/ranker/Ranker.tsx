@@ -28,7 +28,6 @@ import {
   searchBurgers,
   TOP_N,
   withoutAddParam,
-  type LinkAdd,
   type RankerBurger,
 } from "@/lib/ranker";
 import { rankerStore, type RankerSnapshot } from "@/lib/ranker-store";
@@ -85,6 +84,33 @@ export function Ranker({ median, board }: { median: number | null; board: Reveal
     setFocusTick((n) => n + 1);
   };
 
+  // What a link's add did: said once in the live region (the card shows the same words), and an added burger is tracked
+  // like one added from the search (surface "restaurant_page"). Once per outcome, not per mount: the store remembers that
+  // it was said (claimLinkAdd), so coming back to home (the ranker mounts again) shows the note without saying or tracking
+  // it again. Listens to the store (subscribed before the add below starts), and checks once on mount for an outcome
+  // that settled while no ranker was listening.
+  useEffect(() => {
+    if (!RANKER_ENABLED) return;
+    const sayLinkAdd = () => {
+      const s = rankerStore.getSnapshot();
+      const r = s.linkAdd;
+      if (!r || !rankerStore.claimLinkAdd(r)) return;
+      let text = linkAddText(r, nameOf(s.burgers.get(r.key)), s.saved !== null, s.view);
+      if (r.kind === "added") {
+        const before = s.draft.filter((k) => k !== r.key);
+        if (!(s.saved ? !sameList(before, s.saved.items) : before.length > 0)) track("ranking_started", { edited: s.saved !== null });
+        track("ranking_item_added", { menu_key: r.key, position: r.position, surface: "restaurant_page" });
+        if (!revealAnnounced.current && !showsReveal(r.position - 1) && showsReveal(r.position)) {
+          revealAnnounced.current = true;
+          text += ` ${revealAnnouncement(board)}`;
+        }
+      }
+      setAnnounce((prev) => (prev === text ? `${text} ` : text));
+    };
+    sayLinkAdd();
+    return rankerStore.subscribe(sayLinkAdd);
+  }, [board]);
+
   useEffect(() => {
     if (!RANKER_ENABLED) return;
     rankerStore.start();
@@ -95,26 +121,6 @@ export function Ranker({ median, board }: { median: number | null; board: Reveal
     const key = addParam(search);
     if (key) rankerStore.addFromLink(key);
   }, []);
-
-  // What a link's add did: said once in the live region (the card shows the same words), and an added burger is tracked
-  // like one added from the search (surface "restaurant_page").
-  const saidLinkAdd = useRef<LinkAdd | null>(null);
-  useEffect(() => {
-    const r = snap.linkAdd;
-    if (!r || saidLinkAdd.current === r) return;
-    saidLinkAdd.current = r;
-    let text = linkAddText(r, nameOf(snap.burgers.get(r.key)), snap.saved !== null);
-    if (r.kind === "added") {
-      const before = snap.draft.filter((k) => k !== r.key);
-      if (!(snap.saved ? !sameList(before, snap.saved.items) : before.length > 0)) track("ranking_started", { edited: snap.saved !== null });
-      track("ranking_item_added", { menu_key: r.key, position: r.position, surface: "restaurant_page" });
-      if (!revealAnnounced.current && !showsReveal(r.position - 1) && showsReveal(r.position)) {
-        revealAnnounced.current = true;
-        text += ` ${revealAnnouncement(board)}`;
-      }
-    }
-    setAnnounce((prev) => (prev === text ? `${text} ` : text));
-  }, [snap.linkAdd, snap.burgers, snap.saved, snap.draft, board]);
 
   // After a step the visitor took, focus what it shows (only while focus is in the card, or was dropped
   // with a control that went away).
@@ -507,7 +513,7 @@ function SavedRow({ rank, burger, menus }: { rank: number; burger: RankerBurger 
 function LinkAddNote({ snap }: { snap: RankerSnapshot }) {
   const r = snap.linkAdd;
   if (!r) return null;
-  const text = linkAddText(r, nameOf(snap.burgers.get(r.key)), snap.saved !== null);
+  const text = linkAddText(r, nameOf(snap.burgers.get(r.key)), snap.saved !== null, snap.view);
   const ok = r.kind === "added" || r.kind === "already";
   return (
     <p className="t-ui-m ranker-link-note mt-3">
@@ -528,6 +534,8 @@ function ExtraRule() {
 
 /** A row being dragged: which one, where it began and where it would land now. */
 type DragState = { key: string; from: number; to: number };
+/** How far (px) the pointer moves from where it pressed the grip before the press is a drag. */
+const DRAG_START = 5;
 
 /**
  * Drag to reorder, with a mouse (DESIGN.md "The ranker hero": a grip at the row's start where the pointer is fine and
@@ -535,8 +543,10 @@ type DragState = { key: string; from: number; to: number };
  * While a row is dragged the rows are shown in the order they would have after the drop (CSS `order`, so the DOM, its
  * keys and the captured grip stay put), numbered that way, with the "Beyond your top 10" rule at the #10/#11 boundary;
  * the dragged row sits in its landing place, nudged to follow the pointer inside the list (`dragTop`). Where it lands
- * comes from the pointer and the rows' midpoints when the drag began (`dragIndex`). The page scrolls near the window's edge; Escape or a
- * cancelled pointer puts it back; the drop moves it (`onDrop`, announced like an arrow move). Nothing animates.
+ * comes from the pointer and the rows' midpoints when the drag began (`dragIndex`). A press is a drag only once the pointer
+ * has moved `DRAG_START` px: a click on the grip, or a press let go where it began, moves nothing. The page scrolls while
+ * the pointer is near the window's bottom edge or just under the sticky header; Escape or a cancelled pointer puts it
+ * back; the drop moves it (`onDrop`, announced like an arrow move). Nothing animates.
  */
 function useDragToReorder(onDrop: (key: string, to: number) => void, disabled: boolean) {
   const listRef = useRef<HTMLOListElement>(null);
@@ -553,6 +563,11 @@ function useDragToReorder(onDrop: (key: string, to: number) => void, disabled: b
     top: number;
     bottom: number;
     clientY: number;
+    /** Where the press began (viewport), and whether the pointer has since moved far enough to make it a drag. */
+    startY: number;
+    moving: boolean;
+    /** The sticky header's bottom (viewport) when the drag started: the band that scrolls the page up starts there. */
+    topEdge: number;
     raf: number;
     /** The dragged row's translateY now. */
     shift: number;
@@ -583,7 +598,8 @@ function useDragToReorder(onDrop: (key: string, to: number) => void, disabled: b
     const d = info.current;
     if (!d) return;
     const edge = 64;
-    const step = d.clientY < edge ? -Math.ceil((edge - d.clientY) / 4) : d.clientY > window.innerHeight - edge ? Math.ceil((d.clientY - window.innerHeight + edge) / 4) : 0;
+    const top = d.topEdge + edge;
+    const step = d.clientY < top ? -Math.ceil((top - d.clientY) / 4) : d.clientY > window.innerHeight - edge ? Math.ceil((d.clientY - window.innerHeight + edge) / 4) : 0;
     if (step) {
       window.scrollBy(0, step);
       update();
@@ -591,9 +607,10 @@ function useDragToReorder(onDrop: (key: string, to: number) => void, disabled: b
     d.raf = requestAnimationFrame(scrollNearEdge);
   };
   const end = (drop: boolean) => {
-    const now = place();
     const d = info.current;
     if (!d) return;
+    // A press that never moved far enough was not a drag: nothing lands.
+    const now = d.moving ? place() : null;
     cancelAnimationFrame(d.raf);
     listRef.current?.querySelector<HTMLElement>(`[data-row="${CSS.escape(d.key)}"]`)?.style.removeProperty("transform");
     info.current = null;
@@ -639,14 +656,24 @@ function useDragToReorder(onDrop: (key: string, to: number) => void, disabled: b
         top: rects[0].top + y,
         bottom: rects[rects.length - 1].bottom + y,
         clientY: e.clientY,
-        raf: requestAnimationFrame(scrollNearEdge),
+        startY: e.clientY,
+        moving: false,
+        topEdge: 0,
+        raf: 0,
         shift: 0,
       };
-      setDrag(place());
     },
     onPointerMove(e: ReactPointerEvent<HTMLSpanElement>) {
-      if (!info.current) return;
-      info.current.clientY = e.clientY;
+      const d = info.current;
+      if (!d) return;
+      d.clientY = e.clientY;
+      if (!d.moving) {
+        // Not a drag until the pointer has moved: only then does the row lift and the page scroll near an edge.
+        if (Math.abs(e.clientY - d.startY) < DRAG_START) return;
+        d.moving = true;
+        d.topEdge = Math.max(0, document.querySelector(".site-header")?.getBoundingClientRect().bottom ?? 0);
+        d.raf = requestAnimationFrame(scrollNearEdge);
+      }
       update();
     },
     onPointerUp: () => end(true),

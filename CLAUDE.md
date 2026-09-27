@@ -252,7 +252,8 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   (`#rank`, full width, above the H1 "What a burger costs in New York.", user decision 2026-09-26; DESIGN.md "The ranker
   hero"): search the priced burgers (distinct menus, a chain once), add 3 to 25 best first
   ("your top 10", room for more), move them with up/down buttons (or, with a mouse, drag them by a grip at the row's start:
-  user decision 2026-09-26, pointer only, from 480px where the pointer is fine and hovers), remove them, save; a returning browser sees its saved
+  user decision 2026-09-26, pointer only, from 480px where the pointer is fine and hovers; a press is a drag only after
+  5px of movement), remove them, save; a returning browser sees its saved
   list and can edit or delete it. `components/ranker/Ranker.tsx` (UI), `src/lib/ranker-store.ts` (state as an external
   store; an unsaved list in `sessionStorage` `bi-ranker-draft`, `localStorage` `bi-ranker-saved` = this browser has a saved
   list, which the `<head>` script turns into `html.ranker-saved`: a skeleton instead of an empty list until it loads),
@@ -272,7 +273,9 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   key once, drops it from the address, and once the burgers and the saved list are known adds it at the end if there is
   room (a saved list is then being edited: "Save changes"), saying so on the card and in its live region ("Emily added at
   #4. 4 burgers on your list.", "… is already on your list, at #2.", "Your list is full: 25 burgers. Remove one to add
-  …"); `check:seo` checks every restaurant page's link. Without the Supabase settings the card says "Lists open soon.",
+  …", in the saved view "… Edit your list and remove one to add …"); the live region and `ranking_item_added` fire once
+  per add (`claimLinkAdd` in the store, so a remount on a return to home repeats neither); `check:seo` checks every
+  restaurant page's link. Without the Supabase settings the card says "Lists open soon.",
   fetches nothing, and restaurant pages have no "Add to your top 10". The header's "Rank your burgers" (and the menu sheet's) links to `/#rank` from every page; on home it
   scrolls to the ranker and focuses it; the search icon button sits next to it at every width. Under the home board:
   "See the People's Top 10" and "Most-recommended burgers". Menu keys and restaurant ids must never change (lists are
