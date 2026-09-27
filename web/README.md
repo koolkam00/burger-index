@@ -102,11 +102,13 @@ fetches nothing.
   first save. Tested in `test/voter.test.ts`.
 - `src/lib/ranker-api.ts`: the only module that talks to Supabase. `@supabase/supabase-js` is imported lazily on the first call,
   so it is its own chunk and loads only when the ranker needs it: a returning browser's saved list on mount, else the first
-  save. A save left waiting when the page closes goes as a keepalive `fetch` instead (`saveRankingOnUnload`). Refusals come back as HTTP 400 (SQLSTATE 22023) and rate limits as 429 (PT429), each with a stable `hint` code.
+  save. When the page closes, the newest list still waiting or on its way goes again as a keepalive `fetch` (`saveRankingOnUnload`). Refusals come back as HTTP 400 (SQLSTATE 22023) and rate limits as 429 (PT429), each with a stable `hint` code.
 - `src/lib/ranker.ts`: pure helpers: the list's limits and edits, the burgers as the ranker shows them (a chain at its usual
   location with "N locations"; a name two menus share gets its neighborhood), search (accents and dots folded), the replies
   checked, the status line (`autosaveLine`: a failure, a burger gone, "Add 2 more to save your list.", "Saving…", then what
-  the saved list counts for), autosave's timing (`AUTOSAVE_DELAY` 2 s, `retryDelay` 5 s, 15 s, then every minute) and the error copy, and a restaurant page's "Add to your top 10" (`addParam`, `withoutAddParam`,
+  the saved list counts for), autosave's timing (`AUTOSAVE_DELAY` 2 s, `retryDelay` 5 s, 15 s, then every minute;
+  `retriesSave`: the network always, an odd reply 3 times, the hourly budget once the hour turns, `untilNextHour`), the
+  failure copy (`saveFailureText`: what saves the list, since there is no button, and "Your saved list is unchanged.") and the error copy, and a restaurant page's "Add to your top 10" (`addParam`, `withoutAddParam`,
   `linkAddOutcome`, `linkAddText`; the link itself is `rankerAddHref` in `src/lib/site.ts`), and drag to reorder with a
   mouse (`dragIndex`: where a dragged row lands; `dragTop`: where it is drawn; the pointer handling is `useDragToReorder` in
   `components/ranker/Ranker.tsx`, a grip shown only for a fine, hovering pointer from 480px). Tested in `test/ranker.test.ts`.
@@ -114,8 +116,11 @@ fetches nothing.
   its **autosave**: 2 s after the last change once the list can be saved, one save at a time (a change made meanwhile goes
   right after it; a reply only records the list it saved), never the list the backend already holds, a network failure
   tried again (5 s, 15 s, every minute), a refusal not until the next change, a waiting save sent at once when the page is
-  hidden and as a keepalive request when it closes, a replaced list saved again on load, and a delete that waits for a save
-  on its way. An unsaved list is kept in `sessionStorage` (`bi-ranker-draft`), and `localStorage` `bi-ranker-saved` says
+  hidden and the newest list as a keepalive request when it closes (even with a save on its way), a check of the saved list
+  after a return from the back-forward cache or another tab's delete (its `storage` event; a waiting save never brings a
+  deleted list back), a `replaced` list saved again only after a change or "Count it again" (`countAgain`), a delete that
+  waits for a save on its way (and, when it fails, lets the change it held back save), and `takeSave` (each save handed out
+  once, for `ranking_saved`). An unsaved list is kept in `sessionStorage` (`bi-ranker-draft`), and `localStorage` `bi-ranker-saved` says
   this browser has a saved list, which the `<head>` script turns into `html.ranker-saved` (a skeleton, not an empty list,
   until the saved one loads). Every storage access is wrapped. `addFromLink` holds a restaurant page's burger until the
   burgers and the saved list are known, then adds it (or says it is there already, or the list is full) as `linkAdd`.
@@ -248,7 +253,7 @@ there is no banner, and surveys, product tours and the conversations widget are 
 | `ranking_started` | `edited` (the list being changed was saved before) | the first change to the list in the home ranker, once per page view |
 | `ranking_item_added` | `menu_key`, `position` (1-based: the list's new length), `surface` (`search`, or `restaurant_page`: added from a restaurant page's "Add to your top 10") | "Add" in the ranker's search, or the ranker adding a restaurant page's burger (`/?add=<menu key>`) once it can |
 | `add_to_list_clicked` | `menu_key`, `restaurant_id` | "Add to your top 10" on a restaurant page (`components/RestaurantLinks.tsx`) |
-| `ranking_saved` | `length`, `edited` (a saved list was changed) | the first autosave of a page view that Supabase saved (at most once per page view: later autosaves send nothing) |
+| `ranking_saved` | `length`, `edited` (a saved list was changed) | the first autosave of a page view that Supabase saved (at most once per page view: later autosaves send nothing; one that landed while the ranker was unmounted is sent by its next mount) |
 | `ranking_deleted` | `length` | "Delete my list", confirmed and done |
 | `peoples_top_clicked` | `surface` (`nav`, `menu_sheet`, `ranker`, `home`), `from_path` (the path only: no query, no hash) | a link to the People's Top 10 in the header nav, the menu sheet, the ranker card (its top line, or "See the full People's Top 10" beside a list) or under the home board |
 | `peoples_top_revealed` | `surface` (`ranker`), `list_length` | the home ranker first shows the People's Top 10 beside a list of 3+ (added, or a saved or restored list on load), once per page view |

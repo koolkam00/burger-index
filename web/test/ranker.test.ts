@@ -8,10 +8,11 @@ import {
   classifyRankerError,
   autosaveLine,
   AUTOSAVE_DELAY,
-  firstSaveTracker,
-  isTransient,
+  retriesSave,
   retryDelay,
   saveFailureText,
+  saveRetryDelay,
+  untilNextHour,
   dragIndex,
   dragTop,
   linkAddOutcome,
@@ -147,25 +148,39 @@ test("autosave's status line: a failure, a gone burger, what's still needed, sav
   assert.deepEqual(line({ length: 2, saved: counting, dirty: true, problem: "too_short" }), { text: "Add 1 more to save your changes. Your saved list is unchanged.", alert: false });
   assert.deepEqual(line({ length: 0, saved: counting, dirty: true, problem: "too_short" }), { text: "Add 3 more to save your changes. Your saved list is unchanged.", alert: false });
   assert.deepEqual(line({ deleted: true }), { text: "Your list was deleted.", alert: false });
-  // failures first: one tried again says so; a refusal is the backend's words
+  // failures first: one tried again says so; a refusal says what saves it (no button to press), and that a saved list is unchanged
   assert.deepEqual(line({ length: 3, dirty: true, saving: true, failure: { kind: "network", retrying: true } }), { text: "Couldn't reach the counter. Trying again soon.", alert: true });
-  assert.deepEqual(line({ length: 3, dirty: true, failure: { kind: "rate_voter", retrying: false } }), { text: "You've saved your list a lot today. Try again tomorrow.", alert: true });
+  assert.deepEqual(line({ length: 3, dirty: true, failure: { kind: "rate_voter", retrying: false } }), { text: "You've saved your list a lot today. Change it again tomorrow to save it.", alert: true });
+  assert.deepEqual(line({ length: 4, saved: counting, dirty: true, failure: { kind: "rate_voter", retrying: false } }), {
+    text: "You've saved your list a lot today. Change it again tomorrow to save your changes. Your saved list is unchanged.",
+    alert: true,
+  });
   assert.equal(saveFailureText({ kind: "unknown", retrying: true }), "Something went wrong. Trying again soon.");
-  assert.equal(saveFailureText({ kind: "rate_connection", retrying: false }), RANKER_ERROR_COPY.rate_connection);
+  assert.equal(saveFailureText({ kind: "unknown", retrying: false }, true), "Something went wrong. Change your list or reload the page to save your changes. Your saved list is unchanged.");
+  assert.equal(saveFailureText({ kind: "rate_connection", retrying: true }), "Lots of lists were saved from this connection in the last hour. Your list saves after the hour.");
+  assert.equal(saveFailureText({ kind: "rate_connection", retrying: true }, true), "Lots of lists were saved from this connection in the last hour. Your changes save after the hour.");
+  assert.equal(saveFailureText({ kind: "rate_network", retrying: false }), "Lots of new lists came from this network today. Change your list again tomorrow to save it.");
+  assert.equal(saveFailureText({ kind: "unknown_burger", retrying: false }), RANKER_ERROR_COPY.unknown_burger);
+  for (const text of [saveFailureText({ kind: "rate_voter", retrying: false }), saveFailureText({ kind: "rate_connection", retrying: true })]) {
+    assert.doesNotMatch(text, /try again/i, "nothing to press: the copy says what saves it");
+  }
   // a burger that left the Burger Index
   assert.deepEqual(line({ length: 4, dirty: true, problem: "gone" }), { text: "Remove the burgers no longer on the Burger Index to save your list.", alert: true });
   assert.deepEqual(line({ length: 4, saved: counting, dirty: true, problem: "gone" }), { text: "Remove the burgers no longer on the Burger Index to save your changes.", alert: true });
   assert.deepEqual(line({ length: 4, saved: counting, problem: "gone" }), { text: "Saved. It counts from Sep 27, 2026. Remove the burgers no longer on the Burger Index to save changes.", alert: false });
-  // ranking_saved at most once per page view: the first save after the page view began
-  const first = firstSaveTracker(2);
-  assert.deepEqual([null, { seq: 1 }, { seq: 2 }, { seq: 3 }, { seq: 4 }, { seq: 5 }].map(first), [false, false, false, true, false, false]);
-  const fresh = firstSaveTracker(0);
-  assert.equal(fresh({ seq: 1 }), true);
-  assert.equal(fresh({ seq: 1 }), false, "the same save seen again");
   // the timing
   assert.equal(AUTOSAVE_DELAY, 2000);
   assert.deepEqual([1, 2, 3, 4, 9].map(retryDelay), [5000, 15000, 60000, 60000, 60000]);
-  assert.deepEqual(["network", "unknown", "rate_connection", "rate_voter", "unknown_burger", "invalid"].map((k) => isTransient(k as never)), [true, true, false, false, false, false]);
+  // what is tried again by itself: the network always, an odd reply three times, the hourly budget after the hour, no other refusal
+  assert.deepEqual([1, 2, 3, 4, 50].map((n) => retriesSave("network", n)), [true, true, true, true, true]);
+  assert.deepEqual([1, 2, 3, 4].map((n) => retriesSave("unknown", n)), [true, true, true, false]);
+  assert.equal(retriesSave("rate_connection", 7), true);
+  assert.deepEqual(["rate_voter", "rate_network", "unknown_burger", "invalid", "too_short"].map((k) => retriesSave(k as never, 1)), [false, false, false, false, false]);
+  const t = Date.UTC(2026, 8, 27, 14, 59, 30);
+  assert.equal(untilNextHour(t), 30_000 + 15_000, "just after the hour turns");
+  assert.equal(untilNextHour(Date.UTC(2026, 8, 27, 15)), 3_600_000 + 15_000);
+  assert.equal(saveRetryDelay("rate_connection", 1, t), 45_000);
+  assert.equal(saveRetryDelay("network", 2, t), 15_000);
 });
 
 // ---- the burgers and their search ------------------------------------------------------------------

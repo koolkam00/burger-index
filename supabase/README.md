@@ -92,7 +92,9 @@ count against nothing. **Autosave** (2026-09-27): the site saves the list about 
 per-save budgets were raised from 20 an hour and 10 a day (`ranker_rate_autosave`). However often one voter saves, the
 list counts once: it is one row per voter id, the nightly refresh counts its last save through `as_of` (its save day
 for surge damping, one list in `changed_since_last` for the 20-list privacy batch), and each save still marks the
-connection's other active lists `replaced`.
+connection's other active lists `replaced`. A save re-dates the list even when it brings back the version already counted
+(an edit changed back after the 2 s pause is two saves): the list then counts from the next day again, `in_board` is false
+until the next publication, and it is one changed list in the batch.
 
 **What is stored** (`ranker_private.ranker_lists`): the voter id, the list as the visitor sees it, its New York
 save day, the counted and the last published versions, a status, its `origin` (`visitor`, or `published` for the
@@ -411,10 +413,14 @@ The home page's ranker (`web/src/components/ranker/Ranker.tsx`, state in `web/sr
 first save), loads `get_my_ranking` on mount when the browser has one, and calls `delete_ranking` when the visitor deletes.
 **It autosaves** (user request 2026-09-27; no Save button): once the list holds 3 burgers, `save_ranking` goes about 2
 seconds after the last change, one call at a time (a change made meanwhile goes right after it), never with the list the
-backend already holds as it is; a network failure is tried again after 5 s, 15 s, then every minute, a refusal only after
-the next change. A save still waiting when the page closes goes as a keepalive `fetch` to `rpc/save_ranking` with the
-publishable key in the `apikey` header. A `replaced` list loaded on a return visit is saved again by itself (the latest
-save from a connection wins, so two browsers on one connection each take it back when they next open the ranker). The
+backend already holds as it is; a network failure is tried again after 5 s, 15 s, then every minute, an unexpected reply three times, a `rate_connection`
+refusal once the hour turns, any other refusal only after the next change (the card words the rate refusals for a page
+with no Save button: "Change it again tomorrow to save it.", "Your list saves after the hour."). When the page closes,
+the newest list still waiting or on its way goes again as a keepalive `fetch` to `rpc/save_ranking` with the publishable
+key in the `apikey` header. A page back from the back-forward cache, or another tab's delete (the `bi-ranker-saved` flag
+removed), calls `get_my_ranking` before anything more is saved, so a waiting retry never brings back a deleted list. A
+`replaced` list loaded on a return visit is not saved again by itself (that would take the connection's one counted list
+back from its other browser on every visit): it is saved after the visitor changes it or presses "Count it again". The
 card shows each status in plain words: `active` ("Saved. It counts from Sep 27, 2026.", or "Counted in the People's Top
 10." once `in_board`), `replaced` ("Not counted: a newer list was saved from this connection."), `void` ("Not counted.",
 with no "Delete my list": a void list can't be withdrawn); a `deleted` list shows as none. When `delete_ranking` returns

@@ -14,7 +14,6 @@ import {
   autosaveLine,
   dragIndex,
   dragTop,
-  firstSaveTracker,
   linkAddText,
   MAX_HITS,
   MAX_ITEMS,
@@ -85,6 +84,8 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
   const revealAnnounced = useRef(false);
   const startTracked = useRef(false);
   const failureSaid = useRef("");
+  // The next save that goes through is said too: after a failed save was said (so its recovery is heard), or "Count it again".
+  const sayNextSave = useRef(false);
   // Bumped to re-render after an awaited step, so its focus move runs (the store's own update came before it).
   const [, setFocusTick] = useState(0);
   const focusAfter = (target: FocusTarget) => {
@@ -141,24 +142,36 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
 
   // Autosave, in the live region (sparingly: the status line shows every save): the first save that goes through in this
   // page view is tracked (ranking_saved) and said ("Saved. It counts from Sep 28, 2026."); a failed save is said once,
-  // not again for each retry of the same failure. Saves made before this mount don't count. Listens to the store.
+  // not again for each retry of the same failure, and the save that recovers from it is said too. The store hands each
+  // save out once (takeSave): one that landed while no ranker was mounted (the visitor followed a link within the pause)
+  // is tracked by the next mount, without being said. Listens to the store.
   useEffect(() => {
     if (!RANKER_ENABLED) return;
-    const firstSave = firstSaveTracker(rankerStore.getSnapshot().lastSave?.seq ?? 0);
-    const onStore = () => {
+    let tracked = false;
+    const onStore = (mounting: boolean) => {
       const s = rankerStore.getSnapshot();
-      const f = s.failure?.action === "save" ? saveFailureText(s.failure) : "";
+      const f = s.failure?.action === "save" ? saveFailureText(s.failure, s.saved !== null) : "";
       if (f !== failureSaid.current) {
         failureSaid.current = f;
-        if (f) setAnnounce((prev) => (prev === f ? `${f} ` : f));
+        if (f) {
+          sayNextSave.current = true;
+          setAnnounce((prev) => (prev === f ? `${f} ` : f));
+        }
       }
-      const done = s.lastSave;
-      if (!done || !s.saved || !firstSave(done)) return;
-      track("ranking_saved", { length: done.length, edited: done.edited });
+      const done = rankerStore.takeSave();
+      if (!done || !s.saved) return;
+      const first = !tracked;
+      if (first) {
+        tracked = true;
+        track("ranking_saved", { length: done.length, edited: done.edited });
+      }
+      if (mounting || !(first || sayNextSave.current)) return;
+      sayNextSave.current = false;
       const text = s.saved.status === "active" ? savedStatusText(s.saved, nyToday()) : `List saved. ${savedStatusText(s.saved, nyToday())}`;
       setAnnounce((prev) => (prev === text ? `${text} ` : text));
     };
-    return rankerStore.subscribe(onStore);
+    onStore(true);
+    return rankerStore.subscribe(() => onStore(false));
   }, []);
 
   // After a step the visitor took, focus what it shows (only while focus is in the card, or was dropped
@@ -274,13 +287,25 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
   const confirmDelete = async () => {
     const length = await rankerStore.deleteList();
     if (length === null) {
-      // Nothing was withdrawn (a void list): the status line says so.
-      if (rankerStore.getSnapshot().failure?.kind === "not_deleted") focusAfter({ kind: "heading" });
+      // Not deleted: the status line says why, and so does the live region (the status line isn't one).
+      const failure = rankerStore.getSnapshot().failure;
+      if (failure?.action === "delete") say(RANKER_ERROR_COPY[failure.kind]);
+      // Nothing was withdrawn (a void list): the confirmation is gone, so focus goes to the heading.
+      if (failure?.kind === "not_deleted") focusAfter({ kind: "heading" });
       return;
     }
     track("ranking_deleted", { length });
     say("Your list was deleted.");
     focusAfter({ kind: "heading" });
+  };
+  /** "Count it again": a list a newer one from this connection replaced, saved again as it is. */
+  const countAgain = () => {
+    if (held) return;
+    starting(true);
+    sayNextSave.current = true;
+    // the button goes away while it saves: focus the heading rather than drop to the page
+    pendingFocus.current = { kind: "heading" };
+    rankerStore.countAgain();
   };
   const retryMine = () => {
     pendingFocus.current = { kind: "heading" };
@@ -316,6 +341,7 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
         onMoveTo={moveTo}
         onRemove={remove}
         onAskDelete={askDelete}
+        onCountAgain={countAgain}
         onKeep={keep}
         onDelete={confirmDelete}
         onRetryMenus={() => {
@@ -604,6 +630,7 @@ function ListCard({
   onMoveTo,
   onRemove,
   onAskDelete,
+  onCountAgain,
   onKeep,
   onDelete,
   onRetryMenus,
@@ -616,6 +643,7 @@ function ListCard({
   onMoveTo: (key: string, to: number) => void;
   onRemove: (key: string) => void;
   onAskDelete: () => void;
+  onCountAgain: () => void;
   onKeep: () => void;
   onDelete: () => void;
   onRetryMenus: () => void;
@@ -650,6 +678,8 @@ function ListCard({
   // A voided list stays void and can't be withdrawn (the backend keeps it): no "Delete my list" for it.
   const canDelete = saved !== null && saved.status !== "void";
   const asking = snap.confirmDelete && canDelete;
+  // A list a newer one from this connection replaced, as it is: it counts again only when saved again, which the visitor asks for.
+  const replacedAsIs = saved?.status === "replaced" && !snap.dirty && !snap.saving && !snap.problem && !snap.failure && !held;
 
   return (
     <>
@@ -738,6 +768,11 @@ function ListCard({
       <p className="t-ui-s ranker-status mt-2" data-ranker-status="">
         {line.alert ? <Alert>{line.text}</Alert> : line.text}
       </p>
+      {replacedAsIs && !asking ? (
+        <button type="button" className="btn btn-secondary btn-sm mt-3" data-ranker-button="count" onClick={onCountAgain}>
+          Count it again
+        </button>
+      ) : null}
 
       {/* "Share your top 10" (user decision 2026-09-27): the saved list's image and a link to rank your own, once the burgers
           are known; held while a change is still being saved. */}

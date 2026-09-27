@@ -270,8 +270,10 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   user decision 2026-09-26, pointer only, from 480px where the pointer is fine and hovers; a press is a drag only after
   5px of movement), remove them. **It autosaves** (user request 2026-09-27; no Save button): once the list holds 3, about 2 s
   after the last change, one save at a time, never the list already saved, network failures retried (5 s, 15 s, every
-  minute), refusals not until the next change, a waiting save flushed when the page is hidden (a keepalive `fetch` on close);
-  one view: a returning browser finds its saved list on the card, editable, under it a status line, "Share your top 10" and
+  minute; an odd reply 3 times; the hourly budget after the hour), other refusals not until the next change, a waiting save
+  flushed when the page is hidden (the newest list as a keepalive `fetch` on close, even with a save on its way); a list
+  another tab deleted or a page back from the bfcache is checked again before any save; a `replaced` list is saved again
+  only after a change or "Count it again", never just by loading; one view: a returning browser finds its saved list on the card, editable, under it a status line, "Share your top 10" and
   "Delete my list". The per-save budgets were raised for it (`ranker_rate_autosave`: 120 an hour per connection, 200 a day
   per voter id). `components/ranker/Ranker.tsx` (UI), `src/lib/ranker-store.ts` (state as an external
   store; an unsaved list in `sessionStorage` `bi-ranker-draft`, `localStorage` `bi-ranker-saved` = this browser has a saved
@@ -445,7 +447,8 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   components (the restaurant page's links are the client `components/RestaurantLinks.tsx`). The ranker sends
   `ranking_started` (`edited`, once per page view), `ranking_item_added` (`menu_key`, `position`, `surface`: `search` or
   `restaurant_page`), `ranking_saved` (`length`, `edited`: the first autosave of a page view that
-  Supabase saved, never every autosave) and `ranking_deleted` (`length`); the ranker's first showing of the People's Top 10 beside a list sends `peoples_top_revealed` (`surface: "ranker"`,
+  Supabase saved, never every autosave; the store hands each save out once, `takeSave`, so one that lands while the ranker
+  is unmounted is tracked by the next mount) and `ranking_deleted` (`length`); the ranker's first showing of the People's Top 10 beside a list sends `peoples_top_revealed` (`surface: "ranker"`,
   `list_length`, once per page view); links to the People's Top 10 send `peoples_top_clicked` (`surface`:
   `nav` / `menu_sheet` / `ranker` / `home`, `from_path`: the path only); "Share your top 10" sends `list_shared` (`method`:
   `share` / `download` / `copy_link`, `length`); the badge page's and press kit's "Copy" buttons

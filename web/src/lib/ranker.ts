@@ -236,8 +236,8 @@ const GONE_TEXT = "Remove the burgers no longer on the Burger Index to save chan
 /**
  * What the card says about the saved list, unchanged since its last save (DESIGN.md "The ranker hero": the status line):
  * - void: "Not counted." (a void list stays void);
- * - replaced: "Not counted: a newer list was saved from this connection." (the ranker saves it again, which makes it
- *   count again; with a gone burger it asks for that burger to go first);
+ * - replaced: "Not counted: a newer list was saved from this connection." (a change, or "Count it again", saves it
+ *   again, which makes it count again; with a gone burger it asks for that burger to go first);
  * - counted in the last published board: "Counted in the People's Top 10.";
  * - saved, counting from a later day: "Saved. It counts from Sep 27, 2026.";
  * - saved and counting, not yet in a published board: "Saved. It joins the People's Top 10 at its next update."
@@ -266,35 +266,61 @@ export function savedStatusText(saved: Pick<SavedRanking, "status" | "countsFrom
 
 /** How long after the last change the list saves itself (ms). */
 export const AUTOSAVE_DELAY = 2000;
-/** After a save that couldn't reach the backend (network, or an unexpected reply): try again after 5 s, 15 s, then every minute. */
+/** After a save that couldn't reach the backend: try again after 5 s, 15 s, then every minute. */
 export const RETRY_DELAYS = [5000, 15000, 60000] as const;
+const HOUR = 3_600_000;
+/** How long after the hour turns a save refused by the connection's hourly budget is tried again (ms). */
+export const AFTER_HOUR_MARGIN = 15_000;
 
 export function retryDelay(attempt: number): number {
   return RETRY_DELAYS[Math.max(0, Math.min(RETRY_DELAYS.length - 1, attempt - 1))];
 }
 
-/** Failures worth trying again on their own (the connection, an odd reply); a refusal is not (it would only be refused again). */
-export function isTransient(kind: RankerErrorKind): boolean {
-  return kind === "network" || kind === "unknown";
-}
-
-/** A failed save in words: the backend's own for a refusal; one that will be tried again says so. */
-export function saveFailureText(f: { kind: RankerErrorKind; retrying: boolean }): string {
-  if (!f.retrying) return RANKER_ERROR_COPY[f.kind];
-  return f.kind === "network" ? "Couldn't reach the counter. Trying again soon." : "Something went wrong. Trying again soon.";
+/** From `nowMs` (epoch ms) to just after the next hour turns: the connection's budget counts clock hours. */
+export function untilNextHour(nowMs: number): number {
+  return HOUR - (((nowMs % HOUR) + HOUR) % HOUR) + AFTER_HOUR_MARGIN;
 }
 
 /**
- * `ranking_saved` at most once per page view (autosave saves often): true for the first save after `baseline` (the
- * store's last save number when the page view began, so a save made before it never counts), false for every other.
+ * Whether a failed save is tried again by itself, after its `attempt`-th failure in a row: a network failure always (the
+ * connection comes back); an unexpected reply (a server error, a reply the site can't read) up to three times, then not
+ * until the list changes (each try would count against the budgets); the connection's hourly budget once the hour turns;
+ * any other refusal never (it would only be refused again).
  */
-export function firstSaveTracker(baseline: number): (save: { seq: number } | null) => boolean {
-  let done = false;
-  return (save) => {
-    if (done || !save || save.seq <= baseline) return false;
-    done = true;
-    return true;
-  };
+export function retriesSave(kind: RankerErrorKind, attempt: number): boolean {
+  if (kind === "network" || kind === "rate_connection") return true;
+  if (kind === "unknown") return attempt <= RETRY_DELAYS.length;
+  return false;
+}
+
+/** How long to wait before trying a failed save again (`retriesSave` said it would be). */
+export function saveRetryDelay(kind: RankerErrorKind, attempt: number, nowMs: number): number {
+  return kind === "rate_connection" ? untilNextHour(nowMs) : retryDelay(attempt);
+}
+
+/**
+ * A failed save in words (the list saves itself, so no "try again" button to press): one tried again by itself says when;
+ * a refusal says what will save it, and, with a saved list, that the saved list is unchanged. The backend's own words
+ * (RANKER_ERROR_COPY) stay for the refusals a list on the card can't cause.
+ */
+export function saveFailureText(f: { kind: RankerErrorKind; retrying: boolean }, hasSaved = false): string {
+  if (f.retrying) {
+    if (f.kind === "network") return "Couldn't reach the counter. Trying again soon.";
+    if (f.kind === "rate_connection") return `Lots of lists were saved from this connection in the last hour. ${hasSaved ? "Your changes save" : "Your list saves"} after the hour.`;
+    return "Something went wrong. Trying again soon.";
+  }
+  const what = hasSaved ? "your changes" : "it";
+  const text =
+    f.kind === "rate_connection"
+      ? `Lots of lists were saved from this connection in the last hour. Change your list after the hour to save ${what}.`
+      : f.kind === "rate_voter"
+        ? `You've saved your list a lot today. Change it again tomorrow to save ${what}.`
+        : f.kind === "rate_network"
+          ? `Lots of new lists came from this network today. Change your list again tomorrow to save ${what}.`
+          : f.kind === "unknown" || f.kind === "network"
+            ? `Something went wrong. Change your list or reload the page to save ${what}.`
+            : RANKER_ERROR_COPY[f.kind];
+  return hasSaved ? `${text} Your saved list is unchanged.` : text;
 }
 
 /** What the status line under the list needs to know. */
@@ -320,7 +346,7 @@ export type AutosaveInput = {
  * save your changes. Your saved list is unchanged."), then "Saving…", then what the saved list counts for.
  */
 export function autosaveLine(s: AutosaveInput, today: string): { text: string; alert: boolean } {
-  if (s.failure) return { text: saveFailureText(s.failure), alert: true };
+  if (s.failure) return { text: saveFailureText(s.failure, s.saved !== null), alert: true };
   if (s.problem === "gone") {
     if (s.saved && !s.dirty) return { text: savedStatusText(s.saved, today, true), alert: false };
     return { text: `Remove the burgers no longer on the Burger Index to save your ${s.saved ? "changes" : "list"}.`, alert: true };
