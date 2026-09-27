@@ -51,6 +51,26 @@ export function moveItemTo(list: readonly string[], key: string, index: number):
   return out;
 }
 
+/**
+ * Where a row being dragged lands (drag to reorder, with a mouse): `mids` are the rows' vertical midpoints when the drag
+ * began (list order, one coordinate system), `from` the dragged row's index and `center` its midpoint now. It passes
+ * another row once its midpoint crosses that row's, and never leaves the list.
+ */
+export function dragIndex(mids: readonly number[], from: number, center: number): number {
+  let to = from;
+  while (to + 1 < mids.length && center > mids[to + 1]) to++;
+  if (to === from) while (to - 1 >= 0 && center < mids[to - 1]) to--;
+  return to;
+}
+
+/**
+ * Where the dragged row's top is drawn: under the pointer (`pointer` minus `grab`, the pointer's distance from the row's
+ * top when the drag began), kept inside the list (from its first row's top to its last row's bottom).
+ */
+export function dragTop(pointer: number, grab: number, top: number, bottom: number, size: number): number {
+  return Math.max(top, Math.min(bottom - size, pointer - grab));
+}
+
 export function sameList(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((k, i) => k === b[i]);
 }

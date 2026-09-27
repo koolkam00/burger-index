@@ -7,6 +7,8 @@ import {
   addParam,
   classifyRankerError,
   countLine,
+  dragIndex,
+  dragTop,
   linkAddOutcome,
   linkAddText,
   listProblem,
@@ -262,4 +264,32 @@ test("adding from a link: at the end when there is room, else it says why; the w
   assert.equal(linkAddText({ key: "sals", kind: "already", position: 2 }, "Sal's", true), "Sal's is already on your list, at #2.");
   assert.equal(linkAddText({ key: "sals", kind: "full" }, "Sal's", false), "Your list is full: 25 burgers. Remove one to add Sal's.");
   assert.equal(linkAddText({ key: "gone", kind: "gone" }, "A burger no longer listed", false), "That burger is no longer on the Burger Index.");
+});
+
+test("drag to reorder: where a dragged row lands, where it is drawn, and the list it leaves", () => {
+  // Five 56px rows: midpoints 28, 84, 140, 196, 252 (a row passes another once its middle crosses the other's).
+  const mids = [28, 84, 140, 196, 252];
+  assert.equal(dragIndex(mids, 1, 84), 1, "not moved");
+  assert.equal(dragIndex(mids, 1, 139), 1, "not yet past #3's middle");
+  assert.equal(dragIndex(mids, 1, 141), 2);
+  assert.equal(dragIndex(mids, 1, 250), 3);
+  assert.equal(dragIndex(mids, 1, 9999), 4, "never past the end");
+  assert.equal(dragIndex(mids, 3, 29), 1);
+  assert.equal(dragIndex(mids, 3, 27), 0);
+  assert.equal(dragIndex(mids, 3, -500), 0, "never before the start");
+  assert.equal(dragIndex([100], 0, 400), 0, "a list of one");
+  // Rows of different heights (the #11 row carries the "Beyond your top 10" rule): still by midpoints.
+  assert.equal(dragIndex([28, 84, 164, 244], 0, 165), 2);
+
+  // The row is drawn under the pointer, inside the list: a list from 100 to 380, a 56px row grabbed 20px below its top.
+  assert.equal(dragTop(250, 20, 100, 380, 56), 230);
+  assert.equal(dragTop(90, 20, 100, 380, 56), 100, "not above the first row");
+  assert.equal(dragTop(900, 20, 100, 380, 56), 324, "not below the last row");
+  // where it lands follows the pointer, so past the list's end is the last place though the row stops at the edge
+  assert.equal(dragIndex([128, 184, 240, 296, 352], 0, 900 - 20 + 28), 4);
+  assert.equal(dragIndex([128, 184, 240, 296, 352], 4, 0 - 20 + 28), 0);
+  // The drop is a move to that place (the numbers shown while dragging are the landing order).
+  const list = ["a", "b", "c", "d", "e"];
+  assert.deepEqual(moveItemTo(list, "b", dragIndex(mids, 1, 250)), ["a", "c", "d", "b", "e"]);
+  assert.deepEqual(moveItemTo(list, "d", dragIndex(mids, 3, 20)), ["d", "a", "b", "c", "e"]);
 });

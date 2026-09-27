@@ -104,7 +104,9 @@ fetches nothing.
 - `src/lib/ranker.ts`: pure helpers: the list's limits and edits, the burgers as the ranker shows them (a chain at its usual
   location with "N locations"; a name two menus share gets its neighborhood), search (accents and dots folded), the replies
   checked, the status lines and the error copy, and a restaurant page's "Add to your top 10" (`addParam`, `withoutAddParam`,
-  `linkAddOutcome`, `linkAddText`; the link itself is `rankerAddHref` in `src/lib/site.ts`). Tested in `test/ranker.test.ts`.
+  `linkAddOutcome`, `linkAddText`; the link itself is `rankerAddHref` in `src/lib/site.ts`), and drag to reorder with a
+  mouse (`dragIndex`: where a dragged row lands; `dragTop`: where it is drawn; the pointer handling is `useDragToReorder` in
+  `components/ranker/Ranker.tsx`, a grip shown only for a fine, hovering pointer from 480px). Tested in `test/ranker.test.ts`.
 - `src/lib/ranker-store.ts`: the ranker's state as an external store (the burgers, the saved list, the list on the card, what
   is on its way); an unsaved list is kept in `sessionStorage` (`bi-ranker-draft`), and `localStorage` `bi-ranker-saved` says
   this browser has a saved list, which the `<head>` script turns into `html.ranker-saved` (a skeleton, not an empty list,

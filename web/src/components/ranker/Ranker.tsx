@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowDown, ArrowRight, ArrowUp, Check, Plus, Search, TriangleAlert, X } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, Check, GripVertical, Plus, Search, TriangleAlert, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { useMediaQuery } from "@/components/charts/hooks";
 import { RopeLadder } from "@/components/icons/nautical";
 import { PriceChip } from "@/components/ui";
@@ -12,11 +12,14 @@ import { revealAnnouncement, revealView, showsReveal, yourList, type RevealBoard
 import {
   addParam,
   countLine,
+  dragIndex,
+  dragTop,
   linkAddText,
   listProblem,
   MAX_HITS,
   MAX_ITEMS,
   MINE_FAILED_COPY,
+  moveItemTo,
   nyToday,
   PROBLEM_COPY,
   RANKER_ERROR_COPY,
@@ -199,6 +202,14 @@ export function Ranker({ median, board }: { median: number | null; board: Reveal
     pendingFocus.current = { kind: "row", key, control };
     say(`${nameOf(snap.burgers.get(key))} moved to #${to + 1}.`);
   };
+  /** A row dropped at a new place (drag to reorder, with a mouse): announced like a move with the arrows. */
+  const moveTo = (key: string, to: number) => {
+    const from = snap.draft.indexOf(key);
+    if (snap.busy || from < 0 || to === from || to < 0 || to >= snap.draft.length) return;
+    starting();
+    rankerStore.moveTo(key, to);
+    say(`${nameOf(snap.burgers.get(key))} moved to #${to + 1}.`);
+  };
   const remove = (key: string) => {
     if (snap.busy) return;
     const i = snap.draft.indexOf(key);
@@ -286,6 +297,7 @@ export function Ranker({ median, board }: { median: number | null; board: Reveal
         median={median}
         onAdd={add}
         onMove={move}
+        onMoveTo={moveTo}
         onRemove={remove}
         onSave={save}
         onCancel={cancel}
@@ -514,12 +526,144 @@ function ExtraRule() {
   );
 }
 
+/** A row being dragged: which one, where it began and where it would land now. */
+type DragState = { key: string; from: number; to: number };
+
+/**
+ * Drag to reorder, with a mouse (DESIGN.md "The ranker hero": a grip at the row's start where the pointer is fine and
+ * hovers, from 480px; the arrows stay for keyboard and touch). Pointer events on the grip, captured while it is held.
+ * While a row is dragged the rows are shown in the order they would have after the drop (CSS `order`, so the DOM, its
+ * keys and the captured grip stay put), numbered that way, with the "Beyond your top 10" rule at the #10/#11 boundary;
+ * the dragged row sits in its landing place, nudged to follow the pointer inside the list (`dragTop`). Where it lands
+ * comes from the pointer and the rows' midpoints when the drag began (`dragIndex`). The page scrolls near the window's edge; Escape or a
+ * cancelled pointer puts it back; the drop moves it (`onDrop`, announced like an arrow move). Nothing animates.
+ */
+function useDragToReorder(onDrop: (key: string, to: number) => void, disabled: boolean) {
+  const listRef = useRef<HTMLOListElement>(null);
+  const [drag, setDrag] = useState<DragState | null>(null);
+  const info = useRef<{
+    key: string;
+    from: number;
+    /** The rows' midpoints, page coordinates, when the drag began. */
+    mids: number[];
+    size: number;
+    /** From the pointer to the dragged row's top. */
+    grab: number;
+    /** The list's first row top and last row bottom, page coordinates. */
+    top: number;
+    bottom: number;
+    clientY: number;
+    raf: number;
+    /** The dragged row's translateY now. */
+    shift: number;
+  } | null>(null);
+
+  const place = (): DragState | null => {
+    const d = info.current;
+    if (!d) return null;
+    // Where it lands follows the pointer itself (past the list's end it is the last place), not the row as drawn,
+    // which stops at the list's edges.
+    return { key: d.key, from: d.from, to: dragIndex(d.mids, d.from, d.clientY + window.scrollY - d.grab + d.size / 2) };
+  };
+  const update = () => {
+    const next = place();
+    setDrag((prev) => (prev && next && prev.to === next.to ? prev : next));
+    follow();
+  };
+  /** Nudge the dragged row from its landing place to where the pointer holds it (no re-render). */
+  const follow = () => {
+    const d = info.current;
+    const row = d && listRef.current?.querySelector<HTMLElement>(`[data-row="${CSS.escape(d.key)}"]`);
+    if (!d || !row) return;
+    const laidOut = row.getBoundingClientRect().top + window.scrollY - d.shift;
+    d.shift = dragTop(d.clientY + window.scrollY, d.grab, d.top, d.bottom, d.size) - laidOut;
+    row.style.transform = `translateY(${d.shift}px)`;
+  };
+  const scrollNearEdge = () => {
+    const d = info.current;
+    if (!d) return;
+    const edge = 64;
+    const step = d.clientY < edge ? -Math.ceil((edge - d.clientY) / 4) : d.clientY > window.innerHeight - edge ? Math.ceil((d.clientY - window.innerHeight + edge) / 4) : 0;
+    if (step) {
+      window.scrollBy(0, step);
+      update();
+    }
+    d.raf = requestAnimationFrame(scrollNearEdge);
+  };
+  const end = (drop: boolean) => {
+    const now = place();
+    const d = info.current;
+    if (!d) return;
+    cancelAnimationFrame(d.raf);
+    listRef.current?.querySelector<HTMLElement>(`[data-row="${CSS.escape(d.key)}"]`)?.style.removeProperty("transform");
+    info.current = null;
+    setDrag(null);
+    if (drop && now && now.to !== now.from) onDrop(now.key, now.to);
+  };
+
+  // After each render of a drag (the rows in their landing order), put the dragged row back under the pointer.
+  useLayoutEffect(() => {
+    if (drag) follow();
+  });
+  // Escape puts the row back; leaving the builder mid-drag stops the page scrolling.
+  useEffect(() => {
+    if (!drag) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") end(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+  useEffect(() => () => cancelAnimationFrame(info.current?.raf ?? 0), []);
+
+  /** The grip's pointer handlers for the row at `index`. */
+  const grip = (key: string, index: number) => ({
+    onPointerDown(e: ReactPointerEvent<HTMLSpanElement>) {
+      const list = listRef.current;
+      if (disabled || info.current || !list || e.pointerType === "touch" || e.button !== 0) return;
+      const rects = [...list.children].map((row) => row.getBoundingClientRect());
+      if (!rects[index]) return;
+      e.preventDefault();
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        // the pointer is already gone: the drag still ends on its pointerup or pointercancel
+      }
+      const y = window.scrollY;
+      info.current = {
+        key,
+        from: index,
+        mids: rects.map((r) => r.top + y + r.height / 2),
+        size: rects[index].height,
+        grab: e.clientY - rects[index].top,
+        top: rects[0].top + y,
+        bottom: rects[rects.length - 1].bottom + y,
+        clientY: e.clientY,
+        raf: requestAnimationFrame(scrollNearEdge),
+        shift: 0,
+      };
+      setDrag(place());
+    },
+    onPointerMove(e: ReactPointerEvent<HTMLSpanElement>) {
+      if (!info.current) return;
+      info.current.clientY = e.clientY;
+      update();
+    },
+    onPointerUp: () => end(true),
+    onPointerCancel: () => end(false),
+    onLostPointerCapture: () => end(false),
+  });
+
+  return { listRef, drag, grip };
+}
+
 /** Building a list, or editing the saved one: the search, the list with its controls, and "Save". */
 function Builder({
   snap,
   median,
   onAdd,
   onMove,
+  onMoveTo,
   onRemove,
   onSave,
   onCancel,
@@ -529,6 +673,7 @@ function Builder({
   median: number | null;
   onAdd: (b: RankerBurger) => void;
   onMove: (key: string, delta: number) => void;
+  onMoveTo: (key: string, to: number) => void;
   onRemove: (key: string) => void;
   onSave: () => void;
   onCancel: () => void;
@@ -545,6 +690,9 @@ function Builder({
   const held = snap.busy !== null;
   const editing = snap.saved !== null;
   const canSave = !problem && !held && (snap.dirty || !editing);
+  const { listRef, drag, grip } = useDragToReorder(onMoveTo, held);
+  // While a row is dragged, the rows show (and are numbered) in the order they would have after the drop.
+  const order = drag ? moveItemTo(draft, drag.key, drag.to) : draft;
   // The status line: saving, the last failure, why "Save" can't go yet (once tried), or what just happened.
   const status: ReactNode =
     snap.busy === "saving" ? (
@@ -575,16 +723,26 @@ function Builder({
         Your list
       </p>
       {draft.length ? (
-        <ol className="ranker-list mt-2" aria-labelledby={`${uid}-list`}>
+        <ol ref={listRef} className={`ranker-list can-drag mt-2${drag ? " is-dragging" : ""}`} aria-labelledby={`${uid}-list`}>
           {draft.map((key, i) => {
             const b = snap.burgers.get(key);
             const name = b ? b.label : ready ? "A burger no longer on the Burger Index" : "this burger";
+            const at = order.indexOf(key);
             return (
-              <li key={key} data-row={key} className={`ranker-row${i === TOP_N ? " is-first-extra" : ""}`}>
-                {i === TOP_N ? <ExtraRule /> : null}
+              <li
+                key={key}
+                data-row={key}
+                className={`ranker-row${at === 0 ? " is-top" : ""}${at === TOP_N ? " is-first-extra" : ""}${drag?.key === key ? " is-dragged" : ""}`}
+                style={drag ? { order: at } : undefined}
+              >
+                {at === TOP_N ? <ExtraRule /> : null}
+                {/* Pointer only (keyboard and touch use the arrows), so hidden from assistive technology. */}
+                <span className="ranker-grip" aria-hidden="true" {...grip(key, i)}>
+                  <GripVertical strokeWidth={2} />
+                </span>
                 <span className="ranker-rank">
                   <span className="sr-only">Number </span>
-                  {i + 1}
+                  {at + 1}
                 </span>
                 <div className="ranker-what">
                   {b ? (

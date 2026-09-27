@@ -247,7 +247,8 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
 - **The burger ranker (user decisions 2026-09-25/26; it replaced all crowd pricing)** is the home page's first screen
   (`#rank`, full width, above the H1 "What a burger costs in New York.", user decision 2026-09-26; DESIGN.md "The ranker
   hero"): search the priced burgers (distinct menus, a chain once), add 3 to 25 best first
-  ("your top 10", room for more), move them with up/down buttons, remove them, save; a returning browser sees its saved
+  ("your top 10", room for more), move them with up/down buttons (or, with a mouse, drag them by a grip at the row's start:
+  user decision 2026-09-26, pointer only, from 480px where the pointer is fine and hovers), remove them, save; a returning browser sees its saved
   list and can edit or delete it. `components/ranker/Ranker.tsx` (UI), `src/lib/ranker-store.ts` (state as an external
   store; an unsaved list in `sessionStorage` `bi-ranker-draft`, `localStorage` `bi-ranker-saved` = this browser has a saved
   list, which the `<head>` script turns into `html.ranker-saved`: a skeleton instead of an empty list until it loads),

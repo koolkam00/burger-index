@@ -2599,6 +2599,72 @@
       padding-inline: 16px;
     }
   }
+  /* Drag to reorder, with a mouse: a grip at the row's start, only where the pointer is fine and hovers and the row has
+     room (from 480px); keyboard and touch use the arrows. While a row is dragged the rows show in their landing order
+     (`order` on a flex column; the first shown row has no top edge, the #11 one the rule), and the dragged row follows
+     the pointer on --surface-2 with a strong edge (flat: no shadow in a data zone). No motion. */
+  .ranker-grip {
+    display: none;
+  }
+  .ranker-list.is-dragging {
+    display: flex;
+    flex-direction: column;
+  }
+  .ranker-list.is-dragging > .ranker-row {
+    border-top: 1.5px solid var(--line);
+  }
+  .ranker-list.is-dragging > .ranker-row.is-top {
+    border-top: 0;
+  }
+  .ranker-list.is-dragging > .ranker-row.is-first-extra {
+    border-top: 2px solid var(--line-strong);
+  }
+  @media (hover: hover) and (pointer: fine) and (min-width: 480px) {
+    .ranker-list.can-drag .ranker-row {
+      grid-template-columns: 20px 28px minmax(0, 1fr) auto;
+      grid-template-areas: "grip rank what ctls";
+      padding-left: 4px;
+    }
+    .ranker-grip {
+      grid-area: grip;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 44px;
+      color: var(--ink-muted);
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+    }
+    .ranker-grip svg {
+      width: 18px;
+      height: 18px;
+    }
+    .ranker-grip:hover {
+      color: var(--ink);
+    }
+    .ranker-list.is-dragging {
+      user-select: none;
+    }
+    .ranker-list.is-dragging .ranker-grip {
+      cursor: grabbing;
+    }
+    .ranker-row.is-dragged {
+      z-index: 1;
+      background: var(--surface-2);
+      box-shadow: inset 0 0 0 2px var(--line-strong);
+    }
+    .ranker-row.is-dragged .ranker-grip {
+      color: var(--ink);
+    }
+  }
+  @media (hover: hover) and (pointer: fine) and (min-width: 640px) {
+    .ranker-list.can-drag .ranker-row {
+      grid-template-columns: 20px 32px minmax(0, 1fr) auto;
+      padding-left: 6px;
+    }
+  }
   .ranker-empty {
     padding: 14px 16px;
     border: 2px dashed var(--line-strong);
