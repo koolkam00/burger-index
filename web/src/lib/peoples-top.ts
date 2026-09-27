@@ -155,7 +155,7 @@ export function risingText(lists: number, needs: number): string {
   return `On ${pluralize(lists, "list")} · needs ${formatCount(n)} more ${n === 1 ? "list" : "lists"}`;
 }
 
-/** A flagged row's label. */
+/** A flagged row's label ("Under review", FINAL.md's proposed wording, was approved as is by the user on 2026-09-26). */
 export const FLAG_TEXT: Record<Exclude<RowFlag, null>, string> = {
   held: "Under review",
   surge: "Checking a surge of lists",
