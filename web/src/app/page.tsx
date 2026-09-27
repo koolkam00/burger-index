@@ -21,6 +21,7 @@ import { formatCount, formatDate, formatIsoDay, formatMonthYear, formatPrice, pl
 import { datasetNode, itemListNode, organizationNode, websiteNode } from "@/lib/jsonld";
 import { menuIndexPrices, menusByIndexPrice, menusByIndexPriceDesc, type Menu } from "@/lib/menus";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
+import { getRevealBoard } from "@/lib/peoples-top-data";
 import { RANKER_ANCHOR, RANKER_TITLE_ID } from "@/lib/site";
 import { cheapestSpec, priciestSpec, rankingNameInSentence, rankingPath, rankMenus, topTied } from "@/lib/rankings";
 import { homeSeo, sourceLine, type NamedPrice } from "@/lib/seo";
@@ -94,22 +95,29 @@ export default function HomePage() {
   return (
     <>
       <JsonLd nodes={jsonLd} />
-      {/* The view through the front window: sea water, surface ripples, bubbles in the gutters. A compact
-          band (kicker ticket, H1, the median as a plain sentence and the source line) sits beside the
-          burger ranker at lg and above it on a phone; the Order Board hangs below them. */}
-      <section className="hero hero-home atmo" aria-labelledby="hero-title">
+      {/* The view through the front window: sea water, surface ripples, bubbles in the gutters. The burger ranker
+          comes first, full width (user decision 2026-09-26: "put the rank your burgers at the top of the home page");
+          then "What a burger costs in New York.": the kicker ticket, the H1, the median as a plain sentence and the
+          source line (all in the static HTML), and the Order Board under them. */}
+      <div className="hero hero-home atmo">
         <Caustics id="caustic-hero" />
         <Bubbles />
         <div className="wrap band-body">
-          <div className="grid gap-4 md:gap-8 lg:grid-cols-12 lg:items-start">
-            <div className="min-w-0 lg:col-span-5 lg:pt-2">
+          {median !== null ? (
+            // The burger ranker: the first thing to do here (user decisions 2026-09-25/26). Client-rendered; the
+            // header's "Rank your burgers" links to /#rank. It shows the People's Top 10 beside a list of 3+.
+            <div id={RANKER_ANCHOR} role="region" aria-labelledby={RANKER_TITLE_ID} className="ranker-slot min-w-0">
+              <Ranker median={median} board={getRevealBoard()} />
+            </div>
+          ) : null}
+          <section className="home-costs" aria-labelledby="hero-title">
+            <div className="home-costs-head">
               <KickerTicket>Now serving · NYC</KickerTicket>
               <h1 id="hero-title" className="t-display-l mt-4 md:mt-5">
                 What a burger costs in New York.
               </h1>
-              {/* The answer and the one sourcing sentence on the site, in the static HTML at the top of
-                  the page (--ink: at lg they sit on the darker water). The menu count shows once, on the
-                  board line below. */}
+              {/* The answer and the one sourcing sentence on the site, in the static HTML (--ink: they sit on the
+                  water). The menu count shows once, on the board line below. */}
               {median === null ? (
                 <p className="t-lede mt-4">No prices yet.</p>
               ) : (
@@ -119,36 +127,29 @@ export default function HomePage() {
                 </>
               )}
             </div>
-            {median !== null ? (
-              // The burger ranker: the first thing to do here (user decisions 2026-09-25/26). Client-rendered;
-              // the header's "Rank your burgers" links to /#rank.
-              <div id={RANKER_ANCHOR} role="region" aria-labelledby={RANKER_TITLE_ID} className="ranker-slot min-w-0 lg:col-span-7">
-                <Ranker median={median} />
-              </div>
-            ) : null}
-          </div>
-          <div className="hero-board">
-            <Letterboard
-              overline="The Burger Index · NYC median"
-              price={median}
-              line={[pluralize(counts.menus, "menu"), `Updated ${formatDate(generated)}`]}
-            />
-            {/* Under the board: the People's Top 10 (the ranker above feeds it; user decision 2026-09-26) and the
-                most-recommended burgers. */}
-            <p className="hero-links">
-              <PeoplesTopLink surface="home" className="btn btn-secondary">
-                See the People&apos;s Top 10
-                <ArrowRight strokeWidth={2} aria-hidden="true" />
-              </PeoplesTopLink>
-              <Link href={BEST_BURGERS_PATH} className="btn btn-secondary">
-                Most-recommended burgers
-                <ArrowRight strokeWidth={2} aria-hidden="true" />
-              </Link>
-            </p>
-          </div>
+            <div className="hero-board">
+              <Letterboard
+                overline="The Burger Index · NYC median"
+                price={median}
+                line={[pluralize(counts.menus, "menu"), `Updated ${formatDate(generated)}`]}
+              />
+              {/* Under the board: the People's Top 10 (the ranker above feeds it; user decision 2026-09-26) and the
+                  most-recommended burgers. */}
+              <p className="hero-links">
+                <PeoplesTopLink surface="home" className="btn btn-secondary">
+                  See the People&apos;s Top 10
+                  <ArrowRight strokeWidth={2} aria-hidden="true" />
+                </PeoplesTopLink>
+                <Link href={BEST_BURGERS_PATH} className="btn btn-secondary">
+                  Most-recommended burgers
+                  <ArrowRight strokeWidth={2} aria-hidden="true" />
+                </Link>
+              </p>
+            </div>
+          </section>
         </div>
         <WaveEdge />
-      </section>
+      </div>
 
       <div className="wrap">
       <section className="mt-10 md:mt-16" aria-labelledby="spread">

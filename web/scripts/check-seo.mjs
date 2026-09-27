@@ -33,7 +33,10 @@
 // ranking and Rising, row for row with their ranks, list counts and links; its ItemList; "Early results" exactly
 // while the board is early; the one-liner; and each /best-burgers row's People's rank. Crowd pricing is gone for
 // good (user decision 2026-09-26): no page, llms.txt or JSON-LD says "People's Price" or "What's it worth", and
-// /peoples-price, /best-value-burgers and /data/pricer.json are not built. The home page carries the ranker's region.
+// /peoples-price, /best-value-burgers and /data/pricer.json are not built. The home page carries the ranker's region,
+// first (user decision 2026-09-26), then the H1 section with the median sentence and the source line; /data/menus.json
+// carries each menu's People's Top 10 standing exactly as the page numbers it (the ranker's People's Top 10 beside
+// a list of 3+).
 // Sharing and link-building (user decisions 2026-09-25, stage 4): every restaurant, neighborhood, borough,
 // ranking and style page and /best-burgers names its own 1200×630 share image (/og/<path>.png, a PNG of that
 // size that exists, used by no other page, its alt naming the page's burger or area and price); every other
@@ -860,7 +863,7 @@ for (const p of pages) {
   overclaims(`${path} description`, p.description);
   overclaims(`${path} JSON-LD`, JSON.stringify(p.ld));
   for (const r of FOOTER_PATHS) if (!html.includes(`href="${r}"`)) err(`${path}: no link to ${r}`);
-  if (path === "/" && !text(/<section class="hero[^"]*"[^>]*>(.*?)<\/section>/s.exec(html)?.[1] ?? "").includes(SOURCE_LINE)) err("/: no source line near the board");
+  if (path === "/" && !text(/<section class="home-costs" aria-labelledby="hero-title">(.*?)<\/section>/s.exec(html)?.[1] ?? "").includes(SOURCE_LINE)) err("/: no source line in the H1's section (with the board)");
 
   if (path === "/neighborhoods") {
     const section = /<section[^>]*aria-label="Ranked neighborhoods"[^>]*>(.*?)<\/section>/s.exec(html)?.[1] ?? "";
@@ -889,6 +892,27 @@ for (const p of pages) {
 }
 const home = pages.find((p) => p.path === "/");
 if (home && !/<div id="rank" role="region" aria-labelledby="rank-title"/.test(home.html)) err("/: no ranker region (#rank)");
+// The ranker opens the home page; "What a burger costs in New York." (the H1) comes right after it.
+if (home) {
+  const rankAt = home.html.indexOf('<div id="rank" role="region"');
+  const h1At = home.html.search(/<h1[\s>]/);
+  if (rankAt < 0 || h1At < 0 || rankAt > h1At) err("/: the ranker does not come before the H1");
+  const h1 = text((/<h1[^>]*>(.*?)<\/h1>/s.exec(home.html) ?? ["", ""])[1]);
+  if (h1 !== "What a burger costs in New York.") err(`/: h1 "${h1}"`);
+}
+// /data/menus.json: every menu the board shows carries its standing as /peoples-top-10 numbers it (ranked: its rank;
+// Rising: its list count), and no other menu carries one.
+{
+  const file = outFile("/data/menus.json");
+  const menusJson = file ? JSON.parse(readFileSync(file, "utf8")) : null;
+  if (!menusJson) err("/data/menus.json is missing");
+  else {
+    const want = new Map([...topView.ranked.map((r) => [r.key, JSON.stringify({ rank: r.rank })]), ...topView.rising.map((r) => [r.key, JSON.stringify({ rising: r.lists })])]);
+    const got = new Map(menusJson.menus.filter((m) => m.people !== undefined).map((m) => [m.key, JSON.stringify(m.people)]));
+    for (const [key, v] of want) if (got.get(key) !== v) err(`/data/menus.json: ${key} stands ${got.get(key) ?? "nowhere"}, the board says ${v}`);
+    for (const key of got.keys()) if (!want.has(key)) err(`/data/menus.json: ${key} has a standing the board doesn't give it`);
+  }
+}
 
 // ---- uniqueness and lengths ----------------------------------------------------------------------
 

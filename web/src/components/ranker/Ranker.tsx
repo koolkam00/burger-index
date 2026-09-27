@@ -8,6 +8,7 @@ import { RopeLadder } from "@/components/icons/nautical";
 import { PriceChip } from "@/components/ui";
 import { fromPath, track } from "@/lib/analytics";
 import { formatCount, pluralize } from "@/lib/format";
+import { revealAnnouncement, revealView, showsReveal, yourList, type RevealBoard } from "@/lib/peoples-top-reveal";
 import {
   countLine,
   listProblem,
@@ -25,6 +26,7 @@ import {
 import { rankerStore, type RankerSnapshot } from "@/lib/ranker-store";
 import { PEOPLES_TOP_NAME, PEOPLES_TOP_PATH, RANKER_ANCHOR, RANKER_FOCUS_EVENT, RANKER_TITLE_ID } from "@/lib/site";
 import { RANKER_ENABLED } from "@/lib/supabase-config";
+import { PeoplesTopReveal, RevealHint } from "./PeoplesTopReveal";
 
 /** Where focus goes after a step: a heading, the search box, a row's control, or a named button. */
 type FocusTarget = { kind: "heading" } | { kind: "search" } | { kind: "row"; key: string; control: "up" | "down" | "remove" } | { kind: "button"; name: string };
@@ -50,12 +52,20 @@ const nameOf = (b: RankerBurger | undefined) => b?.label ?? "A burger no longer 
  * fetched when the ranker mounts). A browser with a saved list sees a skeleton instead (a <head> flag,
  * html.ranker-saved) until it loads. The Supabase client loads when the ranker first needs it: the saved list
  * of a returning browser, else the first save. Without the Supabase settings the card says lists open soon.
+ *
+ * Once the list on the card (being built, or saved) holds 3 burgers, the People's Top 10 shows beside it (below it
+ * on a phone): `board` is the daily board's seats (user decision 2026-09-26, "Once 3 are added"); the other picks'
+ * standings come with the burgers in /data/menus.json.
  */
-export function Ranker({ median }: { median: number | null }) {
+export function Ranker({ median, board }: { median: number | null; board: RevealBoard }) {
   const snap = useRanker();
   const rootRef = useRef<HTMLDivElement>(null);
   const pendingFocus = useRef<FocusTarget | null>(null);
   const [announce, setAnnounce] = useState("");
+  // Once per page view (this mount): the reveal's first showing is tracked, and its first showing after a change
+  // the visitor made is announced.
+  const revealTracked = useRef(false);
+  const revealAnnounced = useRef(false);
   // Bumped to re-render after an awaited step, so its focus move runs (the store's own update came before it).
   const [, setFocusTick] = useState(0);
   const focusAfter = (target: FocusTarget) => {
@@ -102,6 +112,16 @@ export function Ranker({ median }: { median: number | null }) {
     return () => window.removeEventListener(RANKER_FOCUS_EVENT, onCta);
   }, []);
 
+  // The list on the card, and whether the People's Top 10 shows beside it (only in the builder and the saved view).
+  const onCard = snap.view === "saved" && snap.saved ? snap.saved.items : snap.draft;
+  const listed = RANKER_ENABLED && snap.started && (snap.mine === "none" || snap.mine === "ready");
+  const revealing = listed && showsReveal(onCard.length);
+  useEffect(() => {
+    if (!revealing || revealTracked.current) return;
+    revealTracked.current = true;
+    track("peoples_top_revealed", { surface: "ranker", list_length: onCard.length });
+  }, [revealing, onCard.length]);
+
   if (!RANKER_ENABLED) {
     // Still the focus target of "Rank your burgers" (tabindex −1), like the live card.
     return (
@@ -114,6 +134,12 @@ export function Ranker({ median }: { median: number | null }) {
   }
 
   const say = (text: string) => setAnnounce((prev) => (prev === text ? `${text} ` : text));
+  /** The reveal's one announcement, when a change brings the list from under 3 burgers to 3 or more. */
+  const revealNote = (from: number, to: number) => {
+    if (revealAnnounced.current || showsReveal(from) || !showsReveal(to)) return "";
+    revealAnnounced.current = true;
+    return ` ${revealAnnouncement(board)}`;
+  };
   /** The first change to a list (new, or the saved one) is ranking_started. */
   const starting = () => {
     if (!snap.dirty) track("ranking_started", { edited: snap.saved !== null });
@@ -125,7 +151,7 @@ export function Ranker({ median }: { median: number | null }) {
     rankerStore.add(b.key);
     const position = snap.draft.length + 1;
     track("ranking_item_added", { menu_key: b.key, position });
-    say(`${b.label} added at #${position}. ${pluralize(position, "burger")} on your list.`);
+    say(`${b.label} added at #${position}. ${pluralize(position, "burger")} on your list.${revealNote(snap.draft.length, position)}`);
   };
   const move = (key: string, delta: number) => {
     const from = snap.draft.indexOf(key);
@@ -161,8 +187,10 @@ export function Ranker({ median }: { median: number | null }) {
     pendingFocus.current = { kind: "heading" };
   };
   const cancel = () => {
+    const note = snap.saved ? revealNote(snap.draft.length, snap.saved.items.length).trim() : "";
     rankerStore.cancel();
     pendingFocus.current = { kind: "heading" };
+    if (note) say(note);
   };
   const askDelete = () => {
     rankerStore.askDelete();
@@ -230,10 +258,23 @@ export function Ranker({ median }: { median: number | null }) {
     );
   }
 
+  // Beside the list (below it on a phone): the People's Top 10 at 3+ burgers; before that, at lg only, what shows it
+  // (also in the prerendered card, which holds the empty list).
+  let side: ReactNode = null;
+  if (revealing) {
+    const pick = snap.menus === "ready" ? (key: string) => snap.burgers.get(key) : null;
+    side = <PeoplesTopReveal view={revealView(board, onCard, pick, yourList(snap.saved?.status))} />;
+  } else if (!snap.started || (listed && snap.view === "edit")) {
+    side = <RevealHint />;
+  }
+
   return (
     <div ref={rootRef} className="ranker panel" tabIndex={-1} data-boot={snap.started ? undefined : ""}>
       <RankerBar />
-      <div className="ranker-body">{body}</div>
+      <div className="ranker-body">
+        <div className="ranker-main">{body}</div>
+        {side ? <div className={`ranker-side${revealing ? "" : " is-hint"}`}>{side}</div> : null}
+      </div>
       {!snap.started ? (
         <div className="ranker-boot">
           <Skeleton />

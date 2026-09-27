@@ -10,6 +10,7 @@
 import { normalize, queryTokens } from "./explorer";
 import { formatDate, formatIsoDay, pluralize } from "./format";
 import { isMenuKey, type MenuListData } from "./menu-list";
+import type { PeopleStanding } from "./peoples-top";
 
 /** A list holds 3 to 25 burgers (the backend refuses anything else). */
 export const MIN_ITEMS = 3;
@@ -77,6 +78,8 @@ export type RankerBurger = {
   /** "Astoria, Queens"; a chain with several locations: "7 locations"; no neighborhood: the borough. */
   where: string;
   locations: number;
+  /** Where it stands on the People's Top 10 (ranked #N, or Rising on N lists), or null: not on it. */
+  people: PeopleStanding | null;
   /** Normalized search text: the restaurant, the burger, the neighborhood and the borough. */
   hay: string;
 };
@@ -92,7 +95,7 @@ export function rankerBurgers(data: MenuListData): Map<string, RankerBurger> {
     const places = [...new Set(m.spots.flatMap((s) => [s.hood ? (data.hoods[s.hood] ?? "") : "", s.borough]))].join(" ");
     // Dots dropped too, so "jg melon" finds J.G. Melon (normalize keeps them for prices like "$9.50").
     const text = normalize(`${spot.name} ${m.burger} ${places}`);
-    out.set(m.key, { key: m.key, burger: m.burger, price: m.price, name: spot.name, id: spot.id, label: spot.name, where, locations: m.spots.length, hay: `${text} ${text.replace(/\./g, "")}` });
+    out.set(m.key, { key: m.key, burger: m.burger, price: m.price, name: spot.name, id: spot.id, label: spot.name, where, locations: m.spots.length, people: m.people ?? null, hay: `${text} ${text.replace(/\./g, "")}` });
   }
   const named = new Map<string, number>();
   for (const b of out.values()) named.set(b.name, (named.get(b.name) ?? 0) + 1);

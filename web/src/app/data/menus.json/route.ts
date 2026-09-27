@@ -1,11 +1,13 @@
 import { getPricedRestaurants } from "@/lib/data";
 import { menuListData } from "@/lib/menu-list";
+import { getPeopleStandings } from "@/lib/peoples-top-data";
 
 // Static export writes this to out/data/menus.json: every distinct priced menu (a chain once) with its priced
-// locations, and the neighborhoods' names (lib/menu-list.ts). The home ranker fetches it when it mounts and
-// the badge page's finder when it needs it, so the menus never sit in those pages' HTML. Not linked anywhere.
+// locations and its People's Top 10 standing (when the daily board shows it), and the neighborhoods' names
+// (lib/menu-list.ts). The home ranker fetches it when it mounts and the badge page's finder when it needs it, so
+// the menus never sit in those pages' HTML. Not linked anywhere.
 export const dynamic = "force-static";
 
 export function GET() {
-  return Response.json(menuListData(getPricedRestaurants()));
+  return Response.json(menuListData(getPricedRestaurants(), getPeopleStandings()));
 }

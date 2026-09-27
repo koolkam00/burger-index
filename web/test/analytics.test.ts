@@ -166,6 +166,7 @@ test("the ranker's events carry lengths, positions and menu keys only, never a v
   a.track("ranking_saved", { length: 12, edited: true });
   a.track("ranking_deleted", { length: 12 });
   a.track("peoples_top_clicked", { surface: "nav", from_path: fromPath("/restaurants/due-west?x=1") });
+  a.track("peoples_top_revealed", { surface: "ranker", list_length: 3 });
   assert.deepEqual(ph.captured, [
     ["ranking_started", { edited: false }],
     ["ranking_item_added", { menu_key: "chain:7th-street-burger", position: 1 }],
@@ -174,6 +175,7 @@ test("the ranker's events carry lengths, positions and menu keys only, never a v
     ["ranking_saved", { length: 12, edited: true }],
     ["ranking_deleted", { length: 12 }],
     ["peoples_top_clicked", { surface: "nav", from_path: "/restaurants/due-west" }],
+    ["peoples_top_revealed", { surface: "ranker", list_length: 3 }],
   ]);
   for (const [, props] of ph.captured) assert.equal(JSON.stringify(props).includes("voter"), false);
 });

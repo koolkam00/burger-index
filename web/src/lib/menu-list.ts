@@ -5,9 +5,12 @@
 //
 // A burger is a distinct menu (lib/menus menuKey: a restaurant id, or "chain:<slug>" for a chain, whose
 // locations share one menu), with every priced location of it, the one that stands for the menu everywhere
-// else first (the first priced location in dataset order, as lib/menus pricedMenus has it).
+// else first (the first priced location in dataset order, as lib/menus pricedMenus has it), and where it stands
+// on the People's Top 10 when the daily board shows it (the ranker's People's Top 10 beside a list of 3+:
+// lib/peoples-top-reveal), so the home page's HTML carries only the board's seats.
 import { BOROUGH_META } from "./boroughs";
 import { pricedMenus } from "./menus";
+import type { PeopleStanding } from "./peoples-top";
 import type { Borough, Restaurant } from "./schema";
 
 /** Where the browser fetches the list (a force-static route). Not linked anywhere. */
@@ -32,15 +35,23 @@ export type ListedMenu = {
   price: number;
   /** Priced locations, the menu's usual one first. */
   spots: MenuSpot[];
+  /** Its standing on the People's Top 10 (lib/peoples-top peopleStandings); absent when the board doesn't show it. */
+  people?: PeopleStanding;
 };
 
 /** What /data/menus.json holds: the neighborhoods' names by slug, and every distinct priced menu. */
 export type MenuListData = { hoods: Record<string, string>; menus: ListedMenu[] };
 
-/** Every distinct priced menu (a chain once) with its priced locations, the usual one first. */
-export function listedMenus(list: readonly Restaurant[]): ListedMenu[] {
+/**
+ * Every distinct priced menu (a chain once) with its priced locations, the usual one first, and its standing on the
+ * People's Top 10 where `standings` has one.
+ */
+export function listedMenus(list: readonly Restaurant[], standings: ReadonlyMap<string, PeopleStanding> = new Map()): ListedMenu[] {
   const byKey = new Map<string, ListedMenu>();
-  for (const m of pricedMenus(list)) byKey.set(m.key, { key: m.key, burger: m.restaurant.burger.name, price: m.indexPrice, spots: [] });
+  for (const m of pricedMenus(list)) {
+    const people = standings.get(m.key);
+    byKey.set(m.key, { key: m.key, burger: m.restaurant.burger.name, price: m.indexPrice, spots: [], ...(people ? { people } : {}) });
+  }
   for (const r of list) {
     if (r.index_price === null) continue;
     byKey.get(r.chain ? `chain:${r.chain}` : r.id)?.spots.push({ id: r.id, name: r.name, hood: r.neighborhood_slug, borough: r.borough });
@@ -48,11 +59,11 @@ export function listedMenus(list: readonly Restaurant[]): ListedMenu[] {
   return [...byKey.values()];
 }
 
-/** The file's contents: the menus, and the names of the neighborhoods they are in (sorted by slug). */
-export function menuListData(list: readonly Restaurant[]): MenuListData {
+/** The file's contents: the menus (with their People's Top 10 standings), and the names of the neighborhoods they are in (sorted by slug). */
+export function menuListData(list: readonly Restaurant[], standings?: ReadonlyMap<string, PeopleStanding>): MenuListData {
   const hoods = new Map<string, string>();
   for (const r of list) if (r.index_price !== null && r.neighborhood_slug && r.neighborhood) hoods.set(r.neighborhood_slug, r.neighborhood);
-  return { hoods: Object.fromEntries([...hoods].sort(([a], [b]) => (a < b ? -1 : 1))), menus: listedMenus(list) };
+  return { hoods: Object.fromEntries([...hoods].sort(([a], [b]) => (a < b ? -1 : 1))), menus: listedMenus(list, standings) };
 }
 
 const BOROUGH_NAMES = new Set<string>(BOROUGH_META.map((b) => b.name));
@@ -72,7 +83,18 @@ function isSpot(v: unknown): v is MenuSpot {
   );
 }
 
-/** The file as the browser receives it, checked: malformed menus and names are dropped, never shown. */
+const isCount = (v: unknown): v is number => typeof v === "number" && Number.isInteger(v) && v >= 1;
+
+/** A standing as the browser receives it: `{rank}` or `{rising}` with a positive whole number, else none. */
+function parseStanding(v: unknown): PeopleStanding | null {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return null;
+  const { rank, rising } = v as Record<string, unknown>;
+  if (isCount(rank) && rising === undefined) return { rank };
+  if (isCount(rising) && rank === undefined) return { rising };
+  return null;
+}
+
+/** The file as the browser receives it, checked: malformed menus and names are dropped, never shown (a malformed standing: none). */
 export function parseMenuList(v: unknown): MenuListData {
   const raw = v && typeof v === "object" ? (v as { hoods?: unknown; menus?: unknown }) : {};
   const hoods: Record<string, string> = {};
@@ -83,13 +105,14 @@ export function parseMenuList(v: unknown): MenuListData {
   const seen = new Set<string>();
   for (const m of Array.isArray(raw.menus) ? raw.menus : []) {
     if (!m || typeof m !== "object") continue;
-    const { key, burger, price, spots } = m as Record<string, unknown>;
+    const { key, burger, price, spots, people } = m as Record<string, unknown>;
     if (!isMenuKey(key) || seen.has(key) || typeof burger !== "string" || !burger) continue;
     if (typeof price !== "number" || !Number.isFinite(price) || price <= 0 || !Array.isArray(spots)) continue;
     const good = spots.filter(isSpot);
     if (!good.length) continue;
     seen.add(key);
-    menus.push({ key, burger, price, spots: good });
+    const standing = parseStanding(people);
+    menus.push({ key, burger, price, spots: good, ...(standing ? { people: standing } : {}) });
   }
   return { hoods, menus };
 }

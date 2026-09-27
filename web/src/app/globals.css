@@ -2325,8 +2325,8 @@
   }
 
   /* ---- The ranker hero: the home page's first screen (DESIGN.md "The ranker hero") ------------ */
-  /* The band is shorter on top than an inner page's, so a 375x667 phone sees the ranker's search under the H1,
-     the median sentence and the source line. */
+  /* The ranker opens the page, full width (user decision 2026-09-26); the band is shorter on top than an inner
+     page's, so a 375x667 phone sees the card's search on the first screen. */
   .hero-home {
     padding-top: calc(var(--awning-h) + 20px);
     /* No scroll anchoring in the hero: when the ranker grows (its skeleton becomes a list, a search lists its
@@ -2339,14 +2339,26 @@
       padding-top: calc(var(--awning-h) + 48px);
     }
   }
-  /* The Order Board hangs below the ranker, centered in the water. */
+  /* "What a burger costs in New York." comes next: the kicker ticket, the H1, the median sentence and the source
+     line, centered over the Order Board, which hangs below them in the water. */
+  .ranker-slot + .home-costs {
+    margin-top: 48px;
+  }
+  .home-costs-head {
+    max-width: 46rem;
+    margin-inline: auto;
+    text-align: center;
+  }
   .hero-board {
     max-width: 760px;
-    margin: 48px auto 0;
+    margin: 32px auto 0;
   }
   @media (min-width: 768px) {
-    .hero-board {
+    .ranker-slot + .home-costs {
       margin-top: 64px;
+    }
+    .hero-board {
+      margin-top: 40px;
     }
   }
   /* Two links under the board, clear of its life ring: the People's Top 10 and the most-recommended burgers. */
@@ -2587,6 +2599,138 @@
   .ranker-confirm {
     padding-top: 16px;
     border-top: 1.5px solid var(--line);
+  }
+  /* The card's two columns at lg: the list (7 of 12) and, beside it, the People's Top 10 (5 of 12). The list's
+     column keeps its width whether or not the People's Top 10 shows, so nothing moves when it appears. Below lg the
+     People's Top 10 sits under the list, after a rule. */
+  .ranker-side {
+    min-width: 0;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1.5px solid var(--line);
+  }
+  .ranker-side.is-hint {
+    display: none;
+  }
+  @media (min-width: 1024px) {
+    .ranker-body {
+      display: grid;
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      column-gap: 40px;
+      align-items: start;
+    }
+    .ranker-main {
+      min-width: 0;
+    }
+    .ranker-side,
+    .ranker-side.is-hint {
+      display: block;
+      margin-top: 6px;
+      padding-top: 0;
+      border-top: 0;
+    }
+  }
+  /* Below 3 burgers, at lg: where the People's Top 10 will show (never the board itself). */
+  .ranker-reveal-hint {
+    padding: 14px 16px;
+    border: 2px dashed var(--line-strong);
+    border-radius: var(--radius-3);
+  }
+  /* The People's Top 10 beside the list: a data zone, flat on the card (the page's rows, less counts and prices). */
+  .ranker-reveal-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+  }
+  .reveal-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: 2px solid var(--line);
+    border-radius: var(--radius-3);
+    background: var(--surface);
+    overflow: clip;
+  }
+  .reveal-row {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr);
+    column-gap: 10px;
+    align-items: start;
+    min-height: 48px;
+    padding: 8px 12px 8px 8px;
+    border-top: 1.5px solid var(--line);
+  }
+  .reveal-list > .reveal-row:first-child {
+    border-top: 0;
+  }
+  /* One of the visitor's picks: the selected-row wash, and "#2 on your list" in words (never color alone). */
+  .reveal-row.is-yours {
+    background: var(--accent-tint);
+  }
+  .reveal-rank {
+    font-family: var(--font-ui);
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 1.35;
+    font-variant-numeric: tabular-nums lining-nums;
+    text-align: right;
+    white-space: nowrap;
+  }
+  .reveal-what {
+    min-width: 0;
+  }
+  .reveal-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    margin-top: 4px;
+  }
+  .reveal-yours {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  .reveal-yours svg {
+    width: 14px;
+    height: 14px;
+    flex: none;
+  }
+  .reveal-empty {
+    padding: 14px 16px;
+    border: 2px dashed var(--line-strong);
+    border-radius: var(--radius-3);
+    color: var(--ink);
+  }
+  .reveal-stands {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .reveal-stand {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 8px;
+    padding: 6px 0;
+    border-top: 1.5px solid var(--line);
+    font-family: var(--font-ui);
+    font-size: 15px;
+    line-height: 1.4;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  .reveal-stands > .reveal-stand:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+  .ranker-reveal-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 44px;
   }
   /* A browser with a saved list (html.ranker-saved, set in <head>) sees a skeleton, not an empty list, until
      the ranker mounts and loads it. */

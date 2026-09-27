@@ -51,6 +51,12 @@ export function pricedMenus(list: readonly Restaurant[]): Menu[] {
   return [...byKey.values()];
 }
 
+/** Where a menu is: "Astoria, Queens"; a chain with several locations: "5 locations"; no neighborhood: the borough. */
+export function menuWhere(m: Pick<Menu, "restaurant" | "locations">): string {
+  if (m.locations > 1) return pluralize(m.locations, "location");
+  return m.restaurant.neighborhood ? `${m.restaurant.neighborhood}, ${m.restaurant.borough}` : m.restaurant.borough;
+}
+
 /** Index prices, one per distinct menu, ascending: what every distribution and percentile is drawn from. */
 export function menuIndexPrices(list: readonly Restaurant[]): number[] {
   return pricedMenus(list)

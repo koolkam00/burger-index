@@ -3,16 +3,9 @@
 // (linked to its page) over its burger and where, the list count and the menu price. The board is the daily
 // one (lib/peoples-top-data.ts); nothing here recomputes it.
 import Link from "next/link";
-import { pluralize } from "@/lib/format";
-import type { Menu } from "@/lib/menus";
+import { menuWhere, type Menu } from "@/lib/menus";
 import { FLAG_TEXT, listsText, risingText, type RisingEntry, type RowFlag, type TopEntry } from "@/lib/peoples-top";
 import { PriceChip } from "./ui";
-
-/** "Astoria, Queens"; a chain with several locations: "5 locations"; no neighborhood: the borough. */
-function whereOf(m: Menu): string {
-  if (m.locations > 1) return pluralize(m.locations, "location");
-  return m.restaurant.neighborhood ? `${m.restaurant.neighborhood}, ${m.restaurant.borough}` : m.restaurant.borough;
-}
 
 function Flag({ flag }: { flag: RowFlag }) {
   return flag ? <span className="ptop-flag t-ui-s">{FLAG_TEXT[flag]}</span> : null;
@@ -25,7 +18,7 @@ function What({ menu, detail, flag }: { menu: Menu; detail: string; flag: RowFla
       <Link href={`/restaurants/${r.id}`} className="ui-link t-ui-l break-anywhere font-semibold">
         {r.name}
       </Link>
-      <p className="t-ui-s muted break-anywhere">{`${r.burger.name} · ${whereOf(menu)}`}</p>
+      <p className="t-ui-s muted break-anywhere">{`${r.burger.name} · ${menuWhere(menu)}`}</p>
       <p className="t-ui-s ptop-lists">
         {detail}
         <Flag flag={flag} />

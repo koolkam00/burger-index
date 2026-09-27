@@ -7,8 +7,9 @@ import "server-only";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { getPricedRestaurants } from "./data";
-import { pricedMenus, type Menu } from "./menus";
-import { EMPTY_BOARD, peoplesTopView, type BoardFile, type PeoplesTopView } from "./peoples-top";
+import { menuWhere, pricedMenus, type Menu } from "./menus";
+import { EMPTY_BOARD, peopleStandings, peoplesTopView, type BoardFile, type PeopleStanding, type PeoplesTopView } from "./peoples-top";
+import { revealBoard, type RevealBoard } from "./peoples-top-reveal";
 import { parseBoardFile } from "./peoples-top-schema";
 
 const FILE = join(process.cwd(), "src", "data", "peoples_top.json");
@@ -31,6 +32,8 @@ function load(): BoardFile {
 const BOARD = load();
 const MENUS = new Map(pricedMenus(getPricedRestaurants()).map((m) => [m.key, m]));
 const VIEW = peoplesTopView<Menu>(BOARD, (key) => MENUS.get(key));
+const REVEAL = revealBoard(VIEW, (m) => ({ name: m.restaurant.name, burger: m.restaurant.burger.name, where: menuWhere(m) }));
+const STANDINGS = peopleStandings(VIEW);
 
 /** The board as the pages show it, each row joined to its menu (a chain once, at its usual location). */
 export function getPeoplesTop(): PeoplesTopView<Menu> {
@@ -46,4 +49,14 @@ export function getPeoplesTopStamp(): string | null {
 export function getPeoplesRank(menuKey: string): { rank: number; lists: number } | null {
   const e = [...VIEW.seats, ...VIEW.rest].find((x) => x.key === menuKey);
   return e ? { rank: e.rank, lists: e.lists } : null;
+}
+
+/** The seats and the board's numbers for the home ranker's People's Top 10 beside a list of 3+ (never the whole board). */
+export function getRevealBoard(): RevealBoard {
+  return REVEAL;
+}
+
+/** Every menu the board shows, with where it stands (/data/menus.json carries them to the ranker). */
+export function getPeopleStandings(): ReadonlyMap<string, PeopleStanding> {
+  return STANDINGS;
 }
