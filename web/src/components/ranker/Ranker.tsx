@@ -48,6 +48,11 @@ function prefersReducedMotion(): boolean {
 
 /** "Emily" (with where it is when another burger's restaurant has the name), or a stand-in for a burger no longer listed. */
 const nameOf = (b: RankerBurger | undefined) => b?.label ?? "A burger no longer listed";
+/** A row's burger as the live region says it: like its row, "This burger" while the burgers haven't loaded. */
+const spokenName = (snap: RankerSnapshot, key: string) => {
+  const b = snap.burgers.get(key);
+  return b ? b.label : snap.menus === "ready" ? "A burger no longer listed" : "This burger";
+};
 
 /**
  * The burger ranker, the home page's first screen (DESIGN.md "The ranker hero"; user decisions 2026-09-25/26):
@@ -254,7 +259,7 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
     rankerStore.move(key, delta);
     const control = delta < 0 ? (to === 0 ? "down" : "up") : to === snap.draft.length - 1 ? "up" : "down";
     pendingFocus.current = { kind: "row", key, control };
-    say(`${nameOf(snap.burgers.get(key))} moved to #${to + 1}.`);
+    say(`${spokenName(snap, key)} moved to #${to + 1}.`);
   };
   /** A row dropped at a new place (drag to reorder, with a mouse): announced like a move with the arrows. */
   const moveTo = (key: string, to: number) => {
@@ -262,7 +267,7 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
     if (held || from < 0 || to === from || to < 0 || to >= snap.draft.length) return;
     starting(snap.saved !== null);
     rankerStore.moveTo(key, to);
-    say(`${nameOf(snap.burgers.get(key))} moved to #${to + 1}.`);
+    say(`${spokenName(snap, key)} moved to #${to + 1}.`);
   };
   const remove = (key: string) => {
     if (held) return;
@@ -274,7 +279,7 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
     pendingFocus.current = next ? { kind: "row", key: next, control: "remove" } : { kind: "search" };
     // Going under 3 with a saved list: the saved list stays as it was (said once, as the list drops under 3).
     const under = snap.saved && rest.length < MIN_ITEMS && snap.draft.length >= MIN_ITEMS ? ` Add ${MIN_ITEMS - rest.length} more to save your changes.` : "";
-    say(`${nameOf(snap.burgers.get(key))} removed. ${pluralize(rest.length, "burger")} on your list.${under}`);
+    say(`${spokenName(snap, key)} removed. ${pluralize(rest.length, "burger")} on your list.${under}`);
   };
   const askDelete = () => {
     rankerStore.askDelete();
@@ -764,20 +769,23 @@ function ListCard({
       ) : (
         <p className="ranker-empty t-ui-m muted mt-2">No burgers yet. Find one above and add your favorite first.</p>
       )}
-      {/* Not a live region: the ranker's own says each change, the first save and a failure, so a save never chatters. */}
-      <p className="t-ui-s ranker-status mt-2" data-ranker-status="">
+      {/* Not a live region: the ranker's own says each change, the first save and a failure, so a save never chatters.
+          Its id describes the held "Share your top 10" and "Count it again" (why it waits, what it counts for). */}
+      <p id={`${uid}-status`} className="t-ui-s ranker-status mt-2" data-ranker-status="">
         {line.alert ? <Alert>{line.text}</Alert> : line.text}
       </p>
       {replacedAsIs && !asking ? (
-        <button type="button" className="btn btn-secondary btn-sm mt-3" data-ranker-button="count" onClick={onCountAgain}>
+        <button type="button" className="btn btn-secondary btn-sm mt-3" data-ranker-button="count" aria-describedby={`${uid}-status`} onClick={onCountAgain}>
           Count it again
         </button>
       ) : null}
 
       {/* "Share your top 10" (user decision 2026-09-27): the saved list's image and a link to rank your own, once the burgers
-          are known; held while a change is still being saved. */}
+          are known; held while the list on the card differs from the saved list (a change waiting, on its way, refused, or
+          one that can't be saved yet), so the image is never of a list the card no longer shows. Not keyed on the list: a
+          save must not remount the button (focus would drop to the page); ShareList starts afresh on a new list itself. */}
       {saved && ready && !asking ? (
-        <ShareList key={saved.items.join(",")} items={saved.items} burgers={snap.burgers} url={shareUrl} held={snap.dirty || snap.saving} />
+        <ShareList items={saved.items} burgers={snap.burgers} url={shareUrl} held={snap.dirty || snap.saving} describedBy={`${uid}-status`} />
       ) : null}
       {asking ? (
         <div className="ranker-confirm mt-5" role="group" aria-labelledby="ranker-confirm-q">

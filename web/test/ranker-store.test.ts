@@ -59,7 +59,8 @@ function fakeApi(seed: Record<string, SavedRanking | null> = {}) {
   const lists = new Map(Object.entries(seed));
   const calls: string[] = [];
   const fail: { save?: unknown; get?: unknown; del?: unknown } = {};
-  const ctl = { hold: false, held: [] as Deferred[] };
+  // hold: saves wait for the test; holdGet / holdDel: gets (answering with the list as it was when asked) and deletes too
+  const ctl = { hold: false, held: [] as Deferred[], holdGet: false, heldGets: [] as (() => void)[], holdDel: false, heldDels: [] as (() => void)[] };
   const unload: string[] = [];
   const store = (voter: string, items: readonly string[]): SaveReply => {
     lists.set(voter, { items: [...items], status: "active", savedOn: "2026-09-26", countsFrom: "2026-09-27", inBoard: false });
@@ -79,11 +80,14 @@ function fakeApi(seed: Record<string, SavedRanking | null> = {}) {
     async get(voter) {
       calls.push(`get ${voter}`);
       if (fail.get) throw fail.get;
-      return lists.get(voter) ?? null;
+      const now = lists.get(voter) ?? null;
+      if (ctl.holdGet) await new Promise<void>((resolve) => ctl.heldGets.push(resolve));
+      return now;
     },
     // like delete_ranking: only an active or replaced list is withdrawn (a void one stays void)
     async del(voter) {
       calls.push(`del ${voter}`);
+      if (ctl.holdDel) await new Promise<void>((resolve) => ctl.heldDels.push(resolve));
       if (fail.del) throw fail.del;
       const list = lists.get(voter);
       if (!list || (list.status !== "active" && list.status !== "replaced")) return false;
@@ -821,4 +825,274 @@ test("a link's add is said once per outcome: a ranker that mounts again (a retur
   store.add("a");
   assert.equal(store.getSnapshot().linkAdd, null);
   assert.equal(store.claimLinkAdd(again!), false);
+});
+
+// ---- the second review's cases (2026-09-27) ----------------------------------------------------------------
+
+const settled = async () => {
+  for (let i = 0; i < 6; i++) await tick();
+};
+
+test("another tab's delete while a save is on its way: the check waits for that save, so the card says what the backend holds", async () => {
+  const { store, backend, clock, page, local } = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
+  await started(store);
+  backend.ctl.hold = true;
+  store.add("d");
+  await wait(clock, 2000);
+  backend.lists.set("v1", { ...SAVED(["a", "b", "c"]), status: "deleted" });
+  local.data.delete(RANKER_SAVED_KEY);
+  page().deletedElsewhere();
+  await settled();
+  assert.deepEqual(backend.calls, ["get v1", "save v1 a,b,c,d"], "no check before the save on its way has landed");
+  backend.ctl.held.shift()!.resolve(); // the backend handled the save after the delete: the list is active again
+  await settled();
+  const s = store.getSnapshot();
+  assert.deepEqual(backend.calls, ["get v1", "save v1 a,b,c,d", "get v1"]);
+  assert.deepEqual(s.saved?.items, ["a", "b", "c", "d"], "the card shows the list that counts, not 'deleted'");
+  assert.equal(s.notice, null);
+  assert.equal(local.data.get(RANKER_SAVED_KEY), "1");
+});
+
+test("a change queued behind a save whose reply another tab's delete made stale still saves", async () => {
+  const { store, backend, clock, page, local } = setup();
+  await started(store);
+  backend.ctl.hold = true;
+  for (const k of ["a", "b", "c"]) store.add(k);
+  await wait(clock, 2000); // on its way (and the voter id made)
+  local.data.delete(RANKER_SAVED_KEY);
+  page().deletedElsewhere(); // no saved list known here yet: the card starts again at once
+  assert.deepEqual(store.getSnapshot().draft, []);
+  for (const k of ["c", "b", "a"]) store.add(k);
+  await wait(clock, 2000); // the pause ends while the old save is still on its way: queued behind it
+  backend.ctl.hold = false;
+  backend.ctl.held.shift()!.resolve();
+  await settled();
+  const s = store.getSnapshot();
+  assert.deepEqual(backend.calls, ["save new-voter a,b,c", "save new-voter c,b,a"]);
+  assert.deepEqual(s.saved?.items, ["c", "b", "a"]);
+  assert.equal(s.saving, false);
+  assert.equal(local.data.get(RANKER_SAVED_KEY), "1");
+});
+
+test("back from the back-forward cache with a save that couldn't reach the counter: its retry comes back, or it is done if the keepalive landed", async () => {
+  // the keepalive request was lost: the retry goes again
+  const lost = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
+  await started(lost.store);
+  lost.store.move("b", -1);
+  lost.backend.fail.save = new TypeError("Failed to fetch");
+  await wait(lost.clock, 2000);
+  assert.deepEqual(lost.clock.waiting(), [5000]);
+  lost.page().unload();
+  assert.deepEqual(lost.backend.unload, ["v1 b,a,c"], "a network retry goes as a keepalive request");
+  lost.page().restored();
+  await settled();
+  assert.deepEqual(lost.clock.waiting(), [5000], "the retry is armed again");
+  lost.backend.fail.save = undefined;
+  await wait(lost.clock, 5000);
+  let s = lost.store.getSnapshot();
+  assert.deepEqual(lost.backend.calls, ["get v1", "save v1 b,a,c", "get v1", "save v1 b,a,c"]);
+  assert.equal(s.failure, null);
+  assert.deepEqual(s.saved?.items, ["b", "a", "c"]);
+
+  // the keepalive request landed: no failure left, nothing more sent
+  const landed = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
+  await started(landed.store);
+  landed.store.move("b", -1);
+  landed.backend.fail.save = new TypeError("Failed to fetch");
+  await wait(landed.clock, 2000);
+  landed.page().unload();
+  landed.backend.lists.set("v1", SAVED(["b", "a", "c"], { inBoard: false }));
+  landed.page().restored();
+  await settled();
+  s = landed.store.getSnapshot();
+  assert.equal(s.failure, null);
+  assert.equal(s.saving, false);
+  assert.deepEqual(landed.clock.waiting(), []);
+  assert.deepEqual(landed.backend.calls, ["get v1", "save v1 b,a,c", "get v1"]);
+
+  // the hourly budget: nothing at close, and after the return it still goes once the hour turns
+  const hourly = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
+  await started(hourly.store);
+  hourly.store.move("b", -1);
+  hourly.backend.fail.save = { code: "PT429", hint: "rate_connection", message: "…" };
+  await wait(hourly.clock, 2000);
+  hourly.page().unload();
+  assert.deepEqual(hourly.backend.unload, [], "a refusal's retry waits for the hour, even at close");
+  hourly.page().restored();
+  await settled();
+  assert.deepEqual(hourly.clock.waiting(), [3_600_000 - 2000 + 15_000]);
+  hourly.backend.fail.save = undefined;
+  await wait(hourly.clock, 3_600_000 - 2000 + 15_000);
+  assert.deepEqual(hourly.backend.calls, ["get v1", "save v1 b,a,c", "get v1", "save v1 b,a,c"]);
+  assert.equal(hourly.store.getSnapshot().failure, null);
+});
+
+test("back from the back-forward cache, a list replaced since it was saved here isn't sent again without a new change", async () => {
+  const { store, backend, clock, page } = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
+  await started(store);
+  store.move("b", -1);
+  await wait(clock, 2000);
+  assert.deepEqual(backend.calls, ["get v1", "save v1 b,a,c"]);
+  backend.lists.set("v1", SAVED(["b", "a", "c"], { status: "replaced", inBoard: false })); // the connection's other browser saved
+  page().unload();
+  page().restored();
+  await settled();
+  await wait(clock, 60000);
+  const s = store.getSnapshot();
+  assert.equal(s.saved?.status, "replaced");
+  assert.equal(s.saving, false);
+  assert.deepEqual(backend.calls, ["get v1", "save v1 b,a,c", "get v1"], "the other browser keeps its counted list");
+  store.move("c", -1); // a change made now counts it again
+  await wait(clock, 2000);
+  assert.deepEqual(backend.calls.at(-1), "save v1 b,c,a");
+});
+
+test("back from the back-forward cache after a first list went only as a keepalive request: it is checked, and saved if it didn't land", async () => {
+  const lost = setup();
+  await started(lost.store);
+  for (const k of ["a", "b", "c"]) lost.store.add(k);
+  lost.page().unload();
+  assert.deepEqual(lost.backend.unload, ["new-voter a,b,c"]);
+  lost.page().restored();
+  await settled();
+  await wait(lost.clock, 2000);
+  let s = lost.store.getSnapshot();
+  assert.deepEqual(lost.backend.calls, ["get new-voter", "save new-voter a,b,c"]);
+  assert.equal(s.mine, "ready");
+  assert.deepEqual(s.saved?.items, ["a", "b", "c"]);
+
+  const landed = setup();
+  await started(landed.store);
+  for (const k of ["a", "b", "c"]) landed.store.add(k);
+  landed.page().unload();
+  landed.backend.lists.set("new-voter", SAVED(["a", "b", "c"], { inBoard: false }));
+  landed.page().restored();
+  await settled();
+  await wait(landed.clock, 5000);
+  s = landed.store.getSnapshot();
+  assert.deepEqual(landed.backend.calls, ["get new-voter"]);
+  assert.equal(s.mine, "ready");
+  assert.deepEqual(s.draft, ["a", "b", "c"]);
+  assert.equal(s.dirty, false, "the card says it is saved");
+});
+
+test("a change back to the saved list while a different one is on its way survives a close and a reload", async () => {
+  const { store, backend, clock, page, session } = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
+  await started(store);
+  backend.ctl.hold = true;
+  store.move("b", -1);
+  await wait(clock, 2000); // b,a,c on its way
+  store.move("b", 1); // back to a,b,c
+  assert.equal(session.data.get(RANKER_DRAFT_KEY), JSON.stringify({ items: ["a", "b", "c"] }), "kept: the backend is about to hold b,a,c");
+  page().unload();
+  assert.deepEqual(backend.unload, ["v1 a,b,c"], "the visitor's last list goes at close");
+});
+
+test("a delete confirmed while the saved list is being checked: the check's late answer never brings the list back", async () => {
+  const { store, backend, page, local } = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
+  await started(store);
+  backend.ctl.holdGet = true;
+  page().restored();
+  await settled();
+  store.askDelete();
+  backend.ctl.holdGet = false;
+  assert.equal(await store.deleteList(), 3);
+  backend.ctl.heldGets.shift()!(); // the check answers with the list as it was before the delete
+  await settled();
+  const s = store.getSnapshot();
+  assert.equal(s.saved, null);
+  assert.deepEqual(s.draft, []);
+  assert.equal(s.notice, "deleted");
+  assert.equal(local.data.has(RANKER_SAVED_KEY), false);
+});
+
+test("a failed delete never re-sends a refused list or hurries the hourly wait; 'Keep it' brings the refusal back", async () => {
+  const { store, backend, clock } = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
+  await started(store);
+  store.move("b", -1);
+  backend.fail.save = { code: "PT429", hint: "rate_voter", message: "…" };
+  await wait(clock, 2000);
+  store.askDelete();
+  backend.fail.del = new TypeError("Failed to fetch");
+  assert.equal(await store.deleteList(), null);
+  assert.deepEqual(store.getSnapshot().failure, { action: "delete", kind: "network" });
+  assert.deepEqual(clock.waiting(), []);
+  await wait(clock, 60000);
+  assert.deepEqual(backend.calls, ["get v1", "save v1 b,a,c", "del v1"]);
+  store.keepList();
+  assert.deepEqual(store.getSnapshot().failure, { action: "save", kind: "rate_voter", retrying: false });
+  assert.deepEqual(clock.waiting(), []);
+
+  const hourly = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
+  await started(hourly.store);
+  hourly.store.move("b", -1);
+  hourly.backend.fail.save = { code: "PT429", hint: "rate_connection", message: "…" };
+  await wait(hourly.clock, 2000);
+  hourly.store.askDelete();
+  hourly.backend.fail.del = new TypeError("Failed to fetch");
+  assert.equal(await hourly.store.deleteList(), null);
+  assert.deepEqual(hourly.clock.waiting(), [], "no 2 s pause in place of the hour");
+  hourly.store.keepList();
+  assert.deepEqual(hourly.store.getSnapshot().failure, { action: "save", kind: "rate_connection", retrying: true });
+  assert.deepEqual(hourly.clock.waiting(), [3_600_000 - 2000 + 15_000]);
+});
+
+test("a restaurant page's add that arrives while a delete is on its way goes on the list after it", async () => {
+  const { store, backend } = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
+  await started(store);
+  store.askDelete();
+  backend.ctl.holdDel = true;
+  const deleting = store.deleteList();
+  await settled();
+  store.addFromLink("d");
+  assert.deepEqual(store.getSnapshot().linkAdd, null, "it waits for the delete");
+  backend.ctl.heldDels.shift()!();
+  assert.equal(await deleting, 3);
+  const s = store.getSnapshot();
+  assert.deepEqual(s.draft, ["d"]);
+  assert.deepEqual(s.linkAdd, { key: "d", kind: "added", position: 1 });
+});
+
+test("hiding or closing the page never hurries a refusal's or an odd reply's retry", async () => {
+  const { store, backend, clock, page } = setup();
+  await started(store);
+  for (const k of ["a", "b", "c"]) store.add(k);
+  backend.fail.save = { code: "PT429", hint: "rate_connection", message: "…" };
+  await wait(clock, 2000);
+  page().hidden();
+  page().hidden();
+  page().unload();
+  await settled();
+  assert.deepEqual(backend.calls, ["save new-voter a,b,c"]);
+  assert.deepEqual(backend.unload, []);
+  assert.deepEqual(clock.waiting(), [3_600_000 - 2000 + 15_000], "still waiting for the hour");
+
+  const odd = setup();
+  await started(odd.store);
+  for (const k of ["a", "b", "c"]) odd.store.add(k);
+  odd.backend.fail.save = { code: "PGRST202", status: 404, message: "Could not find the function" };
+  await wait(odd.clock, 2000);
+  for (let i = 0; i < 4; i++) odd.page().hidden();
+  await settled();
+  assert.equal(odd.backend.calls.length, 1, "its three tries keep their times");
+  assert.deepEqual(odd.store.getSnapshot().failure, { action: "save", kind: "unknown", retrying: true });
+});
+
+test("a change made while the saved list is being checked is sent if the page closes before the answer (never after another tab's delete)", async () => {
+  const { store, backend, page } = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
+  await started(store);
+  backend.ctl.holdGet = true;
+  page().restored();
+  store.move("b", -1);
+  page().hidden();
+  page().unload();
+  assert.deepEqual(backend.unload, ["v1 b,a,c"]);
+
+  const other = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
+  await started(other.store);
+  other.backend.ctl.holdGet = true;
+  other.page().deletedElsewhere();
+  other.store.move("b", -1);
+  other.page().unload();
+  assert.deepEqual(other.backend.unload, [], "it could bring the deleted list back");
 });

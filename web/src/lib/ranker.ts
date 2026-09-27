@@ -306,7 +306,8 @@ export function saveRetryDelay(kind: RankerErrorKind, attempt: number, nowMs: nu
 export function saveFailureText(f: { kind: RankerErrorKind; retrying: boolean }, hasSaved = false): string {
   if (f.retrying) {
     if (f.kind === "network") return "Couldn't reach the counter. Trying again soon.";
-    if (f.kind === "rate_connection") return `Lots of lists were saved from this connection in the last hour. ${hasSaved ? "Your changes save" : "Your list saves"} after the hour.`;
+    // The retry lives in this page: said as such (the list on the card isn't kept once the tab closes).
+    if (f.kind === "rate_connection") return `Lots of lists were saved from this connection in the last hour. Keep this page open: ${hasSaved ? "your changes save" : "your list saves"} after the hour.`;
     return "Something went wrong. Trying again soon.";
   }
   const what = hasSaved ? "your changes" : "it";
@@ -319,7 +320,9 @@ export function saveFailureText(f: { kind: RankerErrorKind; retrying: boolean },
           ? `Lots of new lists came from this network today. Change your list again tomorrow to save ${what}.`
           : f.kind === "unknown" || f.kind === "network"
             ? `Something went wrong. Change your list or reload the page to save ${what}.`
-            : RANKER_ERROR_COPY[f.kind];
+            : f.kind === "invalid"
+              ? `That list doesn't look right. Reload the page to save ${what}.`
+              : RANKER_ERROR_COPY[f.kind];
   return hasSaved ? `${text} Your saved list is unchanged.` : text;
 }
 

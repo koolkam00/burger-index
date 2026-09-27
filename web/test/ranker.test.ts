@@ -157,11 +157,17 @@ test("autosave's status line: a failure, a gone burger, what's still needed, sav
   });
   assert.equal(saveFailureText({ kind: "unknown", retrying: true }), "Something went wrong. Trying again soon.");
   assert.equal(saveFailureText({ kind: "unknown", retrying: false }, true), "Something went wrong. Change your list or reload the page to save your changes. Your saved list is unchanged.");
-  assert.equal(saveFailureText({ kind: "rate_connection", retrying: true }), "Lots of lists were saved from this connection in the last hour. Your list saves after the hour.");
-  assert.equal(saveFailureText({ kind: "rate_connection", retrying: true }, true), "Lots of lists were saved from this connection in the last hour. Your changes save after the hour.");
+  // the retry after the hour lives in the page: the copy says to keep it open
+  assert.equal(saveFailureText({ kind: "rate_connection", retrying: true }), "Lots of lists were saved from this connection in the last hour. Keep this page open: your list saves after the hour.");
+  assert.equal(saveFailureText({ kind: "rate_connection", retrying: true }, true), "Lots of lists were saved from this connection in the last hour. Keep this page open: your changes save after the hour.");
+  assert.equal(saveFailureText({ kind: "invalid", retrying: false }), "That list doesn't look right. Reload the page to save it.");
+  assert.equal(saveFailureText({ kind: "invalid", retrying: false }, true), "That list doesn't look right. Reload the page to save your changes. Your saved list is unchanged.");
   assert.equal(saveFailureText({ kind: "rate_network", retrying: false }), "Lots of new lists came from this network today. Change your list again tomorrow to save it.");
   assert.equal(saveFailureText({ kind: "unknown_burger", retrying: false }), RANKER_ERROR_COPY.unknown_burger);
-  for (const text of [saveFailureText({ kind: "rate_voter", retrying: false }), saveFailureText({ kind: "rate_connection", retrying: true })]) {
+  const refusals = (["rate_connection", "rate_voter", "rate_network", "too_short", "too_long", "unknown_burger", "duplicate", "invalid", "network", "disabled", "unknown"] as const).flatMap((kind) =>
+    [false, true].flatMap((retrying) => [saveFailureText({ kind, retrying }), saveFailureText({ kind, retrying }, true)]),
+  );
+  for (const text of refusals) {
     assert.doesNotMatch(text, /try again/i, "nothing to press: the copy says what saves it");
   }
   // a burger that left the Burger Index

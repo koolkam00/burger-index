@@ -86,7 +86,8 @@ which PostgREST turns into that status). The `message` is written for visitors; 
 | `rate_network` | Lots of new lists came from this network today. Try again tomorrow. (30 new voter ids a day per /24 or /48) |
 
 Every `save_ranking` call that passes validation counts against the connection and voter budgets (an identical list
-too: it is counted before the same-list check, so the site never sends one), and a call that finds no list for its
+too: it is counted before the same-list check; the site sends one only when a page closes with that list's save still
+on its way, the keepalive copy, or after a lost reply), and a call that finds no list for its
 voter id also against the network one; a refused call rolls its counts back. `get_my_ranking` and `delete_ranking`
 count against nothing. **Autosave** (2026-09-27): the site saves the list about 2 seconds after each change, so the two
 per-save budgets were raised from 20 an hour and 10 a day (`ranker_rate_autosave`). However often one voter saves, the
@@ -415,7 +416,7 @@ first save), loads `get_my_ranking` on mount when the browser has one, and calls
 seconds after the last change, one call at a time (a change made meanwhile goes right after it), never with the list the
 backend already holds as it is; a network failure is tried again after 5 s, 15 s, then every minute, an unexpected reply three times, a `rate_connection`
 refusal once the hour turns, any other refusal only after the next change (the card words the rate refusals for a page
-with no Save button: "Change it again tomorrow to save it.", "Your list saves after the hour."). When the page closes,
+with no Save button: "Change it again tomorrow to save it.", "Keep this page open: your list saves after the hour."). When the page closes,
 the newest list still waiting or on its way goes again as a keepalive `fetch` to `rpc/save_ranking` with the publishable
 key in the `apikey` header. A page back from the back-forward cache, or another tab's delete (the `bi-ranker-saved` flag
 removed), calls `get_my_ranking` before anything more is saved, so a waiting retry never brings back a deleted list. A

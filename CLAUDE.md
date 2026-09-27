@@ -270,10 +270,11 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   user decision 2026-09-26, pointer only, from 480px where the pointer is fine and hovers; a press is a drag only after
   5px of movement), remove them. **It autosaves** (user request 2026-09-27; no Save button): once the list holds 3, about 2 s
   after the last change, one save at a time, never the list already saved, network failures retried (5 s, 15 s, every
-  minute; an odd reply 3 times; the hourly budget after the hour), other refusals not until the next change, a waiting save
-  flushed when the page is hidden (the newest list as a keepalive `fetch` on close, even with a save on its way); a list
-  another tab deleted or a page back from the bfcache is checked again before any save; a `replaced` list is saved again
-  only after a change or "Count it again", never just by loading; one view: a returning browser finds its saved list on the card, editable, under it a status line, "Share your top 10" and
+  minute; an odd reply 3 times; the hourly budget after the hour, while the page stays open), other refusals not until
+  the next change, a waiting save flushed when the page is hidden (the newest list as a keepalive `fetch` on close, even
+  with a save on its way; never a refusal's or an odd reply's retry early); a list another tab deleted or a page back from
+  the bfcache is checked again (after a save on its way lands) before any save, and a retry the close dropped comes back;
+  a `replaced` list is saved again only after a change made from then on or "Count it again", never just by loading; one view: a returning browser finds its saved list on the card, editable, under it a status line, "Share your top 10" and
   "Delete my list". The per-save budgets were raised for it (`ranker_rate_autosave`: 120 an hour per connection, 200 a day
   per voter id). `components/ranker/Ranker.tsx` (UI), `src/lib/ranker-store.ts` (state as an external
   store; an unsaved list in `sessionStorage` `bi-ranker-draft`, `localStorage` `bi-ranker-saved` = this browser has a saved
@@ -295,8 +296,8 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   room (then it saves itself), saying so on the card and in its live region ("Emily added at #4. 4 burgers on your list.",
   "… is already on your list, at #2.", "Your list is full: 25 burgers. Remove one to add …"); the live region and `ranking_item_added` fire once
   per add (`claimLinkAdd` in the store, so a remount on a return to home repeats neither); `check:seo` checks every
-  restaurant page's link. **"Share your top 10"** (user decision 2026-09-27) under a saved list (held while a change is still
-  being saved) opens a panel: a 1080×1920 story or 1080×1080 square image of the list's first 10
+  restaurant page's link. **"Share your top 10"** (user decision 2026-09-27) under a saved list (held while the list on the card
+  differs from the saved one) opens a panel: a 1080×1920 story or 1080×1080 square image of the list's first 10
   (restaurant over "burger · where", names cut with an ellipsis; the share images' list card), drawn in the browser on a
   canvas with the page's own fonts (`src/lib/share-list-image.ts`; words, rows and geometry pure in `src/lib/share-list.ts`,
   `test/share-list.test.ts`; `components/ranker/ShareList.tsx`), then "Share image" (the Web Share API with the file, where
