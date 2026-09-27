@@ -149,17 +149,21 @@ test("an empty board says when it starts, with the real numbers, and what the vi
 });
 
 test("what the visitor's list does for the empty board follows the saved list, whether or not it is being edited", () => {
-  // The ranker passes yourList(snap.saved?.status) with or without unsaved edits: a saved list keeps counting while
+  // The ranker passes yourList(snap.saved?.status, snap.dirty): a saved list keeps counting while
   // it is edited, and a void one stays uncounted.
   assert.equal(yourList("active"), "counting", "an active saved list (edited or not)");
   assert.equal(yourList("void"), "not_counted", "a void saved list (edited or not)");
   assert.equal(yourList("deleted"), "not_counted");
-  assert.equal(yourList("replaced"), "unsaved", "saving again would count");
+  assert.equal(yourList("replaced"), "replaced", "as it is: it counts again only with 'Count it again'");
+  assert.equal(yourList("replaced", true), "unsaved", "edited: the change saves itself and counts");
+  assert.equal(yourList("active", true), "counting");
   assert.equal(yourList(null), "unsaved");
   assert.equal(yourList(undefined), "unsaved");
   const later = { ...revealBoard(peoplesTopView(EMPTY_BOARD, (k) => k), describe), asOf: "2026-10-01", totalLists: 12 };
   assert.equal(revealView(later, ["a", "b", "c"], picks(), yourList("active")).empty, "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far). Your list helps start it.");
   assert.equal(revealView(later, ["a", "b", "c"], picks(), yourList("void")).empty, "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far).");
+  // a replaced list as it is: saving it waits for the visitor ("Count it again"), so never "once saved"
+  assert.equal(revealView(later, ["a", "b", "c"], picks(), yourList("replaced")).empty, "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far). Count it again to help start it.");
 });
 
 test("a board past 500 lists isn't early; a board with no '≈' has no legend", () => {

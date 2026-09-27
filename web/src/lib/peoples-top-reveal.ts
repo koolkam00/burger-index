@@ -60,16 +60,19 @@ export type RevealRow = RevealSeat & { yours: number | null };
 export type StandLine = { key: string; who: string; stand: string };
 
 /** The visitor's list as it counts toward the board (the empty board's last sentence follows it). */
-export type YourList = "counting" | "unsaved" | "not_counted";
+export type YourList = "counting" | "unsaved" | "replaced" | "not_counted";
 
 /**
- * What the visitor's list does for the board, from the saved list's status (none: nothing saved). A saved list keeps
- * counting while it is being edited, so an edit in progress doesn't change it: active → counting; replaced (a newer
- * list from this connection counts instead) or none → unsaved (saving would count); void or deleted → not counted.
+ * What the visitor's list does for the board, from the saved list's status (none: nothing saved) and whether the list on
+ * the card differs from it (`edited`). A saved list keeps counting while it is being edited, so an edit in progress
+ * doesn't change it: active → counting; none → unsaved (it saves itself once it holds 3); replaced (a newer list from
+ * this connection counts instead) → replaced as it is (it counts again only with "Count it again"), unsaved once edited
+ * (the change saves itself and counts); void or deleted → not counted.
  */
-export function yourList(status: RankingStatus | null | undefined): YourList {
+export function yourList(status: RankingStatus | null | undefined, edited = false): YourList {
   if (status === "active") return "counting";
-  if (!status || status === "replaced") return "unsaved";
+  if (status === "replaced") return edited ? "unsaved" : "replaced";
+  if (!status) return "unsaved";
   return "not_counted";
 }
 
@@ -96,6 +99,7 @@ export type RevealView = {
 const HELP_TEXT: Record<YourList, string> = {
   counting: "Your list helps start it.",
   unsaved: "Your list helps start it once saved.",
+  replaced: "Count it again to help start it.",
   not_counted: "",
 };
 

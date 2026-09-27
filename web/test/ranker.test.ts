@@ -11,6 +11,7 @@ import {
   retriesSave,
   retryDelay,
   saveFailureText,
+  countAgainFailureText,
   saveRetryDelay,
   untilNextHour,
   dragIndex,
@@ -136,7 +137,7 @@ test("a list can be saved with 3 to 25 burgers, each still on the Burger Index",
 test("autosave's status line: a failure, a gone burger, what's still needed, saving, then what the saved list counts for", () => {
   const today = "2026-09-26";
   const counting = { status: "active" as const, countsFrom: "2026-09-27", inBoard: false };
-  const base = { length: 0, saved: null, dirty: false, saving: false, failure: null, problem: null, deleted: false };
+  const base = { length: 0, saved: null, dirty: false, saving: false, failure: null, problem: null, deleted: false, menusFailed: false };
   const line = (o: Partial<Parameters<typeof autosaveLine>[0]>) => autosaveLine({ ...base, ...o }, today);
   assert.deepEqual(line({}), { text: "Add at least 3 burgers, your favorite first.", alert: false });
   assert.deepEqual(line({ length: 1, dirty: true, problem: "too_short" }), { text: "Add 2 more to save your list.", alert: false });
@@ -150,7 +151,7 @@ test("autosave's status line: a failure, a gone burger, what's still needed, sav
   assert.deepEqual(line({ deleted: true }), { text: "Your list was deleted.", alert: false });
   // failures first: one tried again says so; a refusal says what saves it (no button to press), and that a saved list is unchanged
   assert.deepEqual(line({ length: 3, dirty: true, saving: true, failure: { kind: "network", retrying: true } }), { text: "Couldn't reach the counter. Trying again soon.", alert: true });
-  assert.deepEqual(line({ length: 3, dirty: true, failure: { kind: "rate_voter", retrying: false } }), { text: "You've saved your list a lot today. Change it again tomorrow to save it.", alert: true });
+  assert.deepEqual(line({ length: 3, dirty: true, failure: { kind: "rate_voter", retrying: false } }), { text: "You've saved your list a lot today. Your list can't be saved until tomorrow.", alert: true });
   assert.deepEqual(line({ length: 4, saved: counting, dirty: true, failure: { kind: "rate_voter", retrying: false } }), {
     text: "You've saved your list a lot today. Change it again tomorrow to save your changes. Your saved list is unchanged.",
     alert: true,
@@ -162,7 +163,9 @@ test("autosave's status line: a failure, a gone burger, what's still needed, sav
   assert.equal(saveFailureText({ kind: "rate_connection", retrying: true }, true), "Lots of lists were saved from this connection in the last hour. Keep this page open: your changes save after the hour.");
   assert.equal(saveFailureText({ kind: "invalid", retrying: false }), "That list doesn't look right. Reload the page to save it.");
   assert.equal(saveFailureText({ kind: "invalid", retrying: false }, true), "That list doesn't look right. Reload the page to save your changes. Your saved list is unchanged.");
-  assert.equal(saveFailureText({ kind: "rate_network", retrying: false }), "Lots of new lists came from this network today. Change your list again tomorrow to save it.");
+  // a daily limit with no saved list: the list lives only in this tab, so the copy never says it waits for tomorrow
+  assert.equal(saveFailureText({ kind: "rate_network", retrying: false }), "Lots of new lists came from this network today. Your list can't be saved until tomorrow.");
+  assert.equal(saveFailureText({ kind: "rate_network", retrying: false }, true), "Lots of new lists came from this network today. Change your list again tomorrow to save your changes. Your saved list is unchanged.");
   assert.equal(saveFailureText({ kind: "unknown_burger", retrying: false }), RANKER_ERROR_COPY.unknown_burger);
   const refusals = (["rate_connection", "rate_voter", "rate_network", "too_short", "too_long", "unknown_burger", "duplicate", "invalid", "network", "disabled", "unknown"] as const).flatMap((kind) =>
     [false, true].flatMap((retrying) => [saveFailureText({ kind, retrying }), saveFailureText({ kind, retrying }, true)]),
@@ -170,6 +173,31 @@ test("autosave's status line: a failure, a gone burger, what's still needed, sav
   for (const text of refusals) {
     assert.doesNotMatch(text, /try again/i, "nothing to press: the copy says what saves it");
   }
+  // "Count it again" refused: the list as it is, so no "your changes", and "Not counted" stays
+  const replaced = { status: "replaced" as const, countsFrom: null, inBoard: false };
+  assert.deepEqual(line({ length: 3, saved: replaced, failure: { kind: "rate_voter", retrying: false } }), {
+    text: "Not counted: a newer list was saved from this connection. You've saved your list a lot today: count it again tomorrow.",
+    alert: true,
+  });
+  assert.equal(
+    line({ length: 3, saved: replaced, failure: { kind: "rate_connection", retrying: true } }).text,
+    "Lots of lists were saved from this connection in the last hour. Keep this page open: your list counts again after the hour.",
+  );
+  assert.equal(line({ length: 3, saved: replaced, failure: { kind: "network", retrying: true } }).text, "Couldn't reach the counter. Trying again soon.");
+  assert.equal(
+    line({ length: 3, saved: replaced, failure: { kind: "unknown", retrying: false } }).text,
+    "Not counted: a newer list was saved from this connection. Something went wrong: count it again, or reload the page.",
+  );
+  // a replaced list changed: its change is what's refused
+  assert.match(line({ length: 3, saved: replaced, dirty: true, failure: { kind: "rate_voter", retrying: false } }).text, /to save your changes\. Your saved list is unchanged\.$/);
+  for (const kind of ["rate_connection", "rate_voter", "rate_network", "invalid", "network", "unknown"] as const) {
+    for (const retrying of [false, true]) assert.doesNotMatch(countAgainFailureText({ kind, retrying }), /your changes|try again/i);
+  }
+  // a change that can't go yet is never left unsaid
+  assert.deepEqual(line({ length: 3, saved: counting, dirty: true, menusFailed: true }), { text: "Your changes save once the burgers load.", alert: false });
+  assert.deepEqual(line({ length: 3, dirty: true, menusFailed: true }), { text: "Your list saves once the burgers load.", alert: false });
+  assert.deepEqual(line({ length: 3, saved: counting, dirty: true }), { text: "Saving…", alert: false }, "held by a check of the saved list, or the burgers loading");
+  assert.deepEqual(line({ length: 3, saved: counting, menusFailed: true }), { text: "Saved. It counts from Sep 27, 2026.", alert: false });
   // a burger that left the Burger Index
   assert.deepEqual(line({ length: 4, dirty: true, problem: "gone" }), { text: "Remove the burgers no longer on the Burger Index to save your list.", alert: true });
   assert.deepEqual(line({ length: 4, saved: counting, dirty: true, problem: "gone" }), { text: "Remove the burgers no longer on the Burger Index to save your changes.", alert: true });

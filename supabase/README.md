@@ -416,10 +416,13 @@ first save), loads `get_my_ranking` on mount when the browser has one, and calls
 seconds after the last change, one call at a time (a change made meanwhile goes right after it), never with the list the
 backend already holds as it is; a network failure is tried again after 5 s, 15 s, then every minute, an unexpected reply three times, a `rate_connection`
 refusal once the hour turns, any other refusal only after the next change (the card words the rate refusals for a page
-with no Save button: "Change it again tomorrow to save it.", "Keep this page open: your list saves after the hour."). When the page closes,
-the newest list still waiting or on its way goes again as a keepalive `fetch` to `rpc/save_ranking` with the publishable
-key in the `apikey` header. A page back from the back-forward cache, or another tab's delete (the `bi-ranker-saved` flag
-removed), calls `get_my_ranking` before anything more is saved, so a waiting retry never brings back a deleted list. A
+with no Save button: "Your list can't be saved until tomorrow.", "Change it again tomorrow to save your changes.", "Keep this
+page open: your list saves after the hour."). When the page is hidden, only a save waiting for its 2 s pause or a network
+retry goes at once; when it closes, the newest list goes again as a keepalive `fetch` to `rpc/save_ranking` with the
+publishable key in the `apikey` header when it is waiting that way or on its way (a refusal's or an odd reply's retry keeps
+its time). A page back from the back-forward cache, or another tab's delete (the `bi-ranker-saved` flag removed), calls
+`get_my_ranking` before anything more is saved (after the saved list loading or a save on its way has landed), so a waiting
+retry never brings back a deleted list and a newer list another tab saved is shown, not overwritten. A
 `replaced` list loaded on a return visit is not saved again by itself (that would take the connection's one counted list
 back from its other browser on every visit): it is saved after the visitor changes it or presses "Count it again". The
 card shows each status in plain words: `active` ("Saved. It counts from Sep 27, 2026.", or "Counted in the People's Top

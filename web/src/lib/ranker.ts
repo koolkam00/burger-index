@@ -311,19 +311,50 @@ export function saveFailureText(f: { kind: RankerErrorKind; retrying: boolean },
     return "Something went wrong. Trying again soon.";
   }
   const what = hasSaved ? "your changes" : "it";
+  // A daily limit with no saved list: the list lives only in this tab (sessionStorage), so the copy never promises it
+  // waits until tomorrow.
   const text =
     f.kind === "rate_connection"
       ? `Lots of lists were saved from this connection in the last hour. Change your list after the hour to save ${what}.`
       : f.kind === "rate_voter"
-        ? `You've saved your list a lot today. Change it again tomorrow to save ${what}.`
+        ? hasSaved
+          ? "You've saved your list a lot today. Change it again tomorrow to save your changes."
+          : "You've saved your list a lot today. Your list can't be saved until tomorrow."
         : f.kind === "rate_network"
-          ? `Lots of new lists came from this network today. Change your list again tomorrow to save ${what}.`
+          ? hasSaved
+            ? "Lots of new lists came from this network today. Change your list again tomorrow to save your changes."
+            : "Lots of new lists came from this network today. Your list can't be saved until tomorrow."
           : f.kind === "unknown" || f.kind === "network"
             ? `Something went wrong. Change your list or reload the page to save ${what}.`
             : f.kind === "invalid"
               ? `That list doesn't look right. Reload the page to save ${what}.`
               : RANKER_ERROR_COPY[f.kind];
   return hasSaved ? `${text} Your saved list is unchanged.` : text;
+}
+
+/**
+ * "Count it again" failed: the saved list, replaced from this connection, sent again as it is (nothing on the card
+ * changed, so no "your changes"). A refusal keeps "Not counted: …" and says when to count it again.
+ */
+export function countAgainFailureText(f: { kind: RankerErrorKind; retrying: boolean }): string {
+  if (f.retrying) {
+    if (f.kind === "network") return "Couldn't reach the counter. Trying again soon.";
+    if (f.kind === "rate_connection") return "Lots of lists were saved from this connection in the last hour. Keep this page open: your list counts again after the hour.";
+    return "Something went wrong. Trying again soon.";
+  }
+  const why =
+    f.kind === "rate_voter"
+      ? "You've saved your list a lot today: count it again tomorrow."
+      : f.kind === "rate_network"
+        ? "Lots of new lists came from this network today: count it again tomorrow."
+        : f.kind === "rate_connection"
+          ? "Lots of lists were saved from this connection in the last hour: count it again after the hour."
+          : f.kind === "unknown" || f.kind === "network"
+            ? "Something went wrong: count it again, or reload the page."
+            : f.kind === "invalid"
+              ? "That list doesn't look right. Reload the page to count it again."
+              : RANKER_ERROR_COPY[f.kind];
+  return `Not counted: a newer list was saved from this connection. ${why}`;
 }
 
 /** What the status line under the list needs to know. */
@@ -341,15 +372,22 @@ export type AutosaveInput = {
   problem: ListProblem | null;
   /** The list was just deleted (and nothing added since). */
   deleted: boolean;
+  /** The burgers couldn't be loaded: a change can't be saved until they are. */
+  menusFailed: boolean;
 };
 
 /**
  * The status line under the list (DESIGN.md "The ranker hero"): a failure first (with the warning icon), then a burger
  * that left the Burger Index, then what's still needed ("Add 2 more to save your list."; with a saved list "Add 1 more to
- * save your changes. Your saved list is unchanged."), then "Saving…", then what the saved list counts for.
+ * save your changes. Your saved list is unchanged."), then "Saving…", then what the saved list counts for; a change that
+ * can't go yet says so ("Your changes save once the burgers load.", else "Saving…"), never an empty line.
  */
 export function autosaveLine(s: AutosaveInput, today: string): { text: string; alert: boolean } {
-  if (s.failure) return { text: saveFailureText(s.failure, s.saved !== null), alert: true };
+  if (s.failure) {
+    // A replaced list as it is ("Count it again"), or a change.
+    const asIs = s.saved?.status === "replaced" && !s.dirty;
+    return { text: asIs ? countAgainFailureText(s.failure) : saveFailureText(s.failure, s.saved !== null), alert: true };
+  }
   if (s.problem === "gone") {
     if (s.saved && !s.dirty) return { text: savedStatusText(s.saved, today, true), alert: false };
     return { text: `Remove the burgers no longer on the Burger Index to save your ${s.saved ? "changes" : "list"}.`, alert: true };
@@ -362,6 +400,10 @@ export function autosaveLine(s: AutosaveInput, today: string): { text: string; a
   }
   if (s.saving) return { text: "Saving…", alert: false };
   if (s.saved && !s.dirty) return { text: savedStatusText(s.saved, today), alert: false };
+  // A change that can't go yet is never left unsaid: without the burgers it waits for them (the search says why);
+  // otherwise it goes by itself once the burgers or the saved list are in, or its check is answered.
+  if (s.dirty && s.menusFailed) return { text: `Your ${s.saved ? "changes save" : "list saves"} once the burgers load.`, alert: false };
+  if (s.dirty) return { text: "Saving…", alert: false };
   return { text: "", alert: false };
 }
 

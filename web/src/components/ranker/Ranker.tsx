@@ -362,7 +362,7 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
   let side: ReactNode = null;
   if (revealing) {
     const pick = snap.menus === "ready" ? (key: string) => snap.burgers.get(key) : null;
-    side = <PeoplesTopReveal view={revealView(board, onCard, pick, yourList(snap.saved?.status))} />;
+    side = <PeoplesTopReveal view={revealView(board, onCard, pick, yourList(snap.saved?.status, snap.dirty))} />;
   } else if (!snap.started || listed) {
     side = <RevealHint />;
   }
@@ -677,14 +677,17 @@ function ListCard({
               failure: snap.failure?.action === "save" ? snap.failure : null,
               problem: snap.problem,
               deleted: snap.notice === "deleted",
+              menusFailed: snap.menus === "error",
             },
             nyToday(),
           );
   // A voided list stays void and can't be withdrawn (the backend keeps it): no "Delete my list" for it.
   const canDelete = saved !== null && saved.status !== "void";
   const asking = snap.confirmDelete && canDelete;
-  // A list a newer one from this connection replaced, as it is: it counts again only when saved again, which the visitor asks for.
-  const replacedAsIs = saved?.status === "replaced" && !snap.dirty && !snap.saving && !snap.problem && !snap.failure && !held;
+  // A list a newer one from this connection replaced, as it is: it counts again only when saved again, which the visitor asks
+  // for (again after a refusal, which isn't tried again by itself: the status line says when it can count).
+  const refused = snap.failure?.action === "save" && !snap.failure.retrying;
+  const replacedAsIs = saved?.status === "replaced" && !snap.dirty && !snap.saving && !snap.problem && (!snap.failure || refused) && !held;
 
   return (
     <>
