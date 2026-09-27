@@ -273,14 +273,15 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
 - **Burgers near a landmark (`/burgers-near`, `/burgers-near/<landmark>`, user decision 2026-09-26):** for searches like
   "burger near Times Square". `src/lib/landmarks.mjs` holds the landmarks (slug, name, the name in a sentence, borough and
   point: each landmark's Wikipedia coordinates, the article named in a comment; places that are effectively one point are
-  one landmark, such as Penn Station and Madison Square Garden, and a page names only the place its point measures, so
-  Columbus Circle, Chelsea Market and City Hall stand alone while Central Park South, the High Line and the Brooklyn Bridge,
-  which run on past the half mile, have no page; `short`, a shorter name for the title of a long one, so every title keeps
+  one landmark, such as Penn Station and Madison Square Garden, and a point page names only the place its point measures, so
+  Columbus Circle, Chelsea Market and City Hall stand alone; the long places, the High Line, Central Park South and the
+  Brooklyn Bridge, carry a `path` (OpenStreetMap's line, simplified to within 10 m) and are measured along their length,
+  "anywhere along it"; `short`, a shorter name for the title of a long one, so every title keeps
   its count and month), the radius (half a mile,
   0.804672 km, "about a 10-minute walk") and the minimum (5 spots). It is plain JS so `scripts/check-seo.mjs` reads the same
   points. `src/lib/landmarks.ts` (pure, client-safe) does the rest: `spotsNear` (every priced location within the radius as the
-  crow flies, nearest first, ties by name; a chain's two locations are two rows, and a restaurant without coordinates is never
-  on a list, so the count line is the plain "36 burger spots within half a mile, nearest first.", never "All 36 …"), `landmarksWithPages` (the landmarks with 5+ spots, in borough order: 17 today; DUMBO, Yankee Stadium, Citi Field
+  crow flies, of the point or of any point along a path (`distanceToPathKm`), nearest first, ties by name; a chain's two locations are two rows, and a restaurant without coordinates is never
+  on a list, so the count line is the plain "36 burger spots within half a mile, nearest first.", never "All 36 …"), `landmarksWithPages` (the landmarks with 5+ spots, in borough order: 20 today; DUMBO, Yankee Stadium, Citi Field
   and Coney Island have fewer, so no page until the dataset has more), `landmarkSentence` (the lede: "36 burger spots within
   half a mile of Times Square, about a 10-minute walk; their priciest burgers run from $12.65 at … to $34.00 at …
   (September 2026)."), the count line, the hub's rows and sentence, and `landmarkBounds` for the map. `components/Landmarks.tsx`

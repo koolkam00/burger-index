@@ -322,14 +322,17 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   neighborhood and source badge. The landmarks and their points (each landmark's Wikipedia coordinates, the article named in a
   comment) are in `web/src/lib/landmarks.mjs`, plain JS that `check-seo.mjs` reads too; places that are effectively one point
   are one landmark (Penn Station and Madison Square Garden, the World Trade Center and the 9/11 Memorial), and a page names
-  only the place its point measures (Columbus Circle, Chelsea Market, City Hall: Central Park South, the High Line and the
-  Brooklyn Bridge run on past the half mile, so they have no page). A priced restaurant without coordinates can't be
+  only the place its point measures (Columbus Circle, Chelsea Market, City Hall). **Long places are measured along their
+  length** (user decision 2026-09-26): the High Line, Central Park South and the Brooklyn Bridge carry a `path` (OpenStreetMap's
+  line for each, simplified to within 10 m, noted in `landmarks.mjs`) and list every spot within half a mile of any point
+  along it, "anywhere along it" in the lede, count line, description and llms.txt (`isAlong`, `distanceToPathKm`;
+  `check:seo` measures the paths on its own). A priced restaurant without coordinates can't be
   measured, so it is on no list and the count line is the plain "36 burger spots within half a mile" (never "All 36"); a
   DOHMH record without a location gets hand-checked coordinates in `pipeline/data/dohmh_overrides.json` (coordinates only,
   never a zipcode or NTA, which would move its id), and a list row DOHMH doesn't match its address and point in
   `pipeline/data/location_overrides.json`. Every title carries the spot count and the month (`short` in
   `landmarks.mjs` for a long name). A landmark has a page only with **5+
-  spots** (`landmarksWithPages` in `src/lib/landmarks.ts`: 17 today; DUMBO 2, Yankee Stadium 1, Citi Field and Coney Island
+  spots** (`landmarksWithPages` in `src/lib/landmarks.ts`: 20 today; DUMBO 2, Yankee Stadium 1, Citi Field and Coney Island
   0 have none until the dataset has more). The lede: "36 burger spots within half a mile of Times Square, about a 10-minute
   walk; their priciest burgers run from $12.65 at … to $34.00 at … (September 2026)."; never "the cheapest burger near …"
   (`check:seo`). "See them on the map" opens `/map?near=<slug>`, which fits the map to the landmark's half mile. ItemList +

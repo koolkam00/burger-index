@@ -1,13 +1,15 @@
 // "Burgers near <landmark>" (user decision 2026-09-26): for searches like "burger near Times Square", a page per NYC
 // landmark listing every priced burger spot within half a mile of it (about a 10-minute walk), nearest first, with
 // its priciest burger, the price and how far it is, and a hub page listing the landmarks. The landmarks and their
-// points are in ./landmarks.mjs (plain data, shared with scripts/check-seo.mjs).
+// points are in ./landmarks.mjs (plain data, shared with scripts/check-seo.mjs). A long place (the High Line, Central
+// Park South, the Brooklyn Bridge) has a `path` and is measured along its length (user decision 2026-09-26): its page
+// lists the spots within half a mile of any point along it, and says so ("anywhere along it").
 //
 // Rows are locations, not menus: each is a real place to walk to, so a chain's two locations near one landmark are
 // two rows, and "burger spots" counts them (as it does everywhere on the site). Each spot publishes one burger, its
 // priciest (CLAUDE.md "One burger per restaurant"), so the copy says "their priciest burgers run from … to …", never
 // "the cheapest burger near …" (user decision 2026-09-25, honest wording). Distances are as the crow flies, from
-// the landmark's point to the restaurant's coordinates. A priced restaurant without coordinates (a restaurant-list row
+// the landmark's point (or the nearest point along its path) to the restaurant's coordinates. A priced restaurant without coordinates (a restaurant-list row
 // that DOHMH doesn't match, or a DOHMH record without a location) can't be measured, so it is never on a list, and no
 // line claims "all" the spots near a landmark (the count line is the plain count: DESIGN.md "No methodology copy" rules
 // out a note saying why). A DOHMH record without a location gets its coordinates in pipeline/data/dohmh_overrides.json,
@@ -33,6 +35,13 @@ export const LANDMARKS_TICKET = "Shore leave";
 export const RADIUS_WORDS = LANDMARK_RADIUS_MILES === 0.5 ? "half a mile" : `${LANDMARK_RADIUS_MILES} miles`;
 /** How long the radius takes on foot, roughly (20 minutes a mile). */
 export const WALK_WORDS = `about a ${Math.round(LANDMARK_RADIUS_MILES * 20)}-minute walk`;
+/** What a long place's pages add after its name: the radius runs from any point along it. */
+export const ALONG_WORDS = "anywhere along it";
+
+/** A long place, measured along its length (it has a path of at least two points). */
+export function isAlong(l: Pick<Landmark, "path">): boolean {
+  return (l.path?.length ?? 0) >= 2;
+}
 
 export function landmarkPath(l: Pick<Landmark, "slug">): string {
   return `${LANDMARKS_PATH}/${l.slug}`;
@@ -57,11 +66,41 @@ export type LandmarkSpot = {
 
 const byName = (a: PricedRestaurant, b: PricedRestaurant) => a.name.localeCompare(b.name) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 
-/** Every priced spot within the radius of `l`, nearest first (ties by name, then id). */
-export function spotsNear(l: Pick<Landmark, "lat" | "lng">, restaurants: readonly PricedRestaurant[]): LandmarkSpot[] {
+type LatLng = { lat: number | null; lng: number | null };
+
+/**
+ * Kilometers from `p` to the nearest point of a line of [lat, lng] points (as the crow flies), or null when `p` has no
+ * coordinates. For each segment, the nearest point is found in a flat plane around `p` (longitude scaled by the cosine of
+ * its latitude: exact enough over a few kilometers), then measured on the globe like every other distance (distanceKm).
+ * One point is a point.
+ */
+export function distanceToPathKm(path: ReadonlyArray<readonly [number, number]>, p: LatLng): number | null {
+  if (p.lat === null || p.lng === null || !path.length) return null;
+  const k = Math.cos((p.lat * Math.PI) / 180);
+  let best = Infinity;
+  for (let i = 0; i < Math.max(1, path.length - 1); i++) {
+    const [aLat, aLng] = path[i];
+    const [bLat, bLng] = path[Math.min(i + 1, path.length - 1)];
+    const [ax, ay] = [(aLng - p.lng) * k, aLat - p.lat];
+    const [dx, dy] = [(bLng - aLng) * k, bLat - aLat];
+    const len2 = dx * dx + dy * dy;
+    const t = len2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len2)) : 0;
+    const km = distanceKm(p, { lat: aLat + t * (bLat - aLat), lng: aLng + t * (bLng - aLng) }) as number;
+    if (km < best) best = km;
+  }
+  return best;
+}
+
+/** How far a place is from a landmark: from its point, or from the nearest point along a long place's path. */
+export function landmarkDistanceKm(l: Pick<Landmark, "lat" | "lng" | "path">, p: LatLng): number | null {
+  return l.path && isAlong(l) ? distanceToPathKm(l.path, p) : distanceKm(l, p);
+}
+
+/** Every priced spot within the radius of `l` (of any point along it, for a long place), nearest first (ties by name, then id). */
+export function spotsNear(l: Pick<Landmark, "lat" | "lng" | "path">, restaurants: readonly PricedRestaurant[]): LandmarkSpot[] {
   const out: LandmarkSpot[] = [];
   for (const r of restaurants) {
-    const km = distanceKm(l, r);
+    const km = landmarkDistanceKm(l, r);
     if (km !== null && km <= LANDMARK_RADIUS_KM) out.push({ restaurant: r, km });
   }
   return out.sort((a, b) => a.km - b.km || byName(a.restaurant, b.restaurant));
@@ -102,10 +141,11 @@ export function priceEnds(spots: readonly LandmarkSpot[]): { low: LandmarkSpot; 
 /**
  * The page's one-line answer (its lede, plain text like the ranking pages' ledes: the table links every spot):
  * "36 burger spots within half a mile of Times Square, about a 10-minute walk; their priciest burgers run from $12.65
- * at … to $34.00 at … (September 2026)." Each spot's priciest burger, never "the cheapest burger near …".
+ * at … to $34.00 at … (September 2026)." A long place: "… within half a mile of the High Line, anywhere along it, about a
+ * 10-minute walk; …". Each spot's priciest burger, never "the cheapest burger near …".
  */
-export function landmarkSentence(l: Pick<Landmark, "near">, spots: readonly LandmarkSpot[], month: string): string {
-  const where = `within ${RADIUS_WORDS} of ${l.near}, ${WALK_WORDS}`;
+export function landmarkSentence(l: Pick<Landmark, "near" | "path">, spots: readonly LandmarkSpot[], month: string): string {
+  const where = `within ${RADIUS_WORDS} of ${l.near}, ${isAlong(l) ? `${ALONG_WORDS}, ` : ""}${WALK_WORDS}`;
   const ends = priceEnds(spots);
   if (!ends) return `No burger spot ${where} (${month}).`;
   const [low, high] = [ends.low.restaurant, ends.high.restaurant];
@@ -116,11 +156,13 @@ export function landmarkSentence(l: Pick<Landmark, "near">, spots: readonly Land
 }
 
 /**
- * Under the table, and on the share image: "36 burger spots within half a mile, nearest first." Never "All 36 …" or
- * "the one …": a priced spot without coordinates can't be measured (see the top of this file).
+ * Under the table, and on the share image: "36 burger spots within half a mile, nearest first." (a long place: "… within
+ * half a mile, anywhere along it, nearest first."). Never "All 36 …" or "the one …": a priced spot without coordinates
+ * can't be measured (see the top of this file).
  */
-export function landmarkCountLine(spots: number): string {
-  return spots === 1 ? `One burger spot within ${RADIUS_WORDS}.` : `${formatCount(spots)} burger spots within ${RADIUS_WORDS}, nearest first.`;
+export function landmarkCountLine(spots: number, along = false): string {
+  const within = `within ${RADIUS_WORDS}${along ? `, ${ALONG_WORDS}` : ""}`;
+  return spots === 1 ? `One burger spot ${within}.` : `${formatCount(spots)} burger spots ${within}, nearest first.`;
 }
 
 /** A hub row's sub-line: "36 burger spots · priciest burgers $12.65–$34.00". */
@@ -163,14 +205,19 @@ export function spotDistance(s: Pick<LandmarkSpot, "km">): string {
 
 /**
  * The map's view of a landmark (/map?near=<slug>): the box around its radius, [[west, south], [east, north]], so the
- * whole half-mile circle is on screen at any size.
+ * whole half-mile circle is on screen at any size; for a long place, around every point of its path.
  */
-export function landmarkBounds(l: Pick<Landmark, "lat" | "lng">, km: number = LANDMARK_RADIUS_KM): [[number, number], [number, number]] {
-  const dLat = km / 111.2;
-  const dLng = km / (111.32 * Math.cos((l.lat * Math.PI) / 180));
+export function landmarkBounds(l: Pick<Landmark, "lat" | "lng" | "path">, km: number = LANDMARK_RADIUS_KM): [[number, number], [number, number]] {
+  const points: ReadonlyArray<readonly [number, number]> = l.path && isAlong(l) ? l.path : [[l.lat, l.lng]];
+  let [w, s, e, n] = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const [lat, lng] of points) {
+    const dLat = km / 111.2;
+    const dLng = km / (111.32 * Math.cos((lat * Math.PI) / 180));
+    [w, s, e, n] = [Math.min(w, lng - dLng), Math.min(s, lat - dLat), Math.max(e, lng + dLng), Math.max(n, lat + dLat)];
+  }
   return [
-    [l.lng - dLng, l.lat - dLat],
-    [l.lng + dLng, l.lat + dLat],
+    [w, s],
+    [e, n],
   ];
 }
 

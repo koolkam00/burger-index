@@ -3,6 +3,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  ALONG_WORDS,
+  distanceToPathKm,
+  isAlong,
   LANDMARK_RADIUS_KM,
   LANDMARK_RADIUS_MILES,
   LANDMARKS,
@@ -10,6 +13,7 @@ import {
   landmarkBounds,
   landmarkBySlug,
   landmarkCountLine,
+  landmarkDistanceKm,
   landmarkMapHref,
   landmarkPath,
   landmarkSentence,
@@ -63,13 +67,28 @@ test("LANDMARKS: unique slugs that make paths, points inside New York City, a bo
   assert.equal(landmarkBySlug("nowhere"), undefined);
   assert.equal(LANDMARK_RADIUS_MILES, 0.5);
   assert.ok(Math.abs(LANDMARK_RADIUS_KM - 0.804672) < 1e-9);
-  // Places that are effectively one are one landmark: no two points closer than 400 m.
-  for (const a of LANDMARKS) for (const b of LANDMARKS) if (a !== b) assert.ok((distanceKm(a, b) as number) > 0.4, `${a.slug} and ${b.slug} are one place`);
+  // Places that are effectively one are one landmark: no two points closer than 400 m (a long place's path runs past
+  // the points beside it: Chelsea Market on the High Line, City Hall at the Brooklyn Bridge; those are other pages).
+  const points = LANDMARKS.filter((l) => !isAlong(l));
+  for (const a of points) for (const b of points) if (a !== b) assert.ok((distanceKm(a, b) as number) > 0.4, `${a.slug} and ${b.slug} are one place`);
   assert.equal(landmarkTitle(landmarkBySlug("empire-state-building")!), "Burgers near the Empire State Building");
   assert.equal(landmarkTitle(landmarkBySlug("times-square")!), "Burgers near Times Square");
-  // A page names only the place its one point measures (no "Columbus Circle and Central Park South": that street runs
-  // on for half a mile past the point, nor the High Line or the Brooklyn Bridge).
-  for (const l of LANDMARKS) assert.doesNotMatch(l.near, /Central Park South|High Line|Brooklyn Bridge/, l.slug);
+  // A point page names only the place its one point measures (no "Columbus Circle and Central Park South": that street
+  // runs on for half a mile past the point); the long places are pages of their own, measured along their length.
+  for (const l of points) assert.doesNotMatch(l.near, /Central Park South|High Line|Brooklyn Bridge/, l.slug);
+  const along = LANDMARKS.filter((l) => isAlong(l));
+  assert.deepEqual(along.map((l) => [l.slug, l.near]).sort(), [["brooklyn-bridge", "the Brooklyn Bridge"], ["central-park-south", "Central Park South"], ["high-line", "the High Line"]]);
+  // Each path runs the length of its place (OpenStreetMap: the High Line 2.3 km, Central Park South 0.8 km, the
+  // Brooklyn Bridge 1.8 km with its approaches) inside NYC, and its lat/lng (the middle) lies on it.
+  const lengths: Record<string, number> = { "high-line": 2.3, "central-park-south": 0.83, "brooklyn-bridge": 1.77 };
+  for (const l of along) {
+    const path = l.path!;
+    let km = 0;
+    for (let i = 1; i < path.length; i++) km += distanceKm({ lat: path[i - 1][0], lng: path[i - 1][1] }, { lat: path[i][0], lng: path[i][1] }) as number;
+    assert.ok(Math.abs(km - lengths[l.slug]) < 0.1, `${l.slug}: ${km} km`);
+    for (const [lat, lng] of path) assert.ok(lat > 40.49 && lat < 40.92 && lng > -74.26 && lng < -73.69, l.slug);
+    assert.ok((distanceToPathKm(path, l) as number) < 0.02, `${l.slug}: its lat/lng is off its path`);
+  }
   assert.deepEqual(
     ["columbus-circle", "chelsea-market", "city-hall"].map((slug) => landmarkBySlug(slug)?.near),
     ["Columbus Circle", "Chelsea Market", "City Hall"],
@@ -223,6 +242,76 @@ test("landmarkBounds and landmarkMapHref: the map shows the whole half mile", ()
     assert.ok(Math.abs(km - LANDMARK_RADIUS_KM) / LANDMARK_RADIUS_KM < 0.01, String(km));
   }
   assert.equal(landmarkMapHref(ts), "/map?near=times-square");
+});
+
+test("distanceToPathKm: to the nearest point along a line, the ends included", () => {
+  // A line 1 km due east of HERE's west end: from HERE to 1 km east (about 0.0118° of longitude at this latitude).
+  const east = (km: number) => HERE.lng + km / (111.32 * Math.cos((HERE.lat * Math.PI) / 180));
+  const north = (km: number) => HERE.lat + km / 111.2;
+  const line: Array<[number, number]> = [
+    [HERE.lat, HERE.lng],
+    [HERE.lat, east(0.5)],
+    [HERE.lat, east(1)],
+  ];
+  const near = (a: number, b: number) => Math.abs(a - b) < 0.005;
+  // on the line, beside its middle, and past either end (then the end is the nearest point)
+  assert.ok(near(distanceToPathKm(line, { lat: HERE.lat, lng: east(0.7) })!, 0));
+  assert.ok(near(distanceToPathKm(line, { lat: north(0.3), lng: east(0.7) })!, 0.3));
+  assert.ok(near(distanceToPathKm(line, { lat: north(-0.2), lng: east(0.25) })!, 0.2));
+  assert.ok(near(distanceToPathKm(line, { lat: HERE.lat, lng: east(1.4) })!, 0.4));
+  assert.ok(near(distanceToPathKm(line, { lat: north(0.3), lng: east(-0.4) })!, 0.5));
+  // one point is a point; no coordinates or no path: nothing to measure
+  const spot = { lat: north(0.3), lng: east(0.4) };
+  assert.equal(distanceToPathKm([[HERE.lat, HERE.lng]], spot), distanceKm(HERE, spot));
+  assert.equal(distanceToPathKm(line, { lat: null, lng: null }), null);
+  assert.equal(distanceToPathKm([], spot), null);
+  // landmarkDistanceKm: a point landmark measures from its point, a long one from its path
+  assert.equal(landmarkDistanceKm(HERE, spot), distanceKm(HERE, spot));
+  assert.ok(near(landmarkDistanceKm({ ...HERE, path: line }, spot)!, 0.3));
+});
+
+test("a long place: every spot within half a mile of any point along it, nearest first, and words that say so", () => {
+  const east = (km: number) => HERE.lng + km / (111.32 * Math.cos((HERE.lat * Math.PI) / 180));
+  const LINE = { ...HERE, near: "the Line", path: [[HERE.lat, HERE.lng], [HERE.lat, east(2)]] as Array<[number, number]> };
+  assert.ok(isAlong(LINE) && !isAlong({ path: undefined }) && !isAlong({ path: [[40.7, -74]] }));
+  const spots = spotsNear(LINE, [
+    at({ id: "far-end", price: 30, east: 1.95, north: 0.3 }), // 1.95 km from HERE's point, 0.3 km from the line
+    at({ id: "start", price: 12, east: 0.1, north: 0.1 }),
+    at({ id: "past-the-end", price: 20, east: 2.5 }), // 0.5 km past its east end
+    at({ id: "off-the-line", price: 18, east: 1, north: 0.9 }),
+  ]);
+  assert.deepEqual(
+    spots.map((s) => [s.restaurant.id, spotDistance(s)]),
+    [
+      ["start", "0.1 mi"],
+      ["far-end", "0.2 mi"],
+      ["past-the-end", "0.3 mi"],
+    ],
+  );
+  assert.equal(
+    landmarkSentence(LINE, spots, MONTH),
+    `3 burger spots within half a mile of the Line, ${ALONG_WORDS}, about a 10-minute walk; their priciest burgers run from $12.00 at start to $30.00 at far-end (September 2026).`,
+  );
+  assert.equal(landmarkCountLine(3, true), "3 burger spots within half a mile, anywhere along it, nearest first.");
+  assert.equal(landmarkCountLine(1, true), "One burger spot within half a mile, anywhere along it.");
+  assert.equal(landmarkCountLine(3), "3 burger spots within half a mile, nearest first.");
+  // The map's view covers the half mile around every point of the line.
+  const [[w, s], [e, n]] = landmarkBounds(LINE);
+  for (const [lat, lng] of LINE.path) assert.ok(w < lng && lng < e && s < lat && lat < n);
+  assert.ok(Math.abs((distanceKm({ lat: HERE.lat, lng: w }, HERE) as number) - LANDMARK_RADIUS_KM) < 0.01);
+  assert.ok(Math.abs((distanceKm({ lat: HERE.lat, lng: e }, { lat: HERE.lat, lng: east(2) }) as number) - LANDMARK_RADIUS_KM) < 0.01);
+  const seo = landmarkSeo({ near: "the High Line", along: true, spots: 52, radius: "half a mile", walk: "about a 10-minute walk", low: { name: "A", price: 7.25 }, high: { name: "B", price: 39 }, generatedAt: GEN });
+  assert.equal(seo.title, "Burgers near the High Line: 52 burger spots (Sep 2026)");
+  assert.ok(seo.description.startsWith("52 burger spots within half a mile of the High Line, anywhere along it"), seo.description);
+  // The real ones: each has its page, measured along it.
+  const data = loadDataset();
+  const priced = data.restaurants.filter((r): r is PricedRestaurant => r.index_price !== null);
+  const pages = landmarksWithPages(priced);
+  for (const slug of ["high-line", "central-park-south", "brooklyn-bridge"]) {
+    const page = pages.find((p) => p.landmark.slug === slug);
+    assert.ok(page, `${slug} has a page`);
+    for (const x of page.spots) assert.ok(x.km <= LANDMARK_RADIUS_KM && x.km === landmarkDistanceKm(page.landmark, x.restaurant));
+  }
 });
 
 test("a landmark share card: the ticket, the H1, the nearest spots without a rank, the count line", () => {
