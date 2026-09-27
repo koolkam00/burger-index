@@ -47,7 +47,7 @@ export function llmsTxt(d: LlmsInput): string {
       ? `> What a burger costs in New York City. The NYC Burger Index is ${money(d.median)}, the median burger price across ${pluralize(d.menus, "menu")} at ${pluralize(d.locations, "restaurant")}. Updated ${updated}.`
       : `> What a burger costs in New York City. No prices yet. Updated ${updated}.`,
     "",
-    `${d.sourceLine} Prices are in US dollars, before tax and tip. We index prices, not quality.`,
+    `${d.sourceLine} Prices are in US dollars, before tax and tip.`,
     "",
   );
 
