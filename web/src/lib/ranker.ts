@@ -393,6 +393,17 @@ export type AutosaveInput = {
 };
 
 /**
+ * What the live region says of the status line (the ranker says it once): a failed save, or a change held by a check that
+ * can't reach the counter, in the words the line shows, and only while the line shows them (not while it asks for more
+ * burgers, or for a gone one to be removed); else "".
+ */
+export function autosaveTrouble(s: AutosaveInput): string {
+  if (s.failure) return saveFailureLine(s.failure, s.saved, s.dirty);
+  if (s.problem === "gone" || s.length < MIN_ITEMS || !s.dirty || !s.checkRetrying) return "";
+  return saveFailureText({ kind: "network", retrying: true }, s.saved !== null);
+}
+
+/**
  * The status line under the list (DESIGN.md "The ranker hero"): a failure first (with the warning icon), then a burger
  * that left the Burger Index, then what's still needed ("Add 2 more to save your list."; with a saved list "Add 1 more to
  * save your changes. Your saved list is unchanged."), then a change held by a check of the saved list that can't reach
@@ -400,7 +411,8 @@ export type AutosaveInput = {
  * can't go yet says so ("Your changes save once the burgers load.", else "Saving…"), never an empty line.
  */
 export function autosaveLine(s: AutosaveInput, today: string): { text: string; alert: boolean } {
-  if (s.failure) return { text: saveFailureLine(s.failure, s.saved, s.dirty), alert: true };
+  const trouble = autosaveTrouble(s);
+  if (s.failure) return { text: trouble, alert: true };
   if (s.problem === "gone") {
     if (s.saved && !s.dirty) return { text: savedStatusText(s.saved, today, true), alert: false };
     return { text: `Remove the burgers no longer on the Burger Index to save your ${s.saved ? "changes" : "list"}.`, alert: true };
@@ -412,7 +424,7 @@ export function autosaveLine(s: AutosaveInput, today: string): { text: string; a
     return { text: `Add ${MIN_ITEMS - s.length} more to save your list.`, alert: false };
   }
   // A change waiting for a check that can't reach the backend: the same words as a save that couldn't.
-  if (s.dirty && s.checkRetrying) return { text: saveFailureText({ kind: "network", retrying: true }, s.saved !== null), alert: true };
+  if (trouble) return { text: trouble, alert: true };
   if (s.saving) return { text: "Saving…", alert: false };
   if (s.saved && !s.dirty) return { text: savedStatusText(s.saved, today), alert: false };
   // A change that can't go yet is never left unsaid: without the burgers it waits for them (the search says why);

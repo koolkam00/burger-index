@@ -20,8 +20,10 @@
 // answered (it is asked again until it does), after the saved list's load and a save on its way have landed: a list there
 // the card knew or sent keeps the card; another tab's newer list shows ("Showing the list saved in another tab.") unless
 // the card has a change of its own still to go; a list gone that the card knew empties it ("Your list was deleted."), so
-// nothing brings it back without a new change. A check another tab's stamp started that finds nothing new asks once more,
-// RECHECK_DELAY later (a list sent as that tab closed is stamped as it goes, and may land after this read).
+// nothing brings it back without a new change. A read (a load or a check) that finds nothing new while the flag holds another
+// page's stamp younger than RECHECK_DELAY asks once more, RECHECK_DELAY later (a list sent as that page closed is stamped as
+// it goes, and may land after this read). A page that closes with an outcome it never saw (a save or a delete on its way,
+// a list sent unseen, a check not yet answered) leaves a new stamp too, so the other tabs ask.
 //
 // It lives for the page's JavaScript lifetime, so a visitor who leaves the home page and comes back (a client-side
 // navigation) finds the list as they left it. A list not yet saved is also kept in sessionStorage (a reload keeps it,
@@ -214,20 +216,22 @@ function parseList(v: unknown): string[] | null {
 
 /**
  * What this session kept of the card: the list on it, the saved list it was a change of (`base`: null when none was
- * saved; undefined in a draft stored before the base was kept) and the lists this tab sent whose landing it never saw.
+ * saved; undefined in a draft stored before the base was kept), the lists this tab sent whose landing it never saw, and
+ * the deleted list the backend held when this tab last read it (`deleted`: null when it held none, or a list that
+ * counts; undefined in a draft stored before it was kept).
  */
-export type StoredDraft = { items: string[]; base: string[] | null | undefined; sent: string[][] };
+export type StoredDraft = { items: string[]; base: string[] | null | undefined; sent: string[][]; deleted: string[] | null | undefined };
 
 /** A stored draft, checked (null: none, or not one this store wrote). */
 export function parseStoredDraft(raw: string | null): StoredDraft | null {
   if (!raw) return null;
   try {
-    const v = JSON.parse(raw) as { items?: unknown; base?: unknown; sent?: unknown };
+    const v = JSON.parse(raw) as { items?: unknown; base?: unknown; sent?: unknown; deleted?: unknown };
     const items = parseList(v.items);
     if (!items) return null;
-    const base = v.base === null ? null : v.base === undefined ? undefined : (parseList(v.base) ?? undefined);
+    const list = (x: unknown) => (x === null ? null : x === undefined ? undefined : (parseList(x) ?? undefined));
     const sent = Array.isArray(v.sent) ? v.sent.map(parseList).filter((l): l is string[] => l !== null) : [];
-    return { items, base, sent };
+    return { items, base: list(v.base), sent, deleted: list(v.deleted) };
   } catch {
     return null;
   }
@@ -289,6 +293,11 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
    * them: a list there that is one of them is this tab's own, not another tab's.
    */
   let unsure: { items: string[]; seq: number }[] = [];
+  /**
+   * The deleted list the backend held when this tab last read it, or deleted it (null: none). A deleted list there that
+   * isn't this one was saved and deleted since, elsewhere: a first list this tab sent then is gone with it.
+   */
+  let seenDeleted: string[] | null = null;
   let saveSeq = 0;
   let lastSave: SaveEvent | null = null;
   /** The last save handed out by takeSave. */
@@ -315,11 +324,13 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
   let heardDelete = false;
   /** The running check follows this tab's own delete that failed (it may have gone through). */
   let checkAfterDelete = false;
+  /** A check was asked for while this tab's delete was on its way: it runs once the delete is done. */
+  let checkAfterBusy = false;
   let checkTimer: unknown = null;
   let checkTries = 0;
   /**
-   * One more check, RECHECK_DELAY after one another tab's stamp started found nothing new: a list saved as that tab closed
-   * (a keepalive request, stamped as it was sent) may land after this tab's read.
+   * One more check, RECHECK_DELAY after a read of the saved list that found nothing new while the flag's stamp was recent:
+   * a list saved as a tab closed (a keepalive request, stamped as it was sent) may land after this tab's read.
    */
   let recheckTimer: unknown = null;
 
@@ -405,9 +416,26 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     if (mine === "loading" || mine === "error") return;
     const sent = [...(sending ? [sending] : []), ...unsure.map((u) => u.items)];
     const keep = draft.length > 0 && (isDirty() || sent.some((l) => !sameList(l, draft)));
-    write(storage(deps.session), RANKER_DRAFT_KEY, keep ? JSON.stringify({ items: draft, base: saved ? saved.items : null, sent }) : null);
+    write(storage(deps.session), RANKER_DRAFT_KEY, keep ? JSON.stringify({ items: draft, base: saved ? saved.items : null, sent, deleted: seenDeleted }) : null);
   }
-  const stamp = () => write(storage(deps.local), RANKER_SAVED_KEY, `${now().toString(36)}.${Math.random().toString(36).slice(2, 8)}`);
+  /** The last stamp this page wrote. */
+  let ownStamp: string | null = null;
+  function stamp() {
+    ownStamp = `${now().toString(36)}.${Math.random().toString(36).slice(2, 8)}`;
+    write(storage(deps.local), RANKER_SAVED_KEY, ownStamp);
+  }
+  /**
+   * The flag holds another page's stamp younger than RECHECK_DELAY: a list it sent as it closed may not have landed yet.
+   */
+  function recentStamp(): boolean {
+    const raw = read(storage(deps.local), RANKER_SAVED_KEY);
+    const age = raw && raw !== ownStamp ? now() - parseInt(raw.split(".")[0], 36) : NaN;
+    return age >= 0 && age < RECHECK_DELAY;
+  }
+  /** What a read of the saved list found, for a later one: the deleted list there, or none. */
+  function noteRead(reply: SavedRanking | null) {
+    seenDeleted = reply && reply.status === "deleted" ? [...reply.items] : null;
+  }
   /**
    * Tell the next page load whether this browser has a saved list, and the other tabs when it changes: the flag holds a
    * stamp, new with each list saved here (`fresh`), so another tab's storage event says "saved elsewhere" (a write of the
@@ -594,6 +622,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     again = false;
     attempt = 0;
     parked = null;
+    if (saved) seenDeleted = [...saved.items]; // (a read that found the deleted list says which it is)
     saved = null;
     draft = [];
     boot = null;
@@ -613,22 +642,29 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
 
   /**
    * The backend's answer about the saved list, against what the card knew (`base`: the saved list the card was a change
-   * of, null when none; undefined when unknown, taken as the list there) and the lists this tab sent whose landing it
-   * never saw (`sent`). The same rule for a page load (with what the session kept) and every later check:
+   * of, null when none; undefined when unknown, taken as the list there), the lists this tab sent whose landing it never
+   * saw (`sent`) and the deleted list it last saw there (`deleted`; undefined when unknown). The same rule for a page load
+   * (with what the session kept) and every later check:
    * - a list there that is the base, one this tab sent, or the card's: the card stays (a change on it saves itself);
    * - another list there is one another tab saved since: it shows ("Showing the list saved in another tab."), unless the
    *   card has a change of its own still to go (made in this page's life, or kept by the session and never sent), which is
    *   newer and saves over it;
-   * - no list there, when the card knew one (or another tab said it deleted it, or it is a deleted list this tab sent): it
-   *   was deleted, and the card empties ("Your list was deleted."); a first list the backend never had stays and saves.
+   * - no list there, when the card knew one (or another tab said it deleted it, or the deleted list there is one this tab
+   *   sent, or a new one while this tab has sent a list: a list saved, changed and deleted since, in another tab): it was
+   *   deleted, and the card empties ("Your list was deleted."); a first list the backend never had stays and saves.
    * Returns whether the list there is one this tab sent that no other tab has heard of (the flag gets a new stamp).
    */
-  function reconcile(reply: SavedRanking | null, k: { base: string[] | null | undefined; sent: string[][] }, changesAt: number): boolean {
+  function reconcile(
+    reply: SavedRanking | null,
+    k: { base: string[] | null | undefined; sent: string[][]; deleted: string[] | null | undefined },
+    changesAt: number,
+  ): boolean {
     const live = reply && reply.status !== "deleted" ? reply : null;
     const wasSent = (l: readonly string[]) => k.sent.some((s) => sameList(s, l));
     const unchanged = changeSeq === changesAt;
     if (!live) {
-      const gone = heardDelete || checkAfterDelete || k.base != null || (reply !== null && wasSent(reply.items));
+      const newDelete = reply !== null && k.sent.length > 0 && k.deleted !== undefined && !(k.deleted && sameList(k.deleted, reply.items));
+      const gone = heardDelete || checkAfterDelete || k.base != null || (reply !== null && wasSent(reply.items)) || newDelete;
       if (gone && (saved || draft.length || k.base)) showDeleted(checkAfterDelete ? "deleted" : "deleted_elsewhere");
       else saved = null;
       return false;
@@ -658,17 +694,19 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
    * Check the saved list again, keeping the card as it is meanwhile: after a return from the back-forward cache (a keepalive
    * save may or may not have landed), when another tab saved a list (the stamp it keeps in localStorage changed) or deleted
    * it (the flag went away), when a list this tab sent may have landed unseen, or after this tab's delete failed. The saved
-   * list still loading and a save still on its way land first, so the answer describes them. Nothing saves until the
-   * backend has answered, and a check that can't reach it is asked again (5 s, 15 s, then every minute, and at once when
-   * the connection is back). Resolves after its first try.
+   * list still loading and a save still on its way land first, so the answer describes them; one asked for while this
+   * tab's delete is on its way runs after it. Nothing saves until the backend has answered, and a check that can't reach it
+   * is asked again (5 s, 15 s, then every minute, and at once when the connection is back). Resolves after its first try.
    */
-  function check(opts: { deleted?: boolean; afterDelete?: boolean; elsewhere?: boolean } = {}): Promise<void> {
+  function check(opts: { deleted?: boolean; afterDelete?: boolean } = {}): Promise<void> {
     if (!started) return Promise.resolve();
     const voter = deps.voter.read();
     if (!voter) return Promise.resolve();
     if (opts.deleted) heardDelete = true;
     if (busy || mine === "error") {
-      // The delete decides; after a failed load, "Try again" loads the list (and hears of the delete).
+      // After the delete (it may not be what the backend holds last); after a failed load, "Try again" loads the list (and
+      // hears of the delete).
+      if (busy) checkAfterBusy = true;
       emit();
       return Promise.resolve();
     }
@@ -680,11 +718,23 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     checkTries = 0;
     stopTimer();
     emit();
-    return askBackend(my, voter, opts.elsewhere === true);
+    return askBackend(my, voter);
   }
 
-  /** Ask the backend for the saved list for the check numbered `my` (`recheck`: once more later if the answer is nothing new). */
-  async function askBackend(my: number, voter: string, recheck = false): Promise<void> {
+  /**
+   * Ask the saved list once more RECHECK_DELAY from now, when the flag's stamp is recent: a list another tab sent as it
+   * closed may land after the read just answered. Once: by then the stamp is old.
+   */
+  function recheckIfRecent() {
+    if (recheckTimer !== null || !recentStamp()) return;
+    recheckTimer = timers.set(() => {
+      recheckTimer = null;
+      void check();
+    }, RECHECK_DELAY);
+  }
+
+  /** Ask the backend for the saved list for the check numbered `my`. */
+  async function askBackend(my: number, voter: string): Promise<void> {
     await (mineLoading ?? undefined);
     await inFlight?.catch(() => undefined);
     if (my !== syncSeq) return;
@@ -711,14 +761,10 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     if (my !== syncSeq) return;
     mine = "ready";
     const was = saved;
-    const fresh = reconcile(reply, { base: saved ? saved.items : null, sent: unsure.map((u) => u.items) }, checkChangesAt);
-    // (only a first try: a check asked again waits 5 s or more, time enough for the other tab's list to land)
-    if (recheck && (was ? saved !== null && sameList(was.items, saved.items) && was.status === saved.status : saved === null)) {
-      recheckTimer = timers.set(() => {
-        recheckTimer = null;
-        void check();
-      }, RECHECK_DELAY);
-    }
+    const fresh = reconcile(reply, { base: saved ? saved.items : null, sent: unsure.map((u) => u.items), deleted: seenDeleted }, checkChangesAt);
+    noteRead(reply);
+    // Nothing new: asked once more if a tab's stamp is recent (before this tab's own new stamp, below).
+    if (was ? saved !== null && sameList(was.items, saved.items) && was.status === saved.status : saved === null) recheckIfRecent();
     checking = false;
     checkAfterDelete = false;
     heardDelete = false;
@@ -727,6 +773,13 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     persistFlag(fresh);
     persistDraft();
     settle();
+  }
+
+  /** Another tab saved or deleted while this tab's delete was on its way: the card shows what the backend holds now. */
+  function checkHeardWhileBusy() {
+    if (!checkAfterBusy) return;
+    checkAfterBusy = false;
+    void check();
   }
 
   const store: RankerStore = {
@@ -756,7 +809,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
         },
         restored: () => void check(),
         deletedElsewhere: () => void check({ deleted: true }),
-        savedElsewhere: () => void check({ elsewhere: true }),
+        savedElsewhere: () => void check(),
       });
       emit();
       void store.loadMenus();
@@ -812,9 +865,12 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
             touched = false;
             draft = saved ? [...saved.items] : draft;
           }
-          // A check waiting for this load asks again (it heard of something newer) and decides the flag.
+          noteRead(reply);
+          // A check waiting for this load asks again (it heard of something newer) and decides the flag. Otherwise a recent
+          // stamp (a tab that just closed, or this one reloaded) has the list asked once more.
           if (!checking) {
             heardDelete = false;
+            recheckIfRecent();
             persistFlag(fresh);
           }
           persistDraft();
@@ -857,21 +913,31 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
       // saved before (a change back). While the saved list is being checked, a change of the card's own still to go goes
       // too. Never after another tab's delete was heard (it could bring the list back); a retry of a refusal or an odd
       // reply waits for its own time: nothing goes. Nor after this tab's own delete failed, while its check waits (it may
-      // have gone through: a reload decides with the session's draft). The stamp tells the other tabs a list was saved.
-      if (!deps.api.saveOnUnload || heardDelete || checkAfterDelete || busy) return;
-      const send = inFlight ? canSave(true) : needsSave(true) && (mayGoEarly() || (checking && pendingChange()));
-      if (!send) return;
-      stopTimer();
-      again = false;
-      const items = [...draft];
-      try {
-        deps.api.saveOnUnload(deps.voter.get(), items);
-      } catch {
-        // nothing more can be done while the page closes
+      // have gone through: a reload decides with the session's draft).
+      //
+      // The flag gets a new stamp whenever this page leaves an outcome it never saw: the keepalive, a save or a delete on its
+      // way, a list sent whose landing it never saw, a check not yet answered. The other tabs then ask for the saved list
+      // (and once more a little later), so none keeps showing an older list, or a deleted one, as saved.
+      const send =
+        deps.api.saveOnUnload !== undefined &&
+        !heardDelete &&
+        !checkAfterDelete &&
+        !busy &&
+        (inFlight ? canSave(true) : needsSave(true) && (mayGoEarly() || (checking && pendingChange())));
+      if (send) {
+        stopTimer();
+        again = false;
+        const items = [...draft];
+        try {
+          deps.api.saveOnUnload!(deps.voter.get(), items);
+        } catch {
+          // nothing more can be done while the page closes
+        }
+        // Its reply is never read: the draft stays in sessionStorage, so a reload decides with it, and a return from the
+        // back-forward cache checks the saved list again.
+        addUnsure(items, ++sendSeq);
       }
-      // Its reply is never read: the draft stays in sessionStorage, so a reload decides with it, and a return from the
-      // back-forward cache checks the saved list again.
-      addUnsure(items, ++sendSeq);
+      if (!send && !inFlight && !busy && !checking && !unsure.length) return;
       stamp();
       persistDraft();
       emit();
@@ -925,6 +991,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
       syncSeq += 1;
       checking = false;
       checkAfterDelete = false;
+      checkAfterBusy = false;
       stopCheckTimer();
       emit();
       // A save on its way lands first, so the delete withdraws the newest list (and nothing saves after it).
@@ -945,6 +1012,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
           // Nothing was withdrawn: a voided list can't be (it stays void and never counted), or the list changed
           // elsewhere. Show what the backend holds now instead of saying it was deleted.
           const there = await deps.api.get(voter);
+          noteRead(there);
           if (there && there.status !== "deleted") {
             saved = there;
             draft = [...there.items];
@@ -959,20 +1027,25 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
             persistDraft();
             emit();
             settleLinkAdd();
+            checkHeardWhileBusy();
             return null;
           }
         }
         busy = null;
         heardDelete = false;
+        const was = seenDeleted;
         showDeleted("deleted");
+        if (!withdrawn) seenDeleted = was; // (what the read found)
         persistFlag();
         persistDraft();
         emit();
         // A link's add that came while the delete was on its way goes on the new, empty list.
         settleLinkAdd();
+        checkHeardWhileBusy();
         return length;
       } catch (err) {
         busy = null;
+        checkAfterBusy = false; // (its own check follows)
         failure = { action: "delete", kind: classifyRankerError(err) };
         parked = saveFailure;
         // It may have gone through (a lost reply): nothing saves until the saved list is checked.

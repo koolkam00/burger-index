@@ -165,7 +165,7 @@ test("a new browser: a list of 3 saves itself 2 s after the last change (making 
   assert.deepEqual(s.draft, ["c", "a", "b"]);
   assert.equal(s.saving, true);
   assert.deepEqual(clock.waiting(), [2000]);
-  assert.deepEqual(parseStoredDraft(session.data.get(RANKER_DRAFT_KEY) ?? null), { items: ["c", "a", "b"], base: null, sent: [] }, "kept for this session until saved");
+  assert.deepEqual(parseStoredDraft(session.data.get(RANKER_DRAFT_KEY) ?? null), { items: ["c", "a", "b"], base: null, sent: [], deleted: null }, "kept for this session until saved");
 
   await wait(clock, 1999);
   assert.deepEqual(backend.calls, [], "not before the pause ends");
@@ -391,7 +391,7 @@ test("the page hidden: a save waiting goes at once; the page closing: it goes as
   assert.deepEqual(clock.waiting(), [], "nothing left waiting");
   assert.deepEqual(
     parseStoredDraft(session.data.get(RANKER_DRAFT_KEY) ?? null),
-    { items: ["a", "b", "c", "d"], base: ["a", "b", "c"], sent: [["a", "b", "c", "d"]] },
+    { items: ["a", "b", "c", "d"], base: ["a", "b", "c"], sent: [["a", "b", "c", "d"]], deleted: null },
     "a reload shows (and saves) it if the request was lost",
   );
   page().unload();
@@ -1024,7 +1024,7 @@ test("a change back to the saved list while a different one is on its way surviv
   store.move("b", 1); // back to a,b,c
   assert.deepEqual(
     parseStoredDraft(session.data.get(RANKER_DRAFT_KEY) ?? null),
-    { items: ["a", "b", "c"], base: ["a", "b", "c"], sent: [["b", "a", "c"]] },
+    { items: ["a", "b", "c"], base: ["a", "b", "c"], sent: [["b", "a", "c"]], deleted: null },
     "kept: the backend is about to hold b,a,c",
   );
   page().unload();
@@ -1891,7 +1891,8 @@ test("a closed tab reopened with its session: a list deleted, or changed, in ano
   s = reopened.getSnapshot();
   assert.deepEqual(s.draft, ["a", "c", "b", "d"]);
   assert.equal(s.notice, "updated_elsewhere");
-  assert.deepEqual(u.backend.calls, ["get v1", "get v1"]);
+  // (the reopened page's read came right after the closing page's stamp: asked once more, 3 s later)
+  assert.deepEqual(u.backend.calls, ["get v1", "get v1", "get v1"]);
 
   // the keepalive didn't land: the list the session kept saves itself
   const w = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
@@ -2140,4 +2141,156 @@ test("a change held by a check that can't reach the counter says so, not 'Saving
   assert.equal(s.checkRetrying, false);
   assert.deepEqual(backend.lists.get("v1")?.items, ["a", "b", "c", "d"]);
   assert.equal(lineOf(s), "Saved. It joins the People's Top 10 at its next update.");
+});
+
+// ---- round-6 fixes: a close that leaves an outcome unseen, a reopened first list, a delete's round trip, a fresh tab ------
+
+/** Saves that reach the backend but come back with an odd reply. */
+function oddSaveReply(backend: ReturnType<typeof fakeApi>) {
+  const save = backend.api.save;
+  backend.api.save = async (voter, items) => {
+    await save(voter, items);
+    throw { kind: "unknown" };
+  };
+}
+
+test("a tab that closes with a save it never saw land, and nothing to send, still tells the other tabs", async () => {
+  const { tabs, backend, clock, pages } = twoTabs(SAVED(["a", "b", "c"]));
+  const [one, two] = tabs;
+  await started(one);
+  await started(two);
+  oddSaveReply(backend);
+  two.add("d");
+  await wait(clock, 2000);
+  assert.deepEqual(backend.lists.get("v1")?.items, ["a", "b", "c", "d"], "it landed; the reply was odd");
+  assert.deepEqual(two.getSnapshot().failure, { action: "save", kind: "unknown", retrying: true });
+  assert.deepEqual(one.getSnapshot().draft, ["a", "b", "c"], "tab one heard nothing yet");
+  pages[1].hidden();
+  pages[1].unload(); // an odd reply's retry waits for its own time: no keepalive, but a new stamp
+  assert.deepEqual(backend.unload, []);
+  await settled();
+  const s = one.getSnapshot();
+  assert.deepEqual(s.draft, ["a", "b", "c", "d"]);
+  assert.equal(s.notice, "updated_elsewhere");
+  assert.equal(lineOf(s), "Saved. It joins the People's Top 10 at its next update.");
+});
+
+test("a delete whose reply was odd and whose check can't read, then the page closes: the other tab says it was deleted", async () => {
+  const { tabs, backend, clock, pages, data } = twoTabs(SAVED(["a", "b", "c"]));
+  const [one, two] = tabs;
+  await started(one);
+  await started(two);
+  const del = backend.api.del;
+  backend.api.del = async (voter) => {
+    await del(voter);
+    throw { kind: "unknown" };
+  };
+  backend.fail.get = new TypeError("Failed to fetch");
+  one.askDelete();
+  assert.equal(await one.deleteList(), null);
+  assert.equal(backend.lists.get("v1")?.status, "deleted");
+  assert.ok(data.has(RANKER_SAVED_KEY), "the flag is as it was: tab two heard nothing");
+  backend.fail.get = undefined;
+  pages[0].unload(); // closed before its check could read: a new stamp
+  await settled();
+  const s = two.getSnapshot();
+  assert.deepEqual(s.draft, []);
+  assert.equal(s.notice, "deleted_elsewhere");
+  await wait(clock, 60_000);
+  assert.equal(backend.lists.get("v1")?.status, "deleted");
+  assert.ok(!backend.calls.some((c) => c.startsWith("save")), "nothing brings it back");
+});
+
+test("a closed tab reopened with a first list it sent as it closed: changed and deleted in another tab since, it never comes back", async () => {
+  const t = setup({ voter: "v1" });
+  await started(t.store);
+  for (const k of ["c", "e", "a"]) t.store.add(k);
+  await wait(t.clock, 500);
+  t.store.flushOnUnload(); // the keepalive lands; another tab shows it, reorders it, deletes it
+  assert.deepEqual(t.backend.unload, ["v1 c,e,a"]);
+  t.backend.lists.set("v1", { ...SAVED(["a", "c", "e"]), status: "deleted" });
+  t.local.data.delete(RANKER_SAVED_KEY);
+  const back = t.reopen();
+  await started(back);
+  await wait(t.clock, 60_000);
+  const s = back.getSnapshot();
+  assert.deepEqual(s.draft, []);
+  assert.equal(s.notice, "deleted_elsewhere");
+  assert.equal(t.backend.lists.get("v1")?.status, "deleted");
+  assert.ok(!t.backend.calls.some((c) => c.startsWith("save")), "no save without a new change");
+
+  // an older deleted list, there when the first list was made, and a keepalive that never landed: the first list saves
+  const u = setup({ voter: "v1", saved: { ...SAVED(["d", "e", "a"]), status: "deleted" } });
+  await started(u.store);
+  for (const k of ["c", "e", "a"]) u.store.add(k);
+  await wait(u.clock, 500);
+  u.store.flushOnUnload();
+  const again = u.reopen();
+  await started(again);
+  await wait(u.clock, 60_000);
+  assert.deepEqual(u.backend.lists.get("v1")?.items, ["c", "e", "a"]);
+  assert.equal(u.backend.lists.get("v1")?.status, "active");
+  assert.equal(again.getSnapshot().notice, null);
+});
+
+test("another tab's save heard while this tab's delete is on its way: the card shows it once the delete is done", async () => {
+  const { store, backend, local, page, clock } = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
+  local.data.set(RANKER_SAVED_KEY, "x");
+  await started(store);
+  const del = backend.api.del;
+  let reply: () => void = () => undefined;
+  backend.api.del = async (voter) => {
+    const done = await del(voter); // it reaches the backend; the reply is held
+    await new Promise<void>((r) => (reply = r));
+    return done;
+  };
+  store.askDelete();
+  const deleting = store.deleteList();
+  await settled();
+  assert.equal(backend.lists.get("v1")?.status, "deleted");
+  backend.lists.set("v1", SAVED(["c", "b", "a"], { inBoard: false })); // another tab's list lands after it
+  local.data.set(RANKER_SAVED_KEY, "other-tab");
+  page().savedElsewhere();
+  reply();
+  assert.equal(await deleting, 3);
+  await settled();
+  const s = store.getSnapshot();
+  assert.deepEqual(s.draft, ["c", "b", "a"]);
+  assert.equal(s.notice, "updated_elsewhere");
+  assert.ok(local.data.get(RANKER_SAVED_KEY), "the flag says there is a saved list");
+  await wait(clock, 60_000);
+  assert.deepEqual(backend.lists.get("v1")?.items, ["c", "b", "a"]);
+  assert.ok(!backend.calls.some((c) => c.startsWith("save")));
+});
+
+test("a tab opened right after another closed mid-pause: its keepalive landing after the read is asked for once more", async () => {
+  const t = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
+  await started(t.store);
+  t.store.move("c", -2); // c,a,b, still in its pause
+  await wait(t.clock, 500);
+  t.store.flushOnUnload(); // closed: the keepalive is on its way, stamped as it goes
+  assert.deepEqual(t.backend.unload, ["v1 c,a,b"]);
+  t.session.data.clear(); // a new tab: no session of its own
+  t.clock.skip(300);
+  const fresh = t.reopen();
+  await started(fresh);
+  assert.deepEqual(fresh.getSnapshot().draft, ["a", "b", "c"], "its read came first");
+  assert.deepEqual(t.clock.waiting(), [RECHECK_DELAY]);
+  t.backend.lists.set("v1", SAVED(["c", "a", "b"], { inBoard: false })); // the keepalive lands
+  await wait(t.clock, RECHECK_DELAY);
+  const s = fresh.getSnapshot();
+  assert.deepEqual(s.draft, ["c", "a", "b"]);
+  assert.equal(s.notice, "updated_elsewhere");
+  assert.deepEqual(t.clock.waiting(), [], "once: no loop");
+  fresh.add("d");
+  await wait(t.clock, 2000);
+  assert.deepEqual(t.backend.lists.get("v1")?.items, ["c", "a", "b", "d"], "the closed tab's change is kept");
+  assert.deepEqual(t.backend.calls, ["get v1", "get v1", "get v1", "save v1 c,a,b,d"]);
+
+  // an old stamp: one read, as before
+  const u = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
+  u.local.data.set(RANKER_SAVED_KEY, `${(u.clock.now() - RECHECK_DELAY).toString(36)}.abcdef`);
+  await started(u.store);
+  assert.deepEqual(u.clock.waiting(), []);
+  assert.deepEqual(u.backend.calls, ["get v1"]);
 });

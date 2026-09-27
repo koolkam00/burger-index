@@ -7,6 +7,7 @@ import {
   addParam,
   classifyRankerError,
   autosaveLine,
+  autosaveTrouble,
   AUTOSAVE_DELAY,
   retriesSave,
   retryDelay,
@@ -398,4 +399,35 @@ test("drag to reorder: where a dragged row lands, where it is drawn, and the lis
   const list = ["a", "b", "c", "d", "e"];
   assert.deepEqual(moveItemTo(list, "b", dragIndex(mids, 1, 250)), ["a", "c", "d", "b", "e"]);
   assert.deepEqual(moveItemTo(list, "d", dragIndex(mids, 3, 20)), ["d", "a", "b", "c", "e"]);
+});
+
+test("the live region's words for the status line: a failed save, or a change held by a failing check, only while the line shows them", () => {
+  const today = "2026-09-26";
+  const counting = { status: "active" as const, countsFrom: "2026-09-27", inBoard: false };
+  const base = { length: 0, saved: null, dirty: false, saving: false, failure: null, problem: null, deleted: false, menusFailed: false };
+  const held = "Couldn't reach the counter. Trying again soon.";
+  // a check that can't reach the counter while the list is under 3, or holds a gone burger: the line asks for that, so nothing is said
+  assert.equal(autosaveTrouble({ ...base, length: 2, saved: counting, dirty: true, problem: "too_short", checkRetrying: true }), "");
+  assert.equal(autosaveTrouble({ ...base, length: 4, saved: counting, dirty: true, problem: "gone", checkRetrying: true }), "");
+  assert.equal(autosaveTrouble({ ...base, length: 4, saved: counting, dirty: false, checkRetrying: true }), "");
+  assert.equal(autosaveTrouble({ ...base, length: 4, saved: counting, dirty: true, checkRetrying: true }), held);
+  // whatever it says, the status line shows the same words, as an alert
+  const saved = [null, counting] as const;
+  for (const length of [0, 2, 3, 4]) {
+    for (const problem of [null, "too_short", "gone"] as const) {
+      for (const dirty of [false, true]) {
+        for (const checkRetrying of [false, true]) {
+          for (const failure of [null, { kind: "network" as const, retrying: true }, { kind: "rate_voter" as const, retrying: false }]) {
+            for (const s of saved) {
+              const input = { ...base, length, problem, dirty, checkRetrying, failure, saved: s };
+              const said = autosaveTrouble(input);
+              const line = autosaveLine(input, today);
+              if (said) assert.deepEqual(line, { text: said, alert: true });
+              else assert.ok(!line.alert || problem === "gone", JSON.stringify(input));
+            }
+          }
+        }
+      }
+    }
+  }
 });

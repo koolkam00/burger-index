@@ -12,6 +12,7 @@ import { revealAnnouncement, revealView, showsReveal, yourList, type RevealBoard
 import {
   addParam,
   autosaveLine,
+  autosaveTrouble,
   dragIndex,
   dragTop,
   ELSEWHERE_COPY,
@@ -24,11 +25,10 @@ import {
   nyToday,
   RANKER_ERROR_COPY,
   savedStatusText,
-  saveFailureLine,
-  saveFailureText,
   searchBurgers,
   TOP_N,
   withoutAddParam,
+  type AutosaveInput,
   type RankerBurger,
 } from "@/lib/ranker";
 import { rankerStore, type RankerSnapshot } from "@/lib/ranker-store";
@@ -39,6 +39,21 @@ import { ShareList } from "./ShareList";
 
 /** Where focus goes after a step: a heading, the search box, a row's control, or a named button. */
 type FocusTarget = { kind: "heading" } | { kind: "search" } | { kind: "row"; key: string; control: "up" | "down" | "remove" } | { kind: "button"; name: string };
+
+/** The status line's inputs (lib/ranker autosaveLine), which the live region's words (autosaveTrouble) come from too. */
+function autosaveInput(snap: RankerSnapshot): AutosaveInput {
+  return {
+    length: snap.draft.length,
+    saved: snap.saved,
+    dirty: snap.dirty,
+    saving: snap.saving,
+    failure: snap.failure?.action === "save" ? snap.failure : null,
+    problem: snap.problem,
+    deleted: snap.notice === "deleted" || snap.notice === "deleted_elsewhere",
+    menusFailed: snap.menus === "error",
+    checkRetrying: snap.checkRetrying,
+  };
+}
 
 function useRanker(): RankerSnapshot {
   return useSyncExternalStore(rankerStore.subscribe, rankerStore.getSnapshot, rankerStore.getServerSnapshot);
@@ -180,12 +195,8 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
       // This tab's delete is tracked once (the store hands it out once): by the mount that sees it land, else the next one.
       const deleted = rankerStore.takeDelete();
       if (deleted !== null) track("ranking_deleted", { length: deleted });
-      const f =
-        s.failure?.action === "save"
-          ? saveFailureLine(s.failure, s.saved, s.dirty)
-          : s.dirty && s.checkRetrying && !s.failure
-            ? saveFailureText({ kind: "network", retrying: true }, s.saved !== null)
-            : "";
+      // (the status line's own words, only while it shows them)
+      const f = s.failure?.action === "delete" ? "" : autosaveTrouble(autosaveInput(s));
       if (f !== failureSaid.current) {
         failureSaid.current = f;
         if (f) {
@@ -703,20 +714,7 @@ function ListCard({
       ? { text: "Deleting your list…", alert: false }
       : snap.failure?.action === "delete"
         ? { text: RANKER_ERROR_COPY[snap.failure.kind], alert: true }
-        : autosaveLine(
-            {
-              length: draft.length,
-              saved,
-              dirty: snap.dirty,
-              saving: snap.saving,
-              failure: snap.failure?.action === "save" ? snap.failure : null,
-              problem: snap.problem,
-              deleted: snap.notice === "deleted" || snap.notice === "deleted_elsewhere",
-              menusFailed: snap.menus === "error",
-              checkRetrying: snap.checkRetrying,
-            },
-            nyToday(),
-          );
+        : autosaveLine(autosaveInput(snap), nyToday());
   // A voided list stays void and can't be withdrawn (the backend keeps it): no "Delete my list" for it.
   const canDelete = saved !== null && saved.status !== "void";
   const asking = snap.confirmDelete && canDelete;

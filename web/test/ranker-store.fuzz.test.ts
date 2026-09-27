@@ -20,12 +20,16 @@
 // sessionStorage missing or every storage call throwing, and half the keepalive requests land only after the open tabs
 // have read the list their stamp told them of (never after a new page's first read).
 //
+// Odd seeds also get the extended steps (FUZZ_EXT=all|none|odd): a laptop asleep (time jumps, the timers fire late), a tab
+// closed for good, a closed tab reopened with its sessionStorage, a tab duplicated with a copy of it.
+//
 // FUZZ_SEEDS=20000 npm test (or node … --test test/ranker-store.fuzz.test.ts) runs more; FUZZ_START picks the first seed;
 // FUZZ_SEED=<n> replays one seed and prints its steps and each tab's state; FUZZ_SEED=<n> FUZZ_BEGIN='<start>'
 // FUZZ_STEPS='<steps>' replays a minimized sequence as the failure report prints it (FUZZ_TRACE=1 also prints storage
 // events and gets). Exploration only: FUZZ_NO=reload,lost leaves step kinds or backend modes out, FUZZ_REORDER=1 lets
 // requests reach the backend out of order (FUZZ_REORDER=live: only an open page's; a closing page's requests land, or not,
-// before its keepalive), FUZZ_EMULATE_ANNOUNCE=1 has lists saved as a page closes tell the other tabs.
+// before its keepalive), FUZZ_EMULATE_ANNOUNCE=1 has lists saved as a page closes tell the other tabs,
+// FUZZ_EMULATE_CLOSE_STAMP=1 has every closing page leave a new stamp (so the open tabs check).
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { menuListData } from "../src/lib/menu-list";
@@ -41,6 +45,8 @@ const MENUS = menuListData(KEYS.map((id) => place({ id, name: id.toUpperCase(), 
 const TODAY = "2026-09-27";
 /** Exploration only (FUZZ_EMULATE_ANNOUNCE=1): lists saved as a page closes tell the other tabs, as a fix would. */
 const EMULATE_ANNOUNCE = process.env.FUZZ_EMULATE_ANNOUNCE === "1";
+/** Exploration only (FUZZ_EMULATE_CLOSE_STAMP=1): a page that closes always leaves a new stamp, so the open tabs check. */
+const EMULATE_CLOSE_STAMP = process.env.FUZZ_EMULATE_CLOSE_STAMP === "1";
 const REORDER = process.env.FUZZ_REORDER === "1" || process.env.FUZZ_REORDER === "live";
 /** FUZZ_REORDER=live: only an open page's requests wait; a closing page's request reaches the backend (or not) as it closes. */
 const REORDER_LIVE = process.env.FUZZ_REORDER === "live";
@@ -99,7 +105,13 @@ type Step =
   | { t: "mount"; tab: number; link: number | null }
   | { t: "openTab" }
   | { t: "retryLoad"; tab: number }
-  | { t: "quiesce" };
+  | { t: "quiesce" }
+  // the extended steps (sequence(seed, true)): a laptop asleep (time passes, the timers fire late, all at once), a tab closed
+  // for good, a closed tab reopened (its sessionStorage comes back), a tab duplicated (it starts with a copy of the other's)
+  | { t: "sleep"; ms: number }
+  | { t: "closeTab"; tab: number }
+  | { t: "reopen"; tab: number }
+  | { t: "dupTab"; from: number };
 
 type Start = {
   voter: boolean;
@@ -132,7 +144,7 @@ function shuffled<T>(r: Rng, xs: readonly T[]): T[] {
   return out;
 }
 
-function genSteps(r: Rng, start: Start, n: number): Step[] {
+function genSteps(r: Rng, start: Start, n: number, ext: Rng | null = null): Step[] {
   const steps: Step[] = [];
   const tab = () => (start.twoTabs && r.chance(0.5) ? 1 : 0);
   for (let s = 0; s < n; s++) {
@@ -168,6 +180,18 @@ function genSteps(r: Rng, start: Start, n: number): Step[] {
     else step = { t: "time", ms: r.int(3000) };
     if (NO.has(step.t) || (step.t === "mode" && NO.has(step.m))) continue;
     steps.push(step);
+    // The extended steps come from their own PRNG, so the base steps of a seed are the same with or without them.
+    if (ext?.chance(0.08)) {
+      const y = ext.next();
+      let more: Step;
+      if (y < 0.3) {
+        const z = ext.next();
+        more = { t: "sleep", ms: z < 0.4 ? ext.int(3000) : z < 0.8 ? 4000 + ext.int(120_000) : 30 * 60_000 + ext.int(150 * 60_000) };
+      } else if (y < 0.55) more = { t: "closeTab", tab: ext.int(2) };
+      else if (y < 0.75) more = { t: "reopen", tab: ext.int(2) };
+      else more = { t: "dupTab", from: ext.int(2) };
+      if (!NO.has(more.t)) steps.push(more);
+    }
   }
   return steps;
 }
@@ -191,7 +215,7 @@ type Inst = {
 };
 
 /** `lastEditOp`: the visitor's last change here; `toldOp`: when this tab last heard the list was deleted (an event, a check). */
-type Tab = { id: number; session: Map<string, string>; inst: Inst | null; lastEditOp: number; toldOp: number };
+type Tab = { id: number; session: Map<string, string>; inst: Inst | null; lastEditOp: number; toldOp: number; who: number };
 
 type Held = { inst: Inst | null; label: string; run: () => void; land?: () => void };
 
@@ -417,10 +441,22 @@ class World {
     inst.mount = null;
   }
 
-  openTab(): Tab {
+  /** Tabs ever opened (each tab's own id for I3's bookkeeping: a reload or reopen keeps it, a duplicate gets a new one). */
+  whos = 1;
+
+  openTab(from: Tab | null = null): Tab {
     this.landLate();
-    const tab: Tab = { id: this.tabs.length, session: new Map(), inst: null, lastEditOp: 0, toldOp: 0 };
-    this.tabs.push(tab);
+    // a free slot (a tab closed for good) is taken first
+    const slot = this.tabs.length < 2 ? this.tabs.length : this.tabs.findIndex((t) => !t.inst);
+    const tab: Tab = {
+      id: slot,
+      session: new Map(from ? from.session : []),
+      inst: null,
+      lastEditOp: from ? from.lastEditOp : 0,
+      toldOp: from ? from.toldOp : 0,
+      who: this.whos++,
+    };
+    this.tabs[slot] = tab;
     tab.inst = this.makeInst(tab);
     this.mount(tab, null);
     return tab;
@@ -437,6 +473,10 @@ class World {
     inst.page?.hidden();
     inst.page?.unload();
     this.landAll(inst);
+    if (EMULATE_CLOSE_STAMP && this.storage !== "throws") {
+      this.local.set(RANKER_SAVED_KEY, `c${++this.op}`);
+      for (const t of this.tabs) if (t !== tab && t.inst) this.events.push({ to: t, inst: t.inst, deleted: false });
+    }
     inst.alive = false;
     inst.timers.clear();
     inst.deferred = [];
@@ -504,6 +544,7 @@ class World {
   async release(i: number) {
     if (!this.held.length) return;
     const [h] = this.held.splice(i % this.held.length, 1);
+    if (process.env.FUZZ_TRACE) console.log(`      release ${h.label}`);
     h.run();
     await this.settle();
   }
@@ -597,10 +638,11 @@ function makeInst(w: World, tab: Tab): Inst {
     loadMenus: () => (w.netDown ? Promise.reject(new TypeError("Failed to fetch")) : Promise.resolve(MENUS)),
     api: {
       save(voter, items) {
-        const sent = { op: ++w.op, editOp: tab.lastEditOp, toldOp: tab.toldOp, tab: tab.id };
+        const sent = { op: ++w.op, editOp: tab.lastEditOp, toldOp: tab.toldOp, tab: tab.who };
         if (inst.outstanding > 0) w.fail("I2", `tab ${tab.id} sent a second save while one was on its way`);
         if (items.length < 3) w.fail("I2", `tab ${tab.id} sent a save of ${items.length} burgers`);
         const list = [...items];
+        if (process.env.FUZZ_TRACE) console.log(`      save from tab ${tab.id}: ${list.join(",")} (card ${inst.store.getSnapshot().draft.join(",")})`);
         // checked once the store has recorded what it sends (its snapshot is emitted right after the call)
         queueMicrotask(() => {
           const saved = inst.store.getSnapshot().saved;
@@ -638,16 +680,17 @@ function makeInst(w: World, tab: Tab): Inst {
           // a delete that never reached the backend; one whose reply was lost; an odd reply (it went through half the time)
           if (m === "network") return { ok: false, err: w.refusal(m) };
           if (m === "unknown") {
-            if (w.rng.chance(0.5)) w.applyDelete(voter, tab.id, sentOp);
+            if (w.rng.chance(0.5)) w.applyDelete(voter, tab.who, sentOp);
             return { ok: false, err: w.refusal(m) };
           }
-          const done = w.applyDelete(voter, tab.id, sentOp);
+          const done = w.applyDelete(voter, tab.who, sentOp);
           return m === "lost" ? { ok: false, err: new TypeError("Failed to fetch") } : { ok: true, value: done };
         });
       },
       // A keepalive request lands (or not: the network down, a refusal) before the page could come back.
       saveOnUnload(voter, items) {
-        const sent = { op: ++w.op, editOp: tab.lastEditOp, toldOp: tab.toldOp, tab: tab.id };
+        if (process.env.FUZZ_TRACE) console.log(`      keepalive from tab ${tab.id}: ${items.join(",")}`);
+        const sent = { op: ++w.op, editOp: tab.lastEditOp, toldOp: tab.toldOp, tab: tab.who };
         if (w.netDown) return;
         w.landAll(inst);
         const m = mode();
@@ -762,7 +805,7 @@ async function runSteps(seed: number, start: Start, steps: readonly Step[], log 
   w.storage = start.twoTabs ? undefined : start.storage;
   if (start.row !== "none") w.rows.set("v1", { items: [...start.items], status: start.row, savedOn: "2026-09-20", deletedOp: start.row === "deleted" ? 1 : 0, deletedBy: -1, delSentOp: 0 });
   if (start.flag) w.local.set(RANKER_SAVED_KEY, "x");
-  const first: Tab = { id: 0, session: new Map(), inst: null, lastEditOp: 0, toldOp: 0 };
+  const first: Tab = { id: 0, session: new Map(), inst: null, lastEditOp: 0, toldOp: 0, who: 0 };
   if (start.draft) {
     // an unsaved list from earlier in this tab's session: a change made after any delete before the start
     first.session.set(RANKER_DRAFT_KEY, JSON.stringify({ items: start.draft }));
@@ -916,7 +959,7 @@ async function runSteps(seed: number, start: Start, steps: readonly Step[], log 
           }
           break;
         case "openTab":
-          if (w.tabs.length < 2 && start.twoTabs) {
+          if (start.twoTabs && (w.tabs.length < 2 || w.tabs.some((t) => !t.inst))) {
             w.openTab();
             await w.settle();
           }
@@ -932,6 +975,36 @@ async function runSteps(seed: number, start: Start, steps: readonly Step[], log 
         case "quiesce":
           if (await w.quiesce()) check(w, `settled at step ${i}`);
           break;
+        case "sleep": {
+          // the clock jumps; the timers due meanwhile fire late, in order, once the laptop wakes
+          const woke = w.now + step.ms;
+          w.now = woke;
+          await w.advance(0);
+          break;
+        }
+        case "closeTab":
+          if (tab?.inst) {
+            w.close(tab);
+            w.landLate();
+          }
+          break;
+        case "reopen":
+          // a closed tab reopened: its sessionStorage (the draft, the lists it sent) comes back with it
+          if (tab && !tab.inst) {
+            w.landLate();
+            tab.inst = w.makeInst(tab);
+            w.mount(tab, null);
+          }
+          break;
+        case "dupTab": {
+          const src = w.tabs[step.from];
+          // (storage trouble is a one-tab visit: tabs that can't share localStorage never hear of each other)
+          if (!w.storage && src?.inst && !src.inst.frozen && (w.tabs.length < 2 || w.tabs.some((t) => !t.inst))) {
+            w.openTab(src);
+            await w.settle();
+          }
+          break;
+        }
       }
       await w.settle();
       if (log) {
@@ -1004,11 +1077,19 @@ function check(w: World, when: string) {
 
 // ---- the test ----------------------------------------------------------------------------------------------------
 
-function sequence(seed: number): { start: Start; steps: Step[] } {
+/**
+ * A seed's visit. `ext`: with the extended steps (a laptop asleep, tabs closed, reopened, duplicated) inserted between
+ * the base ones; the base steps are the same either way.
+ */
+function sequence(seed: number, ext = false): { start: Start; steps: Step[] } {
   const r = prng(seed);
   const start = genStart(r);
-  return { start, steps: genSteps(r, start, 25 + r.int(40)) };
+  return { start, steps: genSteps(r, start, 25 + r.int(40), ext ? prng(seed ^ 0x27d4eb2f) : null) };
 }
+
+/** Which seeds get the extended steps: FUZZ_EXT=all, none, or (default) the odd ones; never the regression seeds. */
+const EXT = process.env.FUZZ_EXT ?? "odd";
+const extFor = (seed: number) => !REGRESSION_SEEDS.includes(seed) && (EXT === "all" || (EXT !== "none" && seed % 2 === 1));
 
 /** The shortest prefix, then each step dropped in turn, that still breaks the same invariant. */
 async function minimize(seed: number, start: Start, steps: Step[], code: string): Promise<Step[]> {
@@ -1034,6 +1115,68 @@ async function minimize(seed: number, start: Start, steps: Step[], code: string)
  */
 const REGRESSION_SEEDS = [14043, 19283, 30497];
 
+/**
+ * Minimized sequences with the extended steps that once broke an invariant, replayed as they are (their seed only feeds
+ * the backend's coin flips): a tab that closes with an outcome it never saw (an odd reply's retry waiting, a save on its
+ * way while the card holds under 3, a delete whose reply was odd and whose check can't read) and nothing to send as a
+ * keepalive, which leaves the other tab showing an older list (or a deleted one) as "Saved."; and a closed tab reopened
+ * after the other tab changed then deleted the first list it had sent as it closed, which saved it again.
+ */
+const REGRESSION_SEQUENCES: { seed: number; start: Start; steps: Step[] }[] = [
+  {
+    seed: 14308,
+    start: { voter: true, row: "active", items: ["b", "d", "g", "h", "e"], flag: true, draft: null, twoTabs: true },
+    steps: [{ t: "time", ms: 2797 }, { t: "mode", m: "unknown" }, { t: "moveTo", tab: 1, i: 0, j: 2 }, { t: "time", ms: 59605 }, { t: "closeTab", tab: 1 }],
+  },
+  {
+    seed: 10480,
+    start: { voter: true, row: "replaced", items: ["a", "d", "f", "c"], flag: true, draft: null, twoTabs: false },
+    steps: [
+      { t: "reload", tab: 0 },
+      { t: "dupTab", from: 0 },
+      { t: "remove", tab: 0, i: 7 },
+      { t: "remove", tab: 0, i: 3 },
+      { t: "add", tab: 0, k: 4 },
+      { t: "remove", tab: 0, i: 4 },
+      { t: "hold", on: true },
+      { t: "add", tab: 0, k: 0 },
+      { t: "remove", tab: 0, i: 0 },
+      { t: "add", tab: 0, k: 6 },
+      { t: "mode", m: "ok" },
+      { t: "hidden", tab: 0 },
+      { t: "remove", tab: 0, i: 3 },
+      { t: "closeTab", tab: 0 },
+    ],
+  },
+  {
+    seed: 13068,
+    start: { voter: true, row: "active", items: ["b", "c", "e", "a", "g"], flag: true, draft: null, twoTabs: false },
+    steps: [
+      { t: "reload", tab: 0 },
+      { t: "dupTab", from: 0 },
+      { t: "askDelete", tab: 0 },
+      { t: "mount", tab: 0, link: null },
+      { t: "mode", m: "unknown" },
+      { t: "confirmDelete", tab: 0 },
+      { t: "closeTab", tab: 0 },
+    ],
+  },
+  {
+    seed: 5,
+    start: { voter: true, row: "deleted", items: ["f", "g", "b", "h"], flag: false, draft: ["c", "e", "a", "h"], twoTabs: true },
+    steps: [
+      { t: "closeTab", tab: 0 },
+      { t: "time", ms: 5000 },
+      { t: "moveTo", tab: 1, i: 2, j: 0 },
+      { t: "time", ms: 3000 },
+      { t: "askDelete", tab: 1 },
+      { t: "confirmDelete", tab: 1 },
+      { t: "reopen", tab: 0 },
+      { t: "time", ms: 5000 },
+    ],
+  },
+];
+
 const w0 = async (vs: Violation[]) => {
   if (vs.length) assert.fail(vs.map((v) => `${v.code} at step ${v.step}: ${v.msg}`).join("\n"));
 };
@@ -1048,7 +1191,7 @@ test("fuzz: random visits, tabs, pages and network trouble never break the autos
   if (process.env.FUZZ_STEPS) {
     // replay a given sequence: FUZZ_SEED=<seed> FUZZ_STEPS='[…]' (and FUZZ_BEGIN='{…}' for its start)
     const seed = Number(one ?? 1);
-    const start = process.env.FUZZ_BEGIN ? (JSON.parse(process.env.FUZZ_BEGIN) as Start) : sequence(seed).start;
+    const start = process.env.FUZZ_BEGIN ? (JSON.parse(process.env.FUZZ_BEGIN) as Start) : sequence(seed, extFor(seed)).start;
     const vs = await runSteps(seed, start, JSON.parse(process.env.FUZZ_STEPS) as Step[], true);
     await w0(vs);
     return;
@@ -1059,8 +1202,17 @@ test("fuzz: random visits, tabs, pages and network trouble never break the autos
   const t0 = performance.now();
   const seeds = new Set<number>(one ? [] : REGRESSION_SEEDS);
   for (let seed = first; seed < first + count; seed++) seeds.add(seed);
+  if (!one) {
+    for (const r of REGRESSION_SEQUENCES) {
+      const vs = await runSteps(r.seed, r.start, r.steps);
+      for (const v of vs) {
+        const key = `regression ${r.seed} ${v.code}`;
+        if (!found.has(key)) found.set(key, { seed: r.seed, v, steps: r.steps, start: r.start });
+      }
+    }
+  }
   for (const seed of seeds) {
-    const { start, steps } = sequence(seed);
+    const { start, steps } = sequence(seed, extFor(seed));
     const vs = await runSteps(seed, start, steps, Boolean(one));
     for (const v of vs) {
       const key = `${v.code}: ${v.msg.replace(/\[[^\]]*\]|tab \d|step \d+|"[^"]*"/g, "")}`;
