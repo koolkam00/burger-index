@@ -25,6 +25,7 @@ import {
   RANKER_ERROR_COPY,
   savedStatusText,
   saveFailureLine,
+  saveFailureText,
   searchBurgers,
   TOP_N,
   withoutAddParam,
@@ -92,8 +93,9 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
   const failureSaid = useRef("");
   // The next save that goes through is said too: after a failed save was said (so its recovery is heard), or "Count it again".
   const sayNextSave = useRef(false);
-  // Another tab's change to the list (a newer list shown here, or a delete): each one said once (by its number, so a second
-  // update under the same note is said too); the control that had focus in the card, in case the change took it away.
+  // A change to the list the visitor didn't make here (another tab's newer list or delete, or this tab's delete, found by
+  // its reply or by a check after a lost one): each one said once (by its number, so a second update under the same note
+  // is said too); the control that had focus in the card, in case the change took it away.
   const noticeSaid = useRef<number | null>(null);
   const focusBefore = useRef<Element | null>(null);
   // Bumped to re-render after an awaited step, so its focus move runs (the store's own update came before it).
@@ -160,12 +162,12 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
     let tracked = false;
     const onStore = (mounting: boolean) => {
       const s = rankerStore.getSnapshot();
-      // Another tab saved or deleted the list: the card changed without the visitor's doing, so it is said (not on a mount:
-      // the note above the list, or the status line, shows it). Called before React renders the change, so focus in the
-      // card is noted here and, if its control went away, moved to the H3 after.
+      // Another tab saved or deleted the list, or this tab's delete went through: the card changed, so it is said (not on a
+      // mount: the note above the list, or the status line, shows it). Called before React renders the change, so focus in
+      // the card is noted here and, if its control went away ("Delete my list"), moved to the H3 after.
       if (s.noticeSeq !== noticeSaid.current) {
         noticeSaid.current = s.noticeSeq;
-        const words = s.notice === "updated_elsewhere" ? ELSEWHERE_COPY.updated : s.notice === "deleted_elsewhere" ? ELSEWHERE_COPY.deleted : "";
+        const words = s.notice === "updated_elsewhere" ? ELSEWHERE_COPY.updated : s.notice === "deleted_elsewhere" || s.notice === "deleted" ? ELSEWHERE_COPY.deleted : "";
         if (words && !mounting) {
           setAnnounce((prev) => (prev === words ? `${words} ` : words));
           const active = document.activeElement;
@@ -175,7 +177,15 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
           }
         }
       }
-      const f = s.failure?.action === "save" ? saveFailureLine(s.failure, s.saved, s.dirty) : "";
+      // This tab's delete is tracked once (the store hands it out once): by the mount that sees it land, else the next one.
+      const deleted = rankerStore.takeDelete();
+      if (deleted !== null) track("ranking_deleted", { length: deleted });
+      const f =
+        s.failure?.action === "save"
+          ? saveFailureLine(s.failure, s.saved, s.dirty)
+          : s.dirty && s.checkRetrying && !s.failure
+            ? saveFailureText({ kind: "network", retrying: true }, s.saved !== null)
+            : "";
       if (f !== failureSaid.current) {
         failureSaid.current = f;
         if (f) {
@@ -320,18 +330,13 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
     pendingFocus.current = { kind: "button", name: "delete" };
   };
   const confirmDelete = async () => {
-    const length = await rankerStore.deleteList();
-    if (length === null) {
-      // Not deleted: the status line says why, and so does the live region (the status line isn't one).
-      const failure = rankerStore.getSnapshot().failure;
-      if (failure?.action === "delete") say(RANKER_ERROR_COPY[failure.kind]);
-      // Nothing was withdrawn (a void list): the confirmation is gone, so focus goes to the heading.
-      if (failure?.kind === "not_deleted") focusAfter({ kind: "heading" });
-      return;
-    }
-    track("ranking_deleted", { length });
-    say("Your list was deleted.");
-    focusAfter({ kind: "heading" });
+    // Deleted: said, tracked and focused by the store listener above (as when a check finds a delete whose reply was lost).
+    if ((await rankerStore.deleteList()) !== null) return;
+    // Not deleted: the status line says why, and so does the live region (the status line isn't one).
+    const failure = rankerStore.getSnapshot().failure;
+    if (failure?.action === "delete") say(RANKER_ERROR_COPY[failure.kind]);
+    // Nothing was withdrawn (a void list): the confirmation is gone, so focus goes to the heading.
+    if (failure?.kind === "not_deleted") focusAfter({ kind: "heading" });
   };
   /** "Count it again": a list a newer one from this connection replaced, saved again as it is. */
   const countAgain = () => {
@@ -708,6 +713,7 @@ function ListCard({
               problem: snap.problem,
               deleted: snap.notice === "deleted" || snap.notice === "deleted_elsewhere",
               menusFailed: snap.menus === "error",
+              checkRetrying: snap.checkRetrying,
             },
             nyToday(),
           );
@@ -738,6 +744,7 @@ function ListCard({
           {draft.map((key, i) => {
             const b = snap.burgers.get(key);
             const name = b ? b.label : ready ? "A burger no longer on the Burger Index" : "this burger";
+            // Its place as shown (while a row is dragged, the order after the drop): the number and the arrows follow it.
             const at = order.indexOf(key);
             return (
               <li
@@ -777,7 +784,7 @@ function ListCard({
                     className="icon-btn ranker-ctl"
                     data-ctl="up"
                     aria-label={`Move ${name} up`}
-                    aria-disabled={i === 0 || held || undefined}
+                    aria-disabled={at === 0 || held || undefined}
                     onClick={() => onMove(key, -1)}
                   >
                     <ArrowUp strokeWidth={2} aria-hidden="true" />
@@ -787,7 +794,7 @@ function ListCard({
                     className="icon-btn ranker-ctl"
                     data-ctl="down"
                     aria-label={`Move ${name} down`}
-                    aria-disabled={i === draft.length - 1 || held || undefined}
+                    aria-disabled={at === order.length - 1 || held || undefined}
                     onClick={() => onMove(key, 1)}
                   >
                     <ArrowDown strokeWidth={2} aria-hidden="true" />

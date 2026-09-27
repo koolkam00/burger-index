@@ -20,7 +20,8 @@
 // answered (it is asked again until it does), after the saved list's load and a save on its way have landed: a list there
 // the card knew or sent keeps the card; another tab's newer list shows ("Showing the list saved in another tab.") unless
 // the card has a change of its own still to go; a list gone that the card knew empties it ("Your list was deleted."), so
-// nothing brings it back without a new change.
+// nothing brings it back without a new change. A check another tab's stamp started that finds nothing new asks once more,
+// RECHECK_DELAY later (a list sent as that tab closed is stamped as it goes, and may land after this read).
 //
 // It lives for the page's JavaScript lifetime, so a visitor who leaves the home page and comes back (a client-side
 // navigation) finds the list as they left it. A list not yet saved is also kept in sessionStorage (a reload keeps it,
@@ -95,8 +96,13 @@ export type RankerSnapshot = {
    * the card now shows a newer list another tab saved ("updated_elsewhere").
    */
   notice: RankerNotice | null;
-  /** Bumped each time another tab's change reaches the card (each is said, even with the same notice still up). */
+  /**
+   * Bumped each time the card changes without the visitor's doing: another tab's change reaches it, or the list is deleted
+   * (here, or in another tab; each is said, even with the same notice still up).
+   */
   noticeSeq: number;
+  /** A check of the saved list couldn't reach the backend and is asked again: nothing saves until it answers. */
+  checkRetrying: boolean;
   /** "Delete my list" asked to be sure. */
   confirmDelete: boolean;
   /**
@@ -107,6 +113,9 @@ export type RankerSnapshot = {
   /** The last save that went through (null: none yet in this store's life). */
   lastSave: SaveEvent | null;
 };
+
+/** How long after another tab's stamp its list is asked for once more when the first answer showed nothing new. */
+export const RECHECK_DELAY = 3000;
 
 export type RankerApi = {
   save(voter: string, items: readonly string[]): Promise<SaveReply>;
@@ -179,6 +188,11 @@ export type RankerStore = {
    * by the next ranker, and a save is never tracked twice.
    */
   takeSave(): SaveEvent | null;
+  /**
+   * This tab's delete, handed out once: how many burgers the deleted list had, the first time it is asked after a delete
+   * went through (the reply, or a later check that found a delete whose reply was lost), else null (ranking_deleted).
+   */
+  takeDelete(): number | null;
   askDelete(): void;
   keepList(): void;
   /** Withdraw the saved list; resolves to how many burgers it had (null when it failed, or nothing was withdrawn: a void list). */
@@ -285,6 +299,11 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
   let recount = false;
   /** Changes made in this page's life. */
   let changeSeq = 0;
+  /** The burgers on the list this tab's delete withdraws, and each delete that went through, handed out once (takeDelete). */
+  let deleteLength = 0;
+  let deleteSeq = 0;
+  let takenDelete = 0;
+  let lastDeleteLength = 0;
 
   // The check of the saved list (after a return from the back-forward cache, another tab's save or delete, an unsure save,
   // a failed delete): nothing saves until the backend has answered, and one that can't be asked is asked again.
@@ -298,6 +317,11 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
   let checkAfterDelete = false;
   let checkTimer: unknown = null;
   let checkTries = 0;
+  /**
+   * One more check, RECHECK_DELAY after one another tab's stamp started found nothing new: a list saved as that tab closed
+   * (a keepalive request, stamped as it was sent) may land after this tab's read.
+   */
+  let recheckTimer: unknown = null;
 
   const isDirty = () => (saved ? !sameList(draft, saved.items) : draft.length > 0);
   const known = (k: string) => menus !== "ready" || burgers.has(k);
@@ -336,6 +360,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     failure,
     notice,
     noticeSeq,
+    checkRetrying: checkTimer !== null,
     confirmDelete,
     linkAdd,
     lastSave,
@@ -399,9 +424,12 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     timer = null;
     timerRetry = false;
   }
+  /** The check's retry, and a recheck waiting (a new check, or a delete, decides instead). */
   function stopCheckTimer() {
     if (checkTimer !== null) timers.clear(checkTimer);
     checkTimer = null;
+    if (recheckTimer !== null) timers.clear(recheckTimer);
+    recheckTimer = null;
   }
   /** The waiting timer ran out: save now. */
   function fireTimer() {
@@ -573,7 +601,11 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     recount = false;
     touched = false;
     notice = kind;
-    if (kind === "deleted_elsewhere") noticeSeq += 1;
+    noticeSeq += 1;
+    if (kind === "deleted") {
+      deleteSeq += 1;
+      lastDeleteLength = deleteLength;
+    }
     confirmDelete = false;
     linkAdd = null;
     failure = null;
@@ -618,7 +650,8 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     saved = live;
     if (unchanged) touched = false;
     if (live.status !== "replaced") recount = false;
-    return !theirs && wasSent(live.items) && !(base && sameList(live.items, base));
+    // (a list this tab sent is stamped even when it is the base: its status may have changed, "Count it again" landing)
+    return wasSent(live.items);
   }
 
   /**
@@ -629,7 +662,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
    * backend has answered, and a check that can't reach it is asked again (5 s, 15 s, then every minute, and at once when
    * the connection is back). Resolves after its first try.
    */
-  function check(opts: { deleted?: boolean; afterDelete?: boolean } = {}): Promise<void> {
+  function check(opts: { deleted?: boolean; afterDelete?: boolean; elsewhere?: boolean } = {}): Promise<void> {
     if (!started) return Promise.resolve();
     const voter = deps.voter.read();
     if (!voter) return Promise.resolve();
@@ -647,10 +680,11 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     checkTries = 0;
     stopTimer();
     emit();
-    return askBackend(my, voter);
+    return askBackend(my, voter, opts.elsewhere === true);
   }
 
-  async function askBackend(my: number, voter: string): Promise<void> {
+  /** Ask the backend for the saved list for the check numbered `my` (`recheck`: once more later if the answer is nothing new). */
+  async function askBackend(my: number, voter: string, recheck = false): Promise<void> {
     await (mineLoading ?? undefined);
     await inFlight?.catch(() => undefined);
     if (my !== syncSeq) return;
@@ -676,7 +710,15 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     }
     if (my !== syncSeq) return;
     mine = "ready";
+    const was = saved;
     const fresh = reconcile(reply, { base: saved ? saved.items : null, sent: unsure.map((u) => u.items) }, checkChangesAt);
+    // (only a first try: a check asked again waits 5 s or more, time enough for the other tab's list to land)
+    if (recheck && (was ? saved !== null && sameList(was.items, saved.items) && was.status === saved.status : saved === null)) {
+      recheckTimer = timers.set(() => {
+        recheckTimer = null;
+        void check();
+      }, RECHECK_DELAY);
+    }
     checking = false;
     checkAfterDelete = false;
     heardDelete = false;
@@ -714,7 +756,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
         },
         restored: () => void check(),
         deletedElsewhere: () => void check({ deleted: true }),
-        savedElsewhere: () => void check(),
+        savedElsewhere: () => void check({ elsewhere: true }),
       });
       emit();
       void store.loadMenus();
@@ -814,8 +856,9 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
       // list as it is; it counts once more against the budgets); a list different from it goes even when it is the list
       // saved before (a change back). While the saved list is being checked, a change of the card's own still to go goes
       // too. Never after another tab's delete was heard (it could bring the list back); a retry of a refusal or an odd
-      // reply waits for its own time: nothing goes. The stamp tells the other tabs a list was saved.
-      if (!deps.api.saveOnUnload || heardDelete || busy) return;
+      // reply waits for its own time: nothing goes. Nor after this tab's own delete failed, while its check waits (it may
+      // have gone through: a reload decides with the session's draft). The stamp tells the other tabs a list was saved.
+      if (!deps.api.saveOnUnload || heardDelete || checkAfterDelete || busy) return;
       const send = inFlight ? canSave(true) : needsSave(true) && (mayGoEarly() || (checking && pendingChange()));
       if (!send) return;
       stopTimer();
@@ -850,6 +893,12 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
       if (!lastSave || lastSave.seq <= takenSeq) return null;
       takenSeq = lastSave.seq;
       return lastSave;
+    },
+
+    takeDelete() {
+      if (deleteSeq <= takenDelete) return null;
+      takenDelete = deleteSeq;
+      return lastDeleteLength;
     },
 
     askDelete() {
@@ -889,6 +938,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
       failure = null;
       const voter = deps.voter.read();
       const length = saved ? saved.items.length : draft.length;
+      deleteLength = length;
       try {
         const withdrawn = voter ? await deps.api.del(voter) : true;
         if (!withdrawn && voter) {

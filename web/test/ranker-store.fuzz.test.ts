@@ -15,11 +15,17 @@
 //   I5  no timers left once settled, or after a delete that went through with nothing pending
 //   I6  each save is handed out once (takeSave), so ranking_saved is tracked at most once per mount
 //
+// The backend's reads and deletes fail by mode too (a get or delete that never reached it, a lost or odd reply), the owner
+// can void the list (it stays void: a save keeps it void, a delete withdraws nothing), a one-tab visit may start with
+// sessionStorage missing or every storage call throwing, and half the keepalive requests land only after the open tabs
+// have read the list their stamp told them of (never after a new page's first read).
+//
 // FUZZ_SEEDS=20000 npm test (or node … --test test/ranker-store.fuzz.test.ts) runs more; FUZZ_START picks the first seed;
 // FUZZ_SEED=<n> replays one seed and prints its steps and each tab's state; FUZZ_SEED=<n> FUZZ_BEGIN='<start>'
 // FUZZ_STEPS='<steps>' replays a minimized sequence as the failure report prints it (FUZZ_TRACE=1 also prints storage
 // events and gets). Exploration only: FUZZ_NO=reload,lost leaves step kinds or backend modes out, FUZZ_REORDER=1 lets
-// requests reach the backend out of order, FUZZ_EMULATE_ANNOUNCE=1 has lists saved as a page closes tell the other tabs.
+// requests reach the backend out of order (FUZZ_REORDER=live: only an open page's; a closing page's requests land, or not,
+// before its keepalive), FUZZ_EMULATE_ANNOUNCE=1 has lists saved as a page closes tell the other tabs.
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { menuListData } from "../src/lib/menu-list";
@@ -35,7 +41,9 @@ const MENUS = menuListData(KEYS.map((id) => place({ id, name: id.toUpperCase(), 
 const TODAY = "2026-09-27";
 /** Exploration only (FUZZ_EMULATE_ANNOUNCE=1): lists saved as a page closes tell the other tabs, as a fix would. */
 const EMULATE_ANNOUNCE = process.env.FUZZ_EMULATE_ANNOUNCE === "1";
-const REORDER = process.env.FUZZ_REORDER === "1";
+const REORDER = process.env.FUZZ_REORDER === "1" || process.env.FUZZ_REORDER === "live";
+/** FUZZ_REORDER=live: only an open page's requests wait; a closing page's request reaches the backend (or not) as it closes. */
+const REORDER_LIVE = process.env.FUZZ_REORDER === "live";
 /** Exploration only: FUZZ_NO=reload,lost leaves those step kinds and backend modes out. */
 const NO = new Set((process.env.FUZZ_NO ?? "").split(",").filter(Boolean));
 
@@ -86,6 +94,7 @@ type Step =
   | { t: "confirmDelete"; tab: number }
   | { t: "countAgain"; tab: number }
   | { t: "other" }
+  | { t: "void" }
   | { t: "unmount"; tab: number }
   | { t: "mount"; tab: number; link: number | null }
   | { t: "openTab" }
@@ -94,20 +103,24 @@ type Step =
 
 type Start = {
   voter: boolean;
-  row: "none" | "active" | "replaced" | "deleted";
+  row: "none" | "active" | "replaced" | "deleted" | "void";
   items: string[];
   flag: boolean;
   draft: string[] | null;
   twoTabs: boolean;
+  /** One tab only: sessionStorage missing, or every storage call throwing (absent: storage works). */
+  storage?: "noSession" | "throws";
 };
 
 function genStart(r: Rng): Start {
   const voter = r.chance(0.6);
-  const row = voter ? r.pick(["none", "active", "active", "active", "replaced", "deleted"] as const) : "none";
+  const row = voter ? r.pick(["none", "active", "active", "active", "replaced", "deleted", "void"] as const) : "none";
   const items = shuffled(r, KEYS).slice(0, 3 + r.int(3));
-  const flag = row === "active" || row === "replaced" ? r.chance(0.9) : r.chance(0.1);
+  const flag = row === "active" || row === "replaced" || row === "void" ? r.chance(0.9) : r.chance(0.1);
   const draft = r.chance(0.2) ? shuffled(r, KEYS).slice(0, 1 + r.int(5)) : null;
-  return { voter, row, items, flag, draft, twoTabs: r.chance(0.5) };
+  const twoTabs = r.chance(0.5);
+  const storage = !twoTabs && r.chance(0.15) ? r.pick(["noSession", "throws"] as const) : undefined;
+  return { voter, row, items, flag, draft, twoTabs, ...(storage ? { storage } : {}) };
 }
 
 function shuffled<T>(r: Rng, xs: readonly T[]): T[] {
@@ -145,7 +158,8 @@ function genSteps(r: Rng, start: Start, n: number): Step[] {
     else if (x < 0.78) step = { t: "keep", tab: tab() };
     else if (x < 0.81) step = { t: "confirmDelete", tab: tab() };
     else if (x < 0.83) step = { t: "countAgain", tab: tab() };
-    else if (x < 0.85) step = { t: "other" };
+    else if (x < 0.845) step = { t: "other" };
+    else if (x < 0.85) step = { t: "void" };
     else if (x < 0.87) step = { t: "unmount", tab: tab() };
     else if (x < 0.9) step = { t: "mount", tab: tab(), link: r.chance(0.5) ? r.int(KEYS.length + 1) : null };
     else if (x < 0.92) step = { t: "openTab" };
@@ -160,7 +174,7 @@ function genSteps(r: Rng, start: Start, n: number): Step[] {
 
 // ---- the world: backend, storage, clock, tabs ----------------------------------------------------------------
 
-type Row = { items: string[]; status: "active" | "replaced" | "deleted"; savedOn: string; deletedOp: number; deletedBy: number; delSentOp: number };
+type Row = { items: string[]; status: "active" | "replaced" | "deleted" | "void"; savedOn: string; deletedOp: number; deletedBy: number; delSentOp: number };
 
 type Inst = {
   store: RankerStore;
@@ -179,7 +193,7 @@ type Inst = {
 /** `lastEditOp`: the visitor's last change here; `toldOp`: when this tab last heard the list was deleted (an event, a check). */
 type Tab = { id: number; session: Map<string, string>; inst: Inst | null; lastEditOp: number; toldOp: number };
 
-type Held = { inst: Inst | null; label: string; run: () => void };
+type Held = { inst: Inst | null; label: string; run: () => void; land?: () => void };
 
 type Violation = { code: string; msg: string; step: number };
 
@@ -203,11 +217,22 @@ class World {
   otherSinceActive = false;
   /** The save being applied will never be answered to a live page (a keepalive, or a page that closed). */
   silent = false;
+  /** Storage trouble for this (one-tab) visit. */
+  storage: Start["storage"] = undefined;
   /** Set by a call's apply: run when its reply reaches the page (the page learns something). */
   onDeliver: (() => void) | null = null;
+  /**
+   * Keepalive requests still on their way: each lands once the tabs already open have heard the closing tab's stamp and
+   * asked for the list (their reads answered first), before any time passes, and before a page loads or comes back from
+   * the back-forward cache (a new page's first read comes long after). Its own PRNG, so the other draws (and the
+   * regression seeds) stay as they were.
+   */
+  late: (() => void)[] = [];
+  lateRng: Rng;
 
   constructor(seed: number) {
     this.rng = prng(seed ^ 0x9e3779b9);
+    this.lateRng = prng(seed ^ 0x5bd1e995);
   }
 
   fail(code: string, msg: string) {
@@ -232,6 +257,12 @@ class World {
       if ((own || told) && !(sent.editOp > since)) {
         this.fail("I3", `${from} brought back a list deleted ${own ? "in this tab" : "elsewhere, as it knew"} without a change made since: ${items.join(",")}`);
       }
+    }
+    // a voided list stays void: the new version never counts and replaces nothing
+    if (row && row.status === "void") {
+      row.items = [...items];
+      row.savedOn = TODAY;
+      return { status: "void", savedOn: TODAY, countsFrom: null };
     }
     // the same list again from the same connection changes nothing
     if (row && row.status === "active" && sameList(row.items, items)) return { status: "active", savedOn: row.savedOn, countsFrom: "2026-09-28" };
@@ -319,6 +350,11 @@ class World {
       this.held.push({
         inst,
         label,
+        land: () => {
+          if (outcome) return;
+          if (this.rng.chance(0.5)) applyNow();
+          else outcome = { ok: false, err: new TypeError("aborted") };
+        },
         run: () => {
           if (!outcome) {
             // a request of a page that closed meanwhile may never have reached the backend
@@ -331,6 +367,10 @@ class World {
         },
       });
     });
+  }
+
+  landLate() {
+    for (const land of this.late.splice(0)) land();
   }
 
   // -- storage --
@@ -378,6 +418,7 @@ class World {
   }
 
   openTab(): Tab {
+    this.landLate();
     const tab: Tab = { id: this.tabs.length, session: new Map(), inst: null, lastEditOp: 0, toldOp: 0 };
     this.tabs.push(tab);
     tab.inst = this.makeInst(tab);
@@ -385,11 +426,17 @@ class World {
     return tab;
   }
 
+  /** FUZZ_REORDER=live: the requests a page sent before it closed (or sent a keepalive) reach the backend first, or never. */
+  landAll(inst: Inst) {
+    if (REORDER_LIVE) for (const h of this.held) if (h.inst === inst) h.land?.();
+  }
+
   close(tab: Tab) {
     const inst = tab.inst;
     if (!inst) return;
     inst.page?.hidden();
     inst.page?.unload();
+    this.landAll(inst);
     inst.alive = false;
     inst.timers.clear();
     inst.deferred = [];
@@ -405,7 +452,11 @@ class World {
       await new Promise<void>((r) => setImmediate(r));
       if (!this.events.length) {
         await new Promise<void>((r) => setImmediate(r));
-        if (!this.events.length) return;
+        if (!this.events.length) {
+          if (!this.late.length) return;
+          this.landLate();
+          continue;
+        }
       }
       const evs = this.events.splice(0);
       for (const e of evs) {
@@ -460,6 +511,7 @@ class World {
   async thaw(tab: Tab, repliesFirst: boolean) {
     const inst = tab.inst;
     if (!inst?.frozen) return;
+    this.landLate();
     inst.frozen = false;
     const replies = () => {
       const d = inst.deferred.splice(0);
@@ -518,6 +570,14 @@ class World {
   }
 }
 
+/** Storage that throws on every call (blocked site data, a full quota). */
+function throwing(): KeyValueStorage {
+  const no = () => {
+    throw new DOMException("The operation is insecure.", "SecurityError");
+  };
+  return { getItem: no, setItem: no, removeItem: no };
+}
+
 /** One page load of a tab: a store wired to the world's backend, storage, clock and page events. */
 function makeInst(w: World, tab: Tab): Inst {
   const inst: Inst = {
@@ -559,7 +619,10 @@ function makeInst(w: World, tab: Tab): Inst {
       },
       get(voter) {
         if (process.env.FUZZ_TRACE) console.log(`      get from tab ${tab.id} netDown=${w.netDown}`);
+        const m = mode();
         return w.call<SavedRanking | null>(inst, `get ${tab.id}`, () => {
+          // a read that never got its answer (network, lost) or got an odd one (unknown, half the time)
+          if (m === "network" || m === "lost" || (m === "unknown" && w.rng.chance(0.5))) return { ok: false, err: w.refusal(m) };
           const row = w.rows.get(voter);
           if (row?.status === "deleted") w.onDeliver = () => void (tab.toldOp = ++w.op);
           return {
@@ -572,6 +635,12 @@ function makeInst(w: World, tab: Tab): Inst {
         const m = mode();
         const sentOp = ++w.op;
         return w.call<boolean>(inst, `del ${tab.id}`, () => {
+          // a delete that never reached the backend; one whose reply was lost; an odd reply (it went through half the time)
+          if (m === "network") return { ok: false, err: w.refusal(m) };
+          if (m === "unknown") {
+            if (w.rng.chance(0.5)) w.applyDelete(voter, tab.id, sentOp);
+            return { ok: false, err: w.refusal(m) };
+          }
           const done = w.applyDelete(voter, tab.id, sentOp);
           return m === "lost" ? { ok: false, err: new TypeError("Failed to fetch") } : { ok: true, value: done };
         });
@@ -580,19 +649,31 @@ function makeInst(w: World, tab: Tab): Inst {
       saveOnUnload(voter, items) {
         const sent = { op: ++w.op, editOp: tab.lastEditOp, toldOp: tab.toldOp, tab: tab.id };
         if (w.netDown) return;
+        w.landAll(inst);
         const m = mode();
-        w.silent = true;
-        if (m === "ok" || m === "lost" || m === "unknown") w.applySave(voter, [...items], sent, `tab ${tab.id}'s keepalive`);
-        w.silent = false;
+        const list = [...items];
+        const land = () => {
+          w.silent = true;
+          if (m === "ok" || m === "lost" || m === "unknown") w.applySave(voter, list, sent, `tab ${tab.id}'s keepalive`);
+          w.silent = false;
+        };
+        // a keepalive request is slower than the other tabs' reads half the time (its stamp is written as it is sent)
+        if (w.lateRng.chance(0.5)) w.late.push(land);
+        else land();
       },
     },
     voter: { read: () => w.voter, get: () => (w.voter ??= "v1") },
-    local: () => w.localFor(tab, inst),
-    session: () => ({
-      getItem: (k) => tab.session.get(k) ?? null,
-      setItem: (k, v) => void (inst.alive && tab.session.set(k, v)),
-      removeItem: (k) => void (inst.alive && tab.session.delete(k)),
-    }),
+    local: () => (w.storage === "throws" ? throwing() : w.localFor(tab, inst)),
+    session: () =>
+      w.storage === "noSession"
+        ? null
+        : w.storage === "throws"
+          ? throwing()
+          : {
+              getItem: (k) => tab.session.get(k) ?? null,
+              setItem: (k, v) => void (inst.alive && tab.session.set(k, v)),
+              removeItem: (k) => void (inst.alive && tab.session.delete(k)),
+            },
     timers: {
       set: (fn, ms) => {
         const id = ++w.timerId;
@@ -653,6 +734,7 @@ function statusLine(s: RankerSnapshot): { text: string; alert: boolean } {
       problem: s.problem,
       deleted: s.notice === "deleted" || s.notice === "deleted_elsewhere",
       menusFailed: s.menus === "error",
+      checkRetrying: s.checkRetrying,
     },
     TODAY,
   );
@@ -677,6 +759,7 @@ async function runSteps(seed: number, start: Start, steps: readonly Step[], log 
   const w = new World(seed);
   w.op = 2;
   if (start.voter) w.voter = "v1";
+  w.storage = start.twoTabs ? undefined : start.storage;
   if (start.row !== "none") w.rows.set("v1", { items: [...start.items], status: start.row, savedOn: "2026-09-20", deletedOp: start.row === "deleted" ? 1 : 0, deletedBy: -1, delSentOp: 0 });
   if (start.flag) w.local.set(RANKER_SAVED_KEY, "x");
   const first: Tab = { id: 0, session: new Map(), inst: null, lastEditOp: 0, toldOp: 0 };
@@ -770,6 +853,7 @@ async function runSteps(seed: number, start: Start, steps: readonly Step[], log 
         case "reload":
           if (tab?.inst) {
             w.close(tab);
+            w.landLate();
             tab.inst = w.makeInst(tab);
             w.mount(tab, null);
           }
@@ -816,6 +900,12 @@ async function runSteps(seed: number, start: Start, steps: readonly Step[], log 
         case "other":
           w.applySave("other", ["h", "g", "f"], { op: ++w.op, editOp: 0, toldOp: 0, tab: -1 }, "the other browser");
           break;
+        case "void": {
+          // the owner voids the list (ranker_void): it stays void and never counts
+          const row = w.rows.get("v1");
+          if (row && (row.status === "active" || row.status === "replaced")) row.status = "void";
+          break;
+        }
         case "unmount":
           if (tab) w.unmount(tab);
           break;
@@ -879,7 +969,7 @@ function every(w: World) {
 /** Once everything has settled (I1, I4, I5). */
 function check(w: World, when: string) {
   const row = w.voter ? (w.rows.get(w.voter) ?? null) : null;
-  const live = row && (row.status === "active" || row.status === "replaced") ? row : null;
+  const live = row && (row.status === "active" || row.status === "replaced" || row.status === "void") ? row : null;
   const alone = w.tabs.filter((t) => t.inst).length === 1;
   for (const tab of w.tabs) {
     const inst = tab.inst;
@@ -894,7 +984,7 @@ function check(w: World, when: string) {
     if (s.failure?.action === "save" && s.failure.retrying) w.fail(alone ? "I1" : "I4", `${where}: says it will try again, with nothing waiting`);
     if (s.failure) continue; // a refusal or a failed delete, stated on the status line
     if (s.draft.length === 0 && !s.saved) {
-      if (live && live.status === "active") w.fail("I4", `${where}: an empty card while the backend holds a list`);
+      if (live && live.status !== "replaced") w.fail("I4", `${where}: an empty card while the backend holds a list`);
       continue;
     }
     if (s.draft.length < 3 || s.problem) continue; // "Add 1 more to save …": stated
@@ -906,6 +996,7 @@ function check(w: World, when: string) {
       w.fail(alone ? "I1" : "I4", `${where}: the card shows a saved list the backend doesn't hold`);
       continue;
     }
+    if (s.saved.status === "void" && live.status !== "void") w.fail(alone ? "I1" : "I4", `${where}: "not counted" (void) for a list that isn't void`);
     if (s.saved.status === "replaced" && live.status === "active") w.fail(alone ? "I1" : "I4", `${where}: "not counted" for a list that counts`);
     if (s.saved.status === "active" && live.status === "replaced" && !w.otherSinceActive) w.fail(alone ? "I1" : "I4", `${where}: counted, but replaced`);
   }
@@ -936,6 +1027,13 @@ async function minimize(seed: number, start: Start, steps: Step[], code: string)
   return cur;
 }
 
+/**
+ * Seeds that once broke an invariant, run with every range (they are found only past the default 3000): 14043 and 30497, a
+ * change made just before "Delete my list" sent as a keepalive while the check after a lost delete reply waits; 19283, a
+ * replaced list counted again whose reply was lost, never announced to the other tab.
+ */
+const REGRESSION_SEEDS = [14043, 19283, 30497];
+
 const w0 = async (vs: Violation[]) => {
   if (vs.length) assert.fail(vs.map((v) => `${v.code} at step ${v.step}: ${v.msg}`).join("\n"));
 };
@@ -959,7 +1057,9 @@ test("fuzz: random visits, tabs, pages and network trouble never break the autos
   const count = one ? 1 : env("FUZZ_SEEDS", 3000);
   const found = new Map<string, { seed: number; v: Violation; steps: Step[]; start: Start }>();
   const t0 = performance.now();
-  for (let seed = first; seed < first + count; seed++) {
+  const seeds = new Set<number>(one ? [] : REGRESSION_SEEDS);
+  for (let seed = first; seed < first + count; seed++) seeds.add(seed);
+  for (const seed of seeds) {
     const { start, steps } = sequence(seed);
     const vs = await runSteps(seed, start, steps, Boolean(one));
     for (const v of vs) {

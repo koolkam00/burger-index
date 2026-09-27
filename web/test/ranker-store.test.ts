@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { menuListData } from "../src/lib/menu-list";
 import { autosaveLine, saveFailureLine, type SavedRanking, type SaveReply } from "../src/lib/ranker";
-import { createRankerStore, parseDraft, parseStoredDraft, RANKER_DRAFT_KEY, type KeyValueStorage, type PageEvents, type RankerApi, type RankerStore, type Timers } from "../src/lib/ranker-store";
+import { createRankerStore, parseDraft, parseStoredDraft, RANKER_DRAFT_KEY, RECHECK_DELAY, type KeyValueStorage, type PageEvents, type RankerApi, type RankerStore, type Timers } from "../src/lib/ranker-store";
 import { RANKER_SAVED_KEY } from "../src/lib/theme-script";
 import { place } from "./places";
 
@@ -1603,6 +1603,7 @@ const lineOf = (s: ReturnType<RankerStore["getSnapshot"]>) =>
       problem: s.problem,
       deleted: s.notice === "deleted" || s.notice === "deleted_elsewhere",
       menusFailed: s.menus === "error",
+      checkRetrying: s.checkRetrying,
     },
     "2026-09-27",
   ).text;
@@ -1964,4 +1965,179 @@ test("'Count it again' waiting for the hour keeps waiting across the back-forwar
   assert.deepEqual(backend.calls, ["get v1", "save v1 a,b,c", "get v1", "save v1 a,b,c"]);
   assert.equal(s.saved?.status, "active");
   assert.equal(s.failure, null);
+});
+
+// ---- round-6 fixes: a lost delete reply and the page closing, a list saved at close landing late, the check's line ----------
+
+/** del that withdraws the list, then loses its reply. */
+function lostDeleteReply(backend: ReturnType<typeof fakeApi>) {
+  const del = backend.api.del;
+  backend.api.del = async (voter) => {
+    await del(voter);
+    throw new TypeError("Failed to fetch");
+  };
+}
+
+test("a delete whose reply was lost, then the page closes before the check answers: nothing brings the list back", async () => {
+  const t = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
+  await started(t.store);
+  t.store.move("c", -1); // a change still in its pause
+  t.store.askDelete();
+  lostDeleteReply(t.backend);
+  t.backend.fail.get = new TypeError("Failed to fetch");
+  assert.equal(await t.store.deleteList(), null);
+  assert.equal(t.backend.lists.get("v1")?.status, "deleted");
+  assert.deepEqual(t.store.getSnapshot().failure, { action: "delete", kind: "network" });
+  t.page().hidden();
+  t.page().unload();
+  assert.deepEqual(t.backend.unload, [], "no keepalive while the check after the delete waits");
+  assert.deepEqual(t.backend.calls, ["get v1", "del v1", "get v1"]);
+  // the visitor reloads: the session's draft is settled by the load, which finds the list gone
+  t.backend.fail.get = undefined;
+  const again = t.reopen();
+  await started(again);
+  await wait(t.clock, 60_000);
+  const s = again.getSnapshot();
+  assert.deepEqual(s.draft, []);
+  assert.equal(s.saved, null);
+  assert.equal(lineOf(s), "Your list was deleted.");
+  assert.equal(t.backend.lists.get("v1")?.status, "deleted");
+  assert.ok(!t.backend.calls.some((c) => c.startsWith("save")), "nothing saved after the delete");
+
+  // the delete never reached the backend: the reload finds the list, and the change the session kept saves itself
+  const u = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
+  await started(u.store);
+  u.store.move("c", -1);
+  u.store.askDelete();
+  u.backend.fail.del = new TypeError("Failed to fetch");
+  u.backend.fail.get = new TypeError("Failed to fetch");
+  assert.equal(await u.store.deleteList(), null);
+  u.page().unload();
+  assert.deepEqual(u.backend.unload, []);
+  u.backend.fail.del = undefined;
+  u.backend.fail.get = undefined;
+  const back = u.reopen();
+  await started(back);
+  await wait(u.clock, 2000);
+  assert.deepEqual(u.backend.lists.get("v1")?.items, ["a", "c", "b"]);
+  assert.equal(u.backend.lists.get("v1")?.status, "active");
+});
+
+test("a failed delete that a later check finds went through: said and tracked once, like one whose reply came", async () => {
+  const { store, backend, page } = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
+  await started(store);
+  store.askDelete();
+  lostDeleteReply(backend);
+  backend.fail.get = new TypeError("Failed to fetch");
+  assert.equal(await store.deleteList(), null);
+  let s = store.getSnapshot();
+  assert.equal(s.noticeSeq, 0);
+  assert.equal(store.takeDelete(), null, "not known to have gone through yet");
+  backend.fail.get = undefined;
+  page().online();
+  await settled();
+  s = store.getSnapshot();
+  assert.deepEqual(s.draft, []);
+  assert.equal(s.notice, "deleted");
+  assert.equal(s.confirmDelete, false);
+  assert.equal(s.failure, null);
+  assert.equal(s.noticeSeq, 1, "the ranker says it (and rescues focus from the confirmation that went away)");
+  assert.equal(store.takeDelete(), 3, "ranking_deleted, with the list's length");
+  assert.equal(store.takeDelete(), null, "once");
+
+  // a delete whose reply came: the same notice, handed out once
+  const ok = setup({ voter: "v1", saved: SAVED(["a", "b", "c", "d"]) });
+  await started(ok.store);
+  ok.store.askDelete();
+  assert.equal(await ok.store.deleteList(), 4);
+  assert.equal(ok.store.getSnapshot().noticeSeq, 1);
+  assert.equal(ok.store.takeDelete(), 4);
+  assert.equal(ok.store.takeDelete(), null);
+});
+
+test("a list saved as another tab closes that lands after this tab's read: asked once more, it shows, and the next change keeps it", async () => {
+  const { tabs, backend, clock, pages } = twoTabs(SAVED(["a", "b", "c"]));
+  const [one, two] = tabs;
+  await started(one);
+  await started(two);
+  two.move("c", -2); // c,a,b, still in its pause
+  pages[1].unload(); // closed: the keepalive request is on its way, and its stamp is written at once
+  assert.deepEqual(backend.unload, ["v1 c,a,b"]);
+  await settled(); // tab one's read comes first: a,b,c, nothing new
+  assert.deepEqual(one.getSnapshot().draft, ["a", "b", "c"]);
+  assert.deepEqual(clock.waiting(), [RECHECK_DELAY], "asked once more");
+  backend.lists.set("v1", SAVED(["c", "a", "b"], { inBoard: false })); // the keepalive lands
+  await wait(clock, RECHECK_DELAY);
+  let s = one.getSnapshot();
+  assert.deepEqual(s.draft, ["c", "a", "b"]);
+  assert.equal(s.notice, "updated_elsewhere");
+  assert.deepEqual(clock.waiting(), [], "once: no loop");
+  one.add("d");
+  await wait(clock, 2000);
+  assert.deepEqual(backend.lists.get("v1")?.items, ["c", "a", "b", "d"], "the closed tab's change is kept");
+  // (the loads, one's read and its one more; the last read is tab two's, which the harness keeps open)
+  assert.deepEqual(backend.calls, ["get v1", "get v1", "get v1", "get v1", "save v1 c,a,b,d", "get v1"]);
+
+  // a stamp whose list is new is shown at once: no second read
+  const plain = twoTabs(SAVED(["a", "b", "c"]));
+  await started(plain.tabs[0]);
+  await started(plain.tabs[1]);
+  plain.tabs[1].add("d");
+  await wait(plain.clock, 2000);
+  await settled();
+  s = plain.tabs[0].getSnapshot();
+  assert.deepEqual(s.draft, ["a", "b", "c", "d"]);
+  assert.deepEqual(plain.clock.waiting(), []);
+  assert.deepEqual(plain.backend.calls, ["get v1", "get v1", "save v1 a,b,c,d", "get v1"]);
+});
+
+test("a replaced list counted again whose reply was lost: the reload that finds it counting tells the other tabs", async () => {
+  const t = setup({ voter: "v1", saved: SAVED(["a", "b", "c"], { status: "replaced", inBoard: false }) });
+  await started(t.store);
+  t.store.move("c", -1);
+  t.store.move("c", 1); // changed and back: the replaced list as it is goes again
+  t.backend.ctl.hold = true;
+  await wait(t.clock, 2000);
+  assert.deepEqual(t.backend.calls, ["get v1", "save v1 a,b,c"]);
+  t.backend.ctl.hold = false;
+  t.backend.lists.set("v1", SAVED(["a", "b", "c"], { inBoard: false })); // it landed: counting again
+  t.backend.ctl.held.shift()!.reject(new TypeError("Failed to fetch")); // its reply was lost
+  t.backend.fail.get = new TypeError("Failed to fetch"); // and the check can't ask
+  await settled();
+  t.store.remove("c"); // under 3: nothing to send as the page closes
+  t.page().unload();
+  const before = t.local.data.get(RANKER_SAVED_KEY);
+  t.backend.fail.get = undefined;
+  t.clock.skip(1000);
+  const again = t.reopen();
+  await started(again);
+  const s = again.getSnapshot();
+  assert.equal(s.saved?.status, "active");
+  assert.notEqual(t.local.data.get(RANKER_SAVED_KEY), before, "a new stamp: the other tabs ask, and take the new status");
+});
+
+test("a change held by a check that can't reach the counter says so, not 'Saving…'", async () => {
+  const { store, backend, clock, page } = setup({ voter: "v1", saved: SAVED(["a", "b", "c"]) });
+  await started(store);
+  backend.fail.save = new TypeError("Failed to fetch");
+  backend.fail.get = new TypeError("Failed to fetch");
+  store.move("c", -1);
+  await wait(clock, 2000);
+  assert.equal(lineOf(store.getSnapshot()), "Couldn't reach the counter. Trying again soon.");
+  store.move("c", 1); // back to the saved list: the unsure a,c,b is checked, and the check fails
+  store.add("d");
+  await wait(clock, 300_000);
+  let s = store.getSnapshot();
+  assert.equal(s.checkRetrying, true);
+  assert.equal(s.failure, null);
+  assert.equal(lineOf(s), "Couldn't reach the counter. Trying again soon.");
+  backend.fail.save = undefined;
+  backend.fail.get = undefined;
+  page().online();
+  await settled();
+  await wait(clock, 2000);
+  s = store.getSnapshot();
+  assert.equal(s.checkRetrying, false);
+  assert.deepEqual(backend.lists.get("v1")?.items, ["a", "b", "c", "d"]);
+  assert.equal(lineOf(s), "Saved. It joins the People's Top 10 at its next update.");
 });

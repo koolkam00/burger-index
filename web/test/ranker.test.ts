@@ -150,6 +150,9 @@ test("autosave's status line: a failure, a gone burger, what's still needed, sav
   assert.deepEqual(line({ length: 2, saved: counting, dirty: true, problem: "too_short" }), { text: "Add 1 more to save your changes. Your saved list is unchanged.", alert: false });
   assert.deepEqual(line({ length: 0, saved: counting, dirty: true, problem: "too_short" }), { text: "Add 3 more to save your changes. Your saved list is unchanged.", alert: false });
   assert.deepEqual(line({ deleted: true }), { text: "Your list was deleted.", alert: false });
+  // a change held by a check of the saved list that can't reach the counter: said like a save that couldn't
+  assert.deepEqual(line({ length: 4, saved: counting, dirty: true, checkRetrying: true }), { text: "Couldn't reach the counter. Trying again soon.", alert: true });
+  assert.deepEqual(line({ length: 3, saved: counting, checkRetrying: true }), { text: "Saved. It counts from Sep 27, 2026.", alert: false });
   // failures first: one tried again says so; a refusal says what saves it (no button to press), and that a saved list is unchanged
   assert.deepEqual(line({ length: 3, dirty: true, saving: true, failure: { kind: "network", retrying: true } }), { text: "Couldn't reach the counter. Trying again soon.", alert: true });
   assert.deepEqual(line({ length: 3, dirty: true, failure: { kind: "rate_voter", retrying: false } }), { text: "You've saved your list a lot today. Your list can't be saved until tomorrow.", alert: true });

@@ -388,12 +388,15 @@ export type AutosaveInput = {
   deleted: boolean;
   /** The burgers couldn't be loaded: a change can't be saved until they are. */
   menusFailed: boolean;
+  /** A check of the saved list couldn't reach the backend and is asked again (a change waits for its answer). */
+  checkRetrying?: boolean;
 };
 
 /**
  * The status line under the list (DESIGN.md "The ranker hero"): a failure first (with the warning icon), then a burger
  * that left the Burger Index, then what's still needed ("Add 2 more to save your list."; with a saved list "Add 1 more to
- * save your changes. Your saved list is unchanged."), then "Saving…", then what the saved list counts for; a change that
+ * save your changes. Your saved list is unchanged."), then a change held by a check of the saved list that can't reach
+ * the counter (in a save failure's words), then "Saving…", then what the saved list counts for; a change that
  * can't go yet says so ("Your changes save once the burgers load.", else "Saving…"), never an empty line.
  */
 export function autosaveLine(s: AutosaveInput, today: string): { text: string; alert: boolean } {
@@ -408,6 +411,8 @@ export function autosaveLine(s: AutosaveInput, today: string): { text: string; a
     if (s.length === 0) return { text: `Add at least ${MIN_ITEMS} burgers, your favorite first.`, alert: false };
     return { text: `Add ${MIN_ITEMS - s.length} more to save your list.`, alert: false };
   }
+  // A change waiting for a check that can't reach the backend: the same words as a save that couldn't.
+  if (s.dirty && s.checkRetrying) return { text: saveFailureText({ kind: "network", retrying: true }, s.saved !== null), alert: true };
   if (s.saving) return { text: "Saving…", alert: false };
   if (s.saved && !s.dirty) return { text: savedStatusText(s.saved, today), alert: false };
   // A change that can't go yet is never left unsaid: without the burgers it waits for them (the search says why);
