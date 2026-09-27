@@ -33,6 +33,15 @@ export const RANKER_ANCHOR = "rank";
 export const RANKER_TITLE_ID = "rank-title";
 export const RANKER_HREF = `/#${RANKER_ANCHOR}`;
 export const RANKER_FOCUS_EVENT = "burger-index:rank-your-burgers";
+/**
+ * A restaurant page's "Add to your top 10" (user decision 2026-09-26) opens the home ranker with its menu added:
+ * /?add=<menu key>#rank (a chain's key is "chain:<slug>", so each of its locations adds the one menu). The ranker reads
+ * the parameter once, drops it from the address and says what happened (lib/ranker linkAddOutcome).
+ */
+export const RANKER_ADD_PARAM = "add";
+export function rankerAddHref(menuKey: string): string {
+  return `/?${RANKER_ADD_PARAM}=${encodeURIComponent(menuKey)}#${RANKER_ANCHOR}`;
+}
 
 /** Where the borough comparison lives since /boroughs was folded into the home page (breadcrumbs). */
 export const BOROUGHS_HREF = "/#boroughs";

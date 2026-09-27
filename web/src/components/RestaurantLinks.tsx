@@ -1,13 +1,13 @@
 "use client";
 
-// The restaurant page's links out (menu page, website) and to the map, as client components only so
-// a click can send its analytics event (lib/analytics; a no-op without the PostHog key). They render
-// exactly what the page rendered before.
-import { ExternalLink, MapPin } from "lucide-react";
+// The restaurant page's links out (menu page, website), to the map and to the home ranker ("Add to your top 10"), as
+// client components only so a click can send its analytics event (lib/analytics; a no-op without the PostHog key).
+import { ExternalLink, MapPin, Plus } from "lucide-react";
 import Link from "next/link";
 import type { MouseEvent, ReactNode } from "react";
 import { linkHost, track } from "@/lib/analytics";
 import type { PriceSource } from "@/lib/schema";
+import { rankerAddHref } from "@/lib/site";
 
 /** A link to the restaurant's menu page or website, opened in a new tab. */
 export function OutboundLink({
@@ -47,6 +47,25 @@ export function SeeOnMapLink({ restaurantId }: { restaurantId: string }) {
     >
       <MapPin className="size-4 flex-none" strokeWidth={2} aria-hidden="true" />
       See it on the map
+    </Link>
+  );
+}
+
+/**
+ * "Add to your top 10" (user decision 2026-09-26): the home ranker with this restaurant's menu added,
+ * /?add=<menu key>#rank (a chain's locations all add the chain's one menu). The ranker adds it when it can and says what
+ * happened (added, already on the list, list full). nofollow: the home page's canonical is "/", and the key is not a page.
+ */
+export function AddToListLink({ menuKey, restaurantId }: { menuKey: string; restaurantId: string }) {
+  return (
+    <Link
+      href={rankerAddHref(menuKey)}
+      className="btn btn-secondary"
+      rel="nofollow"
+      onClick={() => track("add_to_list_clicked", { menu_key: menuKey, restaurant_id: restaurantId })}
+    >
+      <Plus strokeWidth={2} aria-hidden="true" />
+      Add to your top 10
     </Link>
   );
 }

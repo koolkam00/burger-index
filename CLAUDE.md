@@ -261,8 +261,14 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   on the card holds 3 burgers, the People's Top 10 shows beside it** (below it on a phone; user decision 2026-09-26, "Once
   3 are added", chosen knowing it can anchor later picks): the board's seats (the home page passes only those,
   `getRevealBoard()`), the visitor's picks on it marked, where their other picks stand, the empty board's sentence
-  (`src/lib/peoples-top-reveal.ts`, `components/ranker/PeoplesTopReveal.tsx`, `test/peoples-top-reveal.test.ts`). Without the Supabase settings the card says "Lists open soon." and
-  fetches nothing. The header's "Rank your burgers" (and the menu sheet's) links to `/#rank` from every page; on home it
+  (`src/lib/peoples-top-reveal.ts`, `components/ranker/PeoplesTopReveal.tsx`, `test/peoples-top-reveal.test.ts`). **"Add to
+  your top 10" on every restaurant page** (user decision 2026-09-26; only while lists are open) links `/?add=<menu key>#rank`
+  (`rankerAddHref` in `src/lib/site.ts`; a chain's locations all add the chain's menu key; nofollow): the ranker reads the
+  key once, drops it from the address, and once the burgers and the saved list are known adds it at the end if there is
+  room (a saved list is then being edited: "Save changes"), saying so on the card and in its live region ("Emily added at
+  #4. 4 burgers on your list.", "… is already on your list, at #2.", "Your list is full: 25 burgers. Remove one to add
+  …"); `check:seo` checks every restaurant page's link. Without the Supabase settings the card says "Lists open soon.",
+  fetches nothing, and restaurant pages have no "Add to your top 10". The header's "Rank your burgers" (and the menu sheet's) links to `/#rank` from every page; on home it
   scrolls to the ranker and focuses it; the search icon button sits next to it at every width. Under the home board:
   "See the People's Top 10" and "Most-recommended burgers". Menu keys and restaurant ids must never change (lists are
   keyed on them). "What's it worth?" is gone from the site: no pricer, no WorthPicker, no `/peoples-price` (Vercel
@@ -371,11 +377,13 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   when `NEXT_PUBLIC_POSTHOG_KEY` was set at build time. That key lives **only in the Vercel project settings, never in
   `web/.env.local`**, so dev and local builds send nothing. Components call `track()` in event handlers; nothing in server
   components (the restaurant page's links are the client `components/RestaurantLinks.tsx`). The ranker sends
-  `ranking_started` (`edited`), `ranking_item_added` (`menu_key`, `position`), `ranking_saved` (`length`, `edited`, once
+  `ranking_started` (`edited`), `ranking_item_added` (`menu_key`, `position`, `surface`: `search` or `restaurant_page`),
+  `ranking_saved` (`length`, `edited`, once
   Supabase saved it) and `ranking_deleted` (`length`); the ranker's first showing of the People's Top 10 beside a list sends `peoples_top_revealed` (`surface: "ranker"`,
   `list_length`, once per page view); links to the People's Top 10 send `peoples_top_clicked` (`surface`:
   `nav` / `menu_sheet` / `ranker` / `home`, `from_path`: the path only); the badge page's and press kit's "Copy" buttons
-  `snippet_copied` (`surface`, `what`, the badge's `restaurant_id`). The worth and pricer events are gone. No personal data: never the voter id, and no free text in events
+  `snippet_copied` (`surface`, `what`, the badge's `restaurant_id`); a restaurant page's "Add to your top 10" sends
+  `add_to_list_clicked` (`menu_key`, `restaurant_id`). The worth and pricer events are gone. No personal data: never the voter id, and no free text in events
   but the search query (trimmed, lowercased, 60 characters); replays mask inputs and the query echoed in the "No burgers
   match" messages (`ph-mask`). Events and properties are listed in `web/README.md` "Analytics
   (PostHog)"; tests in `test/analytics.test.ts`. posthog-js drops headless/webdriver browsers, so browser checks see no

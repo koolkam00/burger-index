@@ -4,8 +4,11 @@ import { datasetMenuKeys } from "../scripts/snapshot-peoples-top.mjs";
 import { isMenuKey, listedMenus, MENU_KEY_PATTERN, menuListData, parseMenuList } from "../src/lib/menu-list";
 import {
   addItem,
+  addParam,
   classifyRankerError,
   countLine,
+  linkAddOutcome,
+  linkAddText,
   listProblem,
   MAX_ITEMS,
   MIN_ITEMS,
@@ -20,7 +23,9 @@ import {
   sameList,
   savedStatusText,
   searchBurgers,
+  withoutAddParam,
 } from "../src/lib/ranker";
+import { RANKER_ADD_PARAM, rankerAddHref } from "../src/lib/site";
 import type { Restaurant } from "../src/lib/schema";
 import { THEME_BOOT_SCRIPT } from "../src/lib/theme-script";
 import { loadDataset } from "./dataset";
@@ -225,4 +230,36 @@ test("failures: the backend's hint codes, rate limits (HTTP 429), refusals and n
 test("the <head> script flags a saved ranking (and no longer a pricer area)", () => {
   assert.match(THEME_BOOT_SCRIPT, /localStorage\.getItem\('bi-ranker-saved'\)\)d\.classList\.add\('ranker-saved'\)/);
   assert.doesNotMatch(THEME_BOOT_SCRIPT, /pricer/);
+});
+
+test("a restaurant page's 'Add to your top 10': the link, the parameter read back, and the address without it", () => {
+  assert.equal(RANKER_ADD_PARAM, "add");
+  assert.equal(rankerAddHref("due-west-west-village"), "/?add=due-west-west-village#rank");
+  assert.equal(rankerAddHref("chain:7th-street-burger"), "/?add=chain%3A7th-street-burger#rank");
+  // read back from the address the link opens (the hash is not in location.search)
+  for (const key of ["due-west-west-village", "chain:7th-street-burger"]) assert.equal(addParam(new URL(rankerAddHref(key), "https://x.test").search), key);
+  assert.equal(addParam("?add=chain:jimbos"), "chain:jimbos");
+  // anything that isn't a menu key is ignored
+  for (const bad of ["", "?q=x", "?add=", "?add=Not%20A%20Key", "?add=%3Cscript%3E", `?add=${"a".repeat(121)}`]) assert.equal(addParam(bad), null, bad);
+  assert.equal(withoutAddParam("?add=chain%3Ajimbos"), "");
+  assert.equal(withoutAddParam("?x=1&add=sals&y=2"), "?x=1&y=2");
+  assert.equal(withoutAddParam(""), "");
+});
+
+test("adding from a link: at the end when there is room, else it says why; the words for each", () => {
+  const known = (k: string) => k !== "gone";
+  assert.deepEqual(linkAddOutcome([], "sals", known), { key: "sals", kind: "added", position: 1 });
+  assert.deepEqual(linkAddOutcome(["a", "b", "c"], "sals", known), { key: "sals", kind: "added", position: 4 });
+  assert.deepEqual(linkAddOutcome(["a", "sals", "c"], "sals", known), { key: "sals", kind: "already", position: 2 });
+  const full = Array.from({ length: MAX_ITEMS }, (_, i) => `b${i}`);
+  assert.deepEqual(linkAddOutcome(full, "sals", known), { key: "sals", kind: "full" });
+  assert.deepEqual(linkAddOutcome([...full.slice(0, 24), "sals"], "sals", known), { key: "sals", kind: "already", position: 25 }, "on a full list it is still already there");
+  assert.deepEqual(linkAddOutcome(["a"], "gone", known), { key: "gone", kind: "gone" });
+
+  assert.equal(linkAddText({ key: "sals", kind: "added", position: 1 }, "Sal's", false), "Sal's added at #1. 1 burger on your list.");
+  assert.equal(linkAddText({ key: "sals", kind: "added", position: 4 }, "Sal's", false), "Sal's added at #4. 4 burgers on your list.");
+  assert.equal(linkAddText({ key: "sals", kind: "added", position: 6 }, "Sal's", true), "Sal's added at #6. Save changes to keep it.");
+  assert.equal(linkAddText({ key: "sals", kind: "already", position: 2 }, "Sal's", true), "Sal's is already on your list, at #2.");
+  assert.equal(linkAddText({ key: "sals", kind: "full" }, "Sal's", false), "Your list is full: 25 burgers. Remove one to add Sal's.");
+  assert.equal(linkAddText({ key: "gone", kind: "gone" }, "A burger no longer listed", false), "That burger is no longer on the Burger Index.");
 });

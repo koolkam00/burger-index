@@ -311,3 +311,84 @@ test("the burgers failing to load can be tried again; storage that throws never 
   store.add("a");
   assert.deepEqual(store.getSnapshot().draft, ["a"]);
 });
+
+test("a restaurant page's add: waits for the burgers and the saved list, then adds once at the end", async () => {
+  // A new browser: the add waits for the burgers, then starts the list.
+  let release: (v: unknown) => void = () => {};
+  const slow = setup({ menus: () => new Promise((r) => (release = r)) });
+  slow.store.start();
+  slow.store.addFromLink("c");
+  assert.deepEqual(slow.store.getSnapshot().draft, [], "not before the burgers are known");
+  assert.equal(slow.store.getSnapshot().linkAdd, null);
+  release(MENUS);
+  await tick();
+  let s = slow.store.getSnapshot();
+  assert.deepEqual(s.draft, ["c"]);
+  assert.deepEqual(s.linkAdd, { key: "c", kind: "added", position: 1 });
+  assert.equal(s.view, "edit");
+  assert.equal(slow.session.data.get(RANKER_DRAFT_KEY), JSON.stringify({ items: ["c"] }), "kept for this session like any add");
+  // the same link again: already there, nothing added
+  slow.store.addFromLink("c");
+  s = slow.store.getSnapshot();
+  assert.deepEqual(s.draft, ["c"]);
+  assert.deepEqual(s.linkAdd, { key: "c", kind: "already", position: 1 });
+  // the next change clears the line
+  slow.store.add("a");
+  assert.equal(slow.store.getSnapshot().linkAdd, null);
+  // not a menu key, or a burger the Burger Index doesn't have
+  slow.store.addFromLink("Not a key");
+  assert.equal(slow.store.getSnapshot().linkAdd, null);
+  slow.store.addFromLink("zzz");
+  assert.deepEqual(slow.store.getSnapshot().linkAdd, { key: "zzz", kind: "gone" });
+  assert.deepEqual(slow.store.getSnapshot().draft, ["c", "a"]);
+});
+
+test("a restaurant page's add to a saved list: it waits for the list, then the saved list is being edited", async () => {
+  const saved: SavedRanking = { items: ["a", "b", "c"], status: "active", savedOn: "2026-09-20", countsFrom: null, inBoard: true };
+  const { store, backend } = setup({ voter: "v1", saved });
+  store.start();
+  store.addFromLink("d");
+  assert.deepEqual(store.getSnapshot().draft, [], "not before the saved list has loaded");
+  await tick();
+  await tick();
+  let s = store.getSnapshot();
+  assert.deepEqual(s.draft, ["a", "b", "c", "d"]);
+  assert.equal(s.view, "edit");
+  assert.equal(s.dirty, true);
+  assert.deepEqual(s.linkAdd, { key: "d", kind: "added", position: 4 });
+  assert.deepEqual(backend.calls, ["get v1"], "nothing saved until the visitor saves");
+  store.cancel();
+  s = store.getSnapshot();
+  assert.deepEqual(s.draft, ["a", "b", "c"]);
+  assert.equal(s.linkAdd, null);
+  // already on the saved list: the saved view stays, and says so
+  store.addFromLink("b");
+  s = store.getSnapshot();
+  assert.equal(s.view, "saved");
+  assert.deepEqual(s.draft, ["a", "b", "c"]);
+  assert.deepEqual(s.linkAdd, { key: "b", kind: "already", position: 2 });
+});
+
+test("a restaurant page's add to a full list says so; a failed load waits for 'Try again'", async () => {
+  const many = menuListData(Array.from({ length: 27 }, (_, i) => place({ id: `m${i}`, name: `M${i}`, price: 10, borough: "Queens", hood: "astoria" })));
+  const full = Array.from({ length: 25 }, (_, i) => `m${i}`);
+  const { store } = setup({ menus: async () => many, session: { [RANKER_DRAFT_KEY]: JSON.stringify({ items: full }) } });
+  await started(store);
+  store.addFromLink("m26");
+  let s = store.getSnapshot();
+  assert.equal(s.draft.length, 25);
+  assert.deepEqual(s.linkAdd, { key: "m26", kind: "full" });
+
+  let fails = true;
+  const flaky = setup({ menus: async () => (fails ? Promise.reject(new Error("offline")) : MENUS) });
+  await started(flaky.store);
+  flaky.store.addFromLink("a");
+  s = flaky.store.getSnapshot();
+  assert.equal(s.menus, "error");
+  assert.deepEqual(s.draft, [], "can't tell whether it is on the Burger Index yet");
+  fails = false;
+  await flaky.store.loadMenus();
+  s = flaky.store.getSnapshot();
+  assert.deepEqual(s.draft, ["a"]);
+  assert.deepEqual(s.linkAdd, { key: "a", kind: "added", position: 1 });
+});

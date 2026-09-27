@@ -1089,6 +1089,29 @@ for (const p of pages) {
 const NEAR_KM = 1.5;
 const NEAR_GAP = 400;
 const menuOf = (r) => (r.chain ? `chain:${r.chain}` : r.id);
+
+// "Add to your top 10" (user decision 2026-09-26): while lists are open (the home ranker doesn't say "Lists open
+// soon."), every restaurant page links the home ranker with its menu added, /?add=<menu key>#rank (a chain's locations
+// all add the chain's one menu), nofollow; with lists closed, no page has the link.
+const listsOpen = home ? !home.html.includes("Lists open soon.") : false;
+let addLinks = 0;
+for (const r of priced) {
+  const page = pages.find((p) => p.path === `/restaurants/${r.id}`);
+  if (!page) continue;
+  const links = [...page.html.matchAll(/<a\b[^>]*href="\/\?add=([^"#]*)#rank"[^>]*>/g)];
+  addLinks += links.length;
+  if (!listsOpen) {
+    if (links.length) err(`/restaurants/${r.id}: "Add to your top 10" while lists are closed`);
+    continue;
+  }
+  if (links.length !== 1) {
+    err(`/restaurants/${r.id}: ${links.length} "Add to your top 10" links (want 1)`);
+    continue;
+  }
+  const key = decodeURIComponent(decode(links[0][1]));
+  if (key !== menuOf(r)) err(`/restaurants/${r.id}: "Add to your top 10" adds ${key}, not its menu ${menuOf(r)}`);
+  if (!/\srel="nofollow"/.test(links[0][0])) err(`/restaurants/${r.id}: "Add to your top 10" is not nofollow`);
+}
 function kmBetween(a, b) {
   if (a.lat == null || a.lng == null || b.lat == null || b.lng == null) return null;
   const rad = (d) => (d * Math.PI) / 180;
@@ -1280,6 +1303,7 @@ const stylePages = pages.filter((p) => p.styleRows !== undefined);
 console.log(`style pages: ${stylePages.map((p) => `${p.path} ${p.styleRows}`).join(", ")} · best-burgers rows: ${pages.find((p) => p.path === BEST_PATH)?.bestRows ?? 0}`);
 console.log(`Q&A blocks: ${pages.filter((p) => p.faqs).length} pages, ${pages.reduce((n, p) => n + (p.faqs ?? 0), 0)} questions`);
 const landmarkPagesSeen = pages.filter((p) => p.landmarkRows !== undefined);
+console.log(`"Add to your top 10": ${listsOpen ? `lists open, ${addLinks} restaurant pages link it` : "lists closed, no links"}`);
 console.log(`landmark pages: ${landmarkPagesSeen.length} (${landmarkPagesSeen.map((p) => `${p.path.slice(LANDMARKS_PATH.length + 1)} ${p.landmarkRows}`).join(", ")}) · hub links: ${pages.find((p) => p.path === LANDMARKS_PATH)?.landmarkLinks ?? 0}`);
 console.log(
   `People's Top 10: ${board?.asOf ? `as of ${board.asOf}` : "no board yet"} · ${count(board?.totalLists ?? 0)} lists · ` +

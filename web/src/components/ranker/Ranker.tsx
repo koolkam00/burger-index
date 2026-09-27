@@ -10,7 +10,9 @@ import { fromPath, track } from "@/lib/analytics";
 import { formatCount, pluralize } from "@/lib/format";
 import { revealAnnouncement, revealView, showsReveal, yourList, type RevealBoard } from "@/lib/peoples-top-reveal";
 import {
+  addParam,
   countLine,
+  linkAddText,
   listProblem,
   MAX_HITS,
   MAX_ITEMS,
@@ -18,13 +20,16 @@ import {
   nyToday,
   PROBLEM_COPY,
   RANKER_ERROR_COPY,
+  sameList,
   savedStatusText,
   searchBurgers,
   TOP_N,
+  withoutAddParam,
+  type LinkAdd,
   type RankerBurger,
 } from "@/lib/ranker";
 import { rankerStore, type RankerSnapshot } from "@/lib/ranker-store";
-import { PEOPLES_TOP_NAME, PEOPLES_TOP_PATH, RANKER_ANCHOR, RANKER_FOCUS_EVENT, RANKER_TITLE_ID } from "@/lib/site";
+import { PEOPLES_TOP_NAME, PEOPLES_TOP_PATH, RANKER_ADD_PARAM, RANKER_ANCHOR, RANKER_FOCUS_EVENT, RANKER_TITLE_ID } from "@/lib/site";
 import { RANKER_ENABLED } from "@/lib/supabase-config";
 import { PeoplesTopReveal, RevealHint } from "./PeoplesTopReveal";
 
@@ -56,6 +61,10 @@ const nameOf = (b: RankerBurger | undefined) => b?.label ?? "A burger no longer 
  * Once the list on the card (being built, or saved) holds 3 burgers, the People's Top 10 shows beside it (below it
  * on a phone): `board` is the daily board's seats (user decision 2026-09-26, "Once 3 are added"); the other picks'
  * standings come with the burgers in /data/menus.json.
+ *
+ * A restaurant page's "Add to your top 10" arrives as /?add=<menu key>#rank (user decision 2026-09-26): the key is read
+ * once on mount and dropped from the address, and the store adds it when the burgers and the saved list are known; the
+ * card then says what happened (added, already there, list full) and the live region says it too.
  */
 export function Ranker({ median, board }: { median: number | null; board: RevealBoard }) {
   const snap = useRanker();
@@ -74,8 +83,35 @@ export function Ranker({ median, board }: { median: number | null; board: Reveal
   };
 
   useEffect(() => {
-    if (RANKER_ENABLED) rankerStore.start();
+    if (!RANKER_ENABLED) return;
+    rankerStore.start();
+    // "Add to your top 10" from a restaurant page: read ?add= once, then drop it, so a reload doesn't repeat it.
+    const { pathname, search, hash } = window.location;
+    if (!new URLSearchParams(search).has(RANKER_ADD_PARAM)) return;
+    window.history.replaceState(null, "", `${pathname}${withoutAddParam(search)}${hash}`);
+    const key = addParam(search);
+    if (key) rankerStore.addFromLink(key);
   }, []);
+
+  // What a link's add did: said once in the live region (the card shows the same words), and an added burger is tracked
+  // like one added from the search (surface "restaurant_page").
+  const saidLinkAdd = useRef<LinkAdd | null>(null);
+  useEffect(() => {
+    const r = snap.linkAdd;
+    if (!r || saidLinkAdd.current === r) return;
+    saidLinkAdd.current = r;
+    let text = linkAddText(r, nameOf(snap.burgers.get(r.key)), snap.saved !== null);
+    if (r.kind === "added") {
+      const before = snap.draft.filter((k) => k !== r.key);
+      if (!(snap.saved ? !sameList(before, snap.saved.items) : before.length > 0)) track("ranking_started", { edited: snap.saved !== null });
+      track("ranking_item_added", { menu_key: r.key, position: r.position, surface: "restaurant_page" });
+      if (!revealAnnounced.current && !showsReveal(r.position - 1) && showsReveal(r.position)) {
+        revealAnnounced.current = true;
+        text += ` ${revealAnnouncement(board)}`;
+      }
+    }
+    setAnnounce((prev) => (prev === text ? `${text} ` : text));
+  }, [snap.linkAdd, snap.burgers, snap.saved, snap.draft, board]);
 
   // After a step the visitor took, focus what it shows (only while focus is in the card, or was dropped
   // with a control that went away).
@@ -150,7 +186,7 @@ export function Ranker({ median, board }: { median: number | null; board: Reveal
     starting();
     rankerStore.add(b.key);
     const position = snap.draft.length + 1;
-    track("ranking_item_added", { menu_key: b.key, position });
+    track("ranking_item_added", { menu_key: b.key, position, surface: "search" });
     say(`${b.label} added at #${position}. ${pluralize(position, "burger")} on your list.${revealNote(snap.draft.length, position)}`);
   };
   const move = (key: string, delta: number) => {
@@ -379,6 +415,7 @@ function SavedView({
       <p className="t-ui-m ranker-saved-status mt-1" role="status">
         {status}
       </p>
+      <LinkAddNote snap={snap} />
       {snap.menus === "error" ? <MenusFailed onRetry={onRetryMenus} /> : null}
       <ol className="ranker-list is-saved mt-4" aria-label="Your list">
         {saved.items.map((key, i) => (
@@ -451,6 +488,23 @@ function SavedRow({ rank, burger, menus }: { rank: number; burger: RankerBurger 
   );
 }
 
+/**
+ * What a restaurant page's "Add to your top 10" did, on the card until the list next changes: a check for added or
+ * already there, the warning icon when it couldn't be added. Not a live region: the ranker's own says it once.
+ */
+function LinkAddNote({ snap }: { snap: RankerSnapshot }) {
+  const r = snap.linkAdd;
+  if (!r) return null;
+  const text = linkAddText(r, nameOf(snap.burgers.get(r.key)), snap.saved !== null);
+  const ok = r.kind === "added" || r.kind === "already";
+  return (
+    <p className="t-ui-m ranker-link-note mt-3">
+      {ok ? <Check className="ranker-link-icon" strokeWidth={2} aria-hidden="true" /> : <TriangleAlert className="status-icon" strokeWidth={2} aria-hidden="true" />}
+      <span>{text}</span>
+    </p>
+  );
+}
+
 /** The rule between #10 and #11: the list is "your top 10", with room for more. */
 function ExtraRule() {
   return (
@@ -513,6 +567,7 @@ function Builder({
         {editing ? "Edit your list." : "Your top 10."}
       </h3>
       <p className="t-ui-m muted mt-1">Pick the burgers you like best, your favorite first: at least 3, up to 25.</p>
+      <LinkAddNote snap={snap} />
 
       <BurgerSearch snap={snap} median={median} onAdd={onAdd} onRetryMenus={onRetryMenus} />
 

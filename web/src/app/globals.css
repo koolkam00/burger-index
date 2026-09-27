@@ -2434,6 +2434,20 @@
     min-height: 1.35em;
     color: var(--ink);
   }
+  /* What a restaurant page's "Add to your top 10" did: the words in --ink, a check (added, already there) or the
+     warning icon (the list is full, the burger is gone) beside them. */
+  .ranker-link-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    color: var(--ink);
+  }
+  .ranker-link-icon {
+    width: 16px;
+    height: 16px;
+    flex: none;
+    margin-top: 2px;
+  }
   /* Search matches: the restaurant over its burger and where, the menu price, "Add". */
   .ranker-hits {
     margin: 0;

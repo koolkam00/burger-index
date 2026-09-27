@@ -103,11 +103,14 @@ fetches nothing.
   save. Refusals come back as HTTP 400 (SQLSTATE 22023) and rate limits as 429 (PT429), each with a stable `hint` code.
 - `src/lib/ranker.ts`: pure helpers: the list's limits and edits, the burgers as the ranker shows them (a chain at its usual
   location with "N locations"; a name two menus share gets its neighborhood), search (accents and dots folded), the replies
-  checked, the status lines and the error copy. Tested in `test/ranker.test.ts`.
+  checked, the status lines and the error copy, and a restaurant page's "Add to your top 10" (`addParam`, `withoutAddParam`,
+  `linkAddOutcome`, `linkAddText`; the link itself is `rankerAddHref` in `src/lib/site.ts`). Tested in `test/ranker.test.ts`.
 - `src/lib/ranker-store.ts`: the ranker's state as an external store (the burgers, the saved list, the list on the card, what
   is on its way); an unsaved list is kept in `sessionStorage` (`bi-ranker-draft`), and `localStorage` `bi-ranker-saved` says
   this browser has a saved list, which the `<head>` script turns into `html.ranker-saved` (a skeleton, not an empty list,
-  until the saved one loads). Every storage access is wrapped. Tested with a fake backend in `test/ranker-store.test.ts`.
+  until the saved one loads). Every storage access is wrapped. `addFromLink` holds a restaurant page's burger until the
+  burgers and the saved list are known, then adds it (or says it is there already, or the list is full) as `linkAdd`.
+  Tested with a fake backend in `test/ranker-store.test.ts`.
 - `src/lib/menu-list.ts` and `src/app/data/menus.json/route.ts`: the force-static `/data/menus.json` (every distinct priced
   menu with its priced locations and, where the daily board shows it, its People's Top 10 standing, `{rank}` or `{rising}`;
   and the neighborhoods' names), fetched when the ranker mounts (and by the badge page's finder), so no menu sits in the home
@@ -217,7 +220,8 @@ there is no banner, and surveys, product tours and the conversations widget are 
 | `burger_search` | `surface` (`burgers`), `query`, `results` | the /burgers search box, once typing pauses for 1 s; empty and repeated queries are skipped (the ranker's search sends nothing) |
 | `burger_filter_changed` | `filter` (`borough`, `neighborhood`, `price`, `sort`, `clear_all`), `value`, `results` | every /burgers control: filter popovers, the mobile sheet, chips, price presets, the sort select and the column headers |
 | `ranking_started` | `edited` (the list being changed was saved before) | the first change to a list in the home ranker (a new one, or the saved one being edited) |
-| `ranking_item_added` | `menu_key`, `position` (1-based: the list's new length) | "Add" in the ranker's search |
+| `ranking_item_added` | `menu_key`, `position` (1-based: the list's new length), `surface` (`search`, or `restaurant_page`: added from a restaurant page's "Add to your top 10") | "Add" in the ranker's search, or the ranker adding a restaurant page's burger (`/?add=<menu key>`) once it can |
+| `add_to_list_clicked` | `menu_key`, `restaurant_id` | "Add to your top 10" on a restaurant page (`components/RestaurantLinks.tsx`) |
 | `ranking_saved` | `length`, `edited` | a list saved (once Supabase saved it) |
 | `ranking_deleted` | `length` | "Delete my list", confirmed and done |
 | `peoples_top_clicked` | `surface` (`nav`, `menu_sheet`, `ranker`, `home`), `from_path` (the path only: no query, no hash) | a link to the People's Top 10 in the header nav, the menu sheet, the ranker card (its top line, or "See the full People's Top 10" beside a list) or under the home board |
