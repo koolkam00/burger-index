@@ -5,8 +5,10 @@ under data/cache/socrata/ so builds are offline-reproducible; the NTA code -> na
 mapping is committed at pipeline/data/nta_2010.json. DOHMH records with a hand-checked error
 (a typo'd address with 0,0 coordinates) are fixed per CAMIS from pipeline/data/dohmh_overrides.json
 before matching (load_dohmh_overrides). Hand-checked menu pages from pipeline/data/menu_urls.json replace a
-restaurant's menu_url after matching (load_menu_url_overrides), so the scrape tries them first; the
-restaurant list CSV is never edited.
+restaurant's menu_url after matching (load_menu_url_overrides), so the scrape tries them first. Hand-checked
+locations of list rows DOHMH doesn't match come from pipeline/data/location_overrides.json
+(load_location_overrides): `build` publishes them, the scrape never sees them. The restaurant list CSV is
+never edited.
 """
 
 from __future__ import annotations
@@ -56,6 +58,13 @@ OVERRIDE_FIELDS = ("building", "street", "zipcode", "latitude", "longitude", "nt
 # see load_menu_url_overrides.
 MENU_URLS_PATH = config.PACKAGE_DIR / "data" / "menu_urls.json"
 MENU_URL_FIELDS = ("menu_url", "checked_at", "reason", "name")
+# Hand-checked locations of restaurant-list rows DOHMH doesn't match (no CAMIS, so no address or coordinates):
+# see load_location_overrides. A DOHMH record's own location is fixed per CAMIS in dohmh_overrides.json instead.
+LOCATION_OVERRIDES_PATH = config.PACKAGE_DIR / "data" / "location_overrides.json"
+LOCATION_FIELDS = ("name", "address", "lat", "lng", "address_source", "geocode_source", "checked_at", "reason")
+# A generous box around the five boroughs: a point outside it is a typo (a swapped sign, lat for lng).
+NYC_LAT = (40.49, 40.92)
+NYC_LNG = (-74.26, -73.69)
 # CAMIS ids are issued in sequence; venue stands permitted together are a few numbers apart,
 # a re-permit months or years later is thousands apart.
 SAME_ISSUE_CAMIS_GAP = 1000
@@ -414,6 +423,89 @@ def apply_menu_url_overrides(records: list[dict], overrides: Mapping[str, dict])
     for u in unused:
         log(f"sources: menu-URL override for {u['key']} not applied ({u['why']}); delete it from {MENU_URLS_PATH.name}")
     return out, {"applied": applied, "unused": unused}
+
+
+def load_location_overrides(path: Path = LOCATION_OVERRIDES_PATH) -> dict[str, dict]:
+    """Hand-checked locations (pipeline/data/location_overrides.json -> "overrides": {restaurant key: entry}).
+
+    Keys are csv:... restaurant keys (a restaurant-list row that no DOHMH record matched, so it has no
+    CAMIS, address or coordinates). Entry fields:
+      name            optional, for the reader (not checked)
+      address         the street address the restaurant's own site gives, written the way DOHMH addresses
+                      are published ("160 East 38 Street")
+      lat, lng        where that address is (NYC Planning's GeoSearch geocode of it, or another public point
+                      when the address has none, like a pier), inside the five boroughs
+      address_source  the page that gives the address (the restaurant's own site where it can be read)
+      geocode_source  where lat/lng come from (the GeoSearch request, or the page with the point)
+      checked_at      YYYY-MM-DD, the day the place was checked open at that address
+      reason          one sentence: what was checked
+    Never a neighborhood, NTA or zipcode: the restaurant id is made from the name and neighborhood, so a
+    location must not move it (apply_location_overrides).
+    """
+    if not Path(path).exists():
+        return {}
+    overrides = json.loads(Path(path).read_text())["overrides"]
+    for key, o in overrides.items():
+        bad = sorted(set(o) - set(LOCATION_FIELDS))
+        lat, lng = o.get("lat"), o.get("lng")
+        coords = all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in (lat, lng))
+        problem = (
+            "key must be csv:<slug> (fix a DOHMH record's location in dohmh_overrides.json)" if not re.match(r"^csv:\S+$", key)
+            else f"unknown fields {bad}" if bad
+            else "needs an address" if not isinstance(o.get("address"), str) or not o["address"].strip()
+            else "lat and lng must be numbers" if not coords
+            else "lat/lng is outside New York City" if not (NYC_LAT[0] < lat < NYC_LAT[1] and NYC_LNG[0] < lng < NYC_LNG[1])
+            else "address_source and geocode_source must be http(s) URLs" if not all(
+                re.match(r"^https?://\S+$", str(o.get(k) or "")) for k in ("address_source", "geocode_source"))
+            else "checked_at must be YYYY-MM-DD" if not re.match(r"^\d{4}-\d{2}-\d{2}$", str(o.get("checked_at") or ""))
+            else "needs a reason" if not str(o.get("reason") or "").strip()
+            else None
+        )
+        if problem:
+            raise ValueError(f"{path}: bad location override for {key}: {problem}")
+    return overrides
+
+
+def apply_location_overrides(records: list[dict], overrides: Mapping[str, dict]) -> tuple[list[dict], dict]:
+    """Attach each override to its record as `location_override` ({address, lat, lng, checked_at,
+    source_url}), which `build` publishes as the restaurant's address (when the record has none) and
+    coordinates. The record's own address and lat/lng stay as they are: the scrape workflow reads those
+    (discover.search_query puts the address in the search, discover.location_conflict checks pages against
+    it, chains.choose_rep prefers members with coordinates), so a location override never changes a
+    cached request or its replay. Nothing touches the neighborhood, so ids don't move.
+    Report: which keys were applied, and which were not (the key is not in scope, or the record already
+    has coordinates, e.g. the row now matches a DOHMH record) and can be deleted."""
+    applied: list[str] = []
+    unused: list[dict] = []
+    have = set()
+    out: list[dict] = []
+    for r in records:
+        have.add(r["key"])
+        o = overrides.get(r["key"])
+        if o is not None and (r.get("lat") is not None or r.get("lng") is not None):
+            unused.append({"key": r["key"], "why": "the record already has coordinates"})
+        elif o is not None:
+            r = {**r, "location_override": {"address": r.get("address") or o["address"].strip(), "lat": float(o["lat"]),
+                                            "lng": float(o["lng"]), "checked_at": o["checked_at"],
+                                            "source_url": o["address_source"]}}
+            applied.append(r["key"])
+        out.append(r)
+    unused += [{"key": k, "why": "no restaurant with this key in scope (renamed, matched to DOHMH, dropped or excluded)"}
+               for k in overrides if k not in have]
+    for u in unused:
+        log(f"sources: location override for {u['key']} not applied ({u['why']}); delete it from "
+            f"{LOCATION_OVERRIDES_PATH.name}")
+    return out, {"applied": applied, "unused": unused}
+
+
+def located(rec: Mapping[str, Any]) -> tuple[str | None, float | None, float | None]:
+    """The address and coordinates a restaurant is published with: its own, else its hand-checked
+    location_override's (apply_location_overrides)."""
+    o = rec.get("location_override")
+    address = rec.get("address") or (o or {}).get("address")
+    if o and (rec.get("lat") is None or rec.get("lng") is None):
+        return address, o["lat"], o["lng"]
+    return address, rec.get("lat"), rec.get("lng")
 
 
 def normalize_dohmh(row: dict, nta_map: dict[str, dict], zip_nta: dict[str, str] | None = None) -> dict | None:
@@ -1167,10 +1259,12 @@ def build_restaurants(
     national_chains: str = config.DEFAULT_NATIONAL_CHAINS,
     overrides: list[dict] | None = None,
     menu_urls: Mapping[str, dict] | None = None,
+    locations: Mapping[str, dict] | None = None,
 ) -> tuple[list[dict], dict]:
     """CSV rows first (CSV order, merged with their DOHMH match), then in-scope DOHMH records.
     overrides: hand-checked DOHMH record fixes (load_dohmh_overrides), applied before matching.
-    menu_urls: hand-checked menu pages per restaurant key (load_menu_url_overrides), applied last.
+    menu_urls: hand-checked menu pages per restaurant key (load_menu_url_overrides), applied after matching.
+    locations: hand-checked locations of unmatched list rows (load_location_overrides), attached last.
     national_chains='exclude' drops national chains (McDonald's, Shake Shack...) after matching.
 
     A pilot row only matches a DOHMH record of the same national chain, or (for everything else)
@@ -1295,6 +1389,9 @@ def build_restaurants(
     out, menu_fixed = apply_menu_url_overrides(out, menu_urls or {})
     report["menu_url_overrides_applied"] = menu_fixed["applied"]
     report["menu_url_overrides_unused"] = menu_fixed["unused"]
+    out, placed = apply_location_overrides(out, locations or {})
+    report["location_overrides_applied"] = placed["applied"]
+    report["location_overrides_unused"] = placed["unused"]
     report["no_neighborhood"] = sum(1 for r in out if not r["neighborhood"])
     report["restaurants"] = len(out)
     dupes = [k for k, n in Counter(r["key"] for r in out).items() if n > 1]
@@ -1313,6 +1410,7 @@ def load_restaurants(
     nta_path: Path = config.NTA_PATH,
     overrides_path: Path = DOHMH_OVERRIDES_PATH,
     menu_urls_path: Path | None = None,  # default MENU_URLS_PATH (looked up at call time, so tests can point it away)
+    locations_path: Path | None = None,  # default LOCATION_OVERRIDES_PATH (likewise)
     refresh: bool = False,
     offline: bool = False,
     write_to: Path | None = config.RESTAURANTS_PATH,
@@ -1323,6 +1421,7 @@ def load_restaurants(
         load_csv(csv_path), snap["rows"], load_nta_map(nta_path), cuisines=cuisines, min_date=min_date,
         national_chains=national_chains, overrides=load_dohmh_overrides(overrides_path),
         menu_urls=load_menu_url_overrides(menu_urls_path or MENU_URLS_PATH),
+        locations=load_location_overrides(locations_path or LOCATION_OVERRIDES_PATH),
     )
     report["dohmh_fetched_at"] = snap.get("fetched_at")
     meta = {"cuisines": cuisines, "min_inspection_date": min_date, "national_chains": national_chains,

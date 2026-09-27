@@ -8,10 +8,15 @@
 // its point, as the crow flies, and exists only when at least MIN_LANDMARK_SPOTS are that close
 // (src/lib/landmarks.ts landmarksWithPages): DUMBO, Yankee Stadium, Citi Field and Coney Island have fewer today, so
 // they have no page until the dataset has more spots there. Places that are effectively one point are one landmark
-// (Penn Station lies under Madison Square Garden; the 9/11 Memorial is the World Trade Center site). A page names only
-// the place its one point measures: a long place (the High Line, 2.3 km; Central Park South, 0.8 km; the Brooklyn
-// Bridge, 1.8 km) is not within half a mile of one point along its length, so Chelsea Market, Columbus Circle and City
-// Hall are pages of their own names, and those long places have none.
+// (Penn Station lies under Madison Square Garden; the 9/11 Memorial is the World Trade Center site). A point page names
+// only the place its one point measures (Chelsea Market, Columbus Circle and City Hall, not the long places beside them).
+//
+// Long places are measured along their length (user decision 2026-09-26, "ok add all those suggestions"): the High
+// Line (2.3 km), Central Park South (0.8 km) and the Brooklyn Bridge (1.8 km) carry a `path`, a line of points along
+// them, and their pages list the spots within the radius of any point along it, "anywhere along it". Each path is
+// OpenStreetMap's (the ways named after the place, read 2026-09-26 through the Overpass API; © OpenStreetMap
+// contributors, ODbL), end to end along the walkway or roadway, simplified to within 10 m of it; the comment names
+// its ends. Their `lat`/`lng` is the middle of the path (nothing measures from it).
 //
 // Slugs are URLs (/burgers-near/<slug>): never rename one without a redirect.
 
@@ -29,6 +34,8 @@
  * @property {LandmarkBorough} borough
  * @property {number} lat
  * @property {number} lng
+ * @property {ReadonlyArray<readonly [number, number]>} [path] a long place's line, [lat, lng] points end to end: the page
+ *   measures each spot to the nearest point along it, not to `lat`/`lng`
  */
 
 /** Half a mile, about a 10-minute walk. */
@@ -76,8 +83,30 @@ export const LANDMARKS = Object.freeze([
   },
   // Wikipedia "New York City Hall".
   { slug: "city-hall", name: "City Hall", near: "City Hall", borough: "Manhattan", lat: 40.7127, lng: -74.0059 },
+  // The Brooklyn Bridge, measured along its length: OpenStreetMap's "Brooklyn Bridge" roadway from its Manhattan end
+  // at Park Row and Centre Street to its Brooklyn end at Adams Street; grouped with Manhattan, where it starts.
+  {
+    slug: "brooklyn-bridge",
+    name: "Brooklyn Bridge",
+    near: "the Brooklyn Bridge",
+    borough: "Manhattan",
+    lat: 40.70617,
+    lng: -73.99677,
+    path: Object.freeze([[40.71193, -74.00403], [40.70129, -73.99063], [40.70033, -73.98964]]),
+  },
   // Wikipedia "Columbus Circle".
   { slug: "columbus-circle", name: "Columbus Circle", near: "Columbus Circle", borough: "Manhattan", lat: 40.769, lng: -73.982 },
+  // Central Park South (West 59th Street), measured along its length: OpenStreetMap's "Central Park South" from
+  // Columbus Circle to Grand Army Plaza at Fifth Avenue.
+  {
+    slug: "central-park-south",
+    name: "Central Park South",
+    near: "Central Park South",
+    borough: "Manhattan",
+    lat: 40.76611,
+    lng: -73.9773,
+    path: Object.freeze([[40.7681, -73.98139], [40.7676, -73.98078], [40.76428, -73.97303]]),
+  },
   // Wikipedia "Lincoln Center".
   { slug: "lincoln-center", name: "Lincoln Center", near: "Lincoln Center", borough: "Manhattan", lat: 40.7725, lng: -73.9839 },
   // Wikipedia "Metropolitan Museum of Art" (the museum itself: Museum Mile runs on for 2 km, beyond the radius).
@@ -86,6 +115,17 @@ export const LANDMARKS = Object.freeze([
   { slug: "chelsea-market", name: "Chelsea Market", near: "Chelsea Market", borough: "Manhattan", lat: 40.7425, lng: -74.00611111 },
   // Wikipedia "Vessel (structure)" (the centerpiece of Hudson Yards' public square).
   { slug: "hudson-yards", name: "Hudson Yards", near: "Hudson Yards", borough: "Manhattan", lat: 40.7538, lng: -74.0022 },
+  // The High Line, measured along its length: OpenStreetMap's "High Line" footway from its Gansevoort Street end
+  // north along Tenth Avenue, west on 30th Street to Twelfth Avenue and on to its 34th Street end.
+  {
+    slug: "high-line",
+    name: "High Line",
+    near: "the High Line",
+    borough: "Manhattan",
+    lat: 40.74892,
+    lng: -74.00401,
+    path: Object.freeze([[40.73944, -74.00819], [40.73984, -74.00828], [40.74237, -74.00767], [40.74341, -74.00689], [40.74468, -74.00697], [40.75187, -74.00195], [40.7523, -74.00199], [40.75282, -74.00234], [40.7541, -74.00538], [40.7546, -74.0059], [40.75516, -74.00589], [40.75613, -74.0052], [40.7564, -74.00468], [40.75643, -74.00404]]),
+  },
   // Wikipedia "Barclays Center".
   { slug: "barclays-center", name: "Barclays Center", near: "Barclays Center", borough: "Brooklyn", lat: 40.68266111, lng: -73.975225 },
   // Wikipedia "Dumbo, Brooklyn".

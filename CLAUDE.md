@@ -132,7 +132,8 @@ to withhold, so American Whiskey (its Grubhub/Seamless `Burger`, $20.40, `delive
 where the restaurant's own price was read and set by hand (Boeuf & Bun: Uber Eats = own price / 0.56, so its own
 ordering page's $32) the own price stays. Withholds remain for closed places, another restaurant's page, stale copies
 and partial pages (Brooklyn Diner's LaGuardia Terminal B row is withheld: its search found only the Manhattan menu, and an
-airport concession never gets a street restaurant's price). **Sauce (`getsauce.com`) is a third-party pickup and delivery
+airport concession never gets a street restaurant's price; Nana's Kitchen in the Bronx is withheld since 2026-09-27: its
+only menu found is Nana's Kitchen and Pizzeria's in Auburn, NH, and its own site is a parked domain). **Sauce (`getsauce.com`) is a third-party pickup and delivery
 platform, not the restaurant's site:** it is not yet in `discover.ONLINE_ORDERING` (adding it changes the offline replay:
 plan it with a re-run), so a CSV `menu_url` there reads as `official_menu`; corrections relabel the six such pages
 `online_ordering` (BK Jani, whose Sauce prices are a flat $2 above its year-old own menu image, Fat Boys, Gracie's,
@@ -195,6 +196,18 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
 - `pipeline/data/dohmh_overrides.json` — per-CAMIS fixes for typos in DOHMH records (e.g. Rosemary's `1820` → `18`
   Greenwich Ave with real coordinates), applied by `sources`; `report.dohmh_overrides_applied` lists them and an unused
   override is reported. `pipeline/data/corrections.json` — hand-checked menu price corrections applied by `build`.
+- `pipeline/data/location_overrides.json` — hand-checked locations of restaurant-list rows no DOHMH record matches
+  (`csv:…` key → `address`, `lat`, `lng`, `address_source`, `geocode_source`, `checked_at`, `reason`; added 2026-09-26 so
+  priced places reach the map, the landmark pages and Nearby): the address from the restaurant's own site (DOHMH's current
+  inspection record where the site blocks automated browsers), the point from NYC Planning's GeoSearch (a pier has no
+  address point: Frying Pan's is OpenStreetMap's node for it at Pier 66). Never place a row that is another row's restaurant
+  under another name (Blue Road Burger = Blueroad, Millard Fillmore Tavern = Fillmore's Tavern: same site, menu and
+  address; left for the user to resolve in the list): it would show twice on the map and be its own "nearby". `sources` attaches
+  it as the record's `location_override` (`report.location_overrides_applied`/`_unused`) and `build` publishes it
+  (`sources.located`); the record's own `address`/`lat`/`lng` stay empty, because the scrape reads them (the search query,
+  the page location check, a chain's representative), so the cached replay never changes. Never a neighborhood, NTA or
+  zipcode (the id is name + neighborhood). Add one only for a place checked open at that address; a DOHMH record's own
+  location goes in `dohmh_overrides.json` instead (coordinates only).
 - `pipeline/data/menu_urls.json` — hand-checked menu pages per restaurant key (`camis:…`/`csv:…` → `menu_url`, `checked_at`,
   `reason`), applied by `sources` (CSV untouched; `report.menu_url_overrides_applied`/`_unused`): scraped first, as is, and
   trusted as that restaurant's page. Each new one is a re-scrape on the next `run` (credits); never also correct that target.
@@ -238,7 +251,9 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
 - **The burger ranker (user decisions 2026-09-25/26; it replaced all crowd pricing)** is the home page's first screen
   (`#rank`, full width, above the H1 "What a burger costs in New York.", user decision 2026-09-26; DESIGN.md "The ranker
   hero"): search the priced burgers (distinct menus, a chain once), add 3 to 25 best first
-  ("your top 10", room for more), move them with up/down buttons, remove them, save; a returning browser sees its saved
+  ("your top 10", room for more), move them with up/down buttons (or, with a mouse, drag them by a grip at the row's start:
+  user decision 2026-09-26, pointer only, from 480px where the pointer is fine and hovers; a press is a drag only after
+  5px of movement), remove them, save; a returning browser sees its saved
   list and can edit or delete it. `components/ranker/Ranker.tsx` (UI), `src/lib/ranker-store.ts` (state as an external
   store; an unsaved list in `sessionStorage` `bi-ranker-draft`, `localStorage` `bi-ranker-saved` = this browser has a saved
   list, which the `<head>` script turns into `html.ranker-saved`: a skeleton instead of an empty list until it loads),
@@ -252,8 +267,16 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   on the card holds 3 burgers, the People's Top 10 shows beside it** (below it on a phone; user decision 2026-09-26, "Once
   3 are added", chosen knowing it can anchor later picks): the board's seats (the home page passes only those,
   `getRevealBoard()`), the visitor's picks on it marked, where their other picks stand, the empty board's sentence
-  (`src/lib/peoples-top-reveal.ts`, `components/ranker/PeoplesTopReveal.tsx`, `test/peoples-top-reveal.test.ts`). Without the Supabase settings the card says "Lists open soon." and
-  fetches nothing. The header's "Rank your burgers" (and the menu sheet's) links to `/#rank` from every page; on home it
+  (`src/lib/peoples-top-reveal.ts`, `components/ranker/PeoplesTopReveal.tsx`, `test/peoples-top-reveal.test.ts`). **"Add to
+  your top 10" on every restaurant page** (user decision 2026-09-26; only while lists are open) links `/?add=<menu key>#rank`
+  (`rankerAddHref` in `src/lib/site.ts`; a chain's locations all add the chain's menu key; nofollow): the ranker reads the
+  key once, drops it from the address, and once the burgers and the saved list are known adds it at the end if there is
+  room (a saved list is then being edited: "Save changes"), saying so on the card and in its live region ("Emily added at
+  #4. 4 burgers on your list.", "… is already on your list, at #2.", "Your list is full: 25 burgers. Remove one to add
+  …", in the saved view "… Edit your list and remove one to add …"); the live region and `ranking_item_added` fire once
+  per add (`claimLinkAdd` in the store, so a remount on a return to home repeats neither); `check:seo` checks every
+  restaurant page's link. Without the Supabase settings the card says "Lists open soon.",
+  fetches nothing, and restaurant pages have no "Add to your top 10". The header's "Rank your burgers" (and the menu sheet's) links to `/#rank` from every page; on home it
   scrolls to the ranker and focuses it; the search icon button sits next to it at every width. Under the home board:
   "See the People's Top 10" and "Most-recommended burgers". Menu keys and restaurant ids must never change (lists are
   keyed on them). "What's it worth?" is gone from the site: no pricer, no WorthPicker, no `/peoples-price` (Vercel
@@ -313,13 +336,17 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   neighborhood and source badge. The landmarks and their points (each landmark's Wikipedia coordinates, the article named in a
   comment) are in `web/src/lib/landmarks.mjs`, plain JS that `check-seo.mjs` reads too; places that are effectively one point
   are one landmark (Penn Station and Madison Square Garden, the World Trade Center and the 9/11 Memorial), and a page names
-  only the place its point measures (Columbus Circle, Chelsea Market, City Hall: Central Park South, the High Line and the
-  Brooklyn Bridge run on past the half mile, so they have no page). A priced restaurant without coordinates can't be
+  only the place its point measures (Columbus Circle, Chelsea Market, City Hall). **Long places are measured along their
+  length** (user decision 2026-09-26): the High Line, Central Park South and the Brooklyn Bridge carry a `path` (OpenStreetMap's
+  line for each, simplified to within 10 m, noted in `landmarks.mjs`) and list every spot within half a mile of any point
+  along it, "anywhere along it" in the lede, count line, description and llms.txt (`isAlong`, `distanceToPathKm`;
+  `check:seo` measures the paths on its own). A priced restaurant without coordinates can't be
   measured, so it is on no list and the count line is the plain "36 burger spots within half a mile" (never "All 36"); a
   DOHMH record without a location gets hand-checked coordinates in `pipeline/data/dohmh_overrides.json` (coordinates only,
-  never a zipcode or NTA, which would move its id). Every title carries the spot count and the month (`short` in
+  never a zipcode or NTA, which would move its id), and a list row DOHMH doesn't match its address and point in
+  `pipeline/data/location_overrides.json`. Every title carries the spot count and the month (`short` in
   `landmarks.mjs` for a long name). A landmark has a page only with **5+
-  spots** (`landmarksWithPages` in `src/lib/landmarks.ts`: 17 today; DUMBO 2, Yankee Stadium 1, Citi Field and Coney Island
+  spots** (`landmarksWithPages` in `src/lib/landmarks.ts`: 20 today; DUMBO 2, Yankee Stadium 1, Citi Field and Coney Island
   0 have none until the dataset has more). The lede: "36 burger spots within half a mile of Times Square, about a 10-minute
   walk; their priciest burgers run from $12.65 at … to $34.00 at … (September 2026)."; never "the cheapest burger near …"
   (`check:seo`). "See them on the map" opens `/map?near=<slug>`, which fits the map to the landmark's half mile. ItemList +
@@ -358,11 +385,13 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   when `NEXT_PUBLIC_POSTHOG_KEY` was set at build time. That key lives **only in the Vercel project settings, never in
   `web/.env.local`**, so dev and local builds send nothing. Components call `track()` in event handlers; nothing in server
   components (the restaurant page's links are the client `components/RestaurantLinks.tsx`). The ranker sends
-  `ranking_started` (`edited`), `ranking_item_added` (`menu_key`, `position`), `ranking_saved` (`length`, `edited`, once
+  `ranking_started` (`edited`), `ranking_item_added` (`menu_key`, `position`, `surface`: `search` or `restaurant_page`),
+  `ranking_saved` (`length`, `edited`, once
   Supabase saved it) and `ranking_deleted` (`length`); the ranker's first showing of the People's Top 10 beside a list sends `peoples_top_revealed` (`surface: "ranker"`,
   `list_length`, once per page view); links to the People's Top 10 send `peoples_top_clicked` (`surface`:
   `nav` / `menu_sheet` / `ranker` / `home`, `from_path`: the path only); the badge page's and press kit's "Copy" buttons
-  `snippet_copied` (`surface`, `what`, the badge's `restaurant_id`). The worth and pricer events are gone. No personal data: never the voter id, and no free text in events
+  `snippet_copied` (`surface`, `what`, the badge's `restaurant_id`); a restaurant page's "Add to your top 10" sends
+  `add_to_list_clicked` (`menu_key`, `restaurant_id`). The worth and pricer events are gone. No personal data: never the voter id, and no free text in events
   but the search query (trimmed, lowercased, 60 characters); replays mask inputs and the query echoed in the "No burgers
   match" messages (`ph-mask`). Events and properties are listed in `web/README.md` "Analytics
   (PostHog)"; tests in `test/analytics.test.ts`. posthog-js drops headless/webdriver browsers, so browser checks see no

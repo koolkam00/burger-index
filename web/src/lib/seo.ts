@@ -7,6 +7,7 @@
 // Titles aim at 60 characters or fewer, descriptions at 150–160 (DESCRIPTION_MAX is a hard cap).
 import { boroughInProse, inNeighborhoodPlace, neighborhoodInProse, neighborhoodPreposition } from "./boroughs";
 import { formatCount, formatDate, formatMonthYear, formatPrice, pctDiff, pluralize, theBurger } from "./format";
+import { ALONG_WORDS } from "./landmarks";
 import { rankingShortName } from "./rankings";
 import type { Borough } from "./schema";
 
@@ -366,14 +367,17 @@ export function rankingSeo(d: RankingSeoInput): Seo {
  * A landmark page (lib/landmarks.ts): "Burgers near Times Square: 36 burger spots (Sep 2026)" and "36 burger spots
  * within half a mile of Times Square (September 2026). Their priciest burgers run from $12.65 at … to $34.00 at …."
  * (the walk, "about a 10-minute walk", when it fits too). A long name gives way to its short form in the title, so the
- * title keeps the count and the month: "Burgers near Penn Station & MSG: 33 burger spots (Sep 2026)". Spots and their
- * priciest burger, never "the cheapest burger near …".
+ * title keeps the count and the month: "Burgers near Penn Station & MSG: 33 burger spots (Sep 2026)". A long place
+ * measured along its length says so: "25 burger spots within half a mile of the High Line, anywhere along it …". Spots
+ * and their priciest burger, never "the cheapest burger near …".
  */
 export function landmarkSeo(d: {
   /** The landmark in a sentence (landmarks.mjs `near`): "Times Square", "the Empire State Building". */
   near: string;
   /** The shorter form for the title (landmarks.mjs `short`): "Penn Station & MSG". */
   short?: string;
+  /** A long place, measured along its length (landmarks.ts isAlong): "…, anywhere along it". */
+  along?: boolean;
   spots: number;
   /** "half a mile", "about a 10-minute walk" (landmarks.ts RADIUS_WORDS, WALK_WORDS). */
   radius: string;
@@ -389,7 +393,7 @@ export function landmarkSeo(d: {
   // The ends with the spots' names when they fit (the walk gives way to them first), else the prices alone.
   const named = differ ? `Their priciest burgers run from ${money(d.low!.price)} at ${d.low!.name} to ${money(d.high!.price)} at ${d.high!.name}.` : null;
   const bare = differ ? `Their priciest burgers run from ${money(d.low!.price)} to ${money(d.high!.price)}.` : null;
-  const head = `${pluralize(d.spots, "burger spot")} within ${d.radius} of ${d.near}`;
+  const head = `${pluralize(d.spots, "burger spot")} within ${d.radius} of ${d.near}${d.along ? `, ${ALONG_WORDS}` : ""}`;
   const month = formatMonthYear(d.generatedAt);
   const [withWalk, withoutWalk] = [`${head}, ${d.walk} (${month}).`, `${head} (${month}).`];
   // The first pair that fits: the walk and the names, the names alone, the walk and the prices, the prices alone.

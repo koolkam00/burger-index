@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/JsonLd";
 import { repeatedNames } from "@/components/RestaurantBits";
-import { OutboundLink, SeeOnMapLink } from "@/components/RestaurantLinks";
+import { AddToListLink, OutboundLink, SeeOnMapLink } from "@/components/RestaurantLinks";
 import { DetailOverline, Money, PageHeader, PriceChip, SectionHeading, SourceBadge } from "@/components/ui";
 import { badgePageFor } from "@/lib/badge";
 import { boroughSlug } from "@/lib/boroughs";
@@ -21,13 +21,14 @@ import {
 import { formatDate, formatDelta, formatPrice, hostname, safeHttpUrl } from "@/lib/format";
 import { breadcrumbNode, restaurantNode } from "@/lib/jsonld";
 import { PRICE_SOURCE_LABEL } from "@/lib/labels";
-import { hasOtherMenus, menusByIndexPrice } from "@/lib/menus";
+import { hasOtherMenus, menuKey, menusByIndexPrice } from "@/lib/menus";
 import { formatMiles, moreInNeighborhood, nearbySimilar } from "@/lib/nearby";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
 import type { PricedRestaurant } from "@/lib/schema";
 import { restaurantSeo, sharedTitleIds } from "@/lib/seo";
 import { shareImage } from "@/lib/share-cards";
 import { atLeastOneParam, BOROUGHS_HREF, PLACEHOLDER_PARAM } from "@/lib/site";
+import { RANKER_ENABLED } from "@/lib/supabase-config";
 
 export const dynamicParams = false;
 
@@ -223,6 +224,13 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurants
               </li>
             ) : null}
           </ul>
+          {/* The home ranker with this burger added (only while lists are open: without the Supabase settings the
+              ranker says "Lists open soon."). */}
+          {RANKER_ENABLED ? (
+            <p className="mt-5">
+              <AddToListLink menuKey={menuKey(r)} restaurantId={r.id} />
+            </p>
+          ) : null}
         </section>
 
         {r.hand_check ? <HandCheckNote checkedOn={r.hand_check.checked_on} /> : null}

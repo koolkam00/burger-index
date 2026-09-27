@@ -1796,7 +1796,10 @@
    "40942152",
    "41509909",
    "41668282",
-   "50005823"
+   "50005823",
+   "50033699",
+   "50043566",
+   "50089893"
   ],
   "dohmh_overrides_unused": [],
   "dohmh_in_cuisines": 0,
@@ -1889,6 +1892,15 @@
    "camis:50119000"
   ],
   "menu_url_overrides_unused": [],
+  "location_overrides_applied": [
+   "csv:emily-brooklyn",
+   "csv:frying-pan-manhattan",
+   "csv:casa-13urger-manhattan",
+   "csv:at-the-office-manhattan",
+   "csv:portrait-bar-manhattan",
+   "csv:lori-jayne-at-danger-danger-brooklyn"
+  ],
+  "location_overrides_unused": [],
   "no_neighborhood": 11,
   "restaurants": 1095,
   "dohmh_fetched_at": "2026-09-23T18:42:05Z"
@@ -4486,7 +4498,14 @@
    "csv_neighborhood": "Clinton Hill",
    "csv_notes": "Emmy Burger pizza restaurant",
    "csv_row": 94,
-   "match": null
+   "match": null,
+   "location_override": {
+    "address": "919 Fulton Street",
+    "lat": 40.68359,
+    "lng": -73.966417,
+    "checked_at": "2026-09-26",
+    "source_url": "https://data.cityofnewyork.us/resource/43nn-pn8j.json?camis=50005678"
+   }
   },
   {
    "key": "csv:james-brooklyn",
@@ -5703,7 +5722,14 @@
    "csv_neighborhood": "West Chelsea",
    "csv_notes": "Floating bar at Chelsea Piers; bar food and burgers",
    "csv_row": 137,
-   "match": null
+   "match": null,
+   "location_override": {
+    "address": "Pier 66, 207 12 Avenue",
+    "lat": 40.7523006,
+    "lng": -74.0094145,
+    "checked_at": "2026-09-27",
+    "source_url": "https://www.fryingpan.com/"
+   }
   },
   {
    "key": "camis:50151490",
@@ -6796,7 +6822,14 @@
    "csv_neighborhood": "Lower East Side",
    "csv_notes": "Burger counter",
    "csv_row": 179,
-   "match": null
+   "match": null,
+   "location_override": {
+    "address": "1 Delancey Street",
+    "lat": 40.719977,
+    "lng": -73.993722,
+    "checked_at": "2026-09-26",
+    "source_url": "https://www.casa13urger.com/"
+   }
   },
   {
    "key": "camis:50156068",
@@ -8537,8 +8570,8 @@
    "address": "2272 Frederick Douglass Boulevard",
    "borough": "Manhattan",
    "zipcode": null,
-   "lat": null,
-   "lng": null,
+   "lat": 40.807981,
+   "lng": -73.952422,
    "nta": "MN11",
    "neighborhood": "Central Harlem South",
    "nta_source": "csv-neighborhood",
@@ -8589,8 +8622,8 @@
    "address": "2149 Frederick Douglass Boulevard",
    "borough": "Manhattan",
    "zipcode": null,
-   "lat": null,
-   "lng": null,
+   "lat": 40.804394,
+   "lng": -73.955811,
    "nta": "MN11",
    "neighborhood": "Central Harlem South",
    "nta_source": "csv-neighborhood",
@@ -8818,8 +8851,8 @@
    "address": "2128 Frederick Douglass Boulevard",
    "borough": "Manhattan",
    "zipcode": null,
-   "lat": null,
-   "lng": null,
+   "lat": 40.803536,
+   "lng": -73.955652,
    "nta": "MN11",
    "neighborhood": "Central Harlem South",
    "nta_source": "csv-neighborhood",
@@ -10759,7 +10792,14 @@
    "csv_neighborhood": "Murray Hill",
    "csv_notes": "Upscale sports bar at 160 E 38th St, opened April 2026 beside The Consulate (same address); sports bars serve burgers",
    "csv_row": 329,
-   "match": null
+   "match": null,
+   "location_override": {
+    "address": "160 East 38 Street",
+    "lat": 40.748081,
+    "lng": -73.976836,
+    "checked_at": "2026-09-26",
+    "source_url": "https://theoffice.nyc/"
+   }
   },
   {
    "key": "camis:50165850",
@@ -11119,7 +11159,14 @@
    "csv_neighborhood": "NoMad",
    "csv_notes": "Bar in the Fifth Avenue Hotel; known for its dry-aged burger",
    "csv_row": 343,
-   "match": null
+   "match": null,
+   "location_override": {
+    "address": "1 West 28 Street",
+    "lat": 40.745049,
+    "lng": -73.987756,
+    "checked_at": "2026-09-26",
+    "source_url": "https://www.theportraitbar.com/location/the-portrait-bar/"
+   }
   },
   {
    "key": "camis:50172798",
@@ -32280,7 +32327,14 @@
    "csv_neighborhood": "Bushwick North",
    "csv_notes": "Best-burger lists 2024-2026; inside Danger Danger, 232 Knickerbocker Avenue, 11237 | web check 2026-09-25",
    "csv_row": 1118,
-   "match": null
+   "match": null,
+   "location_override": {
+    "address": "232 Knickerbocker Avenue",
+    "lat": 40.702811,
+    "lng": -73.925888,
+    "checked_at": "2026-09-26",
+    "source_url": "https://dangerdangerbar.com/"
+   }
   },
   {
    "key": "camis:50157617",

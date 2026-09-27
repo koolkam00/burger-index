@@ -52,8 +52,11 @@
 // (as the crow flies, haversine), nearest first, row for row with their distance, name, link and price; exactly the
 // landmarks with 5+ such spots have a page; the H1, the one-line answer (the spot count and the priciest burgers'
 // ends, named), the count line, the title's count and month, every "N burger spots" in the title and description, the ItemList, the map link
-// and the share image. The hub (/burgers-near) lists every landmark page in borough order with its count and range,
-// and is linked from every page's footer, the sitemap and llms.txt; no page says "cheapest burger(s) near".
+// and the share image. A long place with a `path` (the High Line, Central Park South, the Brooklyn Bridge) is measured
+// to the nearest point along its path (worked out here on its own, segment by segment) and its lede, count line,
+// description and llms.txt line say "anywhere along it". The hub (/burgers-near) lists every landmark page in borough
+// order with its count and range, and is linked from every page's footer, the sitemap and llms.txt; no page says
+// "cheapest burger(s) near".
 // Exit 1 on any error; warnings are printed and don't fail.
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -309,10 +312,35 @@ const boardTime = board && (board.refreshedAt ?? board.asOf) ? new Date(board.re
 const BOROUGH_ORDER = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"];
 /** "0.3 mi": miles to one decimal, at least 0.1 (as "Nearby at a similar price" prints them). */
 const milesText = (km) => `${Math.max(0.1, Math.round((km / 1.609344) * 10) / 10).toFixed(1)} mi`;
-/** The priced spots within the radius of `l`, nearest first (ties by name, then id). */
+/** A long place (a path of two or more points): its pages measure along it. */
+const alongIt = (l) => Array.isArray(l.path) && l.path.length >= 2;
+/**
+ * Kilometers from `r` to the nearest point of `l` (its point, or anywhere along its path): per segment, the closest point
+ * in a plane around `r` (longitude times the cosine of r's latitude), then the haversine distance to it.
+ */
+function kmToLandmark(l, r) {
+  if (!alongIt(l)) return kmBetween(l, r);
+  if (r.lat == null || r.lng == null) return null;
+  const cos = Math.cos((r.lat * Math.PI) / 180);
+  let best = null;
+  for (let i = 1; i < l.path.length; i++) {
+    const [[lat1, lng1], [lat2, lng2]] = [l.path[i - 1], l.path[i]];
+    const ux = (lng2 - lng1) * cos;
+    const uy = lat2 - lat1;
+    const vx = (r.lng - lng1) * cos;
+    const vy = r.lat - lat1;
+    const len = ux * ux + uy * uy;
+    const f = len > 0 ? Math.min(1, Math.max(0, (vx * ux + vy * uy) / len)) : 0;
+    const km = kmBetween(r, { lat: lat1 + f * (lat2 - lat1), lng: lng1 + f * (lng2 - lng1) });
+    if (best === null || km < best) best = km;
+  }
+  return best;
+}
+const alongWords = (l) => (alongIt(l) ? ", anywhere along it" : "");
+/** The priced spots within the radius of `l` (of any point along a long place), nearest first (ties by name, then id). */
 function spotsNearLandmark(l) {
   return priced
-    .map((r) => ({ r, km: kmBetween(l, r) }))
+    .map((r) => ({ r, km: kmToLandmark(l, r) }))
     .filter((x) => x.km !== null && x.km <= LANDMARK_RADIUS_KM)
     .sort((a, b) => a.km - b.km || a.r.name.localeCompare(b.r.name) || (a.r.id < b.r.id ? -1 : a.r.id > b.r.id ? 1 : 0));
 }
@@ -332,7 +360,7 @@ const landmarkPagesWant = LANDMARKS.map((l, i) => ({ l, i, spots: spotsNearLandm
   .sort((a, b) => BOROUGH_ORDER.indexOf(a.l.borough) - BOROUGH_ORDER.indexOf(b.l.borough) || a.i - b.i);
 function landmarkLede(l, spots) {
   const { lo, hi } = landmarkEnds(spots);
-  const head = `${count(spots.length)} burger spots within half a mile of ${l.near}, about a 10-minute walk; their priciest burgers`;
+  const head = `${count(spots.length)} burger spots within half a mile of ${l.near}${alongWords(l)}, about a 10-minute walk; their priciest burgers`;
   if (cents(lo.r.index_price) === cents(hi.r.index_price)) return `${head} all cost ${money(lo.r.index_price)} (${month}).`;
   return `${head} run from ${money(lo.r.index_price)} at ${lo.r.name} to ${money(hi.r.index_price)} at ${hi.r.name} (${month}).`;
 }
@@ -785,9 +813,9 @@ for (const p of pages) {
       if (list && list.name !== h1.replace(/\.$/, "")) err(`${path}: ItemList "${list.name}" ≠ h1 "${h1}"`);
       const countLine = text(/<\/table>\s*<\/div>\s*<p class="t-ui-s muted mt-3">(.*?)<\/p>/s.exec(html)?.[1] ?? "");
       // Never "All N …": a priced spot without coordinates can't be measured, so the line is the plain count.
-      if (countLine !== `${count(spots.length)} burger spots within half a mile, nearest first.`) err(`${path}: count line "${countLine}"`);
+      if (countLine !== `${count(spots.length)} burger spots within half a mile${alongWords(l)}, nearest first.`) err(`${path}: count line "${countLine}"`);
       if (!html.includes(`href="/map?near=${l.slug}"`)) err(`${path}: no map link (/map?near=${l.slug})`);
-      if (!p.description.includes(`within half a mile of ${l.near}`)) err(`${path}: description "${p.description}" does not say within half a mile of ${l.near}`);
+      if (!p.description.includes(`within half a mile of ${l.near}${alongWords(l)}`)) err(`${path}: description "${p.description}" does not say within half a mile of ${l.near}${alongWords(l)}`);
       // The title carries the spot count and the month (a long name gives way to its short form, landmarks.mjs `short`).
       const monthShort = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", year: "numeric" }).format(new Date(data.generated_at));
       if (!p.title.includes(`: ${count(spots.length)} `) || !p.title.includes(`(${monthShort})`)) err(`${path}: title "${p.title}" lacks the spot count or the month`);
@@ -1061,6 +1089,29 @@ for (const p of pages) {
 const NEAR_KM = 1.5;
 const NEAR_GAP = 400;
 const menuOf = (r) => (r.chain ? `chain:${r.chain}` : r.id);
+
+// "Add to your top 10" (user decision 2026-09-26): while lists are open (the home ranker doesn't say "Lists open
+// soon."), every restaurant page links the home ranker with its menu added, /?add=<menu key>#rank (a chain's locations
+// all add the chain's one menu), nofollow; with lists closed, no page has the link.
+const listsOpen = home ? !home.html.includes("Lists open soon.") : false;
+let addLinks = 0;
+for (const r of priced) {
+  const page = pages.find((p) => p.path === `/restaurants/${r.id}`);
+  if (!page) continue;
+  const links = [...page.html.matchAll(/<a\b[^>]*href="\/\?add=([^"#]*)#rank"[^>]*>/g)];
+  addLinks += links.length;
+  if (!listsOpen) {
+    if (links.length) err(`/restaurants/${r.id}: "Add to your top 10" while lists are closed`);
+    continue;
+  }
+  if (links.length !== 1) {
+    err(`/restaurants/${r.id}: ${links.length} "Add to your top 10" links (want 1)`);
+    continue;
+  }
+  const key = decodeURIComponent(decode(links[0][1]));
+  if (key !== menuOf(r)) err(`/restaurants/${r.id}: "Add to your top 10" adds ${key}, not its menu ${menuOf(r)}`);
+  if (!/\srel="nofollow"/.test(links[0][0])) err(`/restaurants/${r.id}: "Add to your top 10" is not nofollow`);
+}
 function kmBetween(a, b) {
   if (a.lat == null || a.lng == null || b.lat == null || b.lng == null) return null;
   const rad = (d) => (d * Math.PI) / 180;
@@ -1167,7 +1218,7 @@ for (const path of [PRESS_PATH, BADGE_PATH]) if (!llmsLinks.includes(`${site}${p
 for (const x of landmarkPagesWant) {
   const line = llms.split("\n").find((l) => l.includes(`](${site}/burgers-near/${x.l.slug})`)) ?? "";
   const { lo, hi } = landmarkEnds(x.spots);
-  const want = `: ${count(x.spots.length)} burger spots within half a mile; their priciest burgers run from ${money(lo.r.index_price)} at ${lo.r.name} to ${money(hi.r.index_price)} at ${hi.r.name}`;
+  const want = `: ${count(x.spots.length)} burger spots within half a mile${alongWords(x.l)}; their priciest burgers run from ${money(lo.r.index_price)} at ${lo.r.name} to ${money(hi.r.index_price)} at ${hi.r.name}`;
   if (cents(lo.r.index_price) !== cents(hi.r.index_price) && !line.endsWith(want)) err(`llms.txt: the /burgers-near/${x.l.slug} line "${line}" does not end "${want}"`);
 }
 if (EMAIL.test(llms)) err("llms.txt carries an email address");
@@ -1252,6 +1303,7 @@ const stylePages = pages.filter((p) => p.styleRows !== undefined);
 console.log(`style pages: ${stylePages.map((p) => `${p.path} ${p.styleRows}`).join(", ")} · best-burgers rows: ${pages.find((p) => p.path === BEST_PATH)?.bestRows ?? 0}`);
 console.log(`Q&A blocks: ${pages.filter((p) => p.faqs).length} pages, ${pages.reduce((n, p) => n + (p.faqs ?? 0), 0)} questions`);
 const landmarkPagesSeen = pages.filter((p) => p.landmarkRows !== undefined);
+console.log(`"Add to your top 10": ${listsOpen ? `lists open, ${addLinks} restaurant pages link it` : "lists closed, no links"}`);
 console.log(`landmark pages: ${landmarkPagesSeen.length} (${landmarkPagesSeen.map((p) => `${p.path.slice(LANDMARKS_PATH.length + 1)} ${p.landmarkRows}`).join(", ")}) · hub links: ${pages.find((p) => p.path === LANDMARKS_PATH)?.landmarkLinks ?? 0}`);
 console.log(
   `People's Top 10: ${board?.asOf ? `as of ${board.asOf}` : "no board yet"} · ${count(board?.totalLists ?? 0)} lists · ` +

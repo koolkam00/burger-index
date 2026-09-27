@@ -22,6 +22,8 @@ export type SearchSurface = "burgers";
 export type FilterName = "borough" | "neighborhood" | "price" | "sort" | "clear_all";
 /** What a "Copy" button copied: a badge's HTML or image address, or the press kit's credit line. */
 export type SnippetKind = "badge_html" | "badge_image" | "citation";
+/** Where a burger was added to the home ranker's list from: its search, or a restaurant page's "Add to your top 10". */
+export type RankerAddSurface = "search" | "restaurant_page";
 /** Where a link to the People's Top 10 was followed from. */
 export type PeoplesTopSurface = "nav" | "menu_sheet" | "ranker" | "home";
 
@@ -40,8 +42,13 @@ export type AnalyticsEvents = {
   burger_filter_changed: { filter: FilterName; value: string | null; results: number };
   /** The home ranker: the first change to a list (a new one, or the saved one being edited). */
   ranking_started: { edited: boolean };
-  /** The home ranker: a burger added to the list, at `position` (1-based, the list's new length). */
-  ranking_item_added: { menu_key: string; position: number };
+  /**
+   * The home ranker: a burger added to the list, at `position` (1-based, the list's new length), from its search or from
+   * a restaurant page's "Add to your top 10" (once the ranker has added it).
+   */
+  ranking_item_added: { menu_key: string; position: number; surface: RankerAddSurface };
+  /** A restaurant page's "Add to your top 10" followed (to the home ranker), with the menu it adds. */
+  add_to_list_clicked: { menu_key: string; restaurant_id: string };
   /** The home ranker: a list saved (`edited`: it replaced this browser's saved list), with its length. */
   ranking_saved: { length: number; edited: boolean };
   /** The home ranker: this browser's list deleted. */

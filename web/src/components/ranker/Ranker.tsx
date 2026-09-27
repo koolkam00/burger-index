@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowDown, ArrowRight, ArrowUp, Check, Plus, Search, TriangleAlert, X } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, Check, GripVertical, Plus, Search, TriangleAlert, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { useMediaQuery } from "@/components/charts/hooks";
 import { RopeLadder } from "@/components/icons/nautical";
 import { PriceChip } from "@/components/ui";
@@ -10,21 +10,28 @@ import { fromPath, track } from "@/lib/analytics";
 import { formatCount, pluralize } from "@/lib/format";
 import { revealAnnouncement, revealView, showsReveal, yourList, type RevealBoard } from "@/lib/peoples-top-reveal";
 import {
+  addParam,
   countLine,
+  dragIndex,
+  dragTop,
+  linkAddText,
   listProblem,
   MAX_HITS,
   MAX_ITEMS,
   MINE_FAILED_COPY,
+  moveItemTo,
   nyToday,
   PROBLEM_COPY,
   RANKER_ERROR_COPY,
+  sameList,
   savedStatusText,
   searchBurgers,
   TOP_N,
+  withoutAddParam,
   type RankerBurger,
 } from "@/lib/ranker";
 import { rankerStore, type RankerSnapshot } from "@/lib/ranker-store";
-import { PEOPLES_TOP_NAME, PEOPLES_TOP_PATH, RANKER_ANCHOR, RANKER_FOCUS_EVENT, RANKER_TITLE_ID } from "@/lib/site";
+import { PEOPLES_TOP_NAME, PEOPLES_TOP_PATH, RANKER_ADD_PARAM, RANKER_ANCHOR, RANKER_FOCUS_EVENT, RANKER_TITLE_ID } from "@/lib/site";
 import { RANKER_ENABLED } from "@/lib/supabase-config";
 import { PeoplesTopReveal, RevealHint } from "./PeoplesTopReveal";
 
@@ -56,6 +63,10 @@ const nameOf = (b: RankerBurger | undefined) => b?.label ?? "A burger no longer 
  * Once the list on the card (being built, or saved) holds 3 burgers, the People's Top 10 shows beside it (below it
  * on a phone): `board` is the daily board's seats (user decision 2026-09-26, "Once 3 are added"); the other picks'
  * standings come with the burgers in /data/menus.json.
+ *
+ * A restaurant page's "Add to your top 10" arrives as /?add=<menu key>#rank (user decision 2026-09-26): the key is read
+ * once on mount and dropped from the address, and the store adds it when the burgers and the saved list are known; the
+ * card then says what happened (added, already there, list full) and the live region says it too.
  */
 export function Ranker({ median, board }: { median: number | null; board: RevealBoard }) {
   const snap = useRanker();
@@ -73,8 +84,42 @@ export function Ranker({ median, board }: { median: number | null; board: Reveal
     setFocusTick((n) => n + 1);
   };
 
+  // What a link's add did: said once in the live region (the card shows the same words), and an added burger is tracked
+  // like one added from the search (surface "restaurant_page"). Once per outcome, not per mount: the store remembers that
+  // it was said (claimLinkAdd), so coming back to home (the ranker mounts again) shows the note without saying or tracking
+  // it again. Listens to the store (subscribed before the add below starts), and checks once on mount for an outcome
+  // that settled while no ranker was listening.
   useEffect(() => {
-    if (RANKER_ENABLED) rankerStore.start();
+    if (!RANKER_ENABLED) return;
+    const sayLinkAdd = () => {
+      const s = rankerStore.getSnapshot();
+      const r = s.linkAdd;
+      if (!r || !rankerStore.claimLinkAdd(r)) return;
+      let text = linkAddText(r, nameOf(s.burgers.get(r.key)), s.saved !== null, s.view);
+      if (r.kind === "added") {
+        const before = s.draft.filter((k) => k !== r.key);
+        if (!(s.saved ? !sameList(before, s.saved.items) : before.length > 0)) track("ranking_started", { edited: s.saved !== null });
+        track("ranking_item_added", { menu_key: r.key, position: r.position, surface: "restaurant_page" });
+        if (!revealAnnounced.current && !showsReveal(r.position - 1) && showsReveal(r.position)) {
+          revealAnnounced.current = true;
+          text += ` ${revealAnnouncement(board)}`;
+        }
+      }
+      setAnnounce((prev) => (prev === text ? `${text} ` : text));
+    };
+    sayLinkAdd();
+    return rankerStore.subscribe(sayLinkAdd);
+  }, [board]);
+
+  useEffect(() => {
+    if (!RANKER_ENABLED) return;
+    rankerStore.start();
+    // "Add to your top 10" from a restaurant page: read ?add= once, then drop it, so a reload doesn't repeat it.
+    const { pathname, search, hash } = window.location;
+    if (!new URLSearchParams(search).has(RANKER_ADD_PARAM)) return;
+    window.history.replaceState(null, "", `${pathname}${withoutAddParam(search)}${hash}`);
+    const key = addParam(search);
+    if (key) rankerStore.addFromLink(key);
   }, []);
 
   // After a step the visitor took, focus what it shows (only while focus is in the card, or was dropped
@@ -150,7 +195,7 @@ export function Ranker({ median, board }: { median: number | null; board: Reveal
     starting();
     rankerStore.add(b.key);
     const position = snap.draft.length + 1;
-    track("ranking_item_added", { menu_key: b.key, position });
+    track("ranking_item_added", { menu_key: b.key, position, surface: "search" });
     say(`${b.label} added at #${position}. ${pluralize(position, "burger")} on your list.${revealNote(snap.draft.length, position)}`);
   };
   const move = (key: string, delta: number) => {
@@ -161,6 +206,14 @@ export function Ranker({ median, board }: { median: number | null; board: Reveal
     rankerStore.move(key, delta);
     const control = delta < 0 ? (to === 0 ? "down" : "up") : to === snap.draft.length - 1 ? "up" : "down";
     pendingFocus.current = { kind: "row", key, control };
+    say(`${nameOf(snap.burgers.get(key))} moved to #${to + 1}.`);
+  };
+  /** A row dropped at a new place (drag to reorder, with a mouse): announced like a move with the arrows. */
+  const moveTo = (key: string, to: number) => {
+    const from = snap.draft.indexOf(key);
+    if (snap.busy || from < 0 || to === from || to < 0 || to >= snap.draft.length) return;
+    starting();
+    rankerStore.moveTo(key, to);
     say(`${nameOf(snap.burgers.get(key))} moved to #${to + 1}.`);
   };
   const remove = (key: string) => {
@@ -250,6 +303,7 @@ export function Ranker({ median, board }: { median: number | null; board: Reveal
         median={median}
         onAdd={add}
         onMove={move}
+        onMoveTo={moveTo}
         onRemove={remove}
         onSave={save}
         onCancel={cancel}
@@ -379,6 +433,7 @@ function SavedView({
       <p className="t-ui-m ranker-saved-status mt-1" role="status">
         {status}
       </p>
+      <LinkAddNote snap={snap} />
       {snap.menus === "error" ? <MenusFailed onRetry={onRetryMenus} /> : null}
       <ol className="ranker-list is-saved mt-4" aria-label="Your list">
         {saved.items.map((key, i) => (
@@ -451,6 +506,23 @@ function SavedRow({ rank, burger, menus }: { rank: number; burger: RankerBurger 
   );
 }
 
+/**
+ * What a restaurant page's "Add to your top 10" did, on the card until the list next changes: a check for added or
+ * already there, the warning icon when it couldn't be added. Not a live region: the ranker's own says it once.
+ */
+function LinkAddNote({ snap }: { snap: RankerSnapshot }) {
+  const r = snap.linkAdd;
+  if (!r) return null;
+  const text = linkAddText(r, nameOf(snap.burgers.get(r.key)), snap.saved !== null, snap.view);
+  const ok = r.kind === "added" || r.kind === "already";
+  return (
+    <p className="t-ui-m ranker-link-note mt-3">
+      {ok ? <Check className="ranker-link-icon" strokeWidth={2} aria-hidden="true" /> : <TriangleAlert className="status-icon" strokeWidth={2} aria-hidden="true" />}
+      <span>{text}</span>
+    </p>
+  );
+}
+
 /** The rule between #10 and #11: the list is "your top 10", with room for more. */
 function ExtraRule() {
   return (
@@ -460,12 +532,165 @@ function ExtraRule() {
   );
 }
 
+/** A row being dragged: which one, where it began and where it would land now. */
+type DragState = { key: string; from: number; to: number };
+/** How far (px) the pointer moves from where it pressed the grip before the press is a drag. */
+const DRAG_START = 5;
+
+/**
+ * Drag to reorder, with a mouse (DESIGN.md "The ranker hero": a grip at the row's start where the pointer is fine and
+ * hovers, from 480px; the arrows stay for keyboard and touch). Pointer events on the grip, captured while it is held.
+ * While a row is dragged the rows are shown in the order they would have after the drop (CSS `order`, so the DOM, its
+ * keys and the captured grip stay put), numbered that way, with the "Beyond your top 10" rule at the #10/#11 boundary;
+ * the dragged row sits in its landing place, nudged to follow the pointer inside the list (`dragTop`). Where it lands
+ * comes from the pointer and the rows' midpoints when the drag began (`dragIndex`). A press is a drag only once the pointer
+ * has moved `DRAG_START` px: a click on the grip, or a press let go where it began, moves nothing. The page scrolls while
+ * the pointer is near the window's bottom edge or just under the sticky header; Escape or a cancelled pointer puts it
+ * back; the drop moves it (`onDrop`, announced like an arrow move). Nothing animates.
+ */
+function useDragToReorder(onDrop: (key: string, to: number) => void, disabled: boolean) {
+  const listRef = useRef<HTMLOListElement>(null);
+  const [drag, setDrag] = useState<DragState | null>(null);
+  const info = useRef<{
+    key: string;
+    from: number;
+    /** The rows' midpoints, page coordinates, when the drag began. */
+    mids: number[];
+    size: number;
+    /** From the pointer to the dragged row's top. */
+    grab: number;
+    /** The list's first row top and last row bottom, page coordinates. */
+    top: number;
+    bottom: number;
+    clientY: number;
+    /** Where the press began (viewport), and whether the pointer has since moved far enough to make it a drag. */
+    startY: number;
+    moving: boolean;
+    /** The sticky header's bottom (viewport) when the drag started: the band that scrolls the page up starts there. */
+    topEdge: number;
+    raf: number;
+    /** The dragged row's translateY now. */
+    shift: number;
+  } | null>(null);
+
+  const place = (): DragState | null => {
+    const d = info.current;
+    if (!d) return null;
+    // Where it lands follows the pointer itself (past the list's end it is the last place), not the row as drawn,
+    // which stops at the list's edges.
+    return { key: d.key, from: d.from, to: dragIndex(d.mids, d.from, d.clientY + window.scrollY - d.grab + d.size / 2) };
+  };
+  const update = () => {
+    const next = place();
+    setDrag((prev) => (prev && next && prev.to === next.to ? prev : next));
+    follow();
+  };
+  /** Nudge the dragged row from its landing place to where the pointer holds it (no re-render). */
+  const follow = () => {
+    const d = info.current;
+    const row = d && listRef.current?.querySelector<HTMLElement>(`[data-row="${CSS.escape(d.key)}"]`);
+    if (!d || !row) return;
+    const laidOut = row.getBoundingClientRect().top + window.scrollY - d.shift;
+    d.shift = dragTop(d.clientY + window.scrollY, d.grab, d.top, d.bottom, d.size) - laidOut;
+    row.style.transform = `translateY(${d.shift}px)`;
+  };
+  const scrollNearEdge = () => {
+    const d = info.current;
+    if (!d) return;
+    const edge = 64;
+    const top = d.topEdge + edge;
+    const step = d.clientY < top ? -Math.ceil((top - d.clientY) / 4) : d.clientY > window.innerHeight - edge ? Math.ceil((d.clientY - window.innerHeight + edge) / 4) : 0;
+    if (step) {
+      window.scrollBy(0, step);
+      update();
+    }
+    d.raf = requestAnimationFrame(scrollNearEdge);
+  };
+  const end = (drop: boolean) => {
+    const d = info.current;
+    if (!d) return;
+    // A press that never moved far enough was not a drag: nothing lands.
+    const now = d.moving ? place() : null;
+    cancelAnimationFrame(d.raf);
+    listRef.current?.querySelector<HTMLElement>(`[data-row="${CSS.escape(d.key)}"]`)?.style.removeProperty("transform");
+    info.current = null;
+    setDrag(null);
+    if (drop && now && now.to !== now.from) onDrop(now.key, now.to);
+  };
+
+  // After each render of a drag (the rows in their landing order), put the dragged row back under the pointer.
+  useLayoutEffect(() => {
+    if (drag) follow();
+  });
+  // Escape puts the row back; leaving the builder mid-drag stops the page scrolling.
+  useEffect(() => {
+    if (!drag) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") end(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+  useEffect(() => () => cancelAnimationFrame(info.current?.raf ?? 0), []);
+
+  /** The grip's pointer handlers for the row at `index`. */
+  const grip = (key: string, index: number) => ({
+    onPointerDown(e: ReactPointerEvent<HTMLSpanElement>) {
+      const list = listRef.current;
+      if (disabled || info.current || !list || e.pointerType === "touch" || e.button !== 0) return;
+      const rects = [...list.children].map((row) => row.getBoundingClientRect());
+      if (!rects[index]) return;
+      e.preventDefault();
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        // the pointer is already gone: the drag still ends on its pointerup or pointercancel
+      }
+      const y = window.scrollY;
+      info.current = {
+        key,
+        from: index,
+        mids: rects.map((r) => r.top + y + r.height / 2),
+        size: rects[index].height,
+        grab: e.clientY - rects[index].top,
+        top: rects[0].top + y,
+        bottom: rects[rects.length - 1].bottom + y,
+        clientY: e.clientY,
+        startY: e.clientY,
+        moving: false,
+        topEdge: 0,
+        raf: 0,
+        shift: 0,
+      };
+    },
+    onPointerMove(e: ReactPointerEvent<HTMLSpanElement>) {
+      const d = info.current;
+      if (!d) return;
+      d.clientY = e.clientY;
+      if (!d.moving) {
+        // Not a drag until the pointer has moved: only then does the row lift and the page scroll near an edge.
+        if (Math.abs(e.clientY - d.startY) < DRAG_START) return;
+        d.moving = true;
+        d.topEdge = Math.max(0, document.querySelector(".site-header")?.getBoundingClientRect().bottom ?? 0);
+        d.raf = requestAnimationFrame(scrollNearEdge);
+      }
+      update();
+    },
+    onPointerUp: () => end(true),
+    onPointerCancel: () => end(false),
+    onLostPointerCapture: () => end(false),
+  });
+
+  return { listRef, drag, grip };
+}
+
 /** Building a list, or editing the saved one: the search, the list with its controls, and "Save". */
 function Builder({
   snap,
   median,
   onAdd,
   onMove,
+  onMoveTo,
   onRemove,
   onSave,
   onCancel,
@@ -475,6 +700,7 @@ function Builder({
   median: number | null;
   onAdd: (b: RankerBurger) => void;
   onMove: (key: string, delta: number) => void;
+  onMoveTo: (key: string, to: number) => void;
   onRemove: (key: string) => void;
   onSave: () => void;
   onCancel: () => void;
@@ -491,6 +717,9 @@ function Builder({
   const held = snap.busy !== null;
   const editing = snap.saved !== null;
   const canSave = !problem && !held && (snap.dirty || !editing);
+  const { listRef, drag, grip } = useDragToReorder(onMoveTo, held);
+  // While a row is dragged, the rows show (and are numbered) in the order they would have after the drop.
+  const order = drag ? moveItemTo(draft, drag.key, drag.to) : draft;
   // The status line: saving, the last failure, why "Save" can't go yet (once tried), or what just happened.
   const status: ReactNode =
     snap.busy === "saving" ? (
@@ -513,6 +742,7 @@ function Builder({
         {editing ? "Edit your list." : "Your top 10."}
       </h3>
       <p className="t-ui-m muted mt-1">Pick the burgers you like best, your favorite first: at least 3, up to 25.</p>
+      <LinkAddNote snap={snap} />
 
       <BurgerSearch snap={snap} median={median} onAdd={onAdd} onRetryMenus={onRetryMenus} />
 
@@ -520,16 +750,26 @@ function Builder({
         Your list
       </p>
       {draft.length ? (
-        <ol className="ranker-list mt-2" aria-labelledby={`${uid}-list`}>
+        <ol ref={listRef} className={`ranker-list can-drag mt-2${drag ? " is-dragging" : ""}`} aria-labelledby={`${uid}-list`}>
           {draft.map((key, i) => {
             const b = snap.burgers.get(key);
             const name = b ? b.label : ready ? "A burger no longer on the Burger Index" : "this burger";
+            const at = order.indexOf(key);
             return (
-              <li key={key} data-row={key} className={`ranker-row${i === TOP_N ? " is-first-extra" : ""}`}>
-                {i === TOP_N ? <ExtraRule /> : null}
+              <li
+                key={key}
+                data-row={key}
+                className={`ranker-row${at === 0 ? " is-top" : ""}${at === TOP_N ? " is-first-extra" : ""}${drag?.key === key ? " is-dragged" : ""}`}
+                style={drag ? { order: at } : undefined}
+              >
+                {at === TOP_N ? <ExtraRule /> : null}
+                {/* Pointer only (keyboard and touch use the arrows), so hidden from assistive technology. */}
+                <span className="ranker-grip" aria-hidden="true" {...grip(key, i)}>
+                  <GripVertical strokeWidth={2} />
+                </span>
                 <span className="ranker-rank">
                   <span className="sr-only">Number </span>
-                  {i + 1}
+                  {at + 1}
                 </span>
                 <div className="ranker-what">
                   {b ? (

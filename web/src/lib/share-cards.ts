@@ -9,7 +9,7 @@ import { getBestBurgers } from "./best-burgers-data";
 import { BOROUGH_META } from "./boroughs";
 import { getBorough, getGeneratedAt, getNeighborhoodPages, getPricedRestaurants, getStats, neighborhoodMenuCounts } from "./data";
 import { formatDate, pluralize } from "./format";
-import { LANDMARKS_TICKET, landmarkCountLine, landmarkPath, landmarksWithPages, landmarkTitle, spotDistance } from "./landmarks";
+import { isAlong, LANDMARKS_TICKET, landmarkCountLine, landmarkPath, landmarksWithPages, landmarkTitle, spotDistance } from "./landmarks";
 import { boardCountLine, PEOPLES_TOP_TICKET } from "./peoples-top";
 import { getPeoplesTop } from "./peoples-top-data";
 import { RANKING_TICKETS, rankingCountLine, rankingName, rankingPath, rankingSpecs, rankMenus } from "./rankings";
@@ -58,7 +58,7 @@ function build(): Map<string, ShareCard> {
         ticket: LANDMARKS_TICKET,
         title: landmarkTitle(landmark),
         rows: spots.map((s) => ({ rank: null, name: s.restaurant.name, detail: `${s.restaurant.burger.name} · ${spotDistance(s)}`, price: s.restaurant.index_price })),
-        count: landmarkCountLine(spots.length),
+        count: landmarkCountLine(spots.length, isAlong(landmark)),
       }),
     );
   }

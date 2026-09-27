@@ -10,6 +10,7 @@ import { formatMonthYear } from "@/lib/format";
 import { breadcrumbNode, itemListNode, type Crumb } from "@/lib/jsonld";
 import { landmarkPages } from "@/lib/landmark-routes";
 import {
+  isAlong,
   LANDMARKS_CRUMB,
   LANDMARKS_PATH,
   LANDMARKS_TICKET,
@@ -47,6 +48,7 @@ export function landmarkMetadata(page: LandmarkPage): Metadata {
   const seo = landmarkSeo({
     near: page.landmark.near,
     short: page.landmark.short,
+    along: isAlong(page.landmark),
     spots: page.spots.length,
     radius: RADIUS_WORDS,
     walk: WALK_WORDS,
@@ -181,7 +183,7 @@ export function LandmarkPageView({ page }: { page: LandmarkPage }) {
       <div className="wrap">
         <section className="mt-2" aria-label={title}>
           <LandmarkTable spots={spots} median={median} caption={title} />
-          <p className="t-ui-s muted mt-3">{landmarkCountLine(spots.length)}</p>
+          <p className="t-ui-s muted mt-3">{landmarkCountLine(spots.length, isAlong(landmark))}</p>
           <p className="mt-6">
             <Link href={landmarkMapHref(landmark)} className="btn btn-secondary">
               <MapPin strokeWidth={2} aria-hidden="true" />

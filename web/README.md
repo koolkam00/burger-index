@@ -103,11 +103,16 @@ fetches nothing.
   save. Refusals come back as HTTP 400 (SQLSTATE 22023) and rate limits as 429 (PT429), each with a stable `hint` code.
 - `src/lib/ranker.ts`: pure helpers: the list's limits and edits, the burgers as the ranker shows them (a chain at its usual
   location with "N locations"; a name two menus share gets its neighborhood), search (accents and dots folded), the replies
-  checked, the status lines and the error copy. Tested in `test/ranker.test.ts`.
+  checked, the status lines and the error copy, and a restaurant page's "Add to your top 10" (`addParam`, `withoutAddParam`,
+  `linkAddOutcome`, `linkAddText`; the link itself is `rankerAddHref` in `src/lib/site.ts`), and drag to reorder with a
+  mouse (`dragIndex`: where a dragged row lands; `dragTop`: where it is drawn; the pointer handling is `useDragToReorder` in
+  `components/ranker/Ranker.tsx`, a grip shown only for a fine, hovering pointer from 480px). Tested in `test/ranker.test.ts`.
 - `src/lib/ranker-store.ts`: the ranker's state as an external store (the burgers, the saved list, the list on the card, what
   is on its way); an unsaved list is kept in `sessionStorage` (`bi-ranker-draft`), and `localStorage` `bi-ranker-saved` says
   this browser has a saved list, which the `<head>` script turns into `html.ranker-saved` (a skeleton, not an empty list,
-  until the saved one loads). Every storage access is wrapped. Tested with a fake backend in `test/ranker-store.test.ts`.
+  until the saved one loads). Every storage access is wrapped. `addFromLink` holds a restaurant page's burger until the
+  burgers and the saved list are known, then adds it (or says it is there already, or the list is full) as `linkAdd`.
+  Tested with a fake backend in `test/ranker-store.test.ts`.
 - `src/lib/menu-list.ts` and `src/app/data/menus.json/route.ts`: the force-static `/data/menus.json` (every distinct priced
   menu with its priced locations and, where the daily board shows it, its People's Top 10 standing, `{rank}` or `{rising}`;
   and the neighborhoods' names), fetched when the ranker mounts (and by the badge page's finder), so no menu sits in the home
@@ -217,7 +222,8 @@ there is no banner, and surveys, product tours and the conversations widget are 
 | `burger_search` | `surface` (`burgers`), `query`, `results` | the /burgers search box, once typing pauses for 1 s; empty and repeated queries are skipped (the ranker's search sends nothing) |
 | `burger_filter_changed` | `filter` (`borough`, `neighborhood`, `price`, `sort`, `clear_all`), `value`, `results` | every /burgers control: filter popovers, the mobile sheet, chips, price presets, the sort select and the column headers |
 | `ranking_started` | `edited` (the list being changed was saved before) | the first change to a list in the home ranker (a new one, or the saved one being edited) |
-| `ranking_item_added` | `menu_key`, `position` (1-based: the list's new length) | "Add" in the ranker's search |
+| `ranking_item_added` | `menu_key`, `position` (1-based: the list's new length), `surface` (`search`, or `restaurant_page`: added from a restaurant page's "Add to your top 10") | "Add" in the ranker's search, or the ranker adding a restaurant page's burger (`/?add=<menu key>`) once it can |
+| `add_to_list_clicked` | `menu_key`, `restaurant_id` | "Add to your top 10" on a restaurant page (`components/RestaurantLinks.tsx`) |
 | `ranking_saved` | `length`, `edited` | a list saved (once Supabase saved it) |
 | `ranking_deleted` | `length` | "Delete my list", confirmed and done |
 | `peoples_top_clicked` | `surface` (`nav`, `menu_sheet`, `ranker`, `home`), `from_path` (the path only: no query, no hash) | a link to the People's Top 10 in the header nav, the menu sheet, the ranker card (its top line, or "See the full People's Top 10" beside a list) or under the home board |
@@ -273,14 +279,15 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
 - **Burgers near a landmark (`/burgers-near`, `/burgers-near/<landmark>`, user decision 2026-09-26):** for searches like
   "burger near Times Square". `src/lib/landmarks.mjs` holds the landmarks (slug, name, the name in a sentence, borough and
   point: each landmark's Wikipedia coordinates, the article named in a comment; places that are effectively one point are
-  one landmark, such as Penn Station and Madison Square Garden, and a page names only the place its point measures, so
-  Columbus Circle, Chelsea Market and City Hall stand alone while Central Park South, the High Line and the Brooklyn Bridge,
-  which run on past the half mile, have no page; `short`, a shorter name for the title of a long one, so every title keeps
+  one landmark, such as Penn Station and Madison Square Garden, and a point page names only the place its point measures, so
+  Columbus Circle, Chelsea Market and City Hall stand alone; the long places, the High Line, Central Park South and the
+  Brooklyn Bridge, carry a `path` (OpenStreetMap's line, simplified to within 10 m) and are measured along their length,
+  "anywhere along it"; `short`, a shorter name for the title of a long one, so every title keeps
   its count and month), the radius (half a mile,
   0.804672 km, "about a 10-minute walk") and the minimum (5 spots). It is plain JS so `scripts/check-seo.mjs` reads the same
   points. `src/lib/landmarks.ts` (pure, client-safe) does the rest: `spotsNear` (every priced location within the radius as the
-  crow flies, nearest first, ties by name; a chain's two locations are two rows, and a restaurant without coordinates is never
-  on a list, so the count line is the plain "36 burger spots within half a mile, nearest first.", never "All 36 …"), `landmarksWithPages` (the landmarks with 5+ spots, in borough order: 17 today; DUMBO, Yankee Stadium, Citi Field
+  crow flies, of the point or of any point along a path (`distanceToPathKm`), nearest first, ties by name; a chain's two locations are two rows, and a restaurant without coordinates is never
+  on a list, so the count line is the plain "36 burger spots within half a mile, nearest first.", never "All 36 …"), `landmarksWithPages` (the landmarks with 5+ spots, in borough order: 20 today; DUMBO, Yankee Stadium, Citi Field
   and Coney Island have fewer, so no page until the dataset has more), `landmarkSentence` (the lede: "36 burger spots within
   half a mile of Times Square, about a 10-minute walk; their priciest burgers run from $12.65 at … to $34.00 at …
   (September 2026)."), the count line, the hub's rows and sentence, and `landmarkBounds` for the map. `components/Landmarks.tsx`

@@ -11,6 +11,7 @@ import { isMenuKey, MENU_LIST_PATH, parseMenuList } from "./menu-list";
 import {
   addItem,
   classifyRankerError,
+  linkAddOutcome,
   listProblem,
   MAX_ITEMS,
   moveItem,
@@ -18,6 +19,7 @@ import {
   rankerBurgers,
   removeItem,
   sameList,
+  type LinkAdd,
   type RankerBurger,
   type RankerErrorKind,
   type SavedRanking,
@@ -59,6 +61,11 @@ export type RankerSnapshot = {
   notice: "saved" | "deleted" | null;
   /** "Delete my list" asked to be sure. */
   confirmDelete: boolean;
+  /**
+   * What a restaurant page's "Add to your top 10" (/?add=<key>) did, once the burgers and this browser's saved list
+   * were known: shown and announced until the list next changes (null: none).
+   */
+  linkAdd: LinkAdd | null;
 };
 
 export type RankerApi = {
@@ -95,6 +102,17 @@ export type RankerStore = {
   remove(key: string): void;
   move(key: string, delta: number): void;
   moveTo(key: string, index: number): void;
+  /**
+   * Add a burger from a link (a restaurant page's "Add to your top 10"): it waits until the burgers and this browser's
+   * saved list have loaded, then goes at the end of the list on the card if it isn't there and there's room (a saved
+   * list is then being edited). `linkAdd` says what happened.
+   */
+  addFromLink(key: string): void;
+  /**
+   * The ranker says and tracks a link's add once: true the first time it asks about the current `linkAdd`, false after
+   * (the ranker mounted again on a return to home, or its effect ran twice) and for an outcome no longer current.
+   */
+  claimLinkAdd(outcome: LinkAdd): boolean;
   /** Edit the saved list. */
   edit(): void;
   /** Drop the changes and show the saved list again. */
@@ -140,9 +158,14 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
   let failure: RankerFailure | null = null;
   let notice: RankerSnapshot["notice"] = null;
   let confirmDelete = false;
+  /** A burger a link asked to add, waiting for the burgers and the saved list. */
+  let pendingAdd: string | null = null;
+  let linkAdd: LinkAdd | null = null;
+  /** The ranker has said (and tracked) `linkAdd`. Kept here, not in the component, so a remount doesn't say it again. */
+  let linkAddSaid = false;
 
   const isDirty = () => (saved ? !sameList(draft, saved.items) : draft.length > 0);
-  const snapshotOf = (): RankerSnapshot => ({ started, menus, burgers, mine, saved, view, draft, dirty: isDirty(), busy, failure, notice, confirmDelete });
+  const snapshotOf = (): RankerSnapshot => ({ started, menus, burgers, mine, saved, view, draft, dirty: isDirty(), busy, failure, notice, confirmDelete, linkAdd });
   const serverSnap = snapshotOf();
   let snap = serverSnap;
 
@@ -191,7 +214,23 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     notice = null;
     failure = null;
     confirmDelete = false;
+    linkAdd = null;
     persistDraft();
+    emit();
+  }
+
+  /**
+   * A link's add, once it can be judged: the burgers are loaded (is it on the Burger Index?) and so is this browser's
+   * saved list (which list it goes on). It goes through `change`, like an add from the search.
+   */
+  function settleLinkAdd() {
+    if (pendingAdd === null || !started || busy || menus !== "ready" || (mine !== "none" && mine !== "ready")) return;
+    const key = pendingAdd;
+    pendingAdd = null;
+    const outcome = linkAddOutcome(draft, key, (k) => burgers.has(k));
+    if (outcome.kind === "added") change([...draft, key]);
+    linkAdd = outcome;
+    linkAddSaid = false;
     emit();
   }
 
@@ -230,6 +269,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
           menus = "ready";
           menusLoading = null;
           emit();
+          settleLinkAdd();
         },
         () => {
           menus = "error";
@@ -265,6 +305,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
           persistFlag();
           persistDraft();
           emit();
+          settleLinkAdd();
         },
         () => {
           mineLoading = null;
@@ -280,11 +321,24 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     move: (key, delta) => change(moveItem(draft, key, delta)),
     moveTo: (key, index) => change(moveItemTo(draft, key, index)),
 
+    addFromLink(key) {
+      if (!isMenuKey(key)) return;
+      pendingAdd = key;
+      settleLinkAdd();
+    },
+
+    claimLinkAdd(outcome) {
+      if (outcome !== linkAdd || linkAddSaid) return false;
+      linkAddSaid = true;
+      return true;
+    },
+
     edit() {
       if (!saved || busy) return;
       view = "edit";
       notice = null;
       confirmDelete = false;
+      linkAdd = null;
       emit();
     },
 
@@ -294,6 +348,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
       view = "saved";
       failure = null;
       notice = null;
+      linkAdd = null;
       persistDraft();
       emit();
     },
@@ -310,6 +365,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
       failure = null;
       notice = null;
       confirmDelete = false;
+      linkAdd = null;
       emit();
       try {
         const reply = await deps.api.save(deps.voter.get(), items);
@@ -349,6 +405,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
       const length = saved.items.length;
       busy = "deleting";
       failure = null;
+      linkAdd = null;
       emit();
       try {
         const withdrawn = voter ? await deps.api.del(voter) : true;

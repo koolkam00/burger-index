@@ -814,6 +814,86 @@ def test_committed_menu_url_overrides_name_restaurants_on_the_list():
     assert set(sources.load_menu_url_overrides()) <= keys
 
 
+def place_fix(address="160 East 38 Street", lat=40.748081, lng=-73.976836, **kw):
+    return {"address": address, "lat": lat, "lng": lng, "address_source": "https://theoffice.nyc/",
+            "geocode_source": "https://geosearch.planninglabs.nyc/v2/search?text=160%20East%2038%20Street",
+            "checked_at": "2026-09-26", "reason": "its own site gives the address", **kw}
+
+
+def test_location_overrides_place_an_unmatched_row_without_moving_it(nta_map):
+    rows = [csv_row("At The Office", "Murray Hill"), csv_row("Due West", row=2), csv_row("Nowhere Bar", row=3)]
+    recs = [dohmh("4", "DUE WEST", building="189", street="WEST 10 STREET")]
+    overrides = {
+        "csv:at-the-office-manhattan": place_fix(),
+        "camis:4": place_fix(),  # a matched row: loaded files refuse camis keys, and it would not apply anyway
+        "csv:due-west-manhattan": place_fix(),  # the row matched DOHMH, so its key is camis:4 now
+    }
+    before, _ = sources.build_restaurants(rows, recs, nta_map)
+    out, report = sources.build_restaurants(rows, recs, nta_map, locations=overrides)
+    office, due, nowhere = out
+    # attached, never written over the record's own fields: the scrape reads those, so its cache replays exactly
+    assert office["location_override"] == {"address": "160 East 38 Street", "lat": 40.748081, "lng": -73.976836,
+                                           "checked_at": "2026-09-26", "source_url": "https://theoffice.nyc/"}
+    assert (office["address"], office["lat"], office["lng"]) == (None, None, None)
+    # never the neighborhood, NTA or key, which the restaurant id and results are keyed on
+    strip = lambda r: {k: v for k, v in r.items() if k != "location_override"}  # noqa: E731
+    assert [strip(r) for r in out] == before
+    assert sources.located(office) == ("160 East 38 Street", 40.748081, -73.976836)
+    assert sources.located(nowhere) == (None, None, None)
+    assert sources.located(due) == ("189 West 10 Street", 40.73, -73.99)  # a record's own location stands
+    assert report["location_overrides_applied"] == ["csv:at-the-office-manhattan"]
+    assert report["location_overrides_unused"] == [
+        {"key": "camis:4", "why": "the record already has coordinates"},
+        {"key": "csv:due-west-manhattan",
+         "why": "no restaurant with this key in scope (renamed, matched to DOHMH, dropped or excluded)"}]
+    # a record with its own address keeps it; only the coordinates come from the override
+    assert sources.located({"address": "1 Main Street", "lat": None, "lng": None,
+                            "location_override": {"address": "2 Main Street", "lat": 40.7, "lng": -74.0}}) == (
+        "1 Main Street", 40.7, -74.0)
+
+
+def test_location_override_never_reaches_the_scrape_search(nta_map):
+    from pipeline.chains import build_targets
+    from pipeline.discover import search_query
+
+    rows = [csv_row("At The Office", "Murray Hill")]
+    plain, _ = sources.build_restaurants(rows, [], nta_map)
+    placed, _ = sources.build_restaurants(rows, [], nta_map, locations={"csv:at-the-office-manhattan": place_fix()})
+    q = search_query(build_targets(placed)[0])
+    assert q == search_query(build_targets(plain)[0]) and "38" not in q  # same request, same cache key
+
+
+def test_location_overrides_file_is_strict(tmp_path):
+    assert sources.load_location_overrides(tmp_path / "missing.json") == {}
+    committed = sources.load_location_overrides()  # pipeline/data/location_overrides.json
+    assert committed and all(k.startswith("csv:") for k in committed)
+    assert all(o["address"] and o["reason"] and o["checked_at"] for o in committed.values())
+    bad = tmp_path / "bad.json"
+    for key, entry in (("camis:4", place_fix()),  # a DOHMH record: dohmh_overrides.json
+                       ("At The Office", place_fix()),
+                       ("csv:x", {**place_fix(), "nta": "MN20"}),  # never the neighborhood
+                       ("csv:x", place_fix(address=" ")),
+                       ("csv:x", place_fix(lat="40.7")),
+                       ("csv:x", place_fix(lat=-73.97, lng=40.74)),  # swapped
+                       ("csv:x", place_fix(lat=42.36, lng=-71.06)),  # not in NYC
+                       ("csv:x", {**place_fix(), "address_source": "theoffice.nyc"}),
+                       ("csv:x", {**place_fix(), "checked_at": "Sept 26"}),
+                       ("csv:x", {**place_fix(), "reason": ""})):
+        bad.write_text(json.dumps({"overrides": {key: entry}}))
+        with pytest.raises(ValueError, match="bad location override"):
+            sources.load_location_overrides(bad)
+
+
+def test_committed_location_overrides_name_unmatched_rows_on_the_list():
+    from pipeline import config
+
+    if not config.RESTAURANTS_PATH.exists():
+        pytest.skip("no data/restaurants.json")
+    records = {r["key"]: r for r in json.loads(config.RESTAURANTS_PATH.read_text())["restaurants"]}
+    for key in sources.load_location_overrides():
+        assert key in records and records[key]["camis"] is None, key
+
+
 def test_blank_dohmh_name_at_a_named_address_does_not_crash(nta_map):
     # DOHMH has a record with an empty DBA at 585 E 189th St; a list row naming that address must still match.
     rows = [dohmh("300", "", building="585", street="EAST 189 STREET", boro="Bronx", nta="BX06", zipcode="10458"),

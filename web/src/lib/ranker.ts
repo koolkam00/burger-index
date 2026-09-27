@@ -11,6 +11,7 @@ import { normalize, queryTokens } from "./explorer";
 import { formatDate, formatIsoDay, pluralize } from "./format";
 import { isMenuKey, type MenuListData } from "./menu-list";
 import type { PeopleStanding } from "./peoples-top";
+import { RANKER_ADD_PARAM } from "./site";
 
 /** A list holds 3 to 25 burgers (the backend refuses anything else). */
 export const MIN_ITEMS = 3;
@@ -50,6 +51,26 @@ export function moveItemTo(list: readonly string[], key: string, index: number):
   return out;
 }
 
+/**
+ * Where a row being dragged lands (drag to reorder, with a mouse): `mids` are the rows' vertical midpoints when the drag
+ * began (list order, one coordinate system), `from` the dragged row's index and `center` its midpoint now. It passes
+ * another row once its midpoint crosses that row's, and never leaves the list.
+ */
+export function dragIndex(mids: readonly number[], from: number, center: number): number {
+  let to = from;
+  while (to + 1 < mids.length && center > mids[to + 1]) to++;
+  if (to === from) while (to - 1 >= 0 && center < mids[to - 1]) to--;
+  return to;
+}
+
+/**
+ * Where the dragged row's top is drawn: under the pointer (`pointer` minus `grab`, the pointer's distance from the row's
+ * top when the drag began), kept inside the list (from its first row's top to its last row's bottom).
+ */
+export function dragTop(pointer: number, grab: number, top: number, bottom: number, size: number): number {
+  return Math.max(top, Math.min(bottom - size, pointer - grab));
+}
+
 export function sameList(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((k, i) => k === b[i]);
 }
@@ -61,6 +82,53 @@ export function listProblem(list: readonly string[], known: (key: string) => boo
   if (list.length < MIN_ITEMS) return "too_short";
   if (list.length > MAX_ITEMS) return "too_long";
   return null;
+}
+
+// ---- adding from a restaurant page ("Add to your top 10": /?add=<menu key>#rank) ----------------------
+
+/** The menu key a link asks the ranker to add (`?add=<key>` in `search`), or null: none, or not a menu key. */
+export function addParam(search: string): string | null {
+  const v = new URLSearchParams(search).get(RANKER_ADD_PARAM);
+  return v !== null && isMenuKey(v) ? v : null;
+}
+
+/** `search` without the add parameter (the others kept): "" or "?x=1". The ranker puts this in the address once it has read it. */
+export function withoutAddParam(search: string): string {
+  const params = new URLSearchParams(search);
+  params.delete(RANKER_ADD_PARAM);
+  const rest = params.toString();
+  return rest ? `?${rest}` : "";
+}
+
+/** What a link's add did: added at the end (its new place), already on the list (its place), the list full, or a burger the Burger Index doesn't have. */
+export type LinkAdd = { key: string } & ({ kind: "added" | "already"; position: number } | { kind: "full" | "gone" });
+
+/** What adding `key` from a link does to `list` (`known`: the burger is on the Burger Index). */
+export function linkAddOutcome(list: readonly string[], key: string, known: (key: string) => boolean): LinkAdd {
+  const at = list.indexOf(key);
+  if (at >= 0) return { key, kind: "already", position: at + 1 };
+  if (!known(key)) return { key, kind: "gone" };
+  if (list.length >= MAX_ITEMS) return { key, kind: "full" };
+  return { key, kind: "added", position: list.length + 1 };
+}
+
+/**
+ * The card's line (and the announcement) for a link's add: "Emily added at #4. 4 burgers on your list." (to a saved
+ * list, which is now being edited: "Emily added at #5. Save changes to keep it."), "Emily is already on your list, at #2.",
+ * "Your list is full: 25 burgers. Remove one to add Emily." (in the saved view, which has no remove buttons: "Your list is
+ * full: 25 burgers. Edit your list and remove one to add Emily.") or "That burger is no longer on the Burger Index."
+ */
+export function linkAddText(r: LinkAdd, label: string, editingSaved: boolean, view: "edit" | "saved" = "edit"): string {
+  switch (r.kind) {
+    case "added":
+      return editingSaved ? `${label} added at #${r.position}. Save changes to keep it.` : `${label} added at #${r.position}. ${pluralize(r.position, "burger")} on your list.`;
+    case "already":
+      return `${label} is already on your list, at #${r.position}.`;
+    case "full":
+      return `Your list is full: ${MAX_ITEMS} burgers. ${view === "saved" ? "Edit your list and remove" : "Remove"} one to add ${label}.`;
+    case "gone":
+      return "That burger is no longer on the Burger Index.";
+  }
 }
 
 // ---- the burgers -----------------------------------------------------------------------------------

@@ -4,8 +4,13 @@ import { datasetMenuKeys } from "../scripts/snapshot-peoples-top.mjs";
 import { isMenuKey, listedMenus, MENU_KEY_PATTERN, menuListData, parseMenuList } from "../src/lib/menu-list";
 import {
   addItem,
+  addParam,
   classifyRankerError,
   countLine,
+  dragIndex,
+  dragTop,
+  linkAddOutcome,
+  linkAddText,
   listProblem,
   MAX_ITEMS,
   MIN_ITEMS,
@@ -20,7 +25,9 @@ import {
   sameList,
   savedStatusText,
   searchBurgers,
+  withoutAddParam,
 } from "../src/lib/ranker";
+import { RANKER_ADD_PARAM, rankerAddHref } from "../src/lib/site";
 import type { Restaurant } from "../src/lib/schema";
 import { THEME_BOOT_SCRIPT } from "../src/lib/theme-script";
 import { loadDataset } from "./dataset";
@@ -225,4 +232,68 @@ test("failures: the backend's hint codes, rate limits (HTTP 429), refusals and n
 test("the <head> script flags a saved ranking (and no longer a pricer area)", () => {
   assert.match(THEME_BOOT_SCRIPT, /localStorage\.getItem\('bi-ranker-saved'\)\)d\.classList\.add\('ranker-saved'\)/);
   assert.doesNotMatch(THEME_BOOT_SCRIPT, /pricer/);
+});
+
+test("a restaurant page's 'Add to your top 10': the link, the parameter read back, and the address without it", () => {
+  assert.equal(RANKER_ADD_PARAM, "add");
+  assert.equal(rankerAddHref("due-west-west-village"), "/?add=due-west-west-village#rank");
+  assert.equal(rankerAddHref("chain:7th-street-burger"), "/?add=chain%3A7th-street-burger#rank");
+  // read back from the address the link opens (the hash is not in location.search)
+  for (const key of ["due-west-west-village", "chain:7th-street-burger"]) assert.equal(addParam(new URL(rankerAddHref(key), "https://x.test").search), key);
+  assert.equal(addParam("?add=chain:jimbos"), "chain:jimbos");
+  // anything that isn't a menu key is ignored
+  for (const bad of ["", "?q=x", "?add=", "?add=Not%20A%20Key", "?add=%3Cscript%3E", `?add=${"a".repeat(121)}`]) assert.equal(addParam(bad), null, bad);
+  assert.equal(withoutAddParam("?add=chain%3Ajimbos"), "");
+  assert.equal(withoutAddParam("?x=1&add=sals&y=2"), "?x=1&y=2");
+  assert.equal(withoutAddParam(""), "");
+});
+
+test("adding from a link: at the end when there is room, else it says why; the words for each", () => {
+  const known = (k: string) => k !== "gone";
+  assert.deepEqual(linkAddOutcome([], "sals", known), { key: "sals", kind: "added", position: 1 });
+  assert.deepEqual(linkAddOutcome(["a", "b", "c"], "sals", known), { key: "sals", kind: "added", position: 4 });
+  assert.deepEqual(linkAddOutcome(["a", "sals", "c"], "sals", known), { key: "sals", kind: "already", position: 2 });
+  const full = Array.from({ length: MAX_ITEMS }, (_, i) => `b${i}`);
+  assert.deepEqual(linkAddOutcome(full, "sals", known), { key: "sals", kind: "full" });
+  assert.deepEqual(linkAddOutcome([...full.slice(0, 24), "sals"], "sals", known), { key: "sals", kind: "already", position: 25 }, "on a full list it is still already there");
+  assert.deepEqual(linkAddOutcome(["a"], "gone", known), { key: "gone", kind: "gone" });
+
+  assert.equal(linkAddText({ key: "sals", kind: "added", position: 1 }, "Sal's", false), "Sal's added at #1. 1 burger on your list.");
+  assert.equal(linkAddText({ key: "sals", kind: "added", position: 4 }, "Sal's", false), "Sal's added at #4. 4 burgers on your list.");
+  assert.equal(linkAddText({ key: "sals", kind: "added", position: 6 }, "Sal's", true), "Sal's added at #6. Save changes to keep it.");
+  assert.equal(linkAddText({ key: "sals", kind: "already", position: 2 }, "Sal's", true), "Sal's is already on your list, at #2.");
+  assert.equal(linkAddText({ key: "sals", kind: "full" }, "Sal's", false), "Your list is full: 25 burgers. Remove one to add Sal's.");
+  // the saved view has no remove buttons: it says to edit first
+  assert.equal(linkAddText({ key: "sals", kind: "full" }, "Sal's", false, "edit"), "Your list is full: 25 burgers. Remove one to add Sal's.");
+  assert.equal(linkAddText({ key: "sals", kind: "full" }, "Sal's", false, "saved"), "Your list is full: 25 burgers. Edit your list and remove one to add Sal's.");
+  assert.equal(linkAddText({ key: "sals", kind: "already", position: 2 }, "Sal's", true, "saved"), "Sal's is already on your list, at #2.");
+  assert.equal(linkAddText({ key: "gone", kind: "gone" }, "A burger no longer listed", false), "That burger is no longer on the Burger Index.");
+});
+
+test("drag to reorder: where a dragged row lands, where it is drawn, and the list it leaves", () => {
+  // Five 56px rows: midpoints 28, 84, 140, 196, 252 (a row passes another once its middle crosses the other's).
+  const mids = [28, 84, 140, 196, 252];
+  assert.equal(dragIndex(mids, 1, 84), 1, "not moved");
+  assert.equal(dragIndex(mids, 1, 139), 1, "not yet past #3's middle");
+  assert.equal(dragIndex(mids, 1, 141), 2);
+  assert.equal(dragIndex(mids, 1, 250), 3);
+  assert.equal(dragIndex(mids, 1, 9999), 4, "never past the end");
+  assert.equal(dragIndex(mids, 3, 29), 1);
+  assert.equal(dragIndex(mids, 3, 27), 0);
+  assert.equal(dragIndex(mids, 3, -500), 0, "never before the start");
+  assert.equal(dragIndex([100], 0, 400), 0, "a list of one");
+  // Rows of different heights (the #11 row carries the "Beyond your top 10" rule): still by midpoints.
+  assert.equal(dragIndex([28, 84, 164, 244], 0, 165), 2);
+
+  // The row is drawn under the pointer, inside the list: a list from 100 to 380, a 56px row grabbed 20px below its top.
+  assert.equal(dragTop(250, 20, 100, 380, 56), 230);
+  assert.equal(dragTop(90, 20, 100, 380, 56), 100, "not above the first row");
+  assert.equal(dragTop(900, 20, 100, 380, 56), 324, "not below the last row");
+  // where it lands follows the pointer, so past the list's end is the last place though the row stops at the edge
+  assert.equal(dragIndex([128, 184, 240, 296, 352], 0, 900 - 20 + 28), 4);
+  assert.equal(dragIndex([128, 184, 240, 296, 352], 4, 0 - 20 + 28), 0);
+  // The drop is a move to that place (the numbers shown while dragging are the landing order).
+  const list = ["a", "b", "c", "d", "e"];
+  assert.deepEqual(moveItemTo(list, "b", dragIndex(mids, 1, 250)), ["a", "c", "d", "b", "e"]);
+  assert.deepEqual(moveItemTo(list, "d", dragIndex(mids, 3, 20)), ["d", "a", "b", "c", "e"]);
 });

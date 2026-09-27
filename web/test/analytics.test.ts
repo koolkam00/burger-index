@@ -160,7 +160,8 @@ test("the ranker's events carry lengths, positions and menu keys only, never a v
     await tick();
   });
   a.track("ranking_started", { edited: false });
-  a.track("ranking_item_added", { menu_key: "chain:7th-street-burger", position: 1 });
+  a.track("ranking_item_added", { menu_key: "chain:7th-street-burger", position: 1, surface: "search" });
+  a.track("add_to_list_clicked", { menu_key: "chain:7th-street-burger", restaurant_id: "7th-street-burger-east-village" });
   a.track("ranking_saved", { length: 10, edited: false });
   a.track("ranking_started", { edited: true });
   a.track("ranking_saved", { length: 12, edited: true });
@@ -169,7 +170,8 @@ test("the ranker's events carry lengths, positions and menu keys only, never a v
   a.track("peoples_top_revealed", { surface: "ranker", list_length: 3 });
   assert.deepEqual(ph.captured, [
     ["ranking_started", { edited: false }],
-    ["ranking_item_added", { menu_key: "chain:7th-street-burger", position: 1 }],
+    ["ranking_item_added", { menu_key: "chain:7th-street-burger", position: 1, surface: "search" }],
+    ["add_to_list_clicked", { menu_key: "chain:7th-street-burger", restaurant_id: "7th-street-burger-east-village" }],
     ["ranking_saved", { length: 10, edited: false }],
     ["ranking_started", { edited: true }],
     ["ranking_saved", { length: 12, edited: true }],

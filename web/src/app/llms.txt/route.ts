@@ -2,7 +2,7 @@ import { BEST_BURGERS_NAME, BEST_BURGERS_PATH, leaders } from "@/lib/best-burger
 import { getBestBurgers, getBestBurgersYears } from "@/lib/best-burgers-data";
 import { getBoroughs, getGeneratedAt, getMenuCounts, getNeighborhoodPages, getPricedRestaurants, getStats, rankedNeighborhoods } from "@/lib/data";
 import { CSV_LICENSE, CSV_PATH } from "@/lib/csv";
-import { LANDMARKS_NAME, LANDMARKS_PATH, landmarkPath, landmarksWithPages, landmarkTitle, priceEnds, RADIUS_WORDS, type LandmarkPage } from "@/lib/landmarks";
+import { ALONG_WORDS, isAlong, LANDMARKS_NAME, LANDMARKS_PATH, landmarkPath, landmarksWithPages, landmarkTitle, priceEnds, RADIUS_WORDS, type LandmarkPage } from "@/lib/landmarks";
 import { llmsTxt } from "@/lib/llms";
 import { formatCount, formatDate, formatPrice, spreadEnds } from "@/lib/format";
 import { menusByIndexPrice, menusByIndexPriceDesc, type Menu } from "@/lib/menus";
@@ -65,13 +65,14 @@ function peoplesTopNote(): string {
 }
 
 /**
- * "36 burger spots within half a mile; their priciest burgers run from $12.65 at … to $34.00 at …" (spots are
- * locations; each spot's priciest burger, never "the cheapest burger near …").
+ * "36 burger spots within half a mile; their priciest burgers run from $12.65 at … to $34.00 at …" (a long place: "…
+ * within half a mile, anywhere along it; …"; spots are locations; each spot's priciest burger, never "the cheapest
+ * burger near …").
  */
 function landmarkNote(page: LandmarkPage): string {
   const money = (v: number) => formatPrice(v, { cents: "always" });
   const ends = priceEnds(page.spots);
-  const head = `${formatCount(page.spots.length)} burger spots within ${RADIUS_WORDS}`;
+  const head = `${formatCount(page.spots.length)} burger spots within ${RADIUS_WORDS}${isAlong(page.landmark) ? `, ${ALONG_WORDS}` : ""}`;
   if (!ends || Math.round(ends.low.restaurant.index_price * 100) === Math.round(ends.high.restaurant.index_price * 100)) return head;
   return `${head}; their priciest burgers run from ${money(ends.low.restaurant.index_price)} at ${ends.low.restaurant.name} to ${money(ends.high.restaurant.index_price)} at ${ends.high.restaurant.name}`;
 }

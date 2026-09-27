@@ -36,6 +36,33 @@
       "reason": "DOHMH lists Tavern on the Green at '67th Street and Central Park West' with 0,0 coordinates, so it had no map location. The restaurant stands in Central Park off West 67th Street; the coordinates are Wikipedia's for it (article 'Tavern on the Green', read 2026-09-26). Only the coordinates are set: the record has no zipcode or NTA, and adding one could move its neighborhood and so its restaurant id.",
       "source_url": "https://en.wikipedia.org/wiki/Tavern_on_the_Green",
       "checked_at": "2026-09-26"
+    },
+    {
+      "camis": "50033699",
+      "dba": "ANGEL OF HARLEM",
+      "when": {"street": "FREDERICK DOUGLASS BOULEVARD", "latitude": "0"},
+      "set": {"latitude": 40.807981, "longitude": -73.952422},
+      "reason": "DOHMH lists Angel of Harlem at 2272 Frederick Douglass Boulevard with 0,0 coordinates and no zipcode or NTA, so it had no map location. Its own site (angelofharlemnyc.com/ourstory, read 2026-09-26) gives 2272 Frederick Douglass Blvd; DOHMH inspected it there on 2026-05-07. The coordinates are NYC Planning's PAD geocode of that address (BBL 1019270061). Only the coordinates are set: adding a zipcode or NTA could move its neighborhood and so its restaurant id.",
+      "source_url": "https://geosearch.planninglabs.nyc/v2/search?text=2272%20Frederick%20Douglass%20Boulevard%2C%20Manhattan",
+      "checked_at": "2026-09-26"
+    },
+    {
+      "camis": "50089893",
+      "dba": "BLVD BISTRO",
+      "when": {"street": "FREDERICK DOUGLASS BOULEVARD", "latitude": "0"},
+      "set": {"latitude": 40.804394, "longitude": -73.955811},
+      "reason": "DOHMH lists BLVD Bistro at 2149 Frederick Douglass Boulevard with 0,0 coordinates and no zipcode or NTA, so it had no map location. Its own site (boulevardbistrony.com, read 2026-09-26) gives 2149 Frederick Douglass Blvd, New York, NY 10026; DOHMH inspected it there on 2026-08-27. The coordinates are NYC Planning's PAD geocode of that address (BBL 1018480053). Only the coordinates are set: adding a zipcode or NTA could move its neighborhood and so its restaurant id.",
+      "source_url": "https://geosearch.planninglabs.nyc/v2/search?text=2149%20Frederick%20Douglass%20Boulevard%2C%20Manhattan",
+      "checked_at": "2026-09-26"
+    },
+    {
+      "camis": "50043566",
+      "dba": "ROW HOUSE",
+      "when": {"street": "FREDERICK DOUGLASS BOULEVARD", "latitude": "0"},
+      "set": {"latitude": 40.803536, "longitude": -73.955652},
+      "reason": "DOHMH lists Row House at 2128 Frederick Douglass Boulevard with 0,0 coordinates and no zipcode or NTA, so it had no map location. Its own site (rowhouseharlem.com, read 2026-09-26) gives 2128 Frederick Douglass Blvd, NYC 10026; DOHMH inspected it there on 2025-11-07. The coordinates are NYC Planning's PAD geocode of that address (BBL 1018300061). Only the coordinates are set: adding a zipcode or NTA could move its neighborhood and so its restaurant id.",
+      "source_url": "https://geosearch.planninglabs.nyc/v2/search?text=2128%20Frederick%20Douglass%20Boulevard%2C%20Manhattan",
+      "checked_at": "2026-09-26"
     }
   ]
 }
