@@ -180,7 +180,9 @@ per-list time is public):
 
 The People's Top 10 also counts **four published burger rankings, each saved as one list that counts exactly like a
 visitor's** (the user asked to seed the board with the critics' rankings "as peoples lists in the database"; only
-genuinely ranked lists, none invented, and the site says so in one short line). They are
+genuinely ranked lists, none invented, and the site says so in one short line: the People's Top 10's sourcing line,
+"Includes 4 published burger rankings, each counted like one visitor's list: The Infatuation (Aug 2026, Jan 2026), …",
+on `/peoples-top-10`, beside the ranker's list and in llms.txt, computed from the data file at build). They are
 `data/ranker_published_lists.json` (facts only: publisher, title, link, date, the menu keys best first, the list's
 own numbers and names for them, and what was left out and why: a national chain, no menu price, not beef, a pick the
 list recommends against, a closed place):
@@ -227,8 +229,10 @@ list at the next refresh, reaches the board with the next publication (a void co
 logged in `ranker_actions` with how many of the lists were in the published aggregates, which is what lets the daily
 job's 20%-drop guard accept the fall, and shows as `status: void` in the public view. **Never delete the rows** (nor
 `ranker_private.ranker_published`, which a deleted list takes with it): a deleted list isn't logged, doesn't count
-as a change, and would trip the daily job's guard as an unexplained drop. Then update the site's disclosure line and
-`data/ranker_published_lists.json` (the test pins the four lists: change it with the user's decision).
+as a change, and would trip the daily job's guard as an unexplained drop. Then update
+`data/ranker_published_lists.json`: give the list's entry a `"voided_on": "YYYY-MM-DD"` (the file keeps what was seeded;
+the seeding migration and its check ignore the field, and the tests pin the four lists: change them with the user's
+decision). The site's sourcing line leaves out a voided list, so it follows on the next build.
 
 **Fading them.** The Patty Ladder has no per-list weight, so they can't be counted at part weight without changing the
 method (a new `PARAMS.version`, the database's `params_version` and the design's simulation gate, FINAL.md 12 B).

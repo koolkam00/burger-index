@@ -196,8 +196,9 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
   by `supabase/migrations/20260927113449_ranker_published_lists.sql` (written from this file by
   `web/scripts/ranker-published-migration.mjs`; `web/test/ranker-published.test.ts` pins the four lists and fails if
   the file and the migration differ): **don't edit it to change the lists** (see "Published rankings in the People's
-  Top 10" under "Website"). Not a pipeline output; nothing in the site build reads it yet (a build that reads it needs it
-  in the root `.vercelignore` allowlist).
+  Top 10" under "Website"). Not a pipeline output. The web build reads it for the People's Top 10's sourcing line
+  (`web/scripts/sync-data.mjs` checks it with `checkPublishedLists` and copies it to `web/src/data/`; it is in the root
+  `.vercelignore` allowlist): a missing or broken file fails the build.
 - `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,125 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, the 2026-09-25 deletions, the 2026-09-25 best-burger-list additions (two rounds) and the 2026-09-26 deletions (Bandits Burger + Dive, closed, and the old Lori Jayne row at Alphaville), see `data/list_changes_2026-09-23.md`: `name, neighborhood,
   borough, website, menu_url, notes, source` where `source` is `pilot-100|uptown|downtown|outer|dohmh-diner-pub|dohmh-hamburgers|best-lists-2026-09`). It's the user's data:
   don't edit it without their approval; report duplicates (`report.csv_duplicate_matches`), unmatched rows (`report.csv_unmatched`),
@@ -247,7 +248,8 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
 
 - **Data in:** `scripts/sync-data.mjs` (runs as `predev`/`prebuild`) copies `../data/burger_index.json` to
   `src/data/`, validates it against the contract with ajv (invalid data fails the build), copies
-  `../data/best_burgers.json` and `../data/peoples_top.json` (the People's Top 10 board: the empty early board when missing or broken) and
+  `../data/best_burgers.json` and `../data/peoples_top.json` (the People's Top 10 board: the empty early board when missing or broken),
+  checks and copies `../data/ranker_published_lists.json` (the People's Top 10's sourcing line; missing or broken fails) and
   copies the MapLibre worker to `public/vendor/maplibre/`; all outputs are generated and gitignored. There is no sample data: a missing
   `data/burger_index.json` fails `dev` and `build` with a message (it is committed; `pipeline build` rewrites it from the
   cache). The web tests read the same file (`test/dataset.ts`) or small inline rows.
@@ -287,7 +289,13 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   #4. 4 burgers on your list.", "… is already on your list, at #2.", "Your list is full: 25 burgers. Remove one to add
   …", in the saved view "… Edit your list and remove one to add …"); the live region and `ranking_item_added` fire once
   per add (`claimLinkAdd` in the store, so a remount on a return to home repeats neither); `check:seo` checks every
-  restaurant page's link. Without the Supabase settings the card says "Lists open soon.",
+  restaurant page's link. **"Share your top 10"** (user decision 2026-09-27) under a saved list (after a save, or a saved
+  list loaded on a return visit) opens a panel: a 1080×1920 story or 1080×1080 square image of the list's first 10
+  (restaurant over "burger · where", names cut with an ellipsis; the share images' list card), drawn in the browser on a
+  canvas with the page's own fonts (`src/lib/share-list-image.ts`; words, rows and geometry pure in `src/lib/share-list.ts`,
+  `test/share-list.test.ts`; `components/ranker/ShareList.tsx`), then "Share image" (the Web Share API with the file, where
+  the browser can share files), "Download image" and "Copy link"; the link is the home ranker, `https://<site>/?ref=share#rank`
+  (`rankerShareUrl(SITE_URL)`, passed by the home page): no list, no voter id. Without the Supabase settings the card says "Lists open soon.",
   fetches nothing, and restaurant pages have no "Add to your top 10". The header's "Rank your burgers" (and the menu sheet's) links to `/#rank` from every page; on home it
   scrolls to the ranker and focuses it; the search icon button sits next to it at every width. Under the home board:
   "See the People's Top 10" and "Most-recommended burgers". Menu keys and restaurant ids must never change (lists are
@@ -301,7 +309,12 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   seats first; a seat whose burger left the dataset goes to the best ranked burger not under review; "≈" only between
   rows that are neighbors on the board too). The page: the 10 seats ("The top 3 so far." early on), the rest of the
   ranking, Rising ("On 7 lists · needs 3 more lists"), "Early results" under 500 lists, "Under review" (an owner hold) and
-  "Checking a surge of lists" (the surge review bar), the one-liner as the only method line, an empty state before
+  "Checking a surge of lists" (the surge review bar), the one-liner as the only method line, **the sourcing line** under it
+  (user decision 2026-09-26/27: "Includes 4 published burger rankings, each counted like one visitor's list: The
+  Infatuation (Aug 2026, Jan 2026), Time Out (Oct 2025) and Brooklyn Magazine (Sep 2024).", each month linked to the list;
+  computed from `data/ranker_published_lists.json` by `src/lib/published-lists.ts` / `published-lists-data.ts`, drawn by
+  `components/PublishedLine.tsx`; the same line under the People's Top 10 beside the ranker's list and in llms.txt;
+  `test/published-lists.test.ts`, and `check:seo` recomputes it), an empty state before
   anything is ranked ("The ladder starts when burgers are on 5 lists each (12 lists so far)."), ItemList JSON-LD only
   (never Review, Rating or AggregateRating), its own share image, the sitemap (dated by the board) and llms.txt; linked
   from the nav ("People's Top 10", replacing "People's Price"), the footer, "More burger rankings." and under the home
@@ -353,8 +366,9 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   never a voter id or hash). **To remove them** (all, or one by `list_id`):
   `select ranker_private.ranker_void(array(select voter_id from ranker_private.ranker_published));` — a void is logged,
   so the daily job's 20%-drop guard accepts the fall; the board changes with the next publication. **Never delete the
-  rows** (unlogged, not counted as a change, trips the guard). Then update the site's disclosure line and the data file
-  (and its test, with the user's decision). **To fade them:** there is no per-list weight (adding one changes the
+  rows** (unlogged, not counted as a change, trips the guard). Then give the list's entry in the data file a
+  `"voided_on": "YYYY-MM-DD"` (the file keeps what was seeded; the seeding migration ignores the field): the site's
+  sourcing line leaves a voided list out, so it follows on the next build. **To fade them:** there is no per-list weight (adding one changes the
   Patty Ladder: `PARAMS.version`, the database's `params_version`, the simulation gate); they fade as visitors' lists
   grow, and the owner decides when to void them (for example once the board leaves "Early results" at 500 lists). A
   publication that updates its ranking is a hand-written migration editing that row like a visitor's edit; the
@@ -418,7 +432,8 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   `ranking_saved` (`length`, `edited`, once
   Supabase saved it) and `ranking_deleted` (`length`); the ranker's first showing of the People's Top 10 beside a list sends `peoples_top_revealed` (`surface: "ranker"`,
   `list_length`, once per page view); links to the People's Top 10 send `peoples_top_clicked` (`surface`:
-  `nav` / `menu_sheet` / `ranker` / `home`, `from_path`: the path only); the badge page's and press kit's "Copy" buttons
+  `nav` / `menu_sheet` / `ranker` / `home`, `from_path`: the path only); "Share your top 10" sends `list_shared` (`method`:
+  `share` / `download` / `copy_link`, `length`); the badge page's and press kit's "Copy" buttons
   `snippet_copied` (`surface`, `what`, the badge's `restaurant_id`); a restaurant page's "Add to your top 10" sends
   `add_to_list_clicked` (`menu_key`, `restaurant_id`). The worth and pricer events are gone. No personal data: never the voter id, and no free text in events
   but the search query (trimmed, lowercased, 60 characters); replays mask inputs and the query echoed in the "No burgers

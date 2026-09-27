@@ -9,6 +9,8 @@ import { menusByIndexPrice, menusByIndexPriceDesc, type Menu } from "@/lib/menus
 import { rankingName, rankingPath, rankingSpecs, rankMenus, type RankingSpec } from "@/lib/rankings";
 import { SITE_URL } from "@/lib/metadata";
 import { getPeoplesTop } from "@/lib/peoples-top-data";
+import { publishedLineText } from "@/lib/published-lists";
+import { getPublishedLine } from "@/lib/published-lists-data";
 import { PEOPLES_TOP_NAME, PEOPLES_TOP_PATH } from "@/lib/site";
 import { sourceLine } from "@/lib/seo";
 
@@ -50,18 +52,22 @@ function bestBurgersNote(): string {
 /**
  * "the burgers visitors rank highest, from their own lists: #1 Emily (on 143 lists), #2 …, #3 … (as of Sep 27,
  * 2026)"; before anything is ranked, how many lists there are so far (nothing about a count before the first board).
+ * Then the page's sourcing line: "Includes 4 published burger rankings, each counted like one visitor's list: The
+ * Infatuation (Aug 2026, Jan 2026), …" (publishers as plain text: llms.txt links only to this site).
  */
 function peoplesTopNote(): string {
   const top = getPeoplesTop();
+  const published = getPublishedLine();
+  const sources = published ? `. ${publishedLineText(published)}` : "";
   const what = "the burgers visitors rank highest, from their own lists";
   if (!top.seats.length) {
-    return top.asOf ? `${what}; nothing ranked yet (${formatCount(top.totalLists)} ${top.totalLists === 1 ? "list" : "lists"} so far)` : `${what}; nothing ranked yet`;
+    return `${top.asOf ? `${what}; nothing ranked yet (${formatCount(top.totalLists)} ${top.totalLists === 1 ? "list" : "lists"} so far)` : `${what}; nothing ranked yet`}${sources}`;
   }
   const first = top.seats
     .slice(0, 3)
     .map((e) => `#${e.rank} ${e.menu.restaurant.name} (on ${formatCount(e.lists)} ${e.lists === 1 ? "list" : "lists"})`)
     .join(", ");
-  return `${what}: ${first}${top.asOf ? ` (as of ${formatDate(top.asOf)})` : ""}`;
+  return `${what}: ${first}${top.asOf ? ` (as of ${formatDate(top.asOf)})` : ""}${sources}`;
 }
 
 /**

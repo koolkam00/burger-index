@@ -24,6 +24,8 @@ export type FilterName = "borough" | "neighborhood" | "price" | "sort" | "clear_
 export type SnippetKind = "badge_html" | "badge_image" | "citation";
 /** Where a burger was added to the home ranker's list from: its search, or a restaurant page's "Add to your top 10". */
 export type RankerAddSurface = "search" | "restaurant_page";
+/** How a saved list was shared ("Share your top 10"): the share sheet with the image, the image downloaded, or the link copied. */
+export type ListShareMethod = "share" | "download" | "copy_link";
 /** Where a link to the People's Top 10 was followed from. */
 export type PeoplesTopSurface = "nav" | "menu_sheet" | "ranker" | "home";
 
@@ -60,6 +62,11 @@ export type AnalyticsEvents = {
    * per page view, with the list's length then.
    */
   peoples_top_revealed: { surface: "ranker"; list_length: number };
+  /**
+   * The home ranker's "Share your top 10": the image shared through the browser's share sheet (`share`), downloaded
+   * (`download`) or the link copied (`copy_link`), with the saved list's length. Never the list, never a voter id.
+   */
+  list_shared: { method: ListShareMethod; length: number };
   /** A map pin's popup opened: tapped, or opened for /map?r=<id> ("See it on the map"). */
   map_pin_opened: { restaurant_id: string; source: "pin" | "link" };
   /** The restaurant link inside a map popup. */

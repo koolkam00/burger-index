@@ -9,11 +9,16 @@
 // 4. Copies ../data/peoples_top.json (the People's Top 10 board, committed by the daily workflow on main:
 //    scripts/snapshot-peoples-top.mjs) to src/data/peoples_top.json. A missing or unreadable board never fails the
 //    build: the empty early board is written instead, with a warning. src/lib/peoples-top-data.ts checks it at build.
-// 5. Copies the MapLibre worker modules into public/vendor/maplibre/ (served same-origin).
+// 5. Copies ../data/ranker_published_lists.json (the published rankings seeded as People's Top 10 lists, committed;
+//    user decision 2026-09-26/27) to src/data/, after checking it (scripts/ranker-published-migration.mjs
+//    checkPublishedLists); src/lib/published-lists-data.ts reads it for the People's Top 10's sourcing line. A missing
+//    or broken file fails the build.
+// 6. Copies the MapLibre worker modules into public/vendor/maplibre/ (served same-origin).
 
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { checkPublishedLists } from "./ranker-published-migration.mjs";
 import { emptyBoard, readBoardText, renderBoard } from "./snapshot-peoples-top.mjs";
 import { validateDataset } from "./validate-contract.mjs";
 
@@ -79,6 +84,24 @@ if (board) {
       "the page shows the empty early board (`node scripts/snapshot-peoples-top.mjs` writes it).",
   );
 }
+
+const PUBLISHED = join(web, "..", "data", "ranker_published_lists.json");
+if (!existsSync(PUBLISHED)) {
+  console.error(`✗ ${relative(web, PUBLISHED)} not found (it is committed: \`git checkout -- data/ranker_published_lists.json\`).`);
+  process.exit(1);
+}
+let publishedLists;
+try {
+  publishedLists = checkPublishedLists(JSON.parse(readFileSync(PUBLISHED, "utf8")));
+} catch (err) {
+  console.error(`✗ ${err instanceof Error ? err.message : err}`);
+  process.exit(1);
+}
+copyFileSync(PUBLISHED, join(OUT_DIR, "ranker_published_lists.json"));
+console.log(
+  `✓ published lists: ${relative(web, PUBLISHED)} → ${relative(web, join(OUT_DIR, "ranker_published_lists.json"))} ` +
+    `(${publishedLists.length} ${publishedLists.length === 1 ? "list" : "lists"} from ${new Set(publishedLists.map((l) => l.publisher)).size} publishers)`,
+);
 
 // MapLibre v6 resolves its worker relative to its own module URL, which bundling breaks.
 // Ship the worker (and the shared chunk it imports) as plain static files instead.

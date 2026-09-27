@@ -3,17 +3,20 @@
 // The People's Top 10 beside the visitor's list (user decision 2026-09-26, "Once 3 are added"; DESIGN.md "The ranker
 // hero", "The People's Top 10 beside your list"): a data zone inside the ranker card. The daily board's seats in
 // order (the visitor's picks on it washed and marked "#2 on your list"), where the visitor's other picks stand, and a
-// link to the whole board. The words and the marks come from lib/peoples-top-reveal (pure); this only draws them.
-// Not a live region: the ranker's own live region says once that it appeared.
+// link to the whole board, and the sourcing line (the published rankings counted among the lists, user decision
+// 2026-09-26/27). The words and the marks come from lib/peoples-top-reveal and lib/published-lists (pure); this only
+// draws them. Not a live region: the ranker's own live region says once that it appeared.
 import { ArrowRight, Check } from "lucide-react";
 import Link from "next/link";
 import { useId } from "react";
 import { fromPath, track } from "@/lib/analytics";
+import { PublishedLine } from "@/components/PublishedLine";
 import { FLAG_TEXT } from "@/lib/peoples-top";
 import type { RevealView } from "@/lib/peoples-top-reveal";
+import type { PublishedLine as Published } from "@/lib/published-lists";
 import { PEOPLES_TOP_NAME, PEOPLES_TOP_PATH } from "@/lib/site";
 
-export function PeoplesTopReveal({ view }: { view: RevealView }) {
+export function PeoplesTopReveal({ view, published }: { view: RevealView; published: Published | null }) {
   const uid = useId();
   return (
     <section className="ranker-reveal" aria-labelledby={`${uid}-title`} data-ranker-reveal="">
@@ -66,6 +69,7 @@ export function PeoplesTopReveal({ view }: { view: RevealView }) {
       ) : (
         <p className="reveal-empty t-ui-m mt-3">{view.empty}</p>
       )}
+      {published ? <PublishedLine line={published} className="t-ui-s muted mt-2" /> : null}
       {view.stands.length ? (
         <>
           <p id={`${uid}-stands`} className="t-label muted mt-5">

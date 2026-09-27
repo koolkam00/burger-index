@@ -31,7 +31,9 @@
 // The People's Top 10 (user decisions 2026-09-25/26) is recomputed from ../data/peoples_top.json and the dataset:
 // its seats (a seat whose burger left the dataset goes to the best ranked burger not under review), the rest of the
 // ranking and Rising, row for row with their ranks, list counts and links; its ItemList; "Early results" exactly
-// while the board is early; the one-liner; and each /best-burgers row's People's rank. Crowd pricing is gone for
+// while the board is early; the one-liner; the sourcing line under it (user decision 2026-09-26/27), recomputed from
+// ../data/ranker_published_lists.json word for word with every list linked, and the same words in llms.txt; and each
+// /best-burgers row's People's rank. Crowd pricing is gone for
 // good (user decision 2026-09-26): no page, llms.txt or JSON-LD says "People's Price" or "What's it worth", and
 // /peoples-price, /best-value-burgers and /data/pricer.json are not built. The home page carries the ranker's region,
 // first (user decision 2026-09-26), then the H1 section with the median sentence and the source line; /data/menus.json
@@ -71,6 +73,7 @@ const OUT = join(WEB, "out");
 const DATASET = join(WEB, "..", "data", "burger_index.json");
 const BEST = join(WEB, "..", "data", "best_burgers.json");
 const PEOPLE_TOP = join(WEB, "..", "data", "peoples_top.json");
+const PUBLISHED = join(WEB, "..", "data", "ranker_published_lists.json");
 
 const args = process.argv.slice(2);
 const expectSite = (() => {
@@ -306,6 +309,25 @@ const topView = (() => {
   return { seats: order.slice(0, seats.length), ranked: order, rising: rows.filter((r) => r.tier === "rising").map((r) => ({ ...r, m: menuByKey.get(r.key) })) };
 })();
 const boardTime = board && (board.refreshedAt ?? board.asOf) ? new Date(board.refreshedAt ?? board.asOf).getTime() : null;
+
+// The People's Top 10's sourcing line (src/lib/published-lists.ts), recomputed from the seeded lists: "Includes 4
+// published burger rankings, each counted like one visitor's list: The Infatuation (Aug 2026, Jan 2026), Time Out (Oct
+// 2025) and Brooklyn Magazine (Sep 2024)." Each list is linked by its month; the link's accessible name adds its title.
+// A list voided after seeding carries `voided_on` and leaves the line.
+const publishedLists = existsSync(PUBLISHED) ? JSON.parse(readFileSync(PUBLISHED, "utf8")).lists.filter((l) => !l.voided_on) : null;
+if (!publishedLists) err("../data/ranker_published_lists.json not found");
+const monthShort = (day) => new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", year: "numeric" }).format(new Date(`${day}T12:00:00Z`));
+const publishedWant = (() => {
+  const lists = publishedLists ?? [];
+  if (!lists.length) return null;
+  const publishers = [...new Set(lists.map((l) => l.publisher))].map((name) => `${name} (${lists.filter((l) => l.publisher === name).map((l) => monthShort(l.date)).join(", ")})`);
+  const names = publishers.length > 1 ? `${publishers.slice(0, -1).join(", ")} and ${publishers.at(-1)}` : publishers[0];
+  const lead = lists.length === 1 ? "Includes 1 published burger ranking, counted like one visitor's list:" : `Includes ${count(lists.length)} published burger rankings, each counted like one visitor's list:`;
+  return {
+    text: `${lead} ${names}.`,
+    links: [...new Set(lists.map((l) => l.publisher))].flatMap((name) => lists.filter((l) => l.publisher === name)).map((l) => ({ href: l.url, name: `${monthShort(l.date)}: ${l.title}` })),
+  };
+})();
 
 // ---- burgers near a landmark, recomputed from the dataset and src/lib/landmarks.mjs's points -------------
 
@@ -744,6 +766,18 @@ for (const p of pages) {
     if (h1 !== "The People's Top 10.") err(`${path}: h1 "${h1}"`);
     const body = text(html.replace(/<script\b[^>]*>.*?<\/script>/gs, " "));
     if (!body.includes(ONE_LINER)) err(`${path}: no one-liner`);
+    // The sourcing line: the seeded lists, word for word, each linked to the list itself.
+    const sources = /<p class="ptop-sources[^"]*">(.*?)<\/p>/s.exec(html);
+    if (!publishedWant) {
+      if (sources) err(`${path}: a sourcing line, but no published lists are seeded`);
+    } else if (!sources) err(`${path}: no sourcing line (the published rankings counted among the lists)`);
+    else {
+      const shown = text(sources[1].replace(/<span class="sr-only">.*?<\/span>/gs, ""));
+      if (shown !== publishedWant.text) err(`${path}: sourcing line "${shown}", expected "${publishedWant.text}"`);
+      const links = [...sources[1].matchAll(/<a\b[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/gs)].map(([, href, inner]) => ({ href: decode(href), name: text(inner) }));
+      if (JSON.stringify(links) !== JSON.stringify(publishedWant.links)) err(`${path}: the sourcing line's links ${JSON.stringify(links)} differ from the seeded lists`);
+      p.sourceLinks = links.length;
+    }
     if (board?.early !== body.includes("Early results")) err(`${path}: "Early results" ${board?.early ? "missing" : "shown"} (the board is ${board?.early ? "" : "not "}early)`);
     const rowsOf = (listHtml) =>
       [...listHtml.matchAll(/<li class="ptop-row">(.*?)<\/li>/gs)].map(([, li]) => {
@@ -1201,6 +1235,10 @@ const llms = readFileSync(join(OUT, "llms.txt"), "utf8");
 overclaims("llms.txt", llms);
 if (/People[’']s Price|What[’']s it worth/i.test(llms)) err("llms.txt still mentions the People's Price");
 if (!board?.asOf && /updated daily|\b0 lists so far\b/i.test(llms)) err('llms.txt: before the first board, a list count or "updated daily"');
+if (publishedWant) {
+  const line = llms.split("\n").find((l) => l.includes(`](${site}${PEOPLES_TOP_PATH})`)) ?? "";
+  if (!line.includes(publishedWant.text)) err(`llms.txt: the ${PEOPLES_TOP_PATH} line lacks the sourcing line "${publishedWant.text}"`);
+}
 if (!new RegExp(`\\[Burger prices \\(CSV\\)\\]\\(${site}/data/burger-prices\\.csv\\):[^\\n]*License: CC BY 4\\.0 \\(${LICENSE_URL.replace(/[./]/g, "\\$&")}\\)`).test(llms)) err("llms.txt: the CSV link does not name its license (CC BY 4.0)");
 // The ranking notes count like the pages: burger spots are locations, menus count a chain once.
 for (const path of CITY_RANKING_PATHS) {
@@ -1307,7 +1345,8 @@ console.log(`"Add to your top 10": ${listsOpen ? `lists open, ${addLinks} restau
 console.log(`landmark pages: ${landmarkPagesSeen.length} (${landmarkPagesSeen.map((p) => `${p.path.slice(LANDMARKS_PATH.length + 1)} ${p.landmarkRows}`).join(", ")}) · hub links: ${pages.find((p) => p.path === LANDMARKS_PATH)?.landmarkLinks ?? 0}`);
 console.log(
   `People's Top 10: ${board?.asOf ? `as of ${board.asOf}` : "no board yet"} · ${count(board?.totalLists ?? 0)} lists · ` +
-    `${pages.find((p) => p.path === PEOPLES_TOP_PATH)?.topRows ?? 0} ranked rows, ${pages.find((p) => p.path === PEOPLES_TOP_PATH)?.risingRows ?? 0} rising${board?.early ? " · early results" : ""}`,
+    `${pages.find((p) => p.path === PEOPLES_TOP_PATH)?.topRows ?? 0} ranked rows, ${pages.find((p) => p.path === PEOPLES_TOP_PATH)?.risingRows ?? 0} rising${board?.early ? " · early results" : ""} · ` +
+    `sourcing line: ${pages.find((p) => p.path === PEOPLES_TOP_PATH)?.sourceLinks ?? 0} published lists linked`,
 );
 console.log(
   `share images: ${ogFiles.length} (${(ogBytes / 1048576).toFixed(1)} MB, ${ogFiles.length ? Math.round(ogBytes / ogFiles.length / 1024) : 0} KB each on average) · badges: ${badgeFiles.length} (${(badgeBytes / 1048576).toFixed(1)} MB) · ` +

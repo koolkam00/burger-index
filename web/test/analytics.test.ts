@@ -168,6 +168,9 @@ test("the ranker's events carry lengths, positions and menu keys only, never a v
   a.track("ranking_deleted", { length: 12 });
   a.track("peoples_top_clicked", { surface: "nav", from_path: fromPath("/restaurants/due-west?x=1") });
   a.track("peoples_top_revealed", { surface: "ranker", list_length: 3 });
+  a.track("list_shared", { method: "share", length: 12 });
+  a.track("list_shared", { method: "download", length: 12 });
+  a.track("list_shared", { method: "copy_link", length: 12 });
   assert.deepEqual(ph.captured, [
     ["ranking_started", { edited: false }],
     ["ranking_item_added", { menu_key: "chain:7th-street-burger", position: 1, surface: "search" }],
@@ -178,6 +181,9 @@ test("the ranker's events carry lengths, positions and menu keys only, never a v
     ["ranking_deleted", { length: 12 }],
     ["peoples_top_clicked", { surface: "nav", from_path: "/restaurants/due-west" }],
     ["peoples_top_revealed", { surface: "ranker", list_length: 3 }],
+    ["list_shared", { method: "share", length: 12 }],
+    ["list_shared", { method: "download", length: 12 }],
+    ["list_shared", { method: "copy_link", length: 12 }],
   ]);
   for (const [, props] of ph.captured) assert.equal(JSON.stringify(props).includes("voter"), false);
 });
