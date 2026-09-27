@@ -1,5 +1,5 @@
 {
-  "about": "Hand-checked locations of restaurant-list rows that no DOHMH record matches (so they have no CAMIS, address or coordinates), keyed by their csv:... restaurant key (as in data/restaurants.json), applied by `pipeline sources` (see pipeline/sources.py load_location_overrides). `build` publishes the address (when the record has none) and the coordinates, so the restaurant is on the map, the landmark pages and Nearby lists; the scrape never reads them (its cached requests stay the same), and nothing here sets a neighborhood, NTA or zipcode, which would move the restaurant id. Add one only for a place checked open at that address on its own site (or, where the site blocks automated browsers, DOHMH's current inspection record), with the point from NYC Planning's GeoSearch. A DOHMH record's own location is fixed per CAMIS in dohmh_overrides.json instead. An override whose key leaves the scope, or whose record gains coordinates, is reported as unused. Entries from the 2026-09-26 pass over the priced restaurants without coordinates (skipped as closed or unconfirmed: Bun Haus, Grillify-NYC, Hill and Bay, Jackson's Eatery | Bar, Jerry's Hamburger Place, Nana's Kitchen, SoHo Park, Sunday Dreamin).",
+  "about": "Hand-checked locations of restaurant-list rows that no DOHMH record matches (so they have no CAMIS, address or coordinates), keyed by their csv:... restaurant key (as in data/restaurants.json), applied by `pipeline sources` (see pipeline/sources.py load_location_overrides). `build` publishes the address (when the record has none) and the coordinates, so the restaurant is on the map, the landmark pages and Nearby lists; the scrape never reads them (its cached requests stay the same), and nothing here sets a neighborhood, NTA or zipcode, which would move the restaurant id. Add one only for a place checked open at that address on its own site (or, where the site blocks automated browsers, DOHMH's current inspection record), with the point from NYC Planning's GeoSearch (for an address with no address point, like a pier, another public point at that address, named in geocode_source). A DOHMH record's own location is fixed per CAMIS in dohmh_overrides.json instead. An override whose key leaves the scope, or whose record gains coordinates, is reported as unused. Never place a row that is another row's restaurant under another name (same site, menu and address): it would show twice on the map and list itself as its own nearby place. Entries from the 2026-09-26 pass over the priced restaurants without coordinates (skipped as closed or unconfirmed: Bun Haus, Grillify-NYC, Hill and Bay, Jackson's Eatery | Bar, Jerry's Hamburger Place, SoHo Park, Sunday Dreamin; Nana's Kitchen, whose menu is another restaurant's, is withheld in corrections.json; and, as duplicates of a DOHMH-matched row at the same address, Blue Road Burger (line 174 of the list) = Blueroad (line 645), and Millard Fillmore Tavern (line 524) = Fillmore's Tavern (line 947), left for the user to resolve in the list).",
   "overrides": {
     "csv:at-the-office-manhattan": {
       "name": "At The Office",
@@ -10,16 +10,6 @@
       "geocode_source": "https://geosearch.planninglabs.nyc/v2/search?text=160%20East%2038%20Street%2C%20Manhattan",
       "checked_at": "2026-09-26",
       "reason": "Its own site gives 160 East 38th Street, New York, NY 10016 (the sports bar beside The Consulate, open since April 2026); the point is NYC Planning's PAD geocode of that address (BBL 1008930041)."
-    },
-    "csv:blue-road-burger-manhattan": {
-      "name": "Blue Road Burger",
-      "address": "134 Ludlow Street",
-      "lat": 40.720201,
-      "lng": -73.988119,
-      "address_source": "https://data.cityofnewyork.us/resource/43nn-pn8j.json?camis=50162277",
-      "geocode_source": "https://geosearch.planninglabs.nyc/v2/search?text=134%20Ludlow%20Street%2C%20Manhattan",
-      "checked_at": "2026-09-26",
-      "reason": "Its own site (blueroadnyc.com) shows automated browsers only a bot check, so the address is DOHMH's: BLUEROAD, 134 Ludlow Street, cuisine Hamburgers, inspected 2025-07-09 (the list's name keeps it from matching); the point is NYC Planning's PAD geocode of that address (BBL 1004110075)."
     },
     "csv:casa-13urger-manhattan": {
       "name": "Casa 13urger",
@@ -44,12 +34,12 @@
     "csv:frying-pan-manhattan": {
       "name": "Frying Pan",
       "address": "Pier 66, 207 12 Avenue",
-      "lat": 40.74988056,
-      "lng": -74.01019444,
+      "lat": 40.7523006,
+      "lng": -74.0094145,
       "address_source": "https://www.fryingpan.com/",
-      "geocode_source": "https://en.wikipedia.org/wiki/Frying_Pan_(lightship)",
-      "checked_at": "2026-09-26",
-      "reason": "Its own site gives 207 12th Avenue, Pier 66 (W 26th St) at Hudson River Park, open for the 2026 season; a pier has no PAD address point (GeoSearch returns 207 12 Street, Brooklyn), so the point is Wikipedia's for the Lightship Frying Pan, moored at Pier 66a."
+      "geocode_source": "https://www.openstreetmap.org/node/2981930233",
+      "checked_at": "2026-09-27",
+      "reason": "Its own site gives 207 12th Avenue, Pier 66 (W 26th St) at Hudson River Park, open for the 2026 season; a pier has no PAD address point (GeoSearch returns 207 12 Street, Brooklyn), so the point is OpenStreetMap's node for the Frying Pan pub at Pier 66 (© OpenStreetMap contributors, ODbL), which GeoSearch's reverse geocode places 72 m from 221 Twelfth Avenue."
     },
     "csv:lori-jayne-at-danger-danger-brooklyn": {
       "name": "Lori Jayne at Danger Danger",
@@ -60,16 +50,6 @@
       "geocode_source": "https://geosearch.planninglabs.nyc/v2/search?text=232%20Knickerbocker%20Avenue%2C%20Brooklyn",
       "checked_at": "2026-09-26",
       "reason": "Danger Danger's own site, which hosts the Lori Jayne kitchen, gives 232 Knickerbocker Ave, Brooklyn NY 11237 with its current hours; the point is NYC Planning's PAD geocode of that address (BBL 3031860033)."
-    },
-    "csv:millard-fillmore-tavern-queens": {
-      "name": "Millard Fillmore Tavern",
-      "address": "166-02 65 Avenue",
-      "lat": 40.736509,
-      "lng": -73.802714,
-      "address_source": "https://fillmorestavern.com/",
-      "geocode_source": "https://geosearch.planninglabs.nyc/v2/search?text=166-02%2065%20Avenue%2C%20Queens",
-      "checked_at": "2026-09-26",
-      "reason": "Fillmore's Tavern's own site gives 166-02 65th Ave, New York, NY 11365 (DOHMH has FILLMORE'S TAVERN there, inspected 2024-11-27); the point is NYC Planning's PAD geocode of that address (BBL 4069070033)."
     },
     "csv:portrait-bar-manhattan": {
       "name": "Portrait Bar",

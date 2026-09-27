@@ -1895,11 +1895,9 @@
   "location_overrides_applied": [
    "csv:emily-brooklyn",
    "csv:frying-pan-manhattan",
-   "csv:blue-road-burger-manhattan",
    "csv:casa-13urger-manhattan",
    "csv:at-the-office-manhattan",
    "csv:portrait-bar-manhattan",
-   "csv:millard-fillmore-tavern-queens",
    "csv:lori-jayne-at-danger-danger-brooklyn"
   ],
   "location_overrides_unused": [],
@@ -5727,9 +5725,9 @@
    "match": null,
    "location_override": {
     "address": "Pier 66, 207 12 Avenue",
-    "lat": 40.74988056,
-    "lng": -74.01019444,
-    "checked_at": "2026-09-26",
+    "lat": 40.7523006,
+    "lng": -74.0094145,
+    "checked_at": "2026-09-27",
     "source_url": "https://www.fryingpan.com/"
    }
   },
@@ -6660,14 +6658,7 @@
    "csv_neighborhood": "Lower East Side",
    "csv_notes": "Burger joint",
    "csv_row": 173,
-   "match": null,
-   "location_override": {
-    "address": "134 Ludlow Street",
-    "lat": 40.720201,
-    "lng": -73.988119,
-    "checked_at": "2026-09-26",
-    "source_url": "https://data.cityofnewyork.us/resource/43nn-pn8j.json?camis=50162277"
-   }
+   "match": null
   },
   {
    "key": "camis:50159396",
@@ -15958,13 +15949,6 @@
    "menu_url_override": {
     "checked_at": "2026-09-24",
     "reason": "Now Fillmore's Tavern, same building (166-02 65th Ave); its own food menu lists The Fillmore Burger at $16.78."
-   },
-   "location_override": {
-    "address": "166-02 65 Avenue",
-    "lat": 40.736509,
-    "lng": -73.802714,
-    "checked_at": "2026-09-26",
-    "source_url": "https://fillmorestavern.com/"
    }
   },
   {

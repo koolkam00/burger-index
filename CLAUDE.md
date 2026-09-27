@@ -132,7 +132,8 @@ to withhold, so American Whiskey (its Grubhub/Seamless `Burger`, $20.40, `delive
 where the restaurant's own price was read and set by hand (Boeuf & Bun: Uber Eats = own price / 0.56, so its own
 ordering page's $32) the own price stays. Withholds remain for closed places, another restaurant's page, stale copies
 and partial pages (Brooklyn Diner's LaGuardia Terminal B row is withheld: its search found only the Manhattan menu, and an
-airport concession never gets a street restaurant's price). **Sauce (`getsauce.com`) is a third-party pickup and delivery
+airport concession never gets a street restaurant's price; Nana's Kitchen in the Bronx is withheld since 2026-09-27: its
+only menu found is Nana's Kitchen and Pizzeria's in Auburn, NH, and its own site is a parked domain). **Sauce (`getsauce.com`) is a third-party pickup and delivery
 platform, not the restaurant's site:** it is not yet in `discover.ONLINE_ORDERING` (adding it changes the offline replay:
 plan it with a re-run), so a CSV `menu_url` there reads as `official_menu`; corrections relabel the six such pages
 `online_ordering` (BK Jani, whose Sauce prices are a flat $2 above its year-old own menu image, Fat Boys, Gracie's,
@@ -198,7 +199,10 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
 - `pipeline/data/location_overrides.json` — hand-checked locations of restaurant-list rows no DOHMH record matches
   (`csv:…` key → `address`, `lat`, `lng`, `address_source`, `geocode_source`, `checked_at`, `reason`; added 2026-09-26 so
   priced places reach the map, the landmark pages and Nearby): the address from the restaurant's own site (DOHMH's current
-  inspection record where the site blocks automated browsers), the point from NYC Planning's GeoSearch. `sources` attaches
+  inspection record where the site blocks automated browsers), the point from NYC Planning's GeoSearch (a pier has no
+  address point: Frying Pan's is OpenStreetMap's node for it at Pier 66). Never place a row that is another row's restaurant
+  under another name (Blue Road Burger = Blueroad, Millard Fillmore Tavern = Fillmore's Tavern: same site, menu and
+  address; left for the user to resolve in the list): it would show twice on the map and be its own "nearby". `sources` attaches
   it as the record's `location_override` (`report.location_overrides_applied`/`_unused`) and `build` publishes it
   (`sources.located`); the record's own `address`/`lat`/`lng` stay empty, because the scrape reads them (the search query,
   the page location check, a chain's representative), so the cached replay never changes. Never a neighborhood, NTA or
