@@ -195,7 +195,7 @@ export function boardCountLine(view: Pick<PeoplesTopView<unknown>, "seats" | "to
  * 2026)." (`top`: the first seat's restaurant and counts). Before anything is ranked: what the page is.
  */
 export function peoplesTopLede(top: { name: string; lists: number; firsts: number } | null, asOf: string | null): string {
-  if (!top) return "The burgers visitors rank highest, from their own lists.";
+  if (!top) return "The burgers ranked highest across the lists on The Burger Index.";
   const firsts = top.firsts > 0 ? `, #1 on ${formatCount(top.firsts)} of them` : "";
   const when = asOf ? ` (as of ${formatDate(asOf)})` : "";
   return `${top.name} tops the People's Top 10: on ${pluralize(top.lists, "list")}${firsts}${when}.`;

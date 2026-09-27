@@ -121,7 +121,7 @@ fetches nothing.
 - `src/lib/peoples-top-reveal.ts`: the People's Top 10 beside a list of 3+ (pure): when it shows (`showsReveal`), the seats the
   home page passes the ranker (`revealBoard`, from `getRevealBoard()` in `src/lib/peoples-top-data.ts`: the seats and the
   board's numbers, never the whole board), the visitor's picks marked, the stand-lines and the empty board's words. Tested in
-  `test/peoples-top-reveal.test.ts`. Under it, the People's Top 10's sourcing line (below).
+  `test/peoples-top-reveal.test.ts`.
 - `src/lib/share-list.ts` and `src/lib/share-list-image.ts`: **"Share your top 10"** (user decision 2026-09-27;
   `components/ranker/ShareList.tsx`), under a saved list. The pure half: the image's rows (the list's first 10, numbered),
   its words ("My top 10 burgers", "Rank yours at <host>"), the share text, file names, alt text, `fitText` (names cut to a
@@ -139,7 +139,10 @@ fetches nothing.
 
 User decisions 2026-09-25/26: each visitor saves one strict ranking of 3 to 25 burgers (the ranker above; Supabase
 `save_ranking`, one list per browser and per connection; see [`../supabase/README.md`](../supabase/README.md)), and the
-crowd's ranking is **the Patty Ladder**. In one sentence, the one the page carries as its only method line: "Every list
+crowd's ranking is **the Patty Ladder**. Five published burger rankings are saved among the lists, each counted like any
+other (user decisions 2026-09-26/27; `../data/ranker_published_lists.json`, `supabase/README.md` "Published lists"); the
+site no longer names them (the sourcing line was removed at the user's request, 2026-09-27), so its copy says plain
+"lists", never that every list is a visitor's own (`check:seo` fails on "visitors rank", "their own lists" and the like). In one sentence, the one the page carries as its only method line: "Every list
 turns into head-to-head wins, with your #1 counting most; a burger you left off never loses, and a burger climbs only as
 far as enough different lists back it up."
 
@@ -180,6 +183,12 @@ rpc/ranker_board_inputs ──(read-only GET, publishable key)──> scripts/sn
   database by the latest `../supabase/migrations/<version>_ranker_keys.sql`. When the priced menus change, `--write` makes
   the next one; apply it with the Supabase connector (`apply_migration`, name `ranker_keys`). `test/ranker-keys.test.ts`
   fails while the latest sync differs from the dataset.
+- **The published lists** (`scripts/ranker-published-migration.mjs`): writes the migrations that save
+  `../data/ranker_published_lists.json` as lists: the seeding (`<version>_ranker_published_lists.sql`, the first four, once)
+  and, for a list added later (`added_on` in the file), an addition named with `--add <list id> --write`
+  (`<version>_ranker_published_add.sql`: rows only, idempotent; apply it as `ranker_published_add`). Without flags it checks
+  that the committed migrations are the file's; `test/ranker-published.test.ts` pins the five lists. Nothing on the site
+  reads the file.
 - **The workflow** (`../.github/workflows/peoples-top.yml`): daily at 10:00 UTC and on `workflow_dispatch` (with an
   `allow_drop` input); checks out `main`, Node 22, runs the writer, keeps the aggregates as the `ranker-board-inputs`
   artifact for 90 days, and if the file changed commits "Update People's Top 10" as `github-actions[bot]` and pushes to
@@ -194,12 +203,7 @@ rpc/ranker_board_inputs ──(read-only GET, publishable key)──> scripts/sn
   burger not under review, as the method fills a seat), "≈" only between rows that are neighbors on the board too. The page
   shows the 10 seats ("The top 3 so far." early on), the rest of the ranking, Rising ("On 7 lists · needs 3 more lists"),
   "Early results" under 500 lists, "Under review" (an owner hold) and "Checking a surge of lists" (the surge review bar),
-  the one-liner, the sourcing line under it (user decision 2026-09-26/27: the published rankings counted among the lists,
-  "Includes 4 published burger rankings, each counted like one visitor's list: The Infatuation (Aug 2026, Jan 2026), …", each
-  month linked to the list; `src/lib/published-lists.ts` from `../data/ranker_published_lists.json`, which `sync-data` checks
-  and copies, read by `src/lib/published-lists-data.ts`; drawn by `src/components/PublishedLine.tsx`, also under the People's
-  Top 10 beside the ranker's list and in llms.txt; `test/published-lists.test.ts`, and `check:seo` recomputes it), and
-  before anything is ranked "The ladder starts when burgers are on 5 lists each (12 lists so far)."
+  the one-liner, and before anything is ranked "The ladder starts when burgers are on 5 lists each (12 lists so far)."
   (before the first board, with no count: the lists saved so far aren't published yet)
   ItemList JSON-LD only; its own share image; in the sitemap (dated by the board), llms.txt, the nav, the footer and "More
   burger rankings."; `/best-burgers` rows show a ranked menu's People's rank. Tested in `test/peoples-top.test.ts`.
@@ -486,7 +490,7 @@ Notes:
 | `/cheapest-burgers`, `/most-expensive-burgers` (and `/[borough]` and `/[borough]/[neighborhood]` under each), `/burgers-under-15`, `/burgers-under-20`, `/burgers/[style]` | Ranking pages: a one-line answer and a ranked table, one row per distinct menu (top 25 or half the place's menus, ties at the cut kept; every row under $N or of the style) |
 | `/burgers-near`, `/burgers-near/[landmark]` | Burgers near NYC landmarks: the hub (every landmark with 5+ priced spots within half a mile, by borough, with its count and range) and a page per landmark (the spots within half a mile, nearest first, with distance, burger and price; "See them on the map" opens `/map?near=<slug>`) |
 | `/best-burgers` | The most-recommended burgers in NYC: places ranked by how many publications named them on a best-burger list in 2024-2026, each with its lists, menu price and People's rank (where ranked) |
-| `/peoples-top-10` | The People's Top 10: the daily board of the burgers visitors rank highest (the 10 seats, the rest of the ranking, Rising), "Early results" under 500 lists, the one-liner, "Rank your burgers" (`/peoples-price` redirects here: `vercel.json`) |
+| `/peoples-top-10` | The People's Top 10: the daily board of the burgers ranked highest across the lists (the 10 seats, the rest of the ranking, Rising), "Early results" under 500 lists, the one-liner, "Rank your burgers" (`/peoples-price` redirects here: `vercel.json`) |
 | `/restaurants/[id]` | Priced restaurants only: "The burger" (name, price, description, vs neighborhood and NYC, price source), menu page and website links, "See it on the map" (`/map?r=<id>`), hand-check label, nearby at a similar price, more in the neighborhood, other chain locations, and "Get its price badge" (`/badge?r=<id>`) |
 | `/neighborhoods`, `/neighborhoods/[slug]` | Sortable ranking (areas with at least 5 distinct priced menus; a chain counts once) and a page for every neighborhood with a priced restaurant (its unpriced restaurants listed as plain names, then a Q&A); neighborhoods with nothing priced are plain names on `/neighborhoods` |
 | `/boroughs/[slug]` | The five borough pages (there is no `/boroughs` index), each with "See all" links to its two ranking pages and a Q&A |

@@ -193,11 +193,11 @@ export default function PressPage() {
           <div className="t-body prose-width mt-6 grid gap-4">
             <p>
               The Burger Index is what a burger costs in New York City, {month}: the NYC median, prices by borough and neighborhood, a page for every priced
-              restaurant, rankings and a map. Visitors rank the burgers they like best; together their lists make{" "}
+              restaurant, rankings and a map. Visitors can rank the burgers they like best, and{" "}
               <Link href={PEOPLES_TOP_PATH} className="link">
                 the People&rsquo;s Top 10
-              </Link>
-              .
+              </Link>{" "}
+              shows the burgers ranked highest across the lists.
             </p>
             <p>We index prices, not quality. It is an independent project, not affiliated with any restaurant.</p>
             <p>

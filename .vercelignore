@@ -9,7 +9,6 @@ data/*
 !data/burger_index.json
 !data/best_burgers.json
 !data/peoples_top.json
-!data/ranker_published_lists.json
 web/node_modules
 web/.next
 web/out

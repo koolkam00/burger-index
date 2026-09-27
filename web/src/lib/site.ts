@@ -20,7 +20,7 @@ export function isRankingPath(pathname: string): boolean {
   return /^\/(cheapest-burgers|most-expensive-burgers|burgers-under-\d+|burgers-near)(\/|$)/.test(pathname);
 }
 
-/** The People's Top 10 (lib/peoples-top.ts): the crowd's ranking, made daily from the visitors' lists. */
+/** The People's Top 10 (lib/peoples-top.ts): the burgers ranked highest across the lists, made daily. */
 export const PEOPLES_TOP_PATH = "/peoples-top-10";
 export const PEOPLES_TOP_NAME = "The People's Top 10";
 
