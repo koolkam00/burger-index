@@ -6,8 +6,7 @@
 --   rate_network:    30 new voter ids a day per /24 or /48, unchanged (it counts new lists, not saves)
 -- save_ranking is replaced as it was (patty_ladder_hardening), the two numbers aside: the same checks, the connection
 -- lock, the one-list-per-connection rule, the same security definer, search_path and grants. Every call that passes
--- validation still counts against both budgets (an identical list too: the site sends one only as the keepalive copy of a
--- save still on its way when a page closes, or after a lost reply), a refused call rolls
+-- validation still counts against both budgets (an identical list too: the site never sends one), a refused call rolls
 -- its counts back, and get_my_ranking and delete_ranking count against nothing.
 
 create or replace function public.save_ranking(p_voter uuid, p_items text[])

@@ -420,12 +420,15 @@ with no Save button: "Your list can't be saved until tomorrow.", "Change it agai
 page open: your list saves after the hour."). When the page is hidden, only a save waiting for its 2 s pause or a network
 retry goes at once; when it closes, the newest list goes again as a keepalive `fetch` to `rpc/save_ranking` with the
 publishable key in the `apikey` header when it is waiting that way or on its way (a refusal's or an odd reply's retry keeps
-its time). A page back from the back-forward cache, another tab's save (the `bi-ranker-saved` flag holds a stamp that each
-save changes) or another tab's delete (the flag removed) calls `get_my_ranking` before anything more is saved (after the
-saved list loading or a save on its way has landed; a tab with a change of its own still to go saves it instead), so a
-waiting retry never brings back a deleted list and a newer list another tab saved is shown ("Showing the list saved in
-another tab."), not overwritten; a list the tab sent itself (a save on its way, a keepalive request) is not taken for
-another tab's. A
+its time), and the flag gets a new stamp so the other tabs hear of it. A page back from the back-forward cache, another
+tab's save (the `bi-ranker-saved` flag holds a stamp that each save changes), another tab's delete (the flag removed), a
+save whose reply was lost or odd (it may have been saved), and a delete that failed (it may have gone through) all call
+`get_my_ranking` before anything more is saved (after the saved list loading or a save on its way has landed; asked again
+until it answers), and one rule reads the answer, the same one a page load uses with what `sessionStorage` kept (the list,
+the saved list it changed, the lists sent): a list the tab knew or sent itself keeps the card; a newer list another tab
+saved is shown ("Showing the list saved in another tab."), not overwritten, unless the card has a change of its own still
+to go; a list gone that the card knew empties the card ("Your list was deleted."), so nothing brings a deleted list back
+without a new change. A
 `replaced` list loaded on a return visit is not saved again by itself (that would take the connection's one counted list
 back from its other browser on every visit): it is saved after the visitor changes it or presses "Count it again". The
 card shows each status in plain words: `active` ("Saved. It counts from Sep 27, 2026.", or "Counted in the People's Top

@@ -92,9 +92,9 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
   const failureSaid = useRef("");
   // The next save that goes through is said too: after a failed save was said (so its recovery is heard), or "Count it again".
   const sayNextSave = useRef(false);
-  // Another tab's change to the list (a newer list shown here, or a delete): said once; the control that had focus in the
-  // card, in case the change took it away.
-  const noticeSaid = useRef<RankerSnapshot["notice"]>(null);
+  // Another tab's change to the list (a newer list shown here, or a delete): each one said once (by its number, so a second
+  // update under the same note is said too); the control that had focus in the card, in case the change took it away.
+  const noticeSaid = useRef<number | null>(null);
   const focusBefore = useRef<Element | null>(null);
   // Bumped to re-render after an awaited step, so its focus move runs (the store's own update came before it).
   const [, setFocusTick] = useState(0);
@@ -163,8 +163,8 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
       // Another tab saved or deleted the list: the card changed without the visitor's doing, so it is said (not on a mount:
       // the note above the list, or the status line, shows it). Called before React renders the change, so focus in the
       // card is noted here and, if its control went away, moved to the H3 after.
-      if (s.notice !== noticeSaid.current) {
-        noticeSaid.current = s.notice;
+      if (s.noticeSeq !== noticeSaid.current) {
+        noticeSaid.current = s.noticeSeq;
         const words = s.notice === "updated_elsewhere" ? ELSEWHERE_COPY.updated : s.notice === "deleted_elsewhere" ? ELSEWHERE_COPY.deleted : "";
         if (words && !mounting) {
           setAnnounce((prev) => (prev === words ? `${words} ` : words));

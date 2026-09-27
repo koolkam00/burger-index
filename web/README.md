@@ -120,10 +120,12 @@ fetches nothing.
   tried again (5 s, 15 s, every minute), an odd reply 3 times, a `rate_connection` refusal after the hour turns, the other
   refusals only after the next change; when the page is hidden, only the 2 s pause or a network retry goes at once, and when
   it closes the newest list goes as a keepalive request when it is waiting that way or on its way (a refusal's or an odd
-  reply's retry keeps its time); a check of the saved list after a return from the back-forward cache or another tab's
-  delete (its `storage` event), after the saved list loading or a save on its way has landed: a waiting save never brings a
-  deleted list back, a newer list another tab saved shows instead of being overwritten, and a retry whose list a keepalive
-  request landed is done; a `replaced` list saved again only after a change or "Count it again" (`countAgain`), a delete that
+  reply's retry keeps its time, and the flag's new stamp tells the other tabs); one check of the saved list (`check`, read
+  by `reconcile`, the rule a page load uses too with what `sessionStorage` kept: the list, its base, the lists sent) after a
+  return from the back-forward cache, another tab's save or delete (`storage` events), a save whose reply was lost or odd,
+  or a failed delete, after the saved list loading or a save on its way has landed, asked again until it answers: a waiting
+  save never brings a deleted list back, a newer list another tab saved shows instead of being overwritten (unless the card
+  has a change of its own still to go), and a retry whose list a keepalive request landed is done; a `replaced` list saved again only after a change or "Count it again" (`countAgain`), a delete that
   waits for a save on its way (and, when it fails, lets the change it held back save), and `takeSave` (each save handed out
   once, for `ranking_saved`). An unsaved list is kept in `sessionStorage` (`bi-ranker-draft`), and `localStorage` `bi-ranker-saved` says
   this browser has a saved list, which the `<head>` script turns into `html.ranker-saved` (a skeleton, not an empty list,

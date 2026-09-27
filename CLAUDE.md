@@ -272,9 +272,12 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   after the last change, one save at a time, never the list already saved, network failures retried (5 s, 15 s, every
   minute; an odd reply 3 times; the hourly budget after the hour, while the page stays open), other refusals not until
   the next change, a waiting save flushed when the page is hidden (the newest list as a keepalive `fetch` on close, even
-  with a save on its way; never a refusal's or an odd reply's retry early); a list another tab deleted or a page back from
-  the bfcache is checked again (after the saved list loading or a save on its way lands) before any save: a retry the close
-  dropped comes back, one whose list a keepalive landed is done, and a newer list another tab saved shows (never overwritten);
+  with a save on its way; never a refusal's or an odd reply's retry early); another tab's save or delete, a page back from
+  the bfcache, a lost or odd reply and a failed delete are checked (`get_my_ranking`, after the saved list loading or a save
+  on its way lands, asked again until it answers) before any save, with the one rule a page load also applies to what
+  `sessionStorage` kept (the list, its base, the lists sent): a retry the close dropped comes back, one whose list a
+  keepalive landed is done, a newer list another tab saved shows (never overwritten), and a list gone that the card knew
+  empties it;
   a `replaced` list is saved again only after a change made from then on or "Count it again", never just by loading; one view: a returning browser finds its saved list on the card, editable, under it a status line, "Share your top 10" and
   "Delete my list". The per-save budgets were raised for it (`ranker_rate_autosave`: 120 an hour per connection, 200 a day
   per voter id). `components/ranker/Ranker.tsx` (UI), `src/lib/ranker-store.ts` (state as an external
