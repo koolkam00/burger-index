@@ -199,7 +199,7 @@ export default function PressPage() {
               </Link>{" "}
               shows the burgers ranked highest across the lists.
             </p>
-            <p>We index prices, not quality. It is an independent project, not affiliated with any restaurant.</p>
+            <p>It is an independent project, not affiliated with any restaurant.</p>
             <p>
               Restaurants on it can show their price with a{" "}
               <Link href={BADGE_PAGE_PATH} className="link">
