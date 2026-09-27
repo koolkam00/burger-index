@@ -31,7 +31,8 @@
 // The People's Top 10 (user decisions 2026-09-25/26) is recomputed from ../data/peoples_top.json and the dataset:
 // its seats (a seat whose burger left the dataset goes to the best ranked burger not under review), the rest of the
 // ranking and Rising, row for row with their ranks, list counts and links; its ItemList; "Early results" exactly
-// while the board is early; the one-liner (and no copy anywhere that calls every list a visitor's own: OVERCLAIMS);
+// while the board is early; the one-liner (and no copy anywhere, the JS chunks' strings included, that calls every
+// list a visitor's own: OVERCLAIMS);
 // and each /best-burgers row's People's rank. Crowd pricing is gone for
 // good (user decision 2026-09-26): no page, llms.txt or JSON-LD says "People's Price" or "What's it worth", and
 // /peoples-price, /best-value-burgers and /data/pricer.json are not built. The home page carries the ranker's region,
@@ -1271,6 +1272,15 @@ const LABEL = { official_site: "Restaurant site", official_pdf: "Menu PDF", onli
 const checked = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(data.generated_at));
 const csvSrc = readFileSync(join(OUT, "data", "burger-prices.csv"), "utf8");
 overclaims("CSV", csvSrc);
+
+// Client-rendered copy (the ranker, the People's Top 10 beside a list, the badge finder) lives only in the JS
+// chunks, never in a page's HTML, so the same wording rules run over their strings (escapes decoded).
+for (const f of walk(join(OUT, "_next", "static")).filter((f) => f.endsWith(".js"))) {
+  const js = readFileSync(f, "utf8")
+    .replace(/\\u([0-9a-f]{4})/gi, (_, h) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/\\(['"`])/g, "$1");
+  overclaims(relative(OUT, f), js);
+}
 if (csvSrc.charCodeAt(0) === 0xfeff) warn("CSV starts with a BOM");
 const [header, ...csvRows] = parseCsv(csvSrc);
 const COLS = ["restaurant", "neighborhood", "borough", "burger", "price_usd", "source", "page_url", "checked"];
