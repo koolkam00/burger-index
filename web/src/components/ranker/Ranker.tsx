@@ -9,7 +9,6 @@ import { PriceChip } from "@/components/ui";
 import { fromPath, track } from "@/lib/analytics";
 import { formatCount, pluralize } from "@/lib/format";
 import { revealAnnouncement, revealView, showsReveal, yourList, type RevealBoard } from "@/lib/peoples-top-reveal";
-import type { PublishedLine } from "@/lib/published-lists";
 import {
   addParam,
   countLine,
@@ -55,7 +54,7 @@ const nameOf = (b: RankerBurger | undefined) => b?.label ?? "A burger no longer 
  * The burger ranker, the home page's first screen (DESIGN.md "The ranker hero"; user decisions 2026-09-25/26):
  * search the priced burgers (a chain once), add 3 to 25 in order, move them up and down, remove them, and save
  * the list; come back to see it, edit it or delete it. One list per browser (and per connection: the backend
- * keeps the latest). The People's Top 10 is made from everyone's lists once a day.
+ * keeps the latest). The People's Top 10 is made from all the lists once a day.
  *
  * The prerendered page holds the empty list and the search box (no burgers: they come from /data/menus.json,
  * fetched when the ranker mounts). A browser with a saved list sees a skeleton instead (a <head> flag,
@@ -67,13 +66,13 @@ const nameOf = (b: RankerBurger | undefined) => b?.label ?? "A burger no longer 
  * standings come with the burgers in /data/menus.json.
  *
  * A saved list can be shared (user decision 2026-09-27, "Share your top 10"): an image of its top 10, drawn in the browser,
- * and `shareUrl`, the link to this ranker (no list data). `published` is the People's Top 10's sourcing line.
+ * and `shareUrl`, the link to this ranker (no list data).
  *
  * A restaurant page's "Add to your top 10" arrives as /?add=<menu key>#rank (user decision 2026-09-26): the key is read
  * once on mount and dropped from the address, and the store adds it when the burgers and the saved list are known; the
  * card then says what happened (added, already there, list full) and the live region says it too.
  */
-export function Ranker({ median, board, published, shareUrl }: { median: number | null; board: RevealBoard; published: PublishedLine | null; shareUrl: string }) {
+export function Ranker({ median, board, shareUrl }: { median: number | null; board: RevealBoard; shareUrl: string }) {
   const snap = useRanker();
   const rootRef = useRef<HTMLDivElement>(null);
   const pendingFocus = useRef<FocusTarget | null>(null);
@@ -331,7 +330,7 @@ export function Ranker({ median, board, published, shareUrl }: { median: number 
   let side: ReactNode = null;
   if (revealing) {
     const pick = snap.menus === "ready" ? (key: string) => snap.burgers.get(key) : null;
-    side = <PeoplesTopReveal view={revealView(board, onCard, pick, yourList(snap.saved?.status))} published={published} />;
+    side = <PeoplesTopReveal view={revealView(board, onCard, pick, yourList(snap.saved?.status))} />;
   } else if (!snap.started || (listed && snap.view === "edit")) {
     side = <RevealHint />;
   }

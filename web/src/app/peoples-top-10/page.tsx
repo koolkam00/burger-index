@@ -3,7 +3,6 @@ import Link from "next/link";
 import { RopeLadder } from "@/components/icons/nautical";
 import { JsonLd } from "@/components/JsonLd";
 import { PeoplesTopList, RisingList } from "@/components/PeoplesTop";
-import { PublishedLine } from "@/components/PublishedLine";
 import { RankingLinks } from "@/components/Rankings";
 import { EmptyState, PageHeader, SectionHeading } from "@/components/ui";
 import { getPricedRestaurants, getStats } from "@/lib/data";
@@ -12,7 +11,6 @@ import { breadcrumbNode, itemListNode } from "@/lib/jsonld";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
 import { asOfText, boardCountLine, ladderStartText, PEOPLES_TOP_ONE_LINER, PEOPLES_TOP_TICKET, peoplesTopLede, seatsHeading } from "@/lib/peoples-top";
 import { getPeoplesTop } from "@/lib/peoples-top-data";
-import { getPublishedLine } from "@/lib/published-lists-data";
 import { rankingSpecs } from "@/lib/rankings";
 import { peoplesTopSeo } from "@/lib/seo";
 import { shareImage } from "@/lib/share-cards";
@@ -28,10 +26,10 @@ export const metadata = pageMetadata({
 
 /**
  * The People's Top 10 (user decisions 2026-09-25/26; DESIGN.md "The People's Top 10 page"): the daily board of the
- * burgers visitors rank highest, from their own lists (the home ranker). The 10 seats, the rest of the ranking and the
- * Rising tier, "Early results" until 500 lists, "≈" where two rows are too close to call, the one-liner as the
- * page's only word on method and, under it, the sourcing line (the published rankings counted among the lists). An
- * ItemList restates the ranked rows (never Review, Rating or AggregateRating).
+ * burgers ranked highest across the lists (visitors' lists from the home ranker, and the published rankings saved
+ * among them: supabase/README.md "Published lists"). The 10 seats, the rest of the ranking and the Rising tier, "Early
+ * results" until 500 lists, "≈" where two rows are too close to call, and the one-liner as the page's only word on
+ * method. An ItemList restates the ranked rows (never Review, Rating or AggregateRating).
  */
 export default function PeoplesTopPage() {
   const median = getStats().index_median;
@@ -39,7 +37,6 @@ export default function PeoplesTopPage() {
   const ranked = [...top.seats, ...top.rest];
   const first = top.seats[0];
   const asOf = asOfText(top.asOf);
-  const published = getPublishedLine();
   return (
     <>
       <JsonLd
@@ -69,8 +66,6 @@ export default function PeoplesTopPage() {
         ) : null}
         {/* The page's one word on method (user decision 2026-09-26). */}
         <p className="t-ui-m prose-width mt-3 text-balance">{PEOPLES_TOP_ONE_LINER}</p>
-        {/* The sourcing line (user decision 2026-09-26/27): the published rankings that count among the lists. */}
-        {published ? <PublishedLine line={published} className="t-ui-s muted prose-width mt-2 text-balance" /> : null}
 
         <section className="mt-8" aria-labelledby="top-10">
           <h2 id="top-10" className="t-display-m">

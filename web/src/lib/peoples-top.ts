@@ -1,6 +1,6 @@
 // The People's Top 10 (user decisions 2026-09-25/26; DESIGN.md "The People's Top 10 page"): the burgers
-// visitors rank highest, from their own lists (the home ranker), made once a day by the Patty Ladder
-// (src/lib/ladder.mjs, scripts/snapshot-peoples-top.mjs) and committed as data/peoples_top.json. The site
+// ranked highest across the lists (the home ranker's, and the published rankings counted as lists), made once
+// a day by the Patty Ladder (src/lib/ladder.mjs, scripts/snapshot-peoples-top.mjs) and committed as data/peoples_top.json. The site
 // shows that board as it is: the 10 seats, the rest of the ranking, the Rising tier, "Early results" and the
 // "too close to call" marks. It never recomputes it and never explains it beyond the one-liner.
 //
@@ -195,7 +195,7 @@ export function boardCountLine(view: Pick<PeoplesTopView<unknown>, "seats" | "to
  * 2026)." (`top`: the first seat's restaurant and counts). Before anything is ranked: what the page is.
  */
 export function peoplesTopLede(top: { name: string; lists: number; firsts: number } | null, asOf: string | null): string {
-  if (!top) return "The burgers visitors rank highest, from their own lists.";
+  if (!top) return "The burgers ranked highest across the lists on The Burger Index.";
   const firsts = top.firsts > 0 ? `, #1 on ${formatCount(top.firsts)} of them` : "";
   const when = asOf ? ` (as of ${formatDate(asOf)})` : "";
   return `${top.name} tops the People's Top 10: on ${pluralize(top.lists, "list")}${firsts}${when}.`;

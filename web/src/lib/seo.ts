@@ -154,17 +154,18 @@ export function neighborhoodsSeo(d: {
 }
 
 /**
- * The People's Top 10 (lib/peoples-top.ts): "The People's Top 10: the burgers NYC visitors rank highest" and "The NYC
- * burgers visitors rank highest, from 1,284 lists. #1 Emily, #2 …, #3 …. As of Sep 27, 2026." Visitors' opinion,
- * reported as theirs: no quality words of our own.
+ * The People's Top 10 (lib/peoples-top.ts): "The People's Top 10: the NYC burgers ranked highest" and "The NYC burgers
+ * ranked highest on The Burger Index, from 1,284 lists. #1 Emily, #2 …, #3 …. As of Sep 27, 2026." The lists' opinion,
+ * reported as theirs: no quality words of our own. Plain "lists", never "visitors' own lists": the published rankings
+ * saved among them are lists too (user decision 2026-09-27; supabase/README.md "Published lists").
  */
 export function peoplesTopSeo(d: { leaders: readonly string[]; lists: number; asOf: string | null }): Seo {
   const lead = d.leaders.length
-    ? `The NYC burgers visitors rank highest on The Burger Index, from ${pluralize(d.lists, "list")}.`
-    : "The NYC burgers visitors rank highest on The Burger Index, from their own top-10 lists.";
+    ? `The NYC burgers ranked highest on The Burger Index, from ${pluralize(d.lists, "list")}.`
+    : "The NYC burgers ranked highest across the top-10 lists on The Burger Index.";
   const top = d.leaders.slice(0, 3).map((name, i) => `#${i + 1} ${name}`);
   return {
-    title: pickTitle(["The People's Top 10: the burgers NYC visitors rank highest", "The People's Top 10: NYC burgers visitors rank highest", "The People's Top 10"]),
+    title: pickTitle(["The People's Top 10: the NYC burgers ranked highest", "The People's Top 10: NYC burgers ranked highest", "The People's Top 10"]),
     description: assemble(lead, [
       top.length ? [`${top.join(", ")}.`, `${top.slice(0, 2).join(", ")}.`, `${top[0]}.`] : null,
       d.asOf ? `As of ${formatDate(d.asOf)}.` : null,

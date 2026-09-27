@@ -182,6 +182,54 @@
         "A countdown from 9 to 1; No. 1 comes first here.",
         "Lori Jayne was at Alphaville in 2024 and now cooks inside Danger Danger, the location the Burger Index lists."
       ]
+    },
+    {
+      "id": "tastingtable-best-burgers-nyc-ranked",
+      "publisher": "Tasting Table",
+      "title": "14 Best Burgers In NYC, Ranked",
+      "url": "https://www.tastingtable.com/689372/best-hamburgers-in-nyc/",
+      "date": "2023-06-13",
+      "checked_on": "2026-09-27",
+      "added_on": "2026-09-27",
+      "length": 14,
+      "items": [
+        "the-long-island-bar-carroll-gardens",
+        "nowon-east-village",
+        "keens-midtown",
+        "emily-clinton-hill",
+        "minetta-tavern-west-village",
+        "j-g-melon-lenox-hill",
+        "balthazar-soho",
+        "chain:7th-street-burger",
+        "chain:black-tap",
+        "blue-collar-burger-greenpoint",
+        "pauls-da-burger-joint-east-village",
+        "corner-bistro-west-village"
+      ],
+      "names": [
+        "The Long Island Bar",
+        "Nowon",
+        "Keens Steakhouse",
+        "Emily",
+        "Minetta Tavern",
+        "J.G. Melon",
+        "Balthazar",
+        "7th Street Burger",
+        "Black Tap",
+        "Blue Collar Burger",
+        "Paul's Da Burger Joint",
+        "Corner Bistro"
+      ],
+      "ranks": [2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14],
+      "left_out": [
+        { "rank": 1, "name": "Peter Luger Steakhouse", "reason": "no menu price" },
+        { "rank": 10, "name": "S&P Lunch", "reason": "no menu price" }
+      ],
+      "notes": [
+        "A countdown from 14 to 1; No. 1 comes first here.",
+        "The page shows May 21, 2014, the date of the earlier article at the same link. The ranked text is from June 2023: its images were uploaded on June 13, 2023, and it dates itself (7th Street Burger, opened in 2021, grew just under two years later).",
+        "Nowon is the East Village location the entry names; Emily is the original at 919 Fulton St (Emily West Village has no menu price); Blue Collar Burger is the Greenpoint location, the only one with a menu price; 7th Street Burger and Black Tap are one chain menu each."
+      ]
     }
   ]
 }

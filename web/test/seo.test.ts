@@ -204,9 +204,12 @@ test("llmsTxt: headline numbers, the date, links to pages and the CSV, all on th
 
 test("the People's Top 10 description: the leaders and the day once there is a board; before it, no promise of daily change", () => {
   const empty = peoplesTopSeo({ leaders: [], lists: 0, asOf: null });
-  assert.equal(empty.description, "The NYC burgers visitors rank highest on The Burger Index, from their own top-10 lists. Add your own top 10.");
+  assert.equal(empty.description, "The NYC burgers ranked highest across the top-10 lists on The Burger Index. Add your own top 10.");
   assert.doesNotMatch(empty.description, /daily|\b0 lists/i);
   const full = peoplesTopSeo({ leaders: ["Emily", "Au Cheval", "J.G. Melon"], lists: 1284, asOf: "2026-10-01" });
-  assert.equal(full.description, "The NYC burgers visitors rank highest on The Burger Index, from 1,284 lists. #1 Emily, #2 Au Cheval, #3 J.G. Melon. As of Oct 1, 2026. Add your own top 10.");
+  assert.equal(full.description, "The NYC burgers ranked highest on The Burger Index, from 1,284 lists. #1 Emily, #2 Au Cheval, #3 J.G. Melon. As of Oct 1, 2026. Add your own top 10.");
+  // Plain "lists": the published rankings saved among them are lists too, so nothing says they are all visitors' own.
+  for (const s of [empty, full]) assert.doesNotMatch(`${s.title} ${s.description}`, /visitor|their own/i);
+  assert.equal(full.title, "The People's Top 10: the NYC burgers ranked highest");
   assert.ok(full.description.length <= DESCRIPTION_MAX);
 });

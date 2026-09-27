@@ -22,7 +22,6 @@ import { datasetNode, itemListNode, organizationNode, websiteNode } from "@/lib/
 import { menuIndexPrices, menusByIndexPrice, menusByIndexPriceDesc, type Menu } from "@/lib/menus";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
 import { getRevealBoard } from "@/lib/peoples-top-data";
-import { getPublishedLine } from "@/lib/published-lists-data";
 import { rankerShareUrl } from "@/lib/share-list";
 import { RANKER_ANCHOR, RANKER_TITLE_ID } from "@/lib/site";
 import { cheapestSpec, priciestSpec, rankingNameInSentence, rankingPath, rankMenus, topTied } from "@/lib/rankings";
@@ -109,7 +108,7 @@ export default function HomePage() {
             // The burger ranker: the first thing to do here (user decisions 2026-09-25/26). Client-rendered; the
             // header's "Rank your burgers" links to /#rank. It shows the People's Top 10 beside a list of 3+.
             <div id={RANKER_ANCHOR} role="region" aria-labelledby={RANKER_TITLE_ID} className="ranker-slot min-w-0">
-              <Ranker median={median} board={getRevealBoard()} published={getPublishedLine()} shareUrl={rankerShareUrl(SITE_URL)} />
+              <Ranker median={median} board={getRevealBoard()} shareUrl={rankerShareUrl(SITE_URL)} />
             </div>
           ) : null}
           <section className="home-costs" aria-labelledby="hero-title">

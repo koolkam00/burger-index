@@ -110,7 +110,7 @@ test("the words: rows, headings, the ladder's start, the count line and the lede
   assert.equal(boardCountLine({ seats: [], totalLists: 12, gate: 5, asOf: "2026-10-01" }), "The ladder starts when burgers are on 5 lists each (12 lists so far).");
   assert.equal(peoplesTopLede({ name: "Emily", lists: 143, firsts: 27 }, "2026-10-01"), "Emily tops the People's Top 10: on 143 lists, #1 on 27 of them (as of Oct 1, 2026).");
   assert.equal(peoplesTopLede({ name: "Emily", lists: 5, firsts: 0 }, null), "Emily tops the People's Top 10: on 5 lists.");
-  assert.equal(peoplesTopLede(null, null), "The burgers visitors rank highest, from their own lists.");
+  assert.equal(peoplesTopLede(null, null), "The burgers ranked highest across the lists on The Burger Index.");
   assert.equal(
     PEOPLES_TOP_ONE_LINER,
     "Every list turns into head-to-head wins, with your #1 counting most; a burger you left off never loses, and a burger climbs only as far as enough different lists back it up.",
