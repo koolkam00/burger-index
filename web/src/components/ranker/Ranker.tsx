@@ -9,6 +9,7 @@ import { PriceChip } from "@/components/ui";
 import { fromPath, track } from "@/lib/analytics";
 import { formatCount, pluralize } from "@/lib/format";
 import { revealAnnouncement, revealView, showsReveal, yourList, type RevealBoard } from "@/lib/peoples-top-reveal";
+import type { PublishedLine } from "@/lib/published-lists";
 import {
   addParam,
   countLine,
@@ -34,6 +35,7 @@ import { rankerStore, type RankerSnapshot } from "@/lib/ranker-store";
 import { PEOPLES_TOP_NAME, PEOPLES_TOP_PATH, RANKER_ADD_PARAM, RANKER_ANCHOR, RANKER_FOCUS_EVENT, RANKER_TITLE_ID } from "@/lib/site";
 import { RANKER_ENABLED } from "@/lib/supabase-config";
 import { PeoplesTopReveal, RevealHint } from "./PeoplesTopReveal";
+import { ShareList } from "./ShareList";
 
 /** Where focus goes after a step: a heading, the search box, a row's control, or a named button. */
 type FocusTarget = { kind: "heading" } | { kind: "search" } | { kind: "row"; key: string; control: "up" | "down" | "remove" } | { kind: "button"; name: string };
@@ -64,11 +66,14 @@ const nameOf = (b: RankerBurger | undefined) => b?.label ?? "A burger no longer 
  * on a phone): `board` is the daily board's seats (user decision 2026-09-26, "Once 3 are added"); the other picks'
  * standings come with the burgers in /data/menus.json.
  *
+ * A saved list can be shared (user decision 2026-09-27, "Share your top 10"): an image of its top 10, drawn in the browser,
+ * and `shareUrl`, the link to this ranker (no list data). `published` is the People's Top 10's sourcing line.
+ *
  * A restaurant page's "Add to your top 10" arrives as /?add=<menu key>#rank (user decision 2026-09-26): the key is read
  * once on mount and dropped from the address, and the store adds it when the burgers and the saved list are known; the
  * card then says what happened (added, already there, list full) and the live region says it too.
  */
-export function Ranker({ median, board }: { median: number | null; board: RevealBoard }) {
+export function Ranker({ median, board, published, shareUrl }: { median: number | null; board: RevealBoard; published: PublishedLine | null; shareUrl: string }) {
   const snap = useRanker();
   const rootRef = useRef<HTMLDivElement>(null);
   const pendingFocus = useRef<FocusTarget | null>(null);
@@ -294,7 +299,16 @@ export function Ranker({ median, board }: { median: number | null; board: Reveal
     );
   } else if (snap.view === "saved" && snap.saved) {
     body = (
-      <SavedView snap={snap} onEdit={edit} onSave={save} onAskDelete={askDelete} onKeep={keep} onDelete={confirmDelete} onRetryMenus={() => retryMenus({ kind: "heading" })} />
+      <SavedView
+        snap={snap}
+        shareUrl={shareUrl}
+        onEdit={edit}
+        onSave={save}
+        onAskDelete={askDelete}
+        onKeep={keep}
+        onDelete={confirmDelete}
+        onRetryMenus={() => retryMenus({ kind: "heading" })}
+      />
     );
   } else {
     body = (
@@ -317,7 +331,7 @@ export function Ranker({ median, board }: { median: number | null; board: Reveal
   let side: ReactNode = null;
   if (revealing) {
     const pick = snap.menus === "ready" ? (key: string) => snap.burgers.get(key) : null;
-    side = <PeoplesTopReveal view={revealView(board, onCard, pick, yourList(snap.saved?.status))} />;
+    side = <PeoplesTopReveal view={revealView(board, onCard, pick, yourList(snap.saved?.status))} published={published} />;
   } else if (!snap.started || (listed && snap.view === "edit")) {
     side = <RevealHint />;
   }
@@ -401,6 +415,7 @@ const menusPending = (snap: RankerSnapshot) => snap.menus === "idle" || snap.men
 /** The saved list: its rows, what it counts for, and "Edit my list" / "Delete my list". */
 function SavedView({
   snap,
+  shareUrl,
   onEdit,
   onSave,
   onAskDelete,
@@ -409,6 +424,7 @@ function SavedView({
   onRetryMenus,
 }: {
   snap: RankerSnapshot;
+  shareUrl: string;
   onEdit: () => void;
   onSave: () => void;
   onAskDelete: () => void;
@@ -425,6 +441,8 @@ function SavedView({
   const held = snap.busy !== null;
   // A voided list stays void and can't be withdrawn (the backend keeps it): no "Delete my list" for it.
   const canDelete = saved.status !== "void";
+  // "Save again" (a replaced list that can be saved as it is) is the card's main action; otherwise sharing is.
+  const saveAgain = saved.status === "replaced" && !gone;
   return (
     <>
       <h3 tabIndex={-1} data-ranker-heading="" className="t-display-m ranker-title">
@@ -440,6 +458,9 @@ function SavedView({
           <SavedRow key={key} rank={i + 1} burger={snap.burgers.get(key)} menus={snap.menus} />
         ))}
       </ol>
+      {/* "Share your top 10" (user decision 2026-09-27): an image of the list and a link to rank your own, once the
+          burgers are known. */}
+      {snap.menus === "ready" && !(snap.confirmDelete && canDelete) ? <ShareList items={saved.items} burgers={snap.burgers} url={shareUrl} primary={!saveAgain} /> : null}
       {snap.confirmDelete && canDelete ? (
         <div className="ranker-confirm mt-5" role="group" aria-labelledby="ranker-confirm-q">
           <p id="ranker-confirm-q" className="t-ui-m font-semibold">
@@ -456,7 +477,7 @@ function SavedView({
         </div>
       ) : (
         <div className="ranker-actions mt-5">
-          {saved.status === "replaced" && !gone ? (
+          {saveAgain ? (
             <button type="button" className="btn btn-primary btn-lg" data-ranker-button="save" aria-disabled={held || undefined} onClick={() => !held && onSave()}>
               Save again
             </button>

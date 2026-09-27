@@ -84,7 +84,8 @@ connection: the backend keeps the latest. A burger saved in a list must be one o
 `ranker_keys`, synced by `scripts/ranker-keys-migration.mjs`). The header's "Rank your burgers" links to `/#rank`
 from every page (on home it scrolls to the ranker and focuses it). The crowd's ranking is the People's Top 10 below; once the
 list on the card holds 3 burgers, the card shows it beside the list (user decision 2026-09-26, "Once 3 are added"): the seats
-with the visitor's picks marked, where their other picks stand, and the empty board's sentence before anything is ranked.
+with the visitor's picks marked, where their other picks stand, and the empty board's sentence before anything is ranked. A
+saved list can be shared: "Share your top 10" draws an image of it in the browser and offers the link to the ranker.
 
 The backend is the Supabase project `burger-index`; its schema, the three RPCs (`save_ranking`, `get_my_ranking`,
 `delete_ranking`), the refusals and rate limits are in [`../supabase/README.md`](../supabase/README.md).
@@ -120,7 +121,15 @@ fetches nothing.
 - `src/lib/peoples-top-reveal.ts`: the People's Top 10 beside a list of 3+ (pure): when it shows (`showsReveal`), the seats the
   home page passes the ranker (`revealBoard`, from `getRevealBoard()` in `src/lib/peoples-top-data.ts`: the seats and the
   board's numbers, never the whole board), the visitor's picks marked, the stand-lines and the empty board's words. Tested in
-  `test/peoples-top-reveal.test.ts`.
+  `test/peoples-top-reveal.test.ts`. Under it, the People's Top 10's sourcing line (below).
+- `src/lib/share-list.ts` and `src/lib/share-list-image.ts`: **"Share your top 10"** (user decision 2026-09-27;
+  `components/ranker/ShareList.tsx`), under a saved list. The pure half: the image's rows (the list's first 10, numbered),
+  its words ("My top 10 burgers", "Rank yours at <host>"), the share text, file names, alt text, `fitText` (names cut to a
+  width with an ellipsis) and the geometry of both sizes, a 1080×1920 story and a 1080×1080 square (`shareLayout`), tested in
+  `test/share-list.test.ts`. The browser half draws the image on a canvas (the share images' list card, Day-shift colors, the
+  page's own Lilita One and Barlow, loaded first) and returns a PNG. The panel shows the preview, then "Share image" (the Web
+  Share API with the file, only where `navigator.canShare` accepts files), "Download image" and "Copy link"; the link is the
+  home ranker, `https://<site>/?ref=share#rank` (`rankerShareUrl(SITE_URL)`), with no list and no voter id.
 - `src/components/ranker/`: `Ranker` (the card: search, the list with its controls, save, the saved view, edit, delete with a
   confirmation, loading, error, rate-limit and closed states; focus follows each step and a polite live region says what
   changed), `PeoplesTopReveal` (the People's Top 10 beside the list, and the `lg`-only hint below 3) and `PeoplesTopLink` (a
@@ -185,7 +194,12 @@ rpc/ranker_board_inputs ──(read-only GET, publishable key)──> scripts/sn
   burger not under review, as the method fills a seat), "≈" only between rows that are neighbors on the board too. The page
   shows the 10 seats ("The top 3 so far." early on), the rest of the ranking, Rising ("On 7 lists · needs 3 more lists"),
   "Early results" under 500 lists, "Under review" (an owner hold) and "Checking a surge of lists" (the surge review bar),
-  the one-liner, and before anything is ranked "The ladder starts when burgers are on 5 lists each (12 lists so far)."
+  the one-liner, the sourcing line under it (user decision 2026-09-26/27: the published rankings counted among the lists,
+  "Includes 4 published burger rankings, each counted like one visitor's list: The Infatuation (Aug 2026, Jan 2026), …", each
+  month linked to the list; `src/lib/published-lists.ts` from `../data/ranker_published_lists.json`, which `sync-data` checks
+  and copies, read by `src/lib/published-lists-data.ts`; drawn by `src/components/PublishedLine.tsx`, also under the People's
+  Top 10 beside the ranker's list and in llms.txt; `test/published-lists.test.ts`, and `check:seo` recomputes it), and
+  before anything is ranked "The ladder starts when burgers are on 5 lists each (12 lists so far)."
   (before the first board, with no count: the lists saved so far aren't published yet)
   ItemList JSON-LD only; its own share image; in the sitemap (dated by the board), llms.txt, the nav, the footer and "More
   burger rankings."; `/best-burgers` rows show a ranked menu's People's rank. Tested in `test/peoples-top.test.ts`.
@@ -228,6 +242,7 @@ there is no banner, and surveys, product tours and the conversations widget are 
 | `ranking_deleted` | `length` | "Delete my list", confirmed and done |
 | `peoples_top_clicked` | `surface` (`nav`, `menu_sheet`, `ranker`, `home`), `from_path` (the path only: no query, no hash) | a link to the People's Top 10 in the header nav, the menu sheet, the ranker card (its top line, or "See the full People's Top 10" beside a list) or under the home board |
 | `peoples_top_revealed` | `surface` (`ranker`), `list_length` | the home ranker first shows the People's Top 10 beside a list of 3+ (added, or a saved or restored list on load), once per page view |
+| `list_shared` | `method` (`share`: the browser's share sheet reported the image shared; `download`; `copy_link`: the link is on the clipboard), `length` (the saved list's) | "Share your top 10" under a saved list in the home ranker (`components/ranker/ShareList.tsx`); a closed share sheet sends nothing. The shared link, `/?ref=share#rank`, carries only `ref=share`, so a visit from it shows in `$pageview`'s URL |
 | `map_pin_opened` | `restaurant_id`, `source` (`pin` tapped, or `link` for `/map?r=<id>`, once per visit: a List/Map round trip reopens the popup without sending it again) | `MapCanvas` |
 | `map_popup_link_clicked` | `restaurant_id` | the restaurant link in a map popup |
 | `map_view_changed` | `view` (`map` / `list`) | the Map / List toggle |

@@ -2680,6 +2680,82 @@
     padding-top: 16px;
     border-top: 1.5px solid var(--line);
   }
+  /* "Share your top 10" under a saved list (DESIGN.md "Share your top 10"): the button, then its panel under a rule:
+     the size picker (radio chips), the preview (the image itself, framed like the press kit's share image), the ways
+     to share and the link. */
+  .ranker-share {
+    margin-top: 20px;
+  }
+  .ranker-share-panel {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1.5px solid var(--line);
+  }
+  .share-sizes {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+  .share-sizes legend {
+    padding: 0;
+    margin-bottom: 8px;
+  }
+  .share-size-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .share-size:has(input:checked) {
+    background: var(--accent);
+    border-color: var(--accent-deep);
+    color: var(--accent-ink);
+    box-shadow: 0 2px 0 var(--accent-deep);
+  }
+  .share-size:has(input:checked):hover {
+    background: var(--accent-hover);
+  }
+  .share-size:has(input:focus-visible) {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .share-size {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  .share-preview {
+    margin-top: 16px;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    overflow: clip;
+    background: var(--surface-2);
+    box-shadow: var(--shadow-block);
+  }
+  .share-preview.is-story {
+    width: min(100%, 225px);
+    aspect-ratio: 9 / 16;
+  }
+  .share-preview.is-square {
+    width: min(100%, 320px);
+    aspect-ratio: 1;
+  }
+  .share-preview img {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .share-skel {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+  .share-failed {
+    padding: 14px 16px;
+  }
+  .share-link {
+    max-width: 36rem;
+    font-size: 15px;
+    overflow-wrap: anywhere;
+  }
   /* The card's two columns at lg: the list (7 of 12) and, beside it, the People's Top 10 (5 of 12). The list's
      column keeps its width whether or not the People's Top 10 shows, so nothing moves when it appears. Below lg the
      People's Top 10 sits under the list, after a rule. */
