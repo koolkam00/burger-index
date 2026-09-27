@@ -10,7 +10,8 @@
 // the landmark's point to the restaurant's coordinates. A priced restaurant without coordinates (a restaurant-list row
 // that DOHMH doesn't match, or a DOHMH record without a location) can't be measured, so it is never on a list, and no
 // line claims "all" the spots near a landmark (the count line is the plain count: DESIGN.md "No methodology copy" rules
-// out a note saying why). A DOHMH record without a location gets its coordinates in pipeline/data/dohmh_overrides.json.
+// out a note saying why). A DOHMH record without a location gets its coordinates in pipeline/data/dohmh_overrides.json,
+// and a restaurant-list row DOHMH does not match its address and point in pipeline/data/location_overrides.json.
 // Pure and client-safe (the map reads landmarkBySlug and landmarkBounds).
 import { BOROUGH_META } from "./boroughs";
 import { formatCount, formatPrice, pluralize } from "./format";

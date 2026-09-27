@@ -25,6 +25,7 @@ from . import corrections as corrections_mod
 from .chains import Target, is_airport
 from .models import AreaSummary, Burger, BurgerIndex, HandCheck, PriceSource, Restaurant, Stats
 from .names import slugify
+from .sources import located
 
 # The contract's two restaurant shapes (models.PricedRestaurant, models.UnpricedRestaurant), in field order.
 PRICED_FIELDS = ("id", "name", "chain", "address", "borough", "neighborhood", "neighborhood_slug", "lat", "lng",
@@ -224,18 +225,20 @@ def restaurant_rows(targets: Iterable[Target], results: dict[str, dict], *,
             # the page prices a beef burger (process.py), but only as a group platter or a combo
             status = "no_prices"
         nb = m.get("neighborhood")
+        # its own address and coordinates, else a hand-checked location (sources.apply_location_overrides)
+        address, lat, lng = located(m)
         rows.append({
             "key": m["key"],
             "status": status,
             "id": rid,
             "name": name,
             "chain": t.chain,
-            "address": m.get("address"),
+            "address": address,
             "borough": m["borough"],
             "neighborhood": nb,
             "neighborhood_slug": (slugify(nb) or None) if nb else None,
-            "lat": m.get("lat"),
-            "lng": m.get("lng"),
+            "lat": lat,
+            "lng": lng,
             "website": m.get("website") or res.get("website"),
             "menu_url": res.get("menu_url"),
             "price_source": res.get("price_source"),

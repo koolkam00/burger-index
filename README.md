@@ -45,6 +45,9 @@ Hand-checked fixes live next to the code, each with its source, date and reason:
   listed at "1820 Greenwich Avenue" instead of 18 Greenwich Avenue), fixed per CAMIS by `sources` before matching.
   An override applies only while DOHMH still has the error; once DOHMH corrects the record, `sources` reports the
   override as unused so it can be deleted.
+- `pipeline/data/location_overrides.json`: the street address and map point of restaurant-list rows that no DOHMH
+  record matches (keyed `csv:…`), checked on the restaurant's own site and geocoded with NYC Planning's GeoSearch.
+  `build` publishes them; the scrape never sees them, and they never set a neighborhood (restaurant ids stay put).
 
 ## Pipeline
 

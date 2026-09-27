@@ -41,6 +41,7 @@ def data_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "RESTAURANT_LIST_CSV", csv)
     monkeypatch.setattr(sources, "socrata_get", lambda url, params, http=None: DOHMH_ROWS)
     monkeypatch.setattr(sources, "MENU_URLS_PATH", tmp_path / "menu_urls.json")  # none unless a test writes one
+    monkeypatch.setattr(sources, "LOCATION_OVERRIDES_PATH", tmp_path / "location_overrides.json")  # likewise
     return d
 
 

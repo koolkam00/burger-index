@@ -195,6 +195,15 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
 - `pipeline/data/dohmh_overrides.json` — per-CAMIS fixes for typos in DOHMH records (e.g. Rosemary's `1820` → `18`
   Greenwich Ave with real coordinates), applied by `sources`; `report.dohmh_overrides_applied` lists them and an unused
   override is reported. `pipeline/data/corrections.json` — hand-checked menu price corrections applied by `build`.
+- `pipeline/data/location_overrides.json` — hand-checked locations of restaurant-list rows no DOHMH record matches
+  (`csv:…` key → `address`, `lat`, `lng`, `address_source`, `geocode_source`, `checked_at`, `reason`; added 2026-09-26 so
+  priced places reach the map, the landmark pages and Nearby): the address from the restaurant's own site (DOHMH's current
+  inspection record where the site blocks automated browsers), the point from NYC Planning's GeoSearch. `sources` attaches
+  it as the record's `location_override` (`report.location_overrides_applied`/`_unused`) and `build` publishes it
+  (`sources.located`); the record's own `address`/`lat`/`lng` stay empty, because the scrape reads them (the search query,
+  the page location check, a chain's representative), so the cached replay never changes. Never a neighborhood, NTA or
+  zipcode (the id is name + neighborhood). Add one only for a place checked open at that address; a DOHMH record's own
+  location goes in `dohmh_overrides.json` instead (coordinates only).
 - `pipeline/data/menu_urls.json` — hand-checked menu pages per restaurant key (`camis:…`/`csv:…` → `menu_url`, `checked_at`,
   `reason`), applied by `sources` (CSV untouched; `report.menu_url_overrides_applied`/`_unused`): scraped first, as is, and
   trusted as that restaurant's page. Each new one is a re-scrape on the next `run` (credits); never also correct that target.
@@ -317,7 +326,8 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   Brooklyn Bridge run on past the half mile, so they have no page). A priced restaurant without coordinates can't be
   measured, so it is on no list and the count line is the plain "36 burger spots within half a mile" (never "All 36"); a
   DOHMH record without a location gets hand-checked coordinates in `pipeline/data/dohmh_overrides.json` (coordinates only,
-  never a zipcode or NTA, which would move its id). Every title carries the spot count and the month (`short` in
+  never a zipcode or NTA, which would move its id), and a list row DOHMH doesn't match its address and point in
+  `pipeline/data/location_overrides.json`. Every title carries the spot count and the month (`short` in
   `landmarks.mjs` for a long name). A landmark has a page only with **5+
   spots** (`landmarksWithPages` in `src/lib/landmarks.ts`: 17 today; DUMBO 2, Yankee Stadium 1, Citi Field and Coney Island
   0 have none until the dataset has more). The lede: "36 burger spots within half a mile of Times Square, about a 10-minute

@@ -189,6 +189,25 @@ def test_restaurant_ids_do_not_change_when_a_namesake_is_scraped():
     assert [r["id"] for r in both["restaurants"]] == ["daily-burger-midtown-4590", "daily-burger-midtown-4622"]
 
 
+def test_a_hand_checked_location_is_published_for_a_row_without_one():
+    placed = {"address": "160 East 38 Street", "lat": 40.748081, "lng": -73.976836, "checked_at": "2026-09-26",
+              "source_url": "https://theoffice.nyc/"}
+    rs = [{**rec("At The Office", csv=True, nta="MN20", neighborhood="Murray Hill-Kips Bay", lat=None, lng=None),
+           "location_override": placed},
+          rec("Due West", camis="4", address="189 West 10 Street")]
+    ts = build_targets(rs, chains={})
+    d = dataset(ts, {t.key: result(burgers=[b("Classic", 18)]) for t in ts})
+    build.validate(d)
+    office, due = sorted(d["restaurants"], key=lambda r: r["name"])
+    assert (office["id"], office["address"], office["lat"], office["lng"]) == (
+        "at-the-office-murray-hill", "160 East 38 Street", 40.748081, -73.976836)
+    assert (due["address"], due["lat"], due["lng"]) == ("189 West 10 Street", 40.73, -74.0)
+    # the id is the same as without the location: it never depends on where the restaurant is
+    bare = dataset(build_targets([{k: v for k, v in rs[0].items() if k != "location_override"}], chains={}),
+                   {"csv:at-the-office": result(burgers=[b("Classic", 18)])})
+    assert bare["restaurants"][0]["id"] == office["id"] and bare["restaurants"][0]["lat"] is None
+
+
 def test_airport_chain_locations_do_not_copy_the_street_price():
     rs = [rec("McDonald's", camis="1", dba="MCDONALD'S", address="4040 Broadway"),
           rec("McDonald's", camis="2", dba="MCDONALDS - FOOD COURT", address="Terminal 1", borough="Queens",
