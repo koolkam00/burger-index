@@ -12,16 +12,17 @@ import { UseSystemTheme } from "./theme";
 import { Wordmark } from "./Wordmark";
 
 /**
- * The deck: a rope rail, then dark stained deck planks. The source line, the non-affiliation line, the
- * CSV link with its license and the NYC ranking pages (with the most-recommended burgers, the People's
- * Top 10 and the burgers near NYC landmarks) ship on every page.
+ * The deck: a rope rail, then dark stained deck planks. The source line, the CSV link with its license and the
+ * NYC ranking pages (with the most-recommended burgers, the People's Top 10 and the burgers near NYC landmarks)
+ * ship on every page. (The disclaimer and the map-data line were removed at the user's request on 2026-09-27; the
+ * map keeps its own OpenStreetMap / OpenFreeMap attribution, MapLibre's control.)
  */
 export function SiteFooter({ generatedAt }: { generatedAt: string }) {
   return (
     <footer className="site-footer atmo">
       <span className="rope rope-flat" aria-hidden="true" />
       <div className="deck">
-        <div className="wrap grid gap-10 md:grid-cols-3 md:gap-8">
+        <div className="wrap grid gap-10 md:grid-cols-2 md:gap-8">
           <div className="min-w-0">
             <p>
               <Wordmark />
@@ -103,12 +104,6 @@ export function SiteFooter({ generatedAt }: { generatedAt: string }) {
                 </li>
               </ul>
             </nav>
-          </div>
-          <div className="min-w-0">
-            <p className="t-body-s deck-muted">
-              We index prices, not quality. An original seaside-diner homage: not affiliated with any restaurant, TV show or network.
-            </p>
-            <p className="t-body-s deck-muted mt-3">Map data © OpenStreetMap contributors, tiles by OpenFreeMap.</p>
           </div>
         </div>
       </div>
