@@ -6,7 +6,12 @@ import {
   addItem,
   addParam,
   classifyRankerError,
-  countLine,
+  autosaveLine,
+  AUTOSAVE_DELAY,
+  firstSaveTracker,
+  isTransient,
+  retryDelay,
+  saveFailureText,
   dragIndex,
   dragTop,
   linkAddOutcome,
@@ -125,10 +130,42 @@ test("a list can be saved with 3 to 25 burgers, each still on the Burger Index",
   assert.equal(listProblem(Array.from({ length: 26 }, (_, i) => `k${i}`), known), "too_long");
   assert.equal(MIN_ITEMS, 3);
   assert.equal(MAX_ITEMS, 25);
-  assert.equal(countLine(0), "Add at least 3 burgers, your favorite first.");
-  assert.equal(countLine(1), "1 burger. Add 2 more to save.");
-  assert.equal(countLine(3), "3 burgers, up to 25.");
-  assert.equal(countLine(25), "25 burgers: your list is full.");
+});
+
+test("autosave's status line: a failure, a gone burger, what's still needed, saving, then what the saved list counts for", () => {
+  const today = "2026-09-26";
+  const counting = { status: "active" as const, countsFrom: "2026-09-27", inBoard: false };
+  const base = { length: 0, saved: null, dirty: false, saving: false, failure: null, problem: null, deleted: false };
+  const line = (o: Partial<Parameters<typeof autosaveLine>[0]>) => autosaveLine({ ...base, ...o }, today);
+  assert.deepEqual(line({}), { text: "Add at least 3 burgers, your favorite first.", alert: false });
+  assert.deepEqual(line({ length: 1, dirty: true, problem: "too_short" }), { text: "Add 2 more to save your list.", alert: false });
+  assert.deepEqual(line({ length: 3, dirty: true, saving: true }), { text: "Saving…", alert: false });
+  assert.deepEqual(line({ length: 3, saved: counting }), { text: "Saved. It counts from Sep 27, 2026.", alert: false });
+  assert.deepEqual(line({ length: 3, saved: { ...counting, inBoard: true } }), { text: "Counted in the People's Top 10.", alert: false });
+  assert.deepEqual(line({ length: 4, saved: counting, dirty: true, saving: true }), { text: "Saving…", alert: false });
+  // a saved list edited under 3: not saved, and the saved one stays as it was
+  assert.deepEqual(line({ length: 2, saved: counting, dirty: true, problem: "too_short" }), { text: "Add 1 more to save your changes. Your saved list is unchanged.", alert: false });
+  assert.deepEqual(line({ length: 0, saved: counting, dirty: true, problem: "too_short" }), { text: "Add 3 more to save your changes. Your saved list is unchanged.", alert: false });
+  assert.deepEqual(line({ deleted: true }), { text: "Your list was deleted.", alert: false });
+  // failures first: one tried again says so; a refusal is the backend's words
+  assert.deepEqual(line({ length: 3, dirty: true, saving: true, failure: { kind: "network", retrying: true } }), { text: "Couldn't reach the counter. Trying again soon.", alert: true });
+  assert.deepEqual(line({ length: 3, dirty: true, failure: { kind: "rate_voter", retrying: false } }), { text: "You've saved your list a lot today. Try again tomorrow.", alert: true });
+  assert.equal(saveFailureText({ kind: "unknown", retrying: true }), "Something went wrong. Trying again soon.");
+  assert.equal(saveFailureText({ kind: "rate_connection", retrying: false }), RANKER_ERROR_COPY.rate_connection);
+  // a burger that left the Burger Index
+  assert.deepEqual(line({ length: 4, dirty: true, problem: "gone" }), { text: "Remove the burgers no longer on the Burger Index to save your list.", alert: true });
+  assert.deepEqual(line({ length: 4, saved: counting, dirty: true, problem: "gone" }), { text: "Remove the burgers no longer on the Burger Index to save your changes.", alert: true });
+  assert.deepEqual(line({ length: 4, saved: counting, problem: "gone" }), { text: "Saved. It counts from Sep 27, 2026. Remove the burgers no longer on the Burger Index to save changes.", alert: false });
+  // ranking_saved at most once per page view: the first save after the page view began
+  const first = firstSaveTracker(2);
+  assert.deepEqual([null, { seq: 1 }, { seq: 2 }, { seq: 3 }, { seq: 4 }, { seq: 5 }].map(first), [false, false, false, true, false, false]);
+  const fresh = firstSaveTracker(0);
+  assert.equal(fresh({ seq: 1 }), true);
+  assert.equal(fresh({ seq: 1 }), false, "the same save seen again");
+  // the timing
+  assert.equal(AUTOSAVE_DELAY, 2000);
+  assert.deepEqual([1, 2, 3, 4, 9].map(retryDelay), [5000, 15000, 60000, 60000, 60000]);
+  assert.deepEqual(["network", "unknown", "rate_connection", "rate_voter", "unknown_burger", "invalid"].map((k) => isTransient(k as never)), [true, true, false, false, false, false]);
 });
 
 // ---- the burgers and their search ------------------------------------------------------------------
@@ -194,18 +231,18 @@ test("what the card says about a saved list", () => {
   assert.equal(savedStatusText({ status: "active", countsFrom: "2026-09-27", inBoard: false }, today), "Saved. It counts from Sep 27, 2026.");
   assert.equal(savedStatusText({ status: "active", countsFrom: "2026-09-26", inBoard: false }, today), "Saved. It joins the People's Top 10 at its next update.");
   assert.equal(savedStatusText({ status: "active", countsFrom: "2026-09-20", inBoard: true }, today), "Counted in the People's Top 10.");
-  assert.equal(savedStatusText({ status: "replaced", countsFrom: null, inBoard: false }, today), "Not counted: a newer list was saved from this connection. Save again to count this one.");
+  assert.equal(savedStatusText({ status: "replaced", countsFrom: null, inBoard: false }, today), "Not counted: a newer list was saved from this connection.");
   assert.equal(savedStatusText({ status: "void", countsFrom: null, inBoard: false }, today), "Not counted.");
-  // a burger on it left the Burger Index: a replaced list asks for an edit ("Save again" isn't offered), the rest add it
+  // a burger on it left the Burger Index: no change can be saved until it goes
   assert.equal(
     savedStatusText({ status: "replaced", countsFrom: null, inBoard: false }, today, true),
-    "Not counted: a newer list was saved from this connection. Some burgers on it are no longer on the Burger Index: edit your list to replace them, then save.",
+    "Not counted: a newer list was saved from this connection. Remove the burgers no longer on the Burger Index to count it again.",
   );
   assert.equal(
     savedStatusText({ status: "active", countsFrom: "2026-09-20", inBoard: true }, today, true),
-    "Counted in the People's Top 10. Some burgers on it are no longer on the Burger Index: edit your list to replace them.",
+    "Counted in the People's Top 10. Remove the burgers no longer on the Burger Index to save changes.",
   );
-  assert.equal(savedStatusText({ status: "void", countsFrom: null, inBoard: false }, today, true), "Not counted. Some burgers on it are no longer on the Burger Index: edit your list to replace them.");
+  assert.equal(savedStatusText({ status: "void", countsFrom: null, inBoard: false }, today, true), "Not counted. Remove the burgers no longer on the Burger Index to save changes.");
   assert.match(nyToday(new Date("2026-09-27T03:30:00Z")), /^2026-09-26$/, "New York's day, not UTC's");
 });
 
@@ -258,16 +295,11 @@ test("adding from a link: at the end when there is room, else it says why; the w
   assert.deepEqual(linkAddOutcome([...full.slice(0, 24), "sals"], "sals", known), { key: "sals", kind: "already", position: 25 }, "on a full list it is still already there");
   assert.deepEqual(linkAddOutcome(["a"], "gone", known), { key: "gone", kind: "gone" });
 
-  assert.equal(linkAddText({ key: "sals", kind: "added", position: 1 }, "Sal's", false), "Sal's added at #1. 1 burger on your list.");
-  assert.equal(linkAddText({ key: "sals", kind: "added", position: 4 }, "Sal's", false), "Sal's added at #4. 4 burgers on your list.");
-  assert.equal(linkAddText({ key: "sals", kind: "added", position: 6 }, "Sal's", true), "Sal's added at #6. Save changes to keep it.");
-  assert.equal(linkAddText({ key: "sals", kind: "already", position: 2 }, "Sal's", true), "Sal's is already on your list, at #2.");
-  assert.equal(linkAddText({ key: "sals", kind: "full" }, "Sal's", false), "Your list is full: 25 burgers. Remove one to add Sal's.");
-  // the saved view has no remove buttons: it says to edit first
-  assert.equal(linkAddText({ key: "sals", kind: "full" }, "Sal's", false, "edit"), "Your list is full: 25 burgers. Remove one to add Sal's.");
-  assert.equal(linkAddText({ key: "sals", kind: "full" }, "Sal's", false, "saved"), "Your list is full: 25 burgers. Edit your list and remove one to add Sal's.");
-  assert.equal(linkAddText({ key: "sals", kind: "already", position: 2 }, "Sal's", true, "saved"), "Sal's is already on your list, at #2.");
-  assert.equal(linkAddText({ key: "gone", kind: "gone" }, "A burger no longer listed", false), "That burger is no longer on the Burger Index.");
+  assert.equal(linkAddText({ key: "sals", kind: "added", position: 1 }, "Sal's"), "Sal's added at #1. 1 burger on your list.");
+  assert.equal(linkAddText({ key: "sals", kind: "added", position: 6 }, "Sal's"), "Sal's added at #6. 6 burgers on your list.", "to a saved list too: it saves itself");
+  assert.equal(linkAddText({ key: "sals", kind: "already", position: 2 }, "Sal's"), "Sal's is already on your list, at #2.");
+  assert.equal(linkAddText({ key: "sals", kind: "full" }, "Sal's"), "Your list is full: 25 burgers. Remove one to add Sal's.");
+  assert.equal(linkAddText({ key: "gone", kind: "gone" }, "A burger no longer listed"), "That burger is no longer on the Burger Index.");
 });
 
 test("drag to reorder: where a dragged row lands, where it is drawn, and the list it leaves", () => {

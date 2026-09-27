@@ -76,10 +76,11 @@ Other scripts:
 User decisions 2026-09-25/26: the ranker replaced all crowd pricing ("What's it worth?", the home pricer, the People's Price,
 `/peoples-price` and `/best-value-burgers` are gone; the old answers stay stored in Supabase, hidden, and none are accepted).
 The home page opens on it (`#rank`; DESIGN.md "The ranker hero"): search the priced burgers (every distinct menu, a chain once),
-add 3 to 25 of them best first ("your top 10", with room for more), move them with up and down buttons, remove them, and save.
-A returning browser sees its saved list, what it counts for ("Saved. It counts from Sep 27, 2026.", "Counted in the People's
-Top 10.", "Not counted: a newer list was saved from this connection. Save again to count this one."), and can edit or delete
-it (a voided list, "Not counted.", can be edited but not deleted: the backend keeps it void). One list per browser and per
+add 3 to 25 of them best first ("your top 10", with room for more), move them with up and down buttons, remove them. **The
+list saves itself** (user request 2026-09-27; no Save button): once it holds 3 burgers, about 2 seconds after the last change.
+A returning browser finds its saved list on the card, editable in place, with what it counts for ("Saved. It counts from Sep
+27, 2026.", "Counted in the People's Top 10."), and can delete it (a voided list, "Not counted.", can be edited but not
+deleted: the backend keeps it void). One list per browser and per
 connection: the backend keeps the latest. A burger saved in a list must be one of the dataset's menus (the database's
 `ranker_keys`, synced by `scripts/ranker-keys-migration.mjs`). The header's "Rank your burgers" links to `/#rank`
 from every page (on home it scrolls to the ranker and focuses it). The crowd's ranking is the People's Top 10 below; once the
@@ -101,19 +102,24 @@ fetches nothing.
   first save. Tested in `test/voter.test.ts`.
 - `src/lib/ranker-api.ts`: the only module that talks to Supabase. `@supabase/supabase-js` is imported lazily on the first call,
   so it is its own chunk and loads only when the ranker needs it: a returning browser's saved list on mount, else the first
-  save. Refusals come back as HTTP 400 (SQLSTATE 22023) and rate limits as 429 (PT429), each with a stable `hint` code.
+  save. A save left waiting when the page closes goes as a keepalive `fetch` instead (`saveRankingOnUnload`). Refusals come back as HTTP 400 (SQLSTATE 22023) and rate limits as 429 (PT429), each with a stable `hint` code.
 - `src/lib/ranker.ts`: pure helpers: the list's limits and edits, the burgers as the ranker shows them (a chain at its usual
   location with "N locations"; a name two menus share gets its neighborhood), search (accents and dots folded), the replies
-  checked, the status lines and the error copy, and a restaurant page's "Add to your top 10" (`addParam`, `withoutAddParam`,
+  checked, the status line (`autosaveLine`: a failure, a burger gone, "Add 2 more to save your list.", "Saving…", then what
+  the saved list counts for), autosave's timing (`AUTOSAVE_DELAY` 2 s, `retryDelay` 5 s, 15 s, then every minute) and the error copy, and a restaurant page's "Add to your top 10" (`addParam`, `withoutAddParam`,
   `linkAddOutcome`, `linkAddText`; the link itself is `rankerAddHref` in `src/lib/site.ts`), and drag to reorder with a
   mouse (`dragIndex`: where a dragged row lands; `dragTop`: where it is drawn; the pointer handling is `useDragToReorder` in
   `components/ranker/Ranker.tsx`, a grip shown only for a fine, hovering pointer from 480px). Tested in `test/ranker.test.ts`.
-- `src/lib/ranker-store.ts`: the ranker's state as an external store (the burgers, the saved list, the list on the card, what
-  is on its way); an unsaved list is kept in `sessionStorage` (`bi-ranker-draft`), and `localStorage` `bi-ranker-saved` says
+- `src/lib/ranker-store.ts`: the ranker's state as an external store (the burgers, the saved list, the list on the card) and
+  its **autosave**: 2 s after the last change once the list can be saved, one save at a time (a change made meanwhile goes
+  right after it; a reply only records the list it saved), never the list the backend already holds, a network failure
+  tried again (5 s, 15 s, every minute), a refusal not until the next change, a waiting save sent at once when the page is
+  hidden and as a keepalive request when it closes, a replaced list saved again on load, and a delete that waits for a save
+  on its way. An unsaved list is kept in `sessionStorage` (`bi-ranker-draft`), and `localStorage` `bi-ranker-saved` says
   this browser has a saved list, which the `<head>` script turns into `html.ranker-saved` (a skeleton, not an empty list,
   until the saved one loads). Every storage access is wrapped. `addFromLink` holds a restaurant page's burger until the
   burgers and the saved list are known, then adds it (or says it is there already, or the list is full) as `linkAdd`.
-  Tested with a fake backend in `test/ranker-store.test.ts`.
+  Tested with a fake backend and fake timers in `test/ranker-store.test.ts`.
 - `src/lib/menu-list.ts` and `src/app/data/menus.json/route.ts`: the force-static `/data/menus.json` (every distinct priced
   menu with its priced locations and, where the daily board shows it, its People's Top 10 standing, `{rank}` or `{rising}`;
   and the neighborhoods' names), fetched when the ranker mounts (and by the badge page's finder), so no menu sits in the home
@@ -130,9 +136,9 @@ fetches nothing.
   page's own Lilita One and Barlow, loaded first) and returns a PNG. The panel shows the preview, then "Share image" (the Web
   Share API with the file, only where `navigator.canShare` accepts files), "Download image" and "Copy link"; the link is the
   home ranker, `https://<site>/?ref=share#rank` (`rankerShareUrl(SITE_URL)`), with no list and no voter id.
-- `src/components/ranker/`: `Ranker` (the card: search, the list with its controls, save, the saved view, edit, delete with a
-  confirmation, loading, error, rate-limit and closed states; focus follows each step and a polite live region says what
-  changed), `PeoplesTopReveal` (the People's Top 10 beside the list, and the `lg`-only hint below 3) and `PeoplesTopLink` (a
+- `src/components/ranker/`: `Ranker` (the card, one view: search, the list with its controls, the status line, "Share your
+  top 10" and delete with a confirmation, loading, error, rate-limit and closed states; focus follows each step and a polite
+  live region says each change, the first save of the page view, a failed save once and a delete, never every save), `PeoplesTopReveal` (the People's Top 10 beside the list, and the `lg`-only hint below 3) and `PeoplesTopLink` (a
   link to the People's Top 10 that reports `peoples_top_clicked`).
 
 ### The People's Top 10 (daily board)
@@ -239,14 +245,14 @@ there is no banner, and surveys, product tours and the conversations widget are 
 |---|---|---|
 | `burger_search` | `surface` (`burgers`), `query`, `results` | the /burgers search box, once typing pauses for 1 s; empty and repeated queries are skipped (the ranker's search sends nothing) |
 | `burger_filter_changed` | `filter` (`borough`, `neighborhood`, `price`, `sort`, `clear_all`), `value`, `results` | every /burgers control: filter popovers, the mobile sheet, chips, price presets, the sort select and the column headers |
-| `ranking_started` | `edited` (the list being changed was saved before) | the first change to a list in the home ranker (a new one, or the saved one being edited) |
+| `ranking_started` | `edited` (the list being changed was saved before) | the first change to the list in the home ranker, once per page view |
 | `ranking_item_added` | `menu_key`, `position` (1-based: the list's new length), `surface` (`search`, or `restaurant_page`: added from a restaurant page's "Add to your top 10") | "Add" in the ranker's search, or the ranker adding a restaurant page's burger (`/?add=<menu key>`) once it can |
 | `add_to_list_clicked` | `menu_key`, `restaurant_id` | "Add to your top 10" on a restaurant page (`components/RestaurantLinks.tsx`) |
-| `ranking_saved` | `length`, `edited` | a list saved (once Supabase saved it) |
+| `ranking_saved` | `length`, `edited` (a saved list was changed) | the first autosave of a page view that Supabase saved (at most once per page view: later autosaves send nothing) |
 | `ranking_deleted` | `length` | "Delete my list", confirmed and done |
 | `peoples_top_clicked` | `surface` (`nav`, `menu_sheet`, `ranker`, `home`), `from_path` (the path only: no query, no hash) | a link to the People's Top 10 in the header nav, the menu sheet, the ranker card (its top line, or "See the full People's Top 10" beside a list) or under the home board |
 | `peoples_top_revealed` | `surface` (`ranker`), `list_length` | the home ranker first shows the People's Top 10 beside a list of 3+ (added, or a saved or restored list on load), once per page view |
-| `list_shared` | `method` (`share`: the browser's share sheet reported the image shared; `download`; `copy_link`: the link is on the clipboard), `length` (the saved list's) | "Share your top 10" under a saved list in the home ranker (`components/ranker/ShareList.tsx`); a closed share sheet sends nothing. The shared link, `/?ref=share#rank`, carries only `ref=share`, so a visit from it shows in `$pageview`'s URL |
+| `list_shared` | `method` (`share`: the browser's share sheet reported the image shared; `download`; `copy_link`: the link is on the clipboard), `length` (the saved list's) | "Share your top 10" under a saved list in the home ranker (held while a change is still being saved) (`components/ranker/ShareList.tsx`); a closed share sheet sends nothing. The shared link, `/?ref=share#rank`, carries only `ref=share`, so a visit from it shows in `$pageview`'s URL |
 | `map_pin_opened` | `restaurant_id`, `source` (`pin` tapped, or `link` for `/map?r=<id>`, once per visit: a List/Map round trip reopens the popup without sending it again) | `MapCanvas` |
 | `map_popup_link_clicked` | `restaurant_id` | the restaurant link in a map popup |
 | `map_view_changed` | `view` (`map` / `list`) | the Map / List toggle |
@@ -531,6 +537,7 @@ Notes:
 - **Map:** tiles and styles come from [OpenFreeMap](https://openfreemap.org) (`positron` for light, `dark` for dark), recolored to the
   DESIGN.md map tokens at runtime. MapLibre v6 loads its worker relative to its own module URL, which bundling breaks, so `sync-data`
   copies the worker into `public/vendor/maplibre/`. If the tiles can't load, pins are drawn on a blank basemap and the list view
-  still has every restaurant.
+  still has every restaurant. The map credits its data in MapLibre's attribution control ("OpenFreeMap © OpenMapTiles Data
+  from OpenStreetMap", from the style); the footer no longer carries a map-data line (removed at the user's request, 2026-09-27).
 - **Theme:** light and dark follow the system; the toggle stores `bi-theme` in `localStorage`, and an inline `<head>` script applies it
   before first paint. "Use system setting" in the footer clears it.

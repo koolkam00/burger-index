@@ -132,10 +132,10 @@ test("an empty board says when it starts, with the real numbers, and what the vi
   const empty = revealBoard(peoplesTopView(EMPTY_BOARD, (k) => k), describe);
   const first = revealView(empty, ["a", "b", "c"], picks(), "unsaved");
   assert.deepEqual([first.rows, first.early, first.countLine, first.closeLegend], [[], true, null, false], "'Early results' on the empty early board too, as on /peoples-top-10");
-  assert.equal(first.empty, "No People's Top 10 yet: it starts when burgers are on 5 lists each. Save your list to help start it.", "before the first board: no count");
+  assert.equal(first.empty, "No People's Top 10 yet: it starts when burgers are on 5 lists each. Your list helps start it once saved.", "before the first board: no count");
   assert.deepEqual(first.stands, [], "nothing to place the picks on");
   const later = { ...empty, asOf: "2026-10-01", totalLists: 12 };
-  assert.equal(revealEmptyText(later, "unsaved"), "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far). Save your list to help start it.");
+  assert.equal(revealEmptyText(later, "unsaved"), "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far). Your list helps start it once saved.");
   assert.equal(revealEmptyText(later, "counting"), "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far). Your list helps start it.");
   assert.equal(revealEmptyText({ ...later, totalLists: 1 }, "not_counted"), "No People's Top 10 yet: it starts when burgers are on 5 lists each (1 list so far).");
   // Rising burgers but nothing seated yet: the picks' standings still show.

@@ -1,6 +1,7 @@
 "use client";
 
-// "Share your top 10" (user decision 2026-09-27; DESIGN.md "The ranker hero", "Share your top 10"): under a saved list,
+// "Share your top 10" (user decision 2026-09-27; DESIGN.md "The ranker hero", "Share your top 10"): under a saved list
+// (held while a change is still being saved),
 // a button that opens the share panel: the image size (a 1080×1920 story or a 1080×1080 square), a preview of the image
 // (drawn in the browser, lib/share-list-image.ts), "Share image" where the browser can share files (the Web Share API),
 // else "Download image", and "Copy link" with the link beside it. The link goes to the home ranker,
@@ -29,15 +30,15 @@ export function ShareList({
   items,
   burgers,
   url,
-  primary,
+  held,
 }: {
   /** The saved list, best first (the image shows its first 10). */
   items: readonly string[];
   burgers: ReadonlyMap<string, ShareBurger>;
   /** The link that goes with the image: the home ranker (lib/share-list rankerShareUrl). */
   url: string;
-  /** The card's main action (a primary button), unless "Save again" is. */
-  primary: boolean;
+  /** The list on the card isn't saved yet (a change on its way): the button waits and the panel stays shut. */
+  held: boolean;
 }) {
   const uid = useId();
   const [open, setOpen] = useState(false);
@@ -79,6 +80,7 @@ export function ShareList({
   };
 
   const toggle = () => {
+    if (held) return;
     if (open) {
       setOpen(false);
       return;
@@ -136,13 +138,17 @@ export function ShareList({
   };
 
   const panelId = `${uid}-panel`;
+  // A change still being saved shuts the panel (the image would be of the list before it); the saved list's next
+  // version remounts this (keyed on the list), so the image is always the saved list's.
+  const shown = open && !held;
   const size = SHARE_SIZES[format];
   return (
     <div className="ranker-share">
       <button
         type="button"
-        className={`btn btn-lg ${primary ? "btn-primary" : "btn-secondary"}`}
-        aria-expanded={open}
+        className="btn btn-lg btn-primary"
+        aria-expanded={shown}
+        aria-disabled={held || undefined}
         aria-controls={panelId}
         data-ranker-button="share"
         onClick={toggle}
@@ -150,8 +156,8 @@ export function ShareList({
         <Share2 strokeWidth={2} aria-hidden="true" />
         Share your top 10
       </button>
-      <div id={panelId} className="ranker-share-panel" hidden={!open}>
-        {open ? (
+      <div id={panelId} className="ranker-share-panel" hidden={!shown}>
+        {shown ? (
           <>
             <fieldset className="share-sizes">
               <legend className="t-label muted">Image size</legend>

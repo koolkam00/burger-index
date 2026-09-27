@@ -95,13 +95,13 @@ export type RevealView = {
 /** What the visitor's list does for an empty board. */
 const HELP_TEXT: Record<YourList, string> = {
   counting: "Your list helps start it.",
-  unsaved: "Save your list to help start it.",
+  unsaved: "Your list helps start it once saved.",
   not_counted: "",
 };
 
 /**
- * "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far). Save your list to help start
- * it." Before the first board (`asOf` null: no lists published yet, though some may be saved) the count is left out,
+ * "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far). Your list helps start it once
+ * saved." Before the first board (`asOf` null: no lists published yet, though some may be saved) the count is left out,
  * as on /peoples-top-10.
  */
 export function revealEmptyText(board: Pick<RevealBoard, "gate" | "totalLists" | "asOf">, you: YourList): string {

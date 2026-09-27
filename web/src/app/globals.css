@@ -2541,11 +2541,6 @@
   .ranker-list > .ranker-row:first-child {
     border-top: 0;
   }
-  .ranker-list.is-saved .ranker-row {
-    grid-template-columns: 28px minmax(0, 1fr);
-    grid-template-areas: "rank what";
-    padding-inline: 12px;
-  }
   /* The rule between #10 and #11: the list is "your top 10", with room for more. */
   .ranker-row.is-first-extra {
     border-top: 2px solid var(--line-strong);
@@ -2593,10 +2588,6 @@
       grid-template-columns: 32px minmax(0, 1fr) auto;
       gap: 8px 12px;
       padding-inline: 12px 8px;
-    }
-    .ranker-list.is-saved .ranker-row {
-      grid-template-columns: 32px minmax(0, 1fr);
-      padding-inline: 16px;
     }
   }
   /* Drag to reorder, with a mouse: a grip at the row's start, only where the pointer is fine and hovers and the row has

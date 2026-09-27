@@ -268,11 +268,15 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   hero"): search the priced burgers (distinct menus, a chain once), add 3 to 25 best first
   ("your top 10", room for more), move them with up/down buttons (or, with a mouse, drag them by a grip at the row's start:
   user decision 2026-09-26, pointer only, from 480px where the pointer is fine and hovers; a press is a drag only after
-  5px of movement), remove them, save; a returning browser sees its saved
-  list and can edit or delete it. `components/ranker/Ranker.tsx` (UI), `src/lib/ranker-store.ts` (state as an external
+  5px of movement), remove them. **It autosaves** (user request 2026-09-27; no Save button): once the list holds 3, about 2 s
+  after the last change, one save at a time, never the list already saved, network failures retried (5 s, 15 s, every
+  minute), refusals not until the next change, a waiting save flushed when the page is hidden (a keepalive `fetch` on close);
+  one view: a returning browser finds its saved list on the card, editable, under it a status line, "Share your top 10" and
+  "Delete my list". The per-save budgets were raised for it (`ranker_rate_autosave`: 120 an hour per connection, 200 a day
+  per voter id). `components/ranker/Ranker.tsx` (UI), `src/lib/ranker-store.ts` (state as an external
   store; an unsaved list in `sessionStorage` `bi-ranker-draft`, `localStorage` `bi-ranker-saved` = this browser has a saved
   list, which the `<head>` script turns into `html.ranker-saved`: a skeleton instead of an empty list until it loads),
-  `src/lib/ranker.ts` (pure: limits, edits, search, the backend's replies, status and error copy) and
+  `src/lib/ranker.ts` (pure: limits, edits, search, the backend's replies, the status line, autosave timing, error copy) and
   `src/lib/ranker-api.ts` (the three RPCs, `save_ranking` / `get_my_ranking` / `delete_ranking`, supabase-js imported
   lazily: a returning browser's saved list on mount, else the first save), tested in `test/ranker.test.ts` and
   `test/ranker-store.test.ts`. The voter id is `src/lib/voter.ts` (`localStorage` `burger-index-voter`, the name the old
@@ -286,12 +290,11 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   your top 10" on every restaurant page** (user decision 2026-09-26; only while lists are open) links `/?add=<menu key>#rank`
   (`rankerAddHref` in `src/lib/site.ts`; a chain's locations all add the chain's menu key; nofollow): the ranker reads the
   key once, drops it from the address, and once the burgers and the saved list are known adds it at the end if there is
-  room (a saved list is then being edited: "Save changes"), saying so on the card and in its live region ("Emily added at
-  #4. 4 burgers on your list.", "… is already on your list, at #2.", "Your list is full: 25 burgers. Remove one to add
-  …", in the saved view "… Edit your list and remove one to add …"); the live region and `ranking_item_added` fire once
+  room (then it saves itself), saying so on the card and in its live region ("Emily added at #4. 4 burgers on your list.",
+  "… is already on your list, at #2.", "Your list is full: 25 burgers. Remove one to add …"); the live region and `ranking_item_added` fire once
   per add (`claimLinkAdd` in the store, so a remount on a return to home repeats neither); `check:seo` checks every
-  restaurant page's link. **"Share your top 10"** (user decision 2026-09-27) under a saved list (after a save, or a saved
-  list loaded on a return visit) opens a panel: a 1080×1920 story or 1080×1080 square image of the list's first 10
+  restaurant page's link. **"Share your top 10"** (user decision 2026-09-27) under a saved list (held while a change is still
+  being saved) opens a panel: a 1080×1920 story or 1080×1080 square image of the list's first 10
   (restaurant over "burger · where", names cut with an ellipsis; the share images' list card), drawn in the browser on a
   canvas with the page's own fonts (`src/lib/share-list-image.ts`; words, rows and geometry pure in `src/lib/share-list.ts`,
   `test/share-list.test.ts`; `components/ranker/ShareList.tsx`), then "Share image" (the Web Share API with the file, where
@@ -440,9 +443,9 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   when `NEXT_PUBLIC_POSTHOG_KEY` was set at build time. That key lives **only in the Vercel project settings, never in
   `web/.env.local`**, so dev and local builds send nothing. Components call `track()` in event handlers; nothing in server
   components (the restaurant page's links are the client `components/RestaurantLinks.tsx`). The ranker sends
-  `ranking_started` (`edited`), `ranking_item_added` (`menu_key`, `position`, `surface`: `search` or `restaurant_page`),
-  `ranking_saved` (`length`, `edited`, once
-  Supabase saved it) and `ranking_deleted` (`length`); the ranker's first showing of the People's Top 10 beside a list sends `peoples_top_revealed` (`surface: "ranker"`,
+  `ranking_started` (`edited`, once per page view), `ranking_item_added` (`menu_key`, `position`, `surface`: `search` or
+  `restaurant_page`), `ranking_saved` (`length`, `edited`: the first autosave of a page view that
+  Supabase saved, never every autosave) and `ranking_deleted` (`length`); the ranker's first showing of the People's Top 10 beside a list sends `peoples_top_revealed` (`surface: "ranker"`,
   `list_length`, once per page view); links to the People's Top 10 send `peoples_top_clicked` (`surface`:
   `nav` / `menu_sheet` / `ranker` / `home`, `from_path`: the path only); "Share your top 10" sends `list_shared` (`method`:
   `share` / `download` / `copy_link`, `length`); the badge page's and press kit's "Copy" buttons

@@ -42,7 +42,7 @@ export type AnalyticsEvents = {
   burger_search: { surface: SearchSurface; query: string; results: number };
   /** One /burgers control changed; `results` is the burger count it leaves. */
   burger_filter_changed: { filter: FilterName; value: string | null; results: number };
-  /** The home ranker: the first change to a list (a new one, or the saved one being edited). */
+  /** The home ranker: the first change to the list in this page view (`edited`: the list was saved before). */
   ranking_started: { edited: boolean };
   /**
    * The home ranker: a burger added to the list, at `position` (1-based, the list's new length), from its search or from
@@ -51,7 +51,10 @@ export type AnalyticsEvents = {
   ranking_item_added: { menu_key: string; position: number; surface: RankerAddSurface };
   /** A restaurant page's "Add to your top 10" followed (to the home ranker), with the menu it adds. */
   add_to_list_clicked: { menu_key: string; restaurant_id: string };
-  /** The home ranker: a list saved (`edited`: it replaced this browser's saved list), with its length. */
+  /**
+   * The home ranker: the list saved, with its length (`edited`: it changed this browser's saved list). The list saves itself
+   * (autosave), so this goes at most once per page view: the first save Supabase took.
+   */
   ranking_saved: { length: number; edited: boolean };
   /** The home ranker: this browser's list deleted. */
   ranking_deleted: { length: number };

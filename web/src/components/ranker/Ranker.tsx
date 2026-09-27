@@ -11,20 +11,20 @@ import { formatCount, pluralize } from "@/lib/format";
 import { revealAnnouncement, revealView, showsReveal, yourList, type RevealBoard } from "@/lib/peoples-top-reveal";
 import {
   addParam,
-  countLine,
+  autosaveLine,
   dragIndex,
   dragTop,
+  firstSaveTracker,
   linkAddText,
-  listProblem,
   MAX_HITS,
   MAX_ITEMS,
+  MIN_ITEMS,
   MINE_FAILED_COPY,
   moveItemTo,
   nyToday,
-  PROBLEM_COPY,
   RANKER_ERROR_COPY,
-  sameList,
   savedStatusText,
+  saveFailureText,
   searchBurgers,
   TOP_N,
   withoutAddParam,
@@ -52,14 +52,16 @@ const nameOf = (b: RankerBurger | undefined) => b?.label ?? "A burger no longer 
 
 /**
  * The burger ranker, the home page's first screen (DESIGN.md "The ranker hero"; user decisions 2026-09-25/26):
- * search the priced burgers (a chain once), add 3 to 25 in order, move them up and down, remove them, and save
- * the list; come back to see it, edit it or delete it. One list per browser (and per connection: the backend
- * keeps the latest). The People's Top 10 is made from all the lists once a day.
+ * search the priced burgers (a chain once), add 3 to 25 in order, move them up and down (or drag them), remove them;
+ * the list saves itself about 2 seconds after each change once it holds 3 (autosave, user request 2026-09-27: no Save
+ * button). Come back to find it on the card, editable in place, or delete it. One list per browser (and per
+ * connection: the backend keeps the latest). The People's Top 10 is made from all the lists once a day.
  *
  * The prerendered page holds the empty list and the search box (no burgers: they come from /data/menus.json,
  * fetched when the ranker mounts). A browser with a saved list sees a skeleton instead (a <head> flag,
  * html.ranker-saved) until it loads. The Supabase client loads when the ranker first needs it: the saved list
- * of a returning browser, else the first save. Without the Supabase settings the card says lists open soon.
+ * of a returning browser, else the first save. The status line under the list says what the autosave is doing; the
+ * live region says each change, the first save of the page view, a failure and a delete, and nothing more. Without the Supabase settings the card says lists open soon.
  *
  * Once the list on the card (being built, or saved) holds 3 burgers, the People's Top 10 shows beside it (below it
  * on a phone): `board` is the daily board's seats (user decision 2026-09-26, "Once 3 are added"); the other picks'
@@ -69,8 +71,8 @@ const nameOf = (b: RankerBurger | undefined) => b?.label ?? "A burger no longer 
  * and `shareUrl`, the link to this ranker (no list data).
  *
  * A restaurant page's "Add to your top 10" arrives as /?add=<menu key>#rank (user decision 2026-09-26): the key is read
- * once on mount and dropped from the address, and the store adds it when the burgers and the saved list are known; the
- * card then says what happened (added, already there, list full) and the live region says it too.
+ * once on mount and dropped from the address, and the store adds it when the burgers and the saved list are known (then
+ * it saves itself like any add); the card says what happened (added, already there, list full) and the live region too.
  */
 export function Ranker({ median, board, shareUrl }: { median: number | null; board: RevealBoard; shareUrl: string }) {
   const snap = useRanker();
@@ -78,14 +80,23 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
   const pendingFocus = useRef<FocusTarget | null>(null);
   const [announce, setAnnounce] = useState("");
   // Once per page view (this mount): the reveal's first showing is tracked, and its first showing after a change
-  // the visitor made is announced.
+  // the visitor made is announced; the first change is ranking_started and the first save ranking_saved (announced).
   const revealTracked = useRef(false);
   const revealAnnounced = useRef(false);
+  const startTracked = useRef(false);
+  const failureSaid = useRef("");
   // Bumped to re-render after an awaited step, so its focus move runs (the store's own update came before it).
   const [, setFocusTick] = useState(0);
   const focusAfter = (target: FocusTarget) => {
     pendingFocus.current = target;
     setFocusTick((n) => n + 1);
+  };
+  const say = (text: string) => setAnnounce((prev) => (prev === text ? `${text} ` : text));
+  /** The first change of this page view is ranking_started (`edited`: the list was saved before). */
+  const starting = (edited: boolean) => {
+    if (startTracked.current) return;
+    startTracked.current = true;
+    track("ranking_started", { edited });
   };
 
   // What a link's add did: said once in the live region (the card shows the same words), and an added burger is tracked
@@ -99,10 +110,12 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
       const s = rankerStore.getSnapshot();
       const r = s.linkAdd;
       if (!r || !rankerStore.claimLinkAdd(r)) return;
-      let text = linkAddText(r, nameOf(s.burgers.get(r.key)), s.saved !== null, s.view);
+      let text = linkAddText(r, nameOf(s.burgers.get(r.key)));
       if (r.kind === "added") {
-        const before = s.draft.filter((k) => k !== r.key);
-        if (!(s.saved ? !sameList(before, s.saved.items) : before.length > 0)) track("ranking_started", { edited: s.saved !== null });
+        if (!startTracked.current) {
+          startTracked.current = true;
+          track("ranking_started", { edited: s.saved !== null });
+        }
         track("ranking_item_added", { menu_key: r.key, position: r.position, surface: "restaurant_page" });
         if (!revealAnnounced.current && !showsReveal(r.position - 1) && showsReveal(r.position)) {
           revealAnnounced.current = true;
@@ -124,6 +137,28 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
     window.history.replaceState(null, "", `${pathname}${withoutAddParam(search)}${hash}`);
     const key = addParam(search);
     if (key) rankerStore.addFromLink(key);
+  }, []);
+
+  // Autosave, in the live region (sparingly: the status line shows every save): the first save that goes through in this
+  // page view is tracked (ranking_saved) and said ("Saved. It counts from Sep 28, 2026."); a failed save is said once,
+  // not again for each retry of the same failure. Saves made before this mount don't count. Listens to the store.
+  useEffect(() => {
+    if (!RANKER_ENABLED) return;
+    const firstSave = firstSaveTracker(rankerStore.getSnapshot().lastSave?.seq ?? 0);
+    const onStore = () => {
+      const s = rankerStore.getSnapshot();
+      const f = s.failure?.action === "save" ? saveFailureText(s.failure) : "";
+      if (f !== failureSaid.current) {
+        failureSaid.current = f;
+        if (f) setAnnounce((prev) => (prev === f ? `${f} ` : f));
+      }
+      const done = s.lastSave;
+      if (!done || !s.saved || !firstSave(done)) return;
+      track("ranking_saved", { length: done.length, edited: done.edited });
+      const text = s.saved.status === "active" ? savedStatusText(s.saved, nyToday()) : `List saved. ${savedStatusText(s.saved, nyToday())}`;
+      setAnnounce((prev) => (prev === text ? `${text} ` : text));
+    };
+    return rankerStore.subscribe(onStore);
   }, []);
 
   // After a step the visitor took, focus what it shows (only while focus is in the card, or was dropped
@@ -161,8 +196,8 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
     return () => window.removeEventListener(RANKER_FOCUS_EVENT, onCta);
   }, []);
 
-  // The list on the card, and whether the People's Top 10 shows beside it (only in the builder and the saved view).
-  const onCard = snap.view === "saved" && snap.saved ? snap.saved.items : snap.draft;
+  // The list on the card, and whether the People's Top 10 shows beside it.
+  const onCard = snap.draft;
   const listed = RANKER_ENABLED && snap.started && (snap.mine === "none" || snap.mine === "ready");
   const revealing = listed && showsReveal(onCard.length);
   useEffect(() => {
@@ -182,21 +217,17 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
     );
   }
 
-  const say = (text: string) => setAnnounce((prev) => (prev === text ? `${text} ` : text));
   /** The reveal's one announcement, when a change brings the list from under 3 burgers to 3 or more. */
   const revealNote = (from: number, to: number) => {
     if (revealAnnounced.current || showsReveal(from) || !showsReveal(to)) return "";
     revealAnnounced.current = true;
     return ` ${revealAnnouncement(board)}`;
   };
-  /** The first change to a list (new, or the saved one) is ranking_started. */
-  const starting = () => {
-    if (!snap.dirty) track("ranking_started", { edited: snap.saved !== null });
-  };
+  const held = snap.busy !== null;
 
   const add = (b: RankerBurger) => {
-    if (snap.busy || snap.draft.includes(b.key) || snap.draft.length >= MAX_ITEMS) return;
-    starting();
+    if (held || snap.draft.includes(b.key) || snap.draft.length >= MAX_ITEMS) return;
+    starting(snap.saved !== null);
     rankerStore.add(b.key);
     const position = snap.draft.length + 1;
     track("ranking_item_added", { menu_key: b.key, position, surface: "search" });
@@ -205,8 +236,8 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
   const move = (key: string, delta: number) => {
     const from = snap.draft.indexOf(key);
     const to = from + delta;
-    if (snap.busy || from < 0 || to < 0 || to >= snap.draft.length) return;
-    starting();
+    if (held || from < 0 || to < 0 || to >= snap.draft.length) return;
+    starting(snap.saved !== null);
     rankerStore.move(key, delta);
     const control = delta < 0 ? (to === 0 ? "down" : "up") : to === snap.draft.length - 1 ? "up" : "down";
     pendingFocus.current = { kind: "row", key, control };
@@ -215,39 +246,22 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
   /** A row dropped at a new place (drag to reorder, with a mouse): announced like a move with the arrows. */
   const moveTo = (key: string, to: number) => {
     const from = snap.draft.indexOf(key);
-    if (snap.busy || from < 0 || to === from || to < 0 || to >= snap.draft.length) return;
-    starting();
+    if (held || from < 0 || to === from || to < 0 || to >= snap.draft.length) return;
+    starting(snap.saved !== null);
     rankerStore.moveTo(key, to);
     say(`${nameOf(snap.burgers.get(key))} moved to #${to + 1}.`);
   };
   const remove = (key: string) => {
-    if (snap.busy) return;
+    if (held) return;
     const i = snap.draft.indexOf(key);
-    starting();
+    starting(snap.saved !== null);
     rankerStore.remove(key);
     const rest = snap.draft.filter((k) => k !== key);
     const next = rest[i] ?? rest[i - 1];
     pendingFocus.current = next ? { kind: "row", key: next, control: "remove" } : { kind: "search" };
-    say(`${nameOf(snap.burgers.get(key))} removed. ${pluralize(rest.length, "burger")} on your list.`);
-  };
-  const save = async () => {
-    const result = await rankerStore.save();
-    if (!result.ok) return;
-    track("ranking_saved", { length: result.length, edited: result.edited });
-    // The saved view's status line arrives with its words already in it, which screen readers skip: say them.
-    const now = rankerStore.getSnapshot().saved;
-    say(now ? (now.status === "active" ? savedStatusText(now, nyToday()) : `List saved. ${savedStatusText(now, nyToday())}`) : "List saved.");
-    focusAfter({ kind: "heading" });
-  };
-  const edit = () => {
-    rankerStore.edit();
-    pendingFocus.current = { kind: "heading" };
-  };
-  const cancel = () => {
-    const note = snap.saved ? revealNote(snap.draft.length, snap.saved.items.length).trim() : "";
-    rankerStore.cancel();
-    pendingFocus.current = { kind: "heading" };
-    if (note) say(note);
+    // Going under 3 with a saved list: the saved list stays as it was (said once, as the list drops under 3).
+    const under = snap.saved && rest.length < MIN_ITEMS && snap.draft.length >= MIN_ITEMS ? ` Add ${MIN_ITEMS - rest.length} more to save your changes.` : "";
+    say(`${nameOf(snap.burgers.get(key))} removed. ${pluralize(rest.length, "burger")} on your list.${under}`);
   };
   const askDelete = () => {
     rankerStore.askDelete();
@@ -260,7 +274,7 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
   const confirmDelete = async () => {
     const length = await rankerStore.deleteList();
     if (length === null) {
-      // Nothing was withdrawn (a void list): back to the saved list, whose status line says so.
+      // Nothing was withdrawn (a void list): the status line says so.
       if (rankerStore.getSnapshot().failure?.kind === "not_deleted") focusAfter({ kind: "heading" });
       return;
     }
@@ -271,11 +285,6 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
   const retryMine = () => {
     pendingFocus.current = { kind: "heading" };
     void rankerStore.loadMine();
-  };
-  /** "Try again" after the burgers failed to load: focus goes to the heading (saved list) or the search box. */
-  const retryMenus = (target: FocusTarget) => {
-    pendingFocus.current = target;
-    void rankerStore.loadMenus();
   };
 
   let body: ReactNode;
@@ -296,31 +305,23 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
         </button>
       </>
     );
-  } else if (snap.view === "saved" && snap.saved) {
-    body = (
-      <SavedView
-        snap={snap}
-        shareUrl={shareUrl}
-        onEdit={edit}
-        onSave={save}
-        onAskDelete={askDelete}
-        onKeep={keep}
-        onDelete={confirmDelete}
-        onRetryMenus={() => retryMenus({ kind: "heading" })}
-      />
-    );
   } else {
     body = (
-      <Builder
+      <ListCard
         snap={snap}
         median={median}
+        shareUrl={shareUrl}
         onAdd={add}
         onMove={move}
         onMoveTo={moveTo}
         onRemove={remove}
-        onSave={save}
-        onCancel={cancel}
-        onRetryMenus={() => retryMenus({ kind: "search" })}
+        onAskDelete={askDelete}
+        onKeep={keep}
+        onDelete={confirmDelete}
+        onRetryMenus={() => {
+          pendingFocus.current = { kind: "search" };
+          void rankerStore.loadMenus();
+        }}
       />
     );
   }
@@ -331,7 +332,7 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
   if (revealing) {
     const pick = snap.menus === "ready" ? (key: string) => snap.burgers.get(key) : null;
     side = <PeoplesTopReveal view={revealView(board, onCard, pick, yourList(snap.saved?.status))} />;
-  } else if (!snap.started || (listed && snap.view === "edit")) {
+  } else if (!snap.started || listed) {
     side = <RevealHint />;
   }
 
@@ -411,121 +412,6 @@ function MenusFailed({ onRetry }: { onRetry: () => void }) {
 /** The burgers are on their way (a row shows a skeleton); after a failure a row says so instead. */
 const menusPending = (snap: RankerSnapshot) => snap.menus === "idle" || snap.menus === "loading";
 
-/** The saved list: its rows, what it counts for, and "Edit my list" / "Delete my list". */
-function SavedView({
-  snap,
-  shareUrl,
-  onEdit,
-  onSave,
-  onAskDelete,
-  onKeep,
-  onDelete,
-  onRetryMenus,
-}: {
-  snap: RankerSnapshot;
-  shareUrl: string;
-  onEdit: () => void;
-  onSave: () => void;
-  onAskDelete: () => void;
-  onKeep: () => void;
-  onDelete: () => void;
-  onRetryMenus: () => void;
-}) {
-  const saved = snap.saved!;
-  // A burger that left the Burger Index: the visitor replaces it by editing (a save can't carry it).
-  const gone = snap.menus === "ready" && saved.items.some((k) => !snap.burgers.has(k));
-  const status = savedStatusText(saved, nyToday(), gone);
-  const failure = snap.failure ? RANKER_ERROR_COPY[snap.failure.kind] : null;
-  const busyText = snap.busy === "saving" ? "Saving your list…" : snap.busy === "deleting" ? "Deleting your list…" : null;
-  const held = snap.busy !== null;
-  // A voided list stays void and can't be withdrawn (the backend keeps it): no "Delete my list" for it.
-  const canDelete = saved.status !== "void";
-  // "Save again" (a replaced list that can be saved as it is) is the card's main action; otherwise sharing is.
-  const saveAgain = saved.status === "replaced" && !gone;
-  return (
-    <>
-      <h3 tabIndex={-1} data-ranker-heading="" className="t-display-m ranker-title">
-        Your top {formatCount(saved.items.length)}.
-      </h3>
-      <p className="t-ui-m ranker-saved-status mt-1" role="status">
-        {status}
-      </p>
-      <LinkAddNote snap={snap} />
-      {snap.menus === "error" ? <MenusFailed onRetry={onRetryMenus} /> : null}
-      <ol className="ranker-list is-saved mt-4" aria-label="Your list">
-        {saved.items.map((key, i) => (
-          <SavedRow key={key} rank={i + 1} burger={snap.burgers.get(key)} menus={snap.menus} />
-        ))}
-      </ol>
-      {/* "Share your top 10" (user decision 2026-09-27): an image of the list and a link to rank your own, once the
-          burgers are known. */}
-      {snap.menus === "ready" && !(snap.confirmDelete && canDelete) ? <ShareList items={saved.items} burgers={snap.burgers} url={shareUrl} primary={!saveAgain} /> : null}
-      {snap.confirmDelete && canDelete ? (
-        <div className="ranker-confirm mt-5" role="group" aria-labelledby="ranker-confirm-q">
-          <p id="ranker-confirm-q" className="t-ui-m font-semibold">
-            {saved.status === "active" ? "Delete your list? It stops counting at the next update." : "Delete your list?"}
-          </p>
-          <div className="ranker-actions mt-3">
-            <button type="button" className="btn btn-primary" data-ranker-button="delete" aria-disabled={held || undefined} onClick={() => !held && onDelete()}>
-              Delete my list
-            </button>
-            <button type="button" className="btn btn-secondary" data-ranker-button="keep" aria-disabled={held || undefined} onClick={() => !held && onKeep()}>
-              Keep it
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="ranker-actions mt-5">
-          {saveAgain ? (
-            <button type="button" className="btn btn-primary btn-lg" data-ranker-button="save" aria-disabled={held || undefined} onClick={() => !held && onSave()}>
-              Save again
-            </button>
-          ) : null}
-          <button type="button" className="btn btn-secondary btn-lg" data-ranker-button="edit" aria-disabled={held || undefined} onClick={() => !held && onEdit()}>
-            Edit my list
-          </button>
-          {canDelete ? (
-            <button type="button" className="btn btn-ghost" data-ranker-button="delete" aria-disabled={held || undefined} onClick={() => !held && onAskDelete()}>
-              Delete my list
-            </button>
-          ) : null}
-        </div>
-      )}
-      <p className="t-ui-s ranker-status mt-3" aria-live="polite">
-        {failure ? <Alert>{failure}</Alert> : (busyText ?? "")}
-      </p>
-    </>
-  );
-}
-
-function SavedRow({ rank, burger, menus }: { rank: number; burger: RankerBurger | undefined; menus: RankerSnapshot["menus"] }) {
-  return (
-    <li className={`ranker-row${rank === TOP_N + 1 ? " is-first-extra" : ""}`}>
-      {rank === TOP_N + 1 ? <ExtraRule /> : null}
-      <span className="ranker-rank">
-        <span className="sr-only">Number </span>
-        {rank}
-      </span>
-      <div className="ranker-what">
-        {burger ? (
-          <>
-            <Link href={`/restaurants/${burger.id}`} className="ui-link break-anywhere font-semibold">
-              {burger.name}
-            </Link>
-            <p className="t-ui-s muted break-anywhere">{`${burger.burger} · ${burger.where}`}</p>
-          </>
-        ) : menus === "idle" || menus === "loading" ? (
-          <span className="skel block h-5 w-40 max-w-full" aria-hidden="true" />
-        ) : menus === "error" ? (
-          <p className="t-ui-m muted">Couldn&apos;t load this burger</p>
-        ) : (
-          <p className="t-ui-m muted">No longer on the Burger Index</p>
-        )}
-      </div>
-    </li>
-  );
-}
-
 /**
  * What a restaurant page's "Add to your top 10" did, on the card until the list next changes: a check for added or
  * already there, the warning icon when it couldn't be added. Not a live region: the ranker's own says it once.
@@ -533,7 +419,7 @@ function SavedRow({ rank, burger, menus }: { rank: number; burger: RankerBurger 
 function LinkAddNote({ snap }: { snap: RankerSnapshot }) {
   const r = snap.linkAdd;
   if (!r) return null;
-  const text = linkAddText(r, nameOf(snap.burgers.get(r.key)), snap.saved !== null, snap.view);
+  const text = linkAddText(r, nameOf(snap.burgers.get(r.key)));
   const ok = r.kind === "added" || r.kind === "already";
   return (
     <p className="t-ui-m ranker-link-note mt-3">
@@ -704,64 +590,73 @@ function useDragToReorder(onDrop: (key: string, to: number) => void, disabled: b
   return { listRef, drag, grip };
 }
 
-/** Building a list, or editing the saved one: the search, the list with its controls, and "Save". */
-function Builder({
+/**
+ * The list on the card (one view, user request 2026-09-27: it saves itself): the search, the list with its controls, the
+ * status line (what the autosave is doing, or what the saved list counts for), then, once a list is saved, "Share your
+ * top 10" and "Delete my list".
+ */
+function ListCard({
   snap,
   median,
+  shareUrl,
   onAdd,
   onMove,
   onMoveTo,
   onRemove,
-  onSave,
-  onCancel,
+  onAskDelete,
+  onKeep,
+  onDelete,
   onRetryMenus,
 }: {
   snap: RankerSnapshot;
   median: number | null;
+  shareUrl: string;
   onAdd: (b: RankerBurger) => void;
   onMove: (key: string, delta: number) => void;
   onMoveTo: (key: string, to: number) => void;
   onRemove: (key: string) => void;
-  onSave: () => void;
-  onCancel: () => void;
+  onAskDelete: () => void;
+  onKeep: () => void;
+  onDelete: () => void;
   onRetryMenus: () => void;
 }) {
   const uid = useId();
-  // The list as it was when "Save" was last pressed (null: not yet): "No changes to save." holds only until it changes.
-  const [triedWith, setTriedWith] = useState<readonly string[] | null>(null);
-  const tried = triedWith !== null;
   const draft = snap.draft;
   const ready = snap.menus === "ready";
   const pending = menusPending(snap);
-  const problem = listProblem(draft, (k) => !ready || snap.burgers.has(k));
   const held = snap.busy !== null;
-  const editing = snap.saved !== null;
-  const canSave = !problem && !held && (snap.dirty || !editing);
+  const saved = snap.saved;
   const { listRef, drag, grip } = useDragToReorder(onMoveTo, held);
   // While a row is dragged, the rows show (and are numbered) in the order they would have after the drop.
   const order = drag ? moveItemTo(draft, drag.key, drag.to) : draft;
-  // The status line: saving, the last failure, why "Save" can't go yet (once tried), or what just happened.
-  const status: ReactNode =
-    snap.busy === "saving" ? (
-      "Saving your list…"
-    ) : snap.failure ? (
-      <Alert>{RANKER_ERROR_COPY[snap.failure.kind]}</Alert>
-    ) : problem && (tried || problem === "gone") ? (
-      <Alert>{PROBLEM_COPY[problem]}</Alert>
-    ) : editing && !snap.dirty && triedWith === draft ? (
-      "No changes to save."
-    ) : snap.notice === "deleted" ? (
-      "Your list was deleted."
-    ) : (
-      ""
-    );
+  // The status line: a delete on its way or refused, else what the autosave is doing (lib/ranker autosaveLine).
+  const line =
+    snap.busy === "deleting"
+      ? { text: "Deleting your list…", alert: false }
+      : snap.failure?.action === "delete"
+        ? { text: RANKER_ERROR_COPY[snap.failure.kind], alert: true }
+        : autosaveLine(
+            {
+              length: draft.length,
+              saved,
+              dirty: snap.dirty,
+              saving: snap.saving,
+              failure: snap.failure?.action === "save" ? snap.failure : null,
+              problem: snap.problem,
+              deleted: snap.notice === "deleted",
+            },
+            nyToday(),
+          );
+  // A voided list stays void and can't be withdrawn (the backend keeps it): no "Delete my list" for it.
+  const canDelete = saved !== null && saved.status !== "void";
+  const asking = snap.confirmDelete && canDelete;
 
   return (
     <>
       <h3 tabIndex={-1} data-ranker-heading="" className="t-display-m ranker-title">
-        {editing ? "Edit your list." : "Your top 10."}
+        Your top 10.
       </h3>
-      <p className="t-ui-m muted mt-1">Pick the burgers you like best, your favorite first: at least 3, up to 25.</p>
+      <p className="t-ui-m muted mt-1">Pick the burgers you like best, your favorite first: at least 3, up to 25. Your list saves as you go.</p>
       <LinkAddNote snap={snap} />
 
       <BurgerSearch snap={snap} median={median} onAdd={onAdd} onRetryMenus={onRetryMenus} />
@@ -794,7 +689,9 @@ function Builder({
                 <div className="ranker-what">
                   {b ? (
                     <>
-                      <p className="font-semibold break-anywhere">{b.name}</p>
+                      <Link href={`/restaurants/${b.id}`} className="ui-link break-anywhere font-semibold">
+                        {b.name}
+                      </Link>
                       <p className="t-ui-s muted break-anywhere">{`${b.burger} · ${b.where}`}</p>
                     </>
                   ) : ready ? (
@@ -837,30 +734,37 @@ function Builder({
       ) : (
         <p className="ranker-empty t-ui-m muted mt-2">No burgers yet. Find one above and add your favorite first.</p>
       )}
-      <p className="t-ui-s muted mt-2">{countLine(draft.length)}</p>
-
-      <div className="ranker-actions mt-5">
-        <button
-          type="button"
-          className="btn btn-primary btn-lg"
-          data-ranker-button="save"
-          aria-disabled={!canSave || undefined}
-          onClick={() => {
-            setTriedWith(draft);
-            if (canSave) onSave();
-          }}
-        >
-          {editing ? "Save changes" : "Save my list"}
-        </button>
-        {editing ? (
-          <button type="button" className="btn btn-secondary btn-lg" aria-disabled={held || undefined} onClick={() => !held && onCancel()}>
-            Cancel
-          </button>
-        ) : null}
-      </div>
-      <p className="t-ui-s ranker-status mt-3" aria-live="polite">
-        {status}
+      {/* Not a live region: the ranker's own says each change, the first save and a failure, so a save never chatters. */}
+      <p className="t-ui-s ranker-status mt-2" data-ranker-status="">
+        {line.alert ? <Alert>{line.text}</Alert> : line.text}
       </p>
+
+      {/* "Share your top 10" (user decision 2026-09-27): the saved list's image and a link to rank your own, once the burgers
+          are known; held while a change is still being saved. */}
+      {saved && ready && !asking ? (
+        <ShareList key={saved.items.join(",")} items={saved.items} burgers={snap.burgers} url={shareUrl} held={snap.dirty || snap.saving} />
+      ) : null}
+      {asking ? (
+        <div className="ranker-confirm mt-5" role="group" aria-labelledby="ranker-confirm-q">
+          <p id="ranker-confirm-q" className="t-ui-m font-semibold">
+            {saved.status === "active" ? "Delete your list? It stops counting at the next update." : "Delete your list?"}
+          </p>
+          <div className="ranker-actions mt-3">
+            <button type="button" className="btn btn-primary" data-ranker-button="delete" aria-disabled={held || undefined} onClick={() => !held && onDelete()}>
+              Delete my list
+            </button>
+            <button type="button" className="btn btn-secondary" data-ranker-button="keep" aria-disabled={held || undefined} onClick={() => !held && onKeep()}>
+              Keep it
+            </button>
+          </div>
+        </div>
+      ) : canDelete ? (
+        <div className="ranker-actions mt-4">
+          <button type="button" className="btn btn-ghost" data-ranker-button="delete" aria-disabled={held || undefined} onClick={() => !held && onAskDelete()}>
+            Delete my list
+          </button>
+        </div>
+      ) : null}
     </>
   );
 }
