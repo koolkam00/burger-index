@@ -357,6 +357,20 @@ export function countAgainFailureText(f: { kind: RankerErrorKind; retrying: bool
   return `Not counted: a newer list was saved from this connection. ${why}`;
 }
 
+/**
+ * A failed save in the words the status line and the live region both use: "Count it again" refused (a replaced list, as
+ * it is) keeps "Not counted: …"; a change says what saves it.
+ */
+export function saveFailureLine(f: { kind: RankerErrorKind; retrying: boolean }, saved: Pick<SavedRanking, "status"> | null, dirty: boolean): string {
+  return saved?.status === "replaced" && !dirty ? countAgainFailureText(f) : saveFailureText(f, saved !== null);
+}
+
+/** Said once in the live region (and shown above the list until the next change) when another tab changed the list. */
+export const ELSEWHERE_COPY = {
+  updated: "Showing the list saved in another tab.",
+  deleted: "Your list was deleted.",
+} as const;
+
 /** What the status line under the list needs to know. */
 export type AutosaveInput = {
   length: number;
@@ -383,11 +397,7 @@ export type AutosaveInput = {
  * can't go yet says so ("Your changes save once the burgers load.", else "Saving…"), never an empty line.
  */
 export function autosaveLine(s: AutosaveInput, today: string): { text: string; alert: boolean } {
-  if (s.failure) {
-    // A replaced list as it is ("Count it again"), or a change.
-    const asIs = s.saved?.status === "replaced" && !s.dirty;
-    return { text: asIs ? countAgainFailureText(s.failure) : saveFailureText(s.failure, s.saved !== null), alert: true };
-  }
+  if (s.failure) return { text: saveFailureLine(s.failure, s.saved, s.dirty), alert: true };
   if (s.problem === "gone") {
     if (s.saved && !s.dirty) return { text: savedStatusText(s.saved, today, true), alert: false };
     return { text: `Remove the burgers no longer on the Burger Index to save your ${s.saved ? "changes" : "list"}.`, alert: true };

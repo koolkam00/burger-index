@@ -12,6 +12,7 @@ import {
   retryDelay,
   saveFailureText,
   countAgainFailureText,
+  saveFailureLine,
   saveRetryDelay,
   untilNextHour,
   dragIndex,
@@ -191,8 +192,25 @@ test("autosave's status line: a failure, a gone burger, what's still needed, sav
   // a replaced list changed: its change is what's refused
   assert.match(line({ length: 3, saved: replaced, dirty: true, failure: { kind: "rate_voter", retrying: false } }).text, /to save your changes\. Your saved list is unchanged\.$/);
   for (const kind of ["rate_connection", "rate_voter", "rate_network", "invalid", "network", "unknown"] as const) {
-    for (const retrying of [false, true]) assert.doesNotMatch(countAgainFailureText({ kind, retrying }), /your changes|try again/i);
+    for (const retrying of [false, true]) {
+      assert.doesNotMatch(countAgainFailureText({ kind, retrying }), /your changes|try again/i);
+      // the live region (saveFailureLine) and the status line (autosaveLine) say the same words
+      for (const dirty of [false, true]) {
+        for (const saved of [null, counting, replaced]) {
+          const f = { kind, retrying };
+          assert.equal(saveFailureLine(f, saved, dirty), line({ length: 3, saved, dirty, failure: f }).text, `${kind} ${retrying} ${dirty} ${saved?.status}`);
+        }
+      }
+    }
   }
+  assert.equal(
+    saveFailureLine({ kind: "rate_connection", retrying: true }, replaced, false),
+    "Lots of lists were saved from this connection in the last hour. Keep this page open: your list counts again after the hour.",
+  );
+  assert.equal(
+    saveFailureLine({ kind: "unknown", retrying: false }, replaced, false),
+    "Not counted: a newer list was saved from this connection. Something went wrong: count it again, or reload the page.",
+  );
   // a change that can't go yet is never left unsaid
   assert.deepEqual(line({ length: 3, saved: counting, dirty: true, menusFailed: true }), { text: "Your changes save once the burgers load.", alert: false });
   assert.deepEqual(line({ length: 3, dirty: true, menusFailed: true }), { text: "Your list saves once the burgers load.", alert: false });

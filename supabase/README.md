@@ -420,16 +420,22 @@ with no Save button: "Your list can't be saved until tomorrow.", "Change it agai
 page open: your list saves after the hour."). When the page is hidden, only a save waiting for its 2 s pause or a network
 retry goes at once; when it closes, the newest list goes again as a keepalive `fetch` to `rpc/save_ranking` with the
 publishable key in the `apikey` header when it is waiting that way or on its way (a refusal's or an odd reply's retry keeps
-its time). A page back from the back-forward cache, or another tab's delete (the `bi-ranker-saved` flag removed), calls
-`get_my_ranking` before anything more is saved (after the saved list loading or a save on its way has landed), so a waiting
-retry never brings back a deleted list and a newer list another tab saved is shown, not overwritten. A
+its time). A page back from the back-forward cache, another tab's save (the `bi-ranker-saved` flag holds a stamp that each
+save changes) or another tab's delete (the flag removed) calls `get_my_ranking` before anything more is saved (after the
+saved list loading or a save on its way has landed; a tab with a change of its own still to go saves it instead), so a
+waiting retry never brings back a deleted list and a newer list another tab saved is shown ("Showing the list saved in
+another tab."), not overwritten; a list the tab sent itself (a save on its way, a keepalive request) is not taken for
+another tab's. A
 `replaced` list loaded on a return visit is not saved again by itself (that would take the connection's one counted list
 back from its other browser on every visit): it is saved after the visitor changes it or presses "Count it again". The
 card shows each status in plain words: `active` ("Saved. It counts from Sep 27, 2026.", or "Counted in the People's Top
 10." once `in_board`), `replaced` ("Not counted: a newer list was saved from this connection."), `void` ("Not counted.",
 with no "Delete my list": a void list can't be withdrawn); a `deleted` list shows as none. When `delete_ranking` returns
 false the card reloads the list and shows what the backend holds ("This list can't be deleted." for a void one), never
-"Your list was deleted.". Each refusal's `hint` maps to the same words as the `message` above. It never reads the
+"Your list was deleted.". A refusal's `hint` picks the card's words: `duplicate_burger`, `list_too_short` and
+`list_too_long` show the `message` above; `unknown_burger` adds "Remove it to save your list."; the rate refusals,
+`list_invalid` and `missing_voter` are reworded for autosave (above; `missing_voter` reads as `list_invalid`), and a
+refused "Count it again" keeps "Not counted: a newer list was saved from this connection." before its reason. It never reads the
 aggregates: the People's Top 10 page is built from the daily board (`data/peoples_top.json`).
 
 ## Site configuration

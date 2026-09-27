@@ -11,18 +11,18 @@
 // hour; any other refusal (a daily limit, a list the backend won't take) is not, until the list changes again. A save
 // still waiting when the page is hidden goes at once (the pause, or a network retry: a refusal's or an odd reply's retry
 // keeps its time); when the page closes, whatever is still waiting that way or on its way goes again as a keepalive
-// request (the normal one may not outlive the page). A page restored from the back-forward cache, or another tab
-// deleting the list, checks the saved list again (after the saved list loading or a save on its way has landed) before
-// anything more is saved: a retry the close dropped comes back after it, one whose list a keepalive request landed is
-// done, a newer list another tab saved shows on the card (the card's older one is never sent over it), and a list a newer
-// one replaced waits for a change made from then on. A retry's failure that lands while saves are held (a delete, a
+// request (the normal one may not outlive the page). A page restored from the back-forward cache, or another tab saving
+// or deleting the list, checks the saved list again (after the saved list loading or a save on its way has landed) before
+// anything more is saved: a retry the close dropped comes back at the time it was due, one whose list a keepalive request
+// landed is done, a newer list another tab saved shows on the card (the card's older one is never sent over it; a list this
+// tab sent itself is not taken for another tab's), and a list a newer one replaced waits for a change made from then on. A retry's failure that lands while saves are held (a delete, a
 // check) keeps its time: the delete or the check decides what follows.
 //
 // It lives for the page's JavaScript lifetime, so a visitor who leaves the home page and comes back (a client-side
 // navigation) finds the list as they left it. A list not yet saved is also kept in sessionStorage (a reload keeps it,
-// and saves it), and localStorage remembers that this browser has a saved list (the <head> script reads it: the card
-// shows a skeleton, not an empty list, until the saved one loads). Every storage access is wrapped: it can be missing
-// or throw.
+// and saves it), and localStorage remembers that this browser has a saved list, as a stamp each save changes (the <head>
+// script reads it: the card shows a skeleton, not an empty list, until the saved one loads; the other tabs hear the
+// change). Every storage access is wrapped: it can be missing or throw.
 import { isMenuKey, MENU_LIST_PATH, parseMenuList } from "./menu-list";
 import {
   addItem,
@@ -62,6 +62,8 @@ export type RankerFailure = { action: "save"; kind: RankerErrorKind; retrying: b
 /** A save that went through: the n-th of this store's life, the list's length, and whether a saved list was changed. */
 export type SaveEvent = { seq: number; length: number; edited: boolean };
 
+export type RankerNotice = "deleted" | "deleted_elsewhere" | "updated_elsewhere";
+
 export type RankerSnapshot = {
   /** The store has read storage and started loading (false in the prerendered page, until the ranker mounts). */
   started: boolean;
@@ -79,10 +81,15 @@ export type RankerSnapshot = {
   problem: ListProblem | null;
   /** A save is waiting (the pause after a change, or a retry) or on its way. */
   saving: boolean;
+  /** A list other than the saved one is on its way (the saved list is about to change). */
+  sendingChange: boolean;
   busy: "deleting" | null;
   failure: RankerFailure | null;
-  /** The list was just deleted: shown until the next change. */
-  notice: "deleted" | null;
+  /**
+   * Shown until the next change: the list was just deleted here ("deleted") or in another tab ("deleted_elsewhere"), or
+   * the card now shows a newer list another tab saved ("updated_elsewhere").
+   */
+  notice: RankerNotice | null;
   /** "Delete my list" asked to be sure. */
   confirmDelete: boolean;
   /**
@@ -119,12 +126,13 @@ export type RankerDeps = {
   now?(): number;
   /**
    * Called once, on start: tell the store when the page is hidden, closed, back online, shown again from the
-   * back-forward cache, or when another tab deleted the list (its saved-list flag went away).
+   * back-forward cache, or when another tab deleted the list (its saved-list flag went away) or saved one (the flag's
+   * stamp changed).
    */
   watchPage?(on: PageEvents): void;
 };
 
-export type PageEvents = { hidden(): void; unload(): void; online(): void; restored(): void; deletedElsewhere(): void };
+export type PageEvents = { hidden(): void; unload(): void; online(): void; restored(): void; deletedElsewhere(): void; savedElsewhere(): void };
 
 export type RankerStore = {
   subscribe(listener: () => void): () => void;
@@ -210,6 +218,8 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
    * holds no list (it didn't land). A list there is newer (it landed, maybe changed since in another tab) and shows.
    */
   let restoredIfNone = false;
+  /** With `restoredIfNone`: the lists this tab sent itself before the check (a list there that is one of them isn't newer). */
+  let restoredOwn: string[][] = [];
   let busy: RankerSnapshot["busy"] = null;
   let failure: RankerFailure | null = null;
   let notice: RankerSnapshot["notice"] = null;
@@ -225,6 +235,13 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
   let timer: unknown = null;
   /** The waiting timer is a retry of a failed save (not the pause after a change). */
   let timerRetry = false;
+  /**
+   * When the failed save is due to be tried again (epoch ms), fixed when it failed: a retry the page dropped (a return from
+   * the back-forward cache, a delete, a check) comes back at that time, not a whole wait later.
+   */
+  let retryAt = 0;
+  /** The last list sent as a keepalive request as the page closed (its reply is never read), until a check of the saved list. */
+  let unloadSent: string[] | null = null;
   let inFlight: Promise<void> | null = null;
   /** The list the save on its way sends (null: none on its way). */
   let sending: string[] | null = null;
@@ -275,6 +292,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     dirty: isDirty(),
     problem: started ? problemNow() : null,
     saving: timer !== null || inFlight !== null,
+    sendingChange: sending !== null && (!saved || !sameList(sending, saved.items)),
     busy,
     failure,
     notice,
@@ -321,9 +339,16 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     const keep = isDirty() || (sending !== null && !sameList(draft, sending));
     write(storage(deps.session), RANKER_DRAFT_KEY, keep ? JSON.stringify({ items: draft }) : null);
   }
-  /** Tell the next page load whether this browser has a saved list. */
-  function persistFlag() {
-    write(storage(deps.local), RANKER_SAVED_KEY, saved ? "1" : null);
+  /**
+   * Tell the next page load whether this browser has a saved list, and the other tabs when it changes: the flag holds a
+   * stamp, new with each save that goes through here (`fresh`), so another tab's storage event says "saved elsewhere" (a
+   * write of the same value fires none). Otherwise a flag already there is left as it is (a new stamp for every check
+   * would bounce between tabs).
+   */
+  function persistFlag(fresh = false) {
+    const local = storage(deps.local);
+    if (!saved) write(local, RANKER_SAVED_KEY, null);
+    else if (fresh || !read(local, RANKER_SAVED_KEY)) write(local, RANKER_SAVED_KEY, `${now().toString(36)}.${Math.random().toString(36).slice(2, 8)}`);
   }
 
   function stopTimer() {
@@ -342,10 +367,10 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     stopTimer();
     if (needsSave()) timer = timers.set(fireTimer, ms);
   }
-  /** Try the failed save again when `retrySaveFailure` says (the timer is a retry). */
-  function armRetry(f: RankerFailure & { action: "save" }) {
+  /** Try the failed save again at the time fixed when it failed (`retryAt`; at once if that has passed). */
+  function armRetry() {
     stopTimer();
-    timer = timers.set(fireTimer, saveRetryDelay(f.kind, attempt, now()));
+    timer = timers.set(fireTimer, Math.max(0, retryAt - now()));
     timerRetry = true;
   }
   /**
@@ -381,7 +406,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
           attempt = 0;
           if (failure?.action === "save") failure = null;
           lastSave = { seq: ++saveSeq, length: items.length, edited };
-          persistFlag();
+          persistFlag(true);
           persistDraft();
         }
       } catch (err) {
@@ -390,6 +415,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
           const kind = classifyRankerError(err);
           attempt += 1;
           failure = { action: "save", kind, retrying: retriesSave(kind, attempt) };
+          if (failure.retrying) retryAt = now() + saveRetryDelay(kind, attempt, now());
         }
       }
       inFlight = null;
@@ -407,7 +433,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
       }
       if (timer === null) {
         if (failure?.action === "save" && failure.retrying) {
-          if (needsSave()) armRetry(failure);
+          if (needsSave()) armRetry();
           // Nothing to send (the backend holds the list): done. But while saves are held (a delete, a check of the saved
           // list, the saved list loading) the failure stays: `settle` (or the delete) decides, so an hourly wait keeps its time.
           else if (!busy && !checking && mine !== "loading") {
@@ -471,7 +497,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     if (timer !== null || inFlight) return;
     if (failure?.action === "save") {
       if (failure.retrying && needsSave()) {
-        armRetry(failure);
+        armRetry();
         emit();
       } else if (failure.retrying && canSave()) {
         // The backend holds the list after all (a keepalive request landed): nothing left to try.
@@ -504,17 +530,22 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     draft = [];
     restored = null; // a list from this session waiting for the saved list to load must not bring it back
     restoredIfNone = false;
-    notice = "deleted";
+    restoredOwn = [];
+    notice = "deleted_elsewhere";
     confirmDelete = false;
     linkAdd = null;
     if (failure?.action === "save") failure = null;
   }
 
+  /** The lists this tab sent whose landing it hasn't seen: the save on its way, and the last keepalive request. */
+  const ownSent = (): string[][] => [sending, unloadSent].filter((l): l is string[] => l !== null).map((l) => [...l]);
+
   /**
    * Check the saved list again, keeping the list on the card: after a return from the back-forward cache (a keepalive save
-   * may or may not have landed) or when another tab deleted it (`deletedElsewhere`: the flag it keeps in localStorage
-   * went away). Nothing saves until the backend has answered; a list deleted there empties the card ("Your list was
-   * deleted."), so a save still waiting here never brings it back.
+   * may or may not have landed), when another tab saved a list (`savedElsewhere` too: the stamp it keeps in localStorage
+   * changed) or deleted it (`deletedElsewhere`: the flag went away). Nothing saves until the backend has answered; a list
+   * deleted there empties the card ("Your list was deleted."), so a save still waiting here never brings it back, and a
+   * list there that neither this card nor this tab sent is newer and shows.
    */
   function resync(deletedElsewhere: boolean) {
     if (!started) return;
@@ -528,13 +559,14 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     }
     const voter = deps.voter.read();
     if (!deletedElsewhere && voter && mine === "none" && !busy) {
-      // A first list that went only as a keepalive request as the page closed made the voter id: find out whether it
-      // landed (the card keeps its list and saves it if the backend holds none; a list there, the one that landed or one
-      // another tab saved since, shows instead).
-      if (draft.length) {
-        restored = [...draft];
-        restoredIfNone = true;
-      }
+      // A first list that went only as a keepalive request as the page closed made the voter id (or another tab saved
+      // one): find out whether it landed (the card keeps its list and saves it if the backend holds none, or holds a list
+      // this tab sent itself; another list there, one another tab saved, shows instead). A retry waiting here waits for
+      // the answer (it could send the card's older list over the other tab's): `settle` re-arms it at its own time.
+      restored = [...draft]; // empty too: a list there shows, and says so
+      restoredIfNone = true;
+      restoredOwn = ownSent();
+      stopTimer();
       void store.loadMine();
       return;
     }
@@ -558,8 +590,8 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
     stopTimer();
     emit();
     const had = saved !== null;
-    /** What the card knew the backend held before the check. */
-    const knew = saved ? [...saved.items] : [];
+    /** What the card knew the backend held before the check, and the lists this tab sent itself since. */
+    const knew = [saved ? [...saved.items] : [], ...ownSent()];
     // The saved list still loading and a save still on its way land first, so the answer describes them (and a list
     // another tab deleted isn't brought back by a save the backend handled after this check).
     (mineLoading ?? Promise.resolve())
@@ -574,10 +606,14 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
             const unchanged = changeSeq === changesAt;
             // The backend's list as it is: a replaced one waits for a change made from now on (or "Count it again").
             if (unchanged) touched = false;
-            if (unchanged && !sameList(reply.items, knew) && !sameList(reply.items, draft)) {
-              // Neither the list the card knew nor the one on it (a keepalive request that landed): another tab saved it
-              // since. It is the newest list, so the card shows it (saving the card's older list would take it back).
+            if (unchanged && !knew.some((l) => sameList(reply.items, l)) && !sameList(reply.items, draft)) {
+              // Neither the list the card knew, one this tab sent (a save on its way, a keepalive request) nor the one on
+              // it: another tab saved it since. It is the newest list, so the card shows it, and says so (saving the card's
+              // older list would take it back).
               draft = [...reply.items];
+              notice = "updated_elsewhere";
+              confirmDelete = false;
+              linkAdd = null;
               if (failure?.action === "save") failure = null;
               attempt = 0;
             } else if (failure?.action === "save" && reply.status !== "replaced" && sameList(draft, reply.items)) {
@@ -595,6 +631,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
       )
       .finally(() => {
         if (mySync !== syncSeq) return;
+        unloadSent = null; // the check has seen whatever landed
         checking = false;
         checkingDeleted = false;
         changedWhileChecking = false;
@@ -626,6 +663,9 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
         online: () => void (timer !== null && failure?.action === "save" && failure.kind === "network" ? flush() : undefined),
         restored: () => resync(false),
         deletedElsewhere: () => resync(true),
+        // A change of this card's own still to go (the pause, or more burgers) is newer: it saves and wins (its stamp tells
+        // the other tab). Otherwise the list the other tab saved shows here.
+        savedElsewhere: () => void (isDirty() && !failure && !inFlight ? undefined : resync(false)),
       });
       emit();
       void store.loadMenus();
@@ -677,11 +717,16 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
           if (changeSeq === changesAt) touched = false;
           if (!busy && !inFlight && timer === null) {
             // A list from this session not yet saved stays on the card (and saves itself); otherwise the saved one shows.
-            const keep = restored && !(saved && (restoredIfNone || sameList(restored, saved.items))) ? restored : null;
+            // After a return from the back-forward cache (`restoredIfNone`) a saved list is newer unless this tab sent it.
+            const theirs = restoredIfNone && saved !== null && !restoredOwn.some((l) => sameList(l, saved!.items));
+            const keep = restored?.length && !(saved && (theirs || sameList(restored, saved.items))) ? restored : null;
+            if (theirs && restored && !sameList(restored, saved!.items)) notice = "updated_elsewhere";
             draft = keep ? [...keep] : saved ? [...saved.items] : draft;
+            if (restoredIfNone) unloadSent = null;
           }
           restored = null;
           restoredIfNone = false;
+          restoredOwn = [];
           // While another tab's delete is being checked the check writes the flag (writing it back here would tell the
           // other tabs the list is back, and its removal after that that it was deleted again).
           if (!checking) persistFlag();
@@ -690,10 +735,9 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
           settle();
         },
         () => {
+          // `restored` stays: "Try again" decides with it (no change can come meanwhile: the card shows only the alert).
           mineLoading = null;
           mine = "error";
-          restored = null;
-          restoredIfNone = false;
           emit();
         },
       );
@@ -738,7 +782,8 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
       // Its reply is never read: the draft stays in sessionStorage, so a reload shows (and if need be saves) it, and a
       // return from the back-forward cache checks the saved list again (resync).
       try {
-        deps.api.saveOnUnload(deps.voter.get(), [...draft]);
+        unloadSent = [...draft];
+        deps.api.saveOnUnload(deps.voter.get(), unloadSent);
       } catch {
         // nothing more can be done while the page closes
       }
@@ -755,6 +800,7 @@ export function createRankerStore(deps: RankerDeps): RankerStore {
         failure = null; // a refusal of the list as it is ("Count it again" tomorrow), asked again
         attempt = 0;
       }
+      notice = null;
       void flush();
     },
 
@@ -883,9 +929,12 @@ export const rankerStore: RankerStore = createRankerStore({
     window.addEventListener("pageshow", (e) => {
       if (e.persisted) on.restored();
     });
-    // Another tab deleted the list (its flag went away): a save waiting here must not bring it back.
+    // Another tab deleted the list (its flag went away): a save waiting here must not bring it back. Another tab saved one
+    // (the flag's stamp changed): the card shows it unless it has a change of its own made since.
     window.addEventListener("storage", (e) => {
-      if (e.key === RANKER_SAVED_KEY && e.newValue === null && e.oldValue !== null) on.deletedElsewhere();
+      if (e.key !== RANKER_SAVED_KEY || e.newValue === e.oldValue) return;
+      if (e.newValue === null) on.deletedElsewhere();
+      else on.savedElsewhere();
     });
   },
 });

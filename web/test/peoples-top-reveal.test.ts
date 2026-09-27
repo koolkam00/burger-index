@@ -164,6 +164,11 @@ test("what the visitor's list does for the empty board follows the saved list, w
   assert.equal(revealView(later, ["a", "b", "c"], picks(), yourList("void")).empty, "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far).");
   // a replaced list as it is: saving it waits for the visitor ("Count it again"), so never "once saved"
   assert.equal(revealView(later, ["a", "b", "c"], picks(), yourList("replaced")).empty, "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far). Count it again to help start it.");
+  // "Count it again" pressed and waiting (the hourly budget) or on its way: no button to name
+  assert.equal(yourList("replaced", false, true), "recounting");
+  assert.equal(yourList("replaced", true, true), "unsaved");
+  assert.equal(yourList("active", false, true), "counting");
+  assert.equal(revealView(later, ["a", "b", "c"], picks(), yourList("replaced", false, true)).empty, "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far). Your list helps start it once it counts again.");
 });
 
 test("a board past 500 lists isn't early; a board with no '≈' has no legend", () => {

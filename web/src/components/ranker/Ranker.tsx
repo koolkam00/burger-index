@@ -14,6 +14,7 @@ import {
   autosaveLine,
   dragIndex,
   dragTop,
+  ELSEWHERE_COPY,
   linkAddText,
   MAX_HITS,
   MAX_ITEMS,
@@ -23,7 +24,7 @@ import {
   nyToday,
   RANKER_ERROR_COPY,
   savedStatusText,
-  saveFailureText,
+  saveFailureLine,
   searchBurgers,
   TOP_N,
   withoutAddParam,
@@ -91,6 +92,10 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
   const failureSaid = useRef("");
   // The next save that goes through is said too: after a failed save was said (so its recovery is heard), or "Count it again".
   const sayNextSave = useRef(false);
+  // Another tab's change to the list (a newer list shown here, or a delete): said once; the control that had focus in the
+  // card, in case the change took it away.
+  const noticeSaid = useRef<RankerSnapshot["notice"]>(null);
+  const focusBefore = useRef<Element | null>(null);
   // Bumped to re-render after an awaited step, so its focus move runs (the store's own update came before it).
   const [, setFocusTick] = useState(0);
   const focusAfter = (target: FocusTarget) => {
@@ -155,7 +160,22 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
     let tracked = false;
     const onStore = (mounting: boolean) => {
       const s = rankerStore.getSnapshot();
-      const f = s.failure?.action === "save" ? saveFailureText(s.failure, s.saved !== null) : "";
+      // Another tab saved or deleted the list: the card changed without the visitor's doing, so it is said (not on a mount:
+      // the note above the list, or the status line, shows it). Called before React renders the change, so focus in the
+      // card is noted here and, if its control went away, moved to the H3 after.
+      if (s.notice !== noticeSaid.current) {
+        noticeSaid.current = s.notice;
+        const words = s.notice === "updated_elsewhere" ? ELSEWHERE_COPY.updated : s.notice === "deleted_elsewhere" ? ELSEWHERE_COPY.deleted : "";
+        if (words && !mounting) {
+          setAnnounce((prev) => (prev === words ? `${words} ` : words));
+          const active = document.activeElement;
+          if (active && active !== document.body && rootRef.current?.contains(active)) {
+            focusBefore.current = active;
+            setFocusTick((n) => n + 1);
+          }
+        }
+      }
+      const f = s.failure?.action === "save" ? saveFailureLine(s.failure, s.saved, s.dirty) : "";
       if (f !== failureSaid.current) {
         failureSaid.current = f;
         if (f) {
@@ -178,6 +198,16 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
     onStore(true);
     return rankerStore.subscribe(() => onStore(false));
   }, []);
+
+  // After another tab's change took away the control that had focus (a row, "Delete my list"), focus goes to the H3 rather
+  // than drop to the page.
+  useEffect(() => {
+    const was = focusBefore.current;
+    if (!was) return;
+    focusBefore.current = null;
+    if (was.isConnected || (document.activeElement && document.activeElement !== document.body)) return;
+    rootRef.current?.querySelector<HTMLElement>("[data-ranker-heading]")?.focus();
+  });
 
   // After a step the visitor took, focus what it shows (only while focus is in the card, or was dropped
   // with a control that went away).
@@ -362,7 +392,7 @@ export function Ranker({ median, board, shareUrl }: { median: number | null; boa
   let side: ReactNode = null;
   if (revealing) {
     const pick = snap.menus === "ready" ? (key: string) => snap.burgers.get(key) : null;
-    side = <PeoplesTopReveal view={revealView(board, onCard, pick, yourList(snap.saved?.status, snap.dirty))} />;
+    side = <PeoplesTopReveal view={revealView(board, onCard, pick, yourList(snap.saved?.status, snap.dirty, snap.saving))} />;
   } else if (!snap.started || listed) {
     side = <RevealHint />;
   }
@@ -676,7 +706,7 @@ function ListCard({
               saving: snap.saving,
               failure: snap.failure?.action === "save" ? snap.failure : null,
               problem: snap.problem,
-              deleted: snap.notice === "deleted",
+              deleted: snap.notice === "deleted" || snap.notice === "deleted_elsewhere",
               menusFailed: snap.menus === "error",
             },
             nyToday(),
@@ -696,6 +726,7 @@ function ListCard({
       </h3>
       <p className="t-ui-m muted mt-1">Pick the burgers you like best, your favorite first: at least 3, up to 25. Your list saves as you go.</p>
       <LinkAddNote snap={snap} />
+      {snap.notice === "updated_elsewhere" ? <p className="t-ui-m ranker-link-note mt-3">{ELSEWHERE_COPY.updated}</p> : null}
 
       <BurgerSearch snap={snap} median={median} onAdd={onAdd} onRetryMenus={onRetryMenus} />
 
@@ -785,10 +816,11 @@ function ListCard({
 
       {/* "Share your top 10" (user decision 2026-09-27): the saved list's image and a link to rank your own, once the burgers
           are known; held while the list on the card differs from the saved list (a change waiting, on its way, refused, or
-          one that can't be saved yet), so the image is never of a list the card no longer shows. Not keyed on the list: a
+          one that can't be saved yet) or another list is on its way, so the image is never of a list the card no longer
+          shows (not while "Count it again" waits: the card shows the saved list). Not keyed on the list: a
           save must not remount the button (focus would drop to the page); ShareList starts afresh on a new list itself. */}
       {saved && ready && !asking ? (
-        <ShareList items={saved.items} burgers={snap.burgers} url={shareUrl} held={snap.dirty || snap.saving} describedBy={`${uid}-status`} />
+        <ShareList items={saved.items} burgers={snap.burgers} url={shareUrl} held={snap.dirty || snap.sendingChange} describedBy={`${uid}-status`} />
       ) : null}
       {asking ? (
         <div className="ranker-confirm mt-5" role="group" aria-labelledby="ranker-confirm-q">

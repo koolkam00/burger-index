@@ -60,18 +60,19 @@ export type RevealRow = RevealSeat & { yours: number | null };
 export type StandLine = { key: string; who: string; stand: string };
 
 /** The visitor's list as it counts toward the board (the empty board's last sentence follows it). */
-export type YourList = "counting" | "unsaved" | "replaced" | "not_counted";
+export type YourList = "counting" | "unsaved" | "replaced" | "recounting" | "not_counted";
 
 /**
  * What the visitor's list does for the board, from the saved list's status (none: nothing saved) and whether the list on
  * the card differs from it (`edited`). A saved list keeps counting while it is being edited, so an edit in progress
  * doesn't change it: active → counting; none → unsaved (it saves itself once it holds 3); replaced (a newer list from
- * this connection counts instead) → replaced as it is (it counts again only with "Count it again"), unsaved once edited
- * (the change saves itself and counts); void or deleted → not counted.
+ * this connection counts instead) → replaced as it is (it counts again only with "Count it again"; `recounting` while that
+ * save waits, an hourly wait included, or is on its way), unsaved once edited (the change saves itself and counts); void or
+ * deleted → not counted.
  */
-export function yourList(status: RankingStatus | null | undefined, edited = false): YourList {
+export function yourList(status: RankingStatus | null | undefined, edited = false, recounting = false): YourList {
   if (status === "active") return "counting";
-  if (status === "replaced") return edited ? "unsaved" : "replaced";
+  if (status === "replaced") return edited ? "unsaved" : recounting ? "recounting" : "replaced";
   if (!status) return "unsaved";
   return "not_counted";
 }
@@ -100,6 +101,7 @@ const HELP_TEXT: Record<YourList, string> = {
   counting: "Your list helps start it.",
   unsaved: "Your list helps start it once saved.",
   replaced: "Count it again to help start it.",
+  recounting: "Your list helps start it once it counts again.",
   not_counted: "",
 };
 
