@@ -47,6 +47,7 @@ export function ShareList({
   const [canShare, setCanShare] = useState(false);
   const [status, setStatus] = useState<Status>(null);
   const linkRef = useRef<HTMLInputElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
   const drawing = useRef(new Set<ShareFormat>());
   const urls = useRef<string[]>([]);
 
@@ -85,6 +86,11 @@ export function ShareList({
     setOpen(true);
     setStatus(null);
     setCanShare(canShareFiles());
+    void draw(format);
+  };
+  /** "Try again": focus moves to the preview first, since the button goes with the failure it sits in. */
+  const retry = () => {
+    previewRef.current?.focus();
     void draw(format);
   };
   const pick = (f: ShareFormat) => {
@@ -158,7 +164,7 @@ export function ShareList({
                 ))}
               </div>
             </fieldset>
-            <div className={`share-preview is-${format}`}>
+            <div ref={previewRef} className={`share-preview is-${format}`} tabIndex={-1}>
               {image ? (
                 // A blob: URL drawn in this browser; next/image has nothing to optimize here.
                 // eslint-disable-next-line @next/next/no-img-element
@@ -169,7 +175,7 @@ export function ShareList({
                     <TriangleAlert className="status-icon" strokeWidth={2} aria-hidden="true" />
                     <span>Couldn&apos;t draw the image. Try again.</span>
                   </p>
-                  <button type="button" className="btn btn-secondary btn-sm mt-3" onClick={() => void draw(format)}>
+                  <button type="button" className="btn btn-secondary btn-sm mt-3" onClick={retry}>
                     Try again
                   </button>
                 </div>

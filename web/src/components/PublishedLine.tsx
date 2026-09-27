@@ -19,8 +19,9 @@ export function PublishedLine({ line, className = "" }: { line: Line; className?
             {s.lists.map((l, j) => (
               <Fragment key={l.id}>
                 {j ? ", " : null}
-                {/* The month is the link's visible text; its accessible name adds the list's title. */}
-                <a href={l.url} className="link" title={l.title}>
+                {/* The month is the link's visible text; its accessible name adds the list's title (no title attribute:
+                    screen readers would say the title twice, as the name and again as the description). */}
+                <a href={l.url} className="link">
                   {l.when}
                   <span className="sr-only">{`: ${l.title}`}</span>
                 </a>

@@ -146,8 +146,29 @@ test("a shorter list gets bigger rows, never more room than 10 rows", () => {
     assert.ok(three.height > ten.height && three.name > ten.name, format);
     for (let n = 1; n <= 10; n++) assert.ok(shareLayout(format, n).rows.height * n <= ten.height * 10 + 0.001, `${format} × ${n}`);
   }
-  assert.equal(shareLayout("story", 3).rows.height, 104 * 1.4);
+  assert.equal(shareLayout("story", 3).rows.height, 104 * 1.25);
   assert.equal(shareLayout("square", 9).rows.height, 62 * (10 / 9));
+});
+
+/**
+ * SHARE_GONE's width in Barlow 600 (the image's restaurant line), in ems: the sum of its advance widths in
+ * @fontsource/barlow's latin-600 file, 13.016 em (the browser kerns it a little narrower: 762px at 58.8px, 12.96 em),
+ * with 3% to spare.
+ */
+const GONE_EM = 13.016 * 1.03;
+
+test("\"No longer on the Burger Index\" fits on the restaurant's line at every size, and the burger's line never grows", () => {
+  for (const format of SHARE_FORMATS) {
+    const ten = shareLayout(format, 10).rows;
+    for (let n = 1; n <= 10; n++) {
+      const R = shareLayout(format, n).rows;
+      const room = R.textRight - R.textX;
+      assert.ok(GONE_EM * R.name <= room, `${format} × ${n}: "${SHARE_GONE}" needs ${Math.round(GONE_EM * R.name)}px, the line has ${Math.round(room)}px`);
+      // Only the rank and the restaurant grow: "burger · where" keeps its 10-row size (a bigger one is cut on most rows).
+      assert.equal(R.detail, ten.detail, `${format} × ${n}`);
+      assert.ok(R.name >= ten.name && R.rank >= ten.rank, `${format} × ${n}`);
+    }
+  }
 });
 
 test("the life ring stays clear of the last row", () => {

@@ -22,6 +22,17 @@ export type PublishedLine = {
   sources: PublishedSource[];
 };
 
+/**
+ * The seeded lists the line names: every list not voided, and a voided one (`voided_on`, the New York day of the owner's
+ * void) while the committed board may still count it. A void reaches the board only with the next publication
+ * (supabase/README.md "Published lists"), so a board as of the seeding day or later (it counted the list: `saved_on <=`
+ * its day) and as of a day before the void still has it. Before the first board, or with a board from before the
+ * seeding, a voided list was never counted and leaves at once.
+ */
+export function listsInLine<T extends PublishedList & { voided_on?: string }>(lists: readonly T[], seededOn: string, boardAsOf: string | null): T[] {
+  return lists.filter((l) => !l.voided_on || (boardAsOf !== null && boardAsOf >= seededOn && boardAsOf < l.voided_on));
+}
+
 /** The line for these lists, or null when there are none (then nothing is said). */
 export function publishedLine(lists: readonly PublishedList[]): PublishedLine | null {
   if (!lists.length) return null;

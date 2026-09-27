@@ -6,9 +6,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { checkPublishedLists, PUBLISHED_PATH, publishedMigrationSql } from "../scripts/ranker-published-migration.mjs";
-import { joinAnd, publishedLine, publishedLineText, sourceText, type PublishedList } from "../src/lib/published-lists";
+import { joinAnd, listsInLine, publishedLine, publishedLineText, sourceText, type PublishedList } from "../src/lib/published-lists";
 
-const file = JSON.parse(readFileSync(PUBLISHED_PATH, "utf8")) as { lists: (PublishedList & Record<string, unknown>)[] };
+const file = JSON.parse(readFileSync(PUBLISHED_PATH, "utf8")) as { seeded_on: string; lists: (PublishedList & Record<string, unknown>)[] };
 const lists: PublishedList[] = file.lists.map(({ id, publisher, title, url, date }) => ({ id, publisher, title, url, date }));
 const best = JSON.parse(readFileSync(new URL("../../data/best_burgers.json", import.meta.url), "utf8")) as { lists: PublishedList[] };
 
@@ -65,10 +65,30 @@ test("a list voided after seeding keeps its entry with a voided_on day: the seed
   voided.lists[1].voided_on = "2026-10-10";
   assert.equal(checkPublishedLists(voided).length, 4);
   assert.equal(publishedMigrationSql(voided), publishedMigrationSql(file));
-  // The line is made from the lists still counted (lib/published-lists-data.ts leaves the voided one out).
-  const counted = (voided.lists as (PublishedList & { voided_on?: string })[]).filter((l) => !l.voided_on);
+  // The line is made from the lists the committed board may count (lib/published-lists-data.ts): once a board as of the
+  // void day or later is committed, the voided one is out.
+  const seeded = voided.lists as (PublishedList & { voided_on?: string })[];
+  const counted = listsInLine(seeded, file.seeded_on, "2026-10-10");
   assert.equal(
     publishedLineText(publishedLine(counted)!),
     "Includes 3 published burger rankings, each counted like one visitor's list: The Infatuation (Aug 2026), Time Out (Oct 2025) and Brooklyn Magazine (Sep 2024).",
   );
+});
+
+test("a voided list stays in the line while the committed board still counts it", () => {
+  const seeded = file.lists.map((l, i) => (i === 1 ? { ...l, voided_on: "2026-10-10" } : { ...l })) as (PublishedList & { voided_on?: string })[];
+  const ids = (asOf: string | null) => listsInLine(seeded, file.seeded_on, asOf).map((l) => l.id);
+  const all = file.lists.map((l) => l.id);
+  const without = all.filter((_, i) => i !== 1);
+  // A void reaches the board only with the next publication: a board as of a day before the void still counts the list.
+  assert.deepEqual(ids("2026-10-09"), all);
+  assert.deepEqual(ids(file.seeded_on), all);
+  // A board as of the void day or later was made after it (the refresh runs after midnight): the list is out.
+  assert.deepEqual(ids("2026-10-10"), without);
+  assert.deepEqual(ids("2026-11-01"), without);
+  // No board yet, or one from before the seeding: the voided list was never counted.
+  assert.deepEqual(ids(null), without);
+  assert.deepEqual(ids("2026-09-26"), without);
+  // A list not voided is always named.
+  assert.deepEqual(listsInLine(lists, file.seeded_on, null).map((l) => l.id), all);
 });

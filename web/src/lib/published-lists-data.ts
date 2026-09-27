@@ -3,13 +3,15 @@
 // per build worker. The published rankings seeded as People's Top 10 lists (user decision 2026-09-26/27); the pages
 // show one line about them (lib/published-lists.ts). A file that is missing or doesn't match fails the build here.
 // The file records what was seeded; a list later taken out with ranker_private.ranker_void (supabase/README.md
-// "Published lists") gets a `voided_on` day in its entry and leaves the line (the seeding migration ignores the field).
+// "Published lists") gets a `voided_on` day in its entry (the seeding migration ignores the field) and leaves the line
+// once the committed People's Top 10 board is as of that day or later: until then the board still counts it.
 import "server-only";
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";
-import { publishedLine, type PublishedLine, type PublishedList } from "./published-lists";
+import { getPeoplesTop } from "./peoples-top-data";
+import { listsInLine, publishedLine, type PublishedLine, type PublishedList } from "./published-lists";
 
 const Day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -39,13 +41,13 @@ function load(): PublishedList[] {
   }
   const parsed = FileSchema.safeParse(raw);
   if (!parsed.success) throw new Error(`src/data/ranker_published_lists.json is malformed:\n${z.prettifyError(parsed.error)}`);
-  return parsed.data.lists.filter((l) => !l.voided_on).map(({ id, publisher, title, url, date }) => ({ id, publisher, title, url, date }));
+  return listsInLine(parsed.data.lists, parsed.data.seeded_on, getPeoplesTop().asOf).map(({ id, publisher, title, url, date }) => ({ id, publisher, title, url, date }));
 }
 
 const LISTS = load();
 const LINE = publishedLine(LISTS);
 
-/** The published rankings counted as People's Top 10 lists (not voided), in the file's order. */
+/** The published rankings counted as People's Top 10 lists (not voided, or voided after the committed board), in the file's order. */
 export function getPublishedLists(): readonly PublishedList[] {
   return LISTS;
 }

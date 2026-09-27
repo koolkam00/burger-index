@@ -365,10 +365,15 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   `GET /rest/v1/ranker_published_lists` (publisher, title, url, list_date, burgers, items, added_on, status, in_board;
   never a voter id or hash). **To remove them** (all, or one by `list_id`):
   `select ranker_private.ranker_void(array(select voter_id from ranker_private.ranker_published));` — a void is logged,
-  so the daily job's 20%-drop guard accepts the fall; the board changes with the next publication. **Never delete the
-  rows** (unlogged, not counted as a change, trips the guard). Then give the list's entry in the data file a
-  `"voided_on": "YYYY-MM-DD"` (the file keeps what was seeded; the seeding migration ignores the field): the site's
-  sourcing line leaves a voided list out, so it follows on the next build. **To fade them:** there is no per-list weight (adding one changes the
+  so the daily job's 20%-drop guard accepts the fall; the board changes with the next publication (a void counts toward
+  its 20-list batch only for a list already in the published aggregates). **Never delete the rows** (unlogged, not
+  counted as a change, trips the guard). Then give the list's entry in the data file a `"voided_on": "YYYY-MM-DD"`, the
+  New York day of the void (the file keeps what was seeded; the seeding migration ignores the field): the sourcing line
+  keeps naming a voided list while the committed `data/peoples_top.json` is as of a day before `voided_on` (the board
+  still counts it; the audit view's `in_board` stays true) and drops it with the first board as of that day or later
+  (`listsInLine` in `web/src/lib/published-lists.ts`; `check:seo` applies the same rule). **Seeding ships with, or
+  after, the deploy that discloses it:** the four lists were applied live before the sourcing line was deployed, so
+  until it is, a publication (20 changed lists, `ranker_state.last_run_result.changed_since_last`) must not come first. **To fade them:** there is no per-list weight (adding one changes the
   Patty Ladder: `PARAMS.version`, the database's `params_version`, the simulation gate); they fade as visitors' lists
   grow, and the owner decides when to void them (for example once the board leaves "Early results" at 500 lists). A
   publication that updates its ranking is a hand-written migration editing that row like a visitor's edit; the

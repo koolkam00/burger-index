@@ -141,7 +141,11 @@ type Spec = {
   detail: number;
   rankWidth: number;
   rankGap: number;
-  /** A list shorter than 10 gets bigger rows, up to this many times the 10-row size (never taller than 10 rows). */
+  /**
+   * A list shorter than 10 gets bigger rows, up to this many times the 10-row size (never taller than 10 rows): the rank
+   * and the restaurant grow, the "burger · where" line keeps its 10-row size. At most 1.25, so "No longer on the Burger
+   * Index" still fits on the restaurant's line (at 1.4 the story cut it to "No longer on the Burger I…").
+   */
   maxRowScale: number;
   plaque: { w: number; h: number; font: number };
   ring: number;
@@ -177,7 +181,7 @@ const SPECS: Record<ShareFormat, Spec> = {
     detail: 30,
     rankWidth: 62,
     rankGap: 24,
-    maxRowScale: 1.4,
+    maxRowScale: 1.25,
     plaque: { w: 280, h: 60, font: 38 },
     ring: 124,
     ctaOnStrip: false,
@@ -266,7 +270,8 @@ const NAME_LH = 1.1;
 
 /**
  * The geometry of the image for `rows` rows (1 to 10): a shorter list gets bigger rows (up to `maxRowScale`, never more
- * room than 10 rows take), and a shorter board hangs lower on longer ropes.
+ * room than 10 rows take; the rank and the restaurant grow, the burger's line stays at its 10-row size, so fewer are
+ * cut), and a shorter board hangs lower on longer ropes.
  */
 export function shareLayout(format: ShareFormat, rows: number): ShareLayout {
   const base = SPECS[format];
@@ -277,7 +282,6 @@ export function shareLayout(format: ShareFormat, rows: number): ShareLayout {
     row: base.row * k,
     rank: base.rank * k,
     name: base.name * k,
-    detail: base.detail * k,
     rankWidth: base.rankWidth * k,
     rankGap: base.rankGap * k,
   };

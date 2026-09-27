@@ -313,8 +313,12 @@ const boardTime = board && (board.refreshedAt ?? board.asOf) ? new Date(board.re
 // The People's Top 10's sourcing line (src/lib/published-lists.ts), recomputed from the seeded lists: "Includes 4
 // published burger rankings, each counted like one visitor's list: The Infatuation (Aug 2026, Jan 2026), Time Out (Oct
 // 2025) and Brooklyn Magazine (Sep 2024)." Each list is linked by its month; the link's accessible name adds its title.
-// A list voided after seeding carries `voided_on` and leaves the line.
-const publishedLists = existsSync(PUBLISHED) ? JSON.parse(readFileSync(PUBLISHED, "utf8")).lists.filter((l) => !l.voided_on) : null;
+// A list voided after seeding carries `voided_on` and leaves the line once the board is as of that day or later (a void
+// reaches the board with the next publication); before that, it stays while the board is as of its seeding day or later.
+const publishedFile = existsSync(PUBLISHED) ? JSON.parse(readFileSync(PUBLISHED, "utf8")) : null;
+const publishedLists = publishedFile
+  ? publishedFile.lists.filter((l) => !l.voided_on || (board?.asOf != null && board.asOf >= publishedFile.seeded_on && board.asOf < l.voided_on))
+  : null;
 if (!publishedLists) err("../data/ranker_published_lists.json not found");
 const monthShort = (day) => new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", year: "numeric" }).format(new Date(`${day}T12:00:00Z`));
 const publishedWant = (() => {
@@ -776,6 +780,8 @@ for (const p of pages) {
       if (shown !== publishedWant.text) err(`${path}: sourcing line "${shown}", expected "${publishedWant.text}"`);
       const links = [...sources[1].matchAll(/<a\b[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/gs)].map(([, href, inner]) => ({ href: decode(href), name: text(inner) }));
       if (JSON.stringify(links) !== JSON.stringify(publishedWant.links)) err(`${path}: the sourcing line's links ${JSON.stringify(links)} differ from the seeded lists`);
+      // The title is in each link's name (its sr-only text); a title attribute would make screen readers say it twice.
+      if (/<a\b[^>]*\stitle=/.test(sources[1])) err(`${path}: a sourcing-line link has a title attribute (its title is already in the link's name)`);
       p.sourceLinks = links.length;
     }
     if (board?.early !== body.includes("Early results")) err(`${path}: "Early results" ${board?.early ? "missing" : "shown"} (the board is ${board?.early ? "" : "not "}early)`);
