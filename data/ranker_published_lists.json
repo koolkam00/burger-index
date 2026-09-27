@@ -1,0 +1,187 @@
+{
+  "version": 1,
+  "seeded_on": "2026-09-27",
+  "lists": [
+    {
+      "id": "infatuation-smashburger-power-rankings",
+      "publisher": "The Infatuation",
+      "title": "The NYC Smashburger Power Rankings",
+      "url": "https://www.theinfatuation.com/new-york/guides/best-smashburgers-nyc",
+      "date": "2026-08-03",
+      "checked_on": "2026-09-27",
+      "length": 19,
+      "items": [
+        "smashed-nyc-west-village-west-village",
+        "gotham-burger-social-club-chinatown",
+        "rolos-ridgewood",
+        "milk-burger-mott-haven",
+        "herbies-burgers-williamsburg",
+        "burger-by-day-chinatown",
+        "nowon-east-village",
+        "butter-smashburgers-west-village",
+        "chain:7th-street-burger",
+        "chain:harlem-shake",
+        "hamburger-america-soho-soho",
+        "little-grenjai-bedford",
+        "el-sazon-r-d-chinatown",
+        "k-o-burger-chinatown",
+        "flat-out-burger-stuyvesant-heights",
+        "cubbys-clinton",
+        "smacking-burger-west-village"
+      ],
+      "names": [
+        "Smashed",
+        "Gotham Burger Social Club",
+        "Rolo's",
+        "Milk Burger",
+        "Herbie's Burgers",
+        "Burger By Day",
+        "Nowon",
+        "Butter Smashburgers",
+        "7th Street Burger",
+        "Harlem Shake",
+        "Hamburger America",
+        "Little Grenjai",
+        "El Sazón R.D.",
+        "K.O. Burger",
+        "Flat Out Burger",
+        "Cubby's",
+        "Smacking Burger"
+      ],
+      "ranks": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
+      "left_out": [
+        { "rank": 18, "name": "Shake Shack", "reason": "national chain, not on the Burger Index" },
+        { "rank": 19, "name": "Moonburger", "reason": "a plant-based burger; no menu price" }
+      ],
+      "notes": [
+        "Each place is the location the list names (Smashed at 516 Hudson St, Herbie's Burgers in Williamsburg, Nowon at 507 E 6th St, Flat Out Burger in Bed-Stuy); 7th Street Burger and Harlem Shake are one chain menu each."
+      ]
+    },
+    {
+      "id": "infatuation-limited-edition-burgers-ranked",
+      "publisher": "The Infatuation",
+      "title": "NYC's Limited Edition Burgers, Ranked",
+      "url": "https://www.theinfatuation.com/new-york/guides/limited-edition-off-menu-burgers-ranked",
+      "date": "2026-01-20",
+      "checked_on": "2026-09-27",
+      "length": 15,
+      "items": [
+        "raouls-soho",
+        "lords-west-village",
+        "sailor-fort-greene",
+        "rolos-ridgewood",
+        "le-dive-chinatown",
+        "crevette-west-village",
+        "quatorze-yorkville",
+        "cozy-royale-east-williamsburg",
+        "sip-and-guzzle-west-village"
+      ],
+      "names": [
+        "Raoul's",
+        "Lord's",
+        "Sailor",
+        "Rolo's",
+        "Le Dive",
+        "Crevette",
+        "Quatorze",
+        "Cozy Royale",
+        "Sip & Guzzle"
+      ],
+      "ranks": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+      "left_out": [
+        { "rank": 10, "name": "Le B.", "reason": "no menu price" },
+        { "rank": 11, "name": "Peter Luger Steak House", "reason": "the list recommends against it" },
+        { "rank": 12, "name": "Brass", "reason": "the list recommends against it" },
+        { "rank": 13, "name": "Opto", "reason": "the list recommends against it" },
+        { "rank": 14, "name": "Le Gratin", "reason": "the list recommends against it" },
+        { "rank": 15, "name": "Crane Club", "reason": "the list recommends against it" }
+      ],
+      "notes": []
+    },
+    {
+      "id": "timeout-best-burgers-nyc",
+      "publisher": "Time Out",
+      "title": "The 16 best burgers in NYC right now",
+      "url": "https://www.timeout.com/newyork/restaurants/best-burgers-nyc",
+      "date": "2025-10-27",
+      "checked_on": "2026-09-27",
+      "length": 16,
+      "items": [
+        "deux-luxe-soho",
+        "smacking-burger-west-village",
+        "hamburger-america-soho-soho",
+        "sip-and-guzzle-west-village",
+        "the-long-island-bar-carroll-gardens",
+        "red-hook-tavern-carroll-gardens",
+        "chain:7th-street-burger",
+        "minetta-tavern-west-village",
+        "nowon-east-village",
+        "gertrudes-prospect-heights",
+        "j-g-melon-lenox-hill",
+        "blue-collar-burger-greenpoint",
+        "raouls-soho",
+        "miladys-soho"
+      ],
+      "names": [
+        "Deux Luxe",
+        "Smacking Burger",
+        "Hamburger America",
+        "Sip & Guzzle",
+        "The Long Island Bar",
+        "Red Hook Tavern",
+        "7th Street Burger",
+        "Minetta Tavern",
+        "Nowon",
+        "Gertrude's",
+        "J.G. Melon",
+        "Blue Collar Burger",
+        "Raoul's",
+        "Milady's"
+      ],
+      "ranks": [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+      "left_out": [
+        { "rank": 2, "name": "Crane Club", "reason": "no menu price" },
+        { "rank": 16, "name": "Peter Luger Steak House", "reason": "no menu price" }
+      ],
+      "notes": [
+        "Numbered 1 to 16 in Time Out's own order; the page doesn't call it a ranking.",
+        "Nowon is the East Village location, as on /best-burgers; the entry also names the Bushwick one.",
+        "Blue Collar Burger is the Greenpoint location, the only one with a menu price."
+      ]
+    },
+    {
+      "id": "bkmag-brooklyn-9-best-burgers-2024",
+      "publisher": "Brooklyn Magazine",
+      "title": "Brooklyn Bites: The borough's 9 best burgers",
+      "url": "https://www.bkmag.com/2024/09/10/brooklyn-bites-the-boroughs-9-best-burgers/",
+      "date": "2024-09-10",
+      "checked_on": "2026-09-27",
+      "length": 9,
+      "items": [
+        "red-hook-tavern-carroll-gardens",
+        "gator-greenpoint",
+        "swoonys-carroll-gardens",
+        "the-long-island-bar-carroll-gardens",
+        "lori-jayne-at-danger-danger-bushwick-north"
+      ],
+      "names": [
+        "Red Hook Tavern",
+        "Gator",
+        "Swoony's",
+        "The Long Island Bar",
+        "Lori Jayne"
+      ],
+      "ranks": [1, 3, 4, 5, 6],
+      "left_out": [
+        { "rank": 2, "name": "Blue Hour", "reason": "temporarily closed; no menu price" },
+        { "rank": 7, "name": "Hart's", "reason": "a lamb burger; no menu price" },
+        { "rank": 8, "name": "Peter Luger Steak House", "reason": "no menu price" },
+        { "rank": 9, "name": "Grilled!", "reason": "a vegan burger; no menu price" }
+      ],
+      "notes": [
+        "A countdown from 9 to 1; No. 1 comes first here.",
+        "Lori Jayne was at Alphaville in 2024 and now cooks inside Danger Danger, the location the Burger Index lists."
+      ]
+    }
+  ]
+}
