@@ -186,9 +186,9 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
   **Owned by the daily workflow on `main` once merged: never edit, regenerate or commit it on a branch**, and never
   hand-edit it anywhere: it is the ladder's only memory (yesterday's scores, tiers and seats). See "People's Top 10
   snapshot" under "Website". Not a pipeline output; `pipeline build` never touches it.
-- `data/ranker_published_lists.json` — **the five published burger rankings counted as People's Top 10 lists** (user
+- `data/ranker_published_lists.json` — **the seven published burger rankings counted as People's Top 10 lists** (user
   decisions 2026-09-26/27: the critics' rankings seeded "as peoples lists in the database", then "add at least one more
-  list"; only genuinely ranked lists, none invented). Facts only: per list its `id` (the `/best-burgers` list id, or its
+  list", then "count the robert top 10"; only genuinely ranked lists, none invented). Facts only: per list its `id` (the `/best-burgers` list id, or its
   own slug), `publisher`, `title`, `url`, `date`, `checked_on`, `added_on` (a list added after the seeding: the New York
   day its addition was applied), `length` (the list's own entry count), `items` (menu keys, best first), the list's own
   `ranks` and `names` for them, `left_out` (rank, name, reason) and short mapping `notes`; plus `seeded_on`. The
@@ -196,9 +196,12 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
   numbered, never called a ranking) and Brooklyn Magazine's 9 best burgers (5), seeded by
   `supabase/migrations/20260927113449_ranker_published_lists.sql`, and Tasting Table's 14 Best Burgers In NYC, Ranked
   (12; June 2023, though its page shows the 2014 date of the earlier article at that link), added by
-  `20260927165759_ranker_published_add.sql`. Both are written from this file by `web/scripts/ranker-published-migration.mjs`
+  `20260927165759_ranker_published_add.sql`, then Robert Sietsema's My 10 Favorite Hamburgers in New York and NJ, 2026
+  (6; his Substack, a countdown from 10) by `20260928011846_ranker_published_add.sql` and Time Out's national The best
+  burgers in America (3: its NYC entries, Nos. 4, 7 and 11 of 20) by `20260928011915_ranker_published_add.sql`. All are
+  written from this file by `web/scripts/ranker-published-migration.mjs`
   (`--write` seeds once; `--add <id> --write` adds a list marked `added_on`); `web/test/ranker-published.test.ts` pins the
-  five lists and fails if the file and a migration differ: **don't edit it to change the lists** (see "Published rankings
+  seven lists and fails if the file and a migration differ: **don't edit it to change the lists** (see "Published rankings
   in the People's Top 10" under "Website"). Not a pipeline output. The site never names the lists (the sourcing line was removed at
   the user's request on 2026-09-27); the web build reads the file only to fit the People's Top 10 before the database's
   first publication (see "People's Top 10 snapshot"), so the build reads whatever lists it holds.
@@ -366,22 +369,23 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   price_usd, source badge label, page_url, checked; linked once from the footer) are force-static. IndexNow: the key
   file is `public/<key>.txt` (public by design) and `scripts/indexnow.mjs` submits the live sitemap. `npm run check:seo`
   verifies a build end to end (`-- --site https://…` also asserts the origin).
-- **Published rankings in the People's Top 10 (user decisions 2026-09-26/27):** five published burger rankings
-  (`data/ranker_published_lists.json`) are saved in the ranker's database as five lists, each counting exactly like one
+- **Published rankings in the People's Top 10 (user decisions 2026-09-26/27):** seven published burger rankings
+  (`data/ranker_published_lists.json`) are saved in the ranker's database as seven lists, each counting exactly like one
   visitor's list (`supabase/README.md` "Published lists"): `origin = 'published'` rows of `ranker_private.ranker_lists`,
   their sources in `ranker_private.ranker_published`, active since 2026-09-27 (the four seeded, then Tasting Table's added
-  the same day when the user asked to "add at least one more list"). **The site doesn't name them** (user decision
+  the same day when the user asked to "add at least one more list", then Robert Sietsema's and Time Out's national ranking
+  that evening when the user asked to "count the robert top 10"). **The site doesn't name them** (user decision
   2026-09-27: the sourcing line was removed at the user's request); the public audit view and these docs do, and the
   site's copy never says every list is a visitor's own. No function treats them differently (the nightly refresh, surge
   damping, rate limits, one-list-per-connection rule and owner tools are unchanged); their voter ids come from each link
   and the private salt (no visitor call can reach them), and their network hashes from the publisher (The Infatuation's
-  two lists are one network: four in all). Anyone can audit them with the publishable key at
+  two lists are one network, and so are Time Out's two: five in all). Anyone can audit them with the publishable key at
   `GET /rest/v1/ranker_published_lists` (publisher, title, url, list_date, burgers, items, added_on, status, in_board;
   never a voter id or hash). **Only genuinely ranked lists** (the publication calls it a ranking or counts its picks down
   or numbers them best first; a reader-vote ranking counts as one list) from a reputable publication, with 3+ entries
   that are priced menu keys; never an unordered roundup given an invented order, never an Upper Cut Media House list or a
-  trend feature; prefer 2022-2026. Waiting for the user: Robert Sietsema's 2026 ranking on his own Substack (a critic's
-  newsletter, not an edited publication). **To add one** (only with the user): its entry in the data file with
+  trend feature; prefer 2022-2026. A named critic's own ranking counts too (user decision 2026-09-27: Robert Sietsema's
+  Substack, "count the robert top 10"); a national ranking counts with only its NYC entries, in its order. **To add one** (only with the user): its entry in the data file with
   `added_on`, `node web/scripts/ranker-published-migration.mjs --add <id> --write`, `apply_migration` (name
   `ranker_published_add`: rows only, idempotent, every key checked against `ranker_private.ranker_keys` first), the file
   renamed to the version the project recorded, and the list pinned in `web/test/ranker-published.test.ts`. **To remove
@@ -485,7 +489,7 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   `data/burger_index.json` and the migration → deploy → `cd web && SITE_URL=https://<production host> npm run indexnow`
   (tells Bing and the other IndexNow engines). Until the sync is applied, visitors can't save the new burgers.
 - **People's Top 10 snapshot (the force ranker, user decisions 2026-09-25/26).** Visitors
-  save one ranked list of 3-25 burgers (Supabase, `supabase/README.md`; five published rankings count as lists too, see
+  save one ranked list of 3-25 burgers (Supabase, `supabase/README.md`; seven published rankings count as lists too, see
   "Published rankings in the People's Top 10"); the crowd's ranking is **the Patty Ladder**
   (the ranker design's `FINAL.md`, with its reference `ladder.mjs` and simulator `sim.py`), computed once a day from
   the public aggregates the database rebuilds each night at 00:20 New York, never live in the browser (the board is

@@ -25,6 +25,8 @@ URL `https://wtbtivqubzymhbmijnri.supabase.co`. Managed with the Supabase connec
 | `20260927123642_ranker_published_in_board.sql` | `ranker_published_in_board` | after the 2026-09-27 review: the audit view's `in_board` without the `active` condition, so a voided list reads true until the publication that drops it |
 | `20260927165759_ranker_published_add.sql` | `ranker_published_add` | Tasting Table's "14 Best Burgers In NYC, Ranked" added as a fifth published list (rows only, idempotent; `ranker-published-migration.mjs --add`, see "Published lists") |
 | `20260927173119_ranker_rate_autosave.sql` | `ranker_rate_autosave` | the site autosaves the list (user request 2026-09-27): `save_ranking` as before with two budgets raised, 120 saves an hour per connection (was 20) and 200 a New York day per voter id (was 10); `rate_network` unchanged |
+| `20260928011846_ranker_published_add.sql` | `ranker_published_add` | Robert Sietsema's "My 10 Favorite Hamburgers in New York and NJ, 2026" added as a sixth published list (user request 2026-09-27, "count the robert top 10") |
+| `20260928011915_ranker_published_add.sql` | `ranker_published_add` | Time Out's national "The best burgers in America to sink your teeth into" (its NYC entries) added as a seventh published list |
 
 **A migration that retires something the live site calls ships with, or after, the deploy that stops calling it.** The
 `patty_ladder` migration revoked "What's it worth?" while `main` still served the pricer, so the live site's crowd
@@ -99,7 +101,7 @@ until the next publication, and it is one changed list in the batch.
 
 **What is stored** (`ranker_private.ranker_lists`): the voter id, the list as the visitor sees it, its New York
 save day, the counted and the last published versions, a status, its `origin` (`visitor`, or `published` for the
-five published rankings: "Published lists" below), and two salted SHA-256 hashes: the
+seven published rankings: "Published lists" below), and two salted SHA-256 hashes: the
 connection (the IPv4 address, or the IPv6 /64, since a device rotates its addresses inside it) and the network
 (its /24 or /48). The salt is random, made when the migration ran, and lives only in
 `ranker_private.ranker_state`; it is not a key and is never sent anywhere. The connection hash is cleared 30 days
@@ -199,9 +201,10 @@ per-list time is public):
 
 ## Published lists (user decisions 2026-09-26/27)
 
-The People's Top 10 also counts **five published burger rankings, each saved as one list that counts exactly like a
+The People's Top 10 also counts **seven published burger rankings, each saved as one list that counts exactly like a
 visitor's** (the user asked to seed the board with the critics' rankings "as peoples lists in the database", then, on
-2026-09-27, to "add at least one more list"; only genuinely ranked lists, none invented). **The site doesn't name them:**
+2026-09-27, to "add at least one more list" and to "count the robert top 10"; only genuinely ranked lists, none
+invented). **The site doesn't name them:**
 the People's Top 10's sourcing line that did ("Includes 4 published burger rankings, each counted like one visitor's list:
 …", on `/peoples-top-10`, beside the ranker's list and in llms.txt) was removed at the user's request on 2026-09-27. The
 public audit view below and these docs disclose them, and the site's copy says plain "lists", never that every list is a
@@ -216,11 +219,14 @@ beef, a pick the list recommends against, a closed place):
 | The 16 best burgers in NYC right now (2025-10-27) | Time Out | 14 of 16 (numbered best first; the page doesn't call it a ranking) | the seeding |
 | Brooklyn Bites: The borough's 9 best burgers (2024-09-10) | Brooklyn Magazine | 5 of 9 (a countdown, No. 1 first here) | the seeding |
 | 14 Best Burgers In NYC, Ranked (2023-06-13) | Tasting Table | 12 of 14 (a countdown; No. 1 Peter Luger and No. 10 S&P Lunch have no menu price) | `ranker_published_add` |
+| My 10 Favorite Hamburgers in New York and NJ, 2026 (2026-05-04) | Robert Sietsema's New York | 6 of 10 (his Substack, "ranking them from 10th down to 1st", No. 1 first here; No. 2 Manuela is not on the Burger Index, No. 5 F. Ottomanelli and No. 10 Peter McManus have no menu price, No. 9 Marty's is in Jersey City) | `ranker_published_add` |
+| The best burgers in America to sink your teeth into (2026-07-29) | Time Out | 3 of 20 (a national top 20 that Time Out's own news pieces call its national ranking; only its NYC entries, Red Hook Tavern No. 4, Hamburger America No. 7 and Deux Luxe No. 11; No. 1 is the Chicago Au Cheval) | `ranker_published_add` |
 
 Tasting Table's page shows May 21, 2014, the date of the earlier article at the same link; its ranked text is from June
 2023 (its images were uploaded on June 13, 2023, and the text dates itself), so the file and the database date it
-2023-06-13 (no archive copy confirms the day). Candidates checked on 2026-09-27 and left out: Robert Sietsema's 2026 ranking on his own
-Substack (a critic's newsletter, not an edited publication: waiting for the user), lovefood's national ranking (compiled
+2023-06-13 (no archive copy confirms the day). Robert Sietsema's ranking is a critic's own reader-supported newsletter,
+not an edited publication; the user decided to count it ("count the robert top 10", 2026-09-27). Candidates checked on
+2026-09-27 and left out: lovefood's national ranking (compiled
 from other reviews), Burgerdudes (sells restaurant collaborations, like Upper Cut Media House), The Daily Meal's 2017,
 2019 and 2020 lists and Time Out's 2015 reader vote (too old).
 
@@ -229,7 +235,9 @@ from other reviews), Burgerdudes (sells restaurant collaborations, like Upper Cu
 - The first four by the seeding migration, `20260927113449_ranker_published_lists.sql` (applied as
   `ranker_published_lists` on 2026-09-27): it also added `ranker_lists.origin`, the source table and the audit view.
   Tasting Table's by an addition, `20260927165759_ranker_published_add.sql` (applied as `ranker_published_add` the same
-  day). Both are written from the data file by `web/scripts/ranker-published-migration.mjs` (the seeding with `--write`,
+  day), then Robert Sietsema's by `20260928011846_ranker_published_add.sql` and Time Out's national ranking by
+  `20260928011915_ranker_published_add.sql` (each applied as `ranker_published_add` that evening, New York day
+  2026-09-27, one list at a time). All are written from the data file by `web/scripts/ranker-published-migration.mjs` (the seeding with `--write`,
   once; an addition with `--add <list id> --write`, for lists the file marks `added_on` and no migration saved yet), and
   `web/test/ranker-published.test.ts` fails if the file and any of them differ. An addition inserts rows only (no table,
   function or view changes) and is idempotent: a list whose id or link is already published is skipped, so running it
@@ -249,7 +257,7 @@ from other reviews), Burgerdudes (sells restaurant collaborations, like Upper Cu
   and the network hash its publisher, hashed like a visitor's (`salt|conn|…`, `salt|net|…`) but with a `published:`
   value no IP address can produce: one connection per list (no visitor's save can replace one, and they don't
   replace each other) and one network per publisher, so The Infatuation's two lists are one network, as one
-  publisher (four networks in all). The connection hash is cleared 30 days after the save, as for anyone.
+  publisher, and so are Time Out's two (five networks in all). The connection hash is cleared 30 days after the save, as for anyone.
 - **Anyone can audit them** with the site's publishable key:
   `GET /rest/v1/ranker_published_lists?select=publisher,title,url,list_date,burgers` (or `select=*` for the menu keys
   best first, the day added, `status` and `in_board`: this exact list is in the last published aggregates, whatever its
@@ -276,13 +284,15 @@ job's 20%-drop guard accept the fall, and shows as `status: void` in the public 
 `ranker_private.ranker_published`, which a deleted list takes with it): a deleted list isn't logged, doesn't count
 as a change, and would trip the daily job's guard as an unexplained drop. Then record it in
 `data/ranker_published_lists.json`: give the list's entry a `"voided_on": "YYYY-MM-DD"`, the New York day of the void
-(the file keeps what was saved; no migration reads the field, and the tests pin the five lists: change them with the
-user's decision). Nothing on the site reads the file, so a void changes no page until the board itself changes.
+(the file keeps what was saved; no migration reads the field, and the tests pin the seven lists: change them with the
+user's decision). The site never names the lists, but until the database's first publication the web build fits the
+People's Top 10 from this file (voided lists left out: `web/src/lib/published-board.mjs`), so a void recorded there
+changes that board on the next deploy; after the first publication it changes the board with the next publication.
 
 **Fading them.** The Patty Ladder has no per-list weight, so they can't be counted at part weight without changing the
 method (a new `PARAMS.version`, the database's `params_version` and the design's simulation gate, FINAL.md 12 B).
-They fade on their own: five lists among the visitors' lists weigh less as the lists grow (a quarter of the lists
-beside 15 visitors' lists, under 1% past 500). The owner decides when to void them; a natural point is when the board
+They fade on their own: seven lists among the visitors' lists weigh less as the lists grow (under a third of the lists
+beside 15 visitors' lists, about 1% past 500). The owner decides when to void them; a natural point is when the board
 stops being early (500 lists).
 
 **Changing one** (a publication updates its ranking): a new, hand-written migration that edits the row as a
@@ -452,6 +462,6 @@ site and the daily job use only the publishable key.
 
 There are no test lists (every test rolled back). To start over (SQL editor): `delete from
 ranker_private.ranker_lists; delete from ranker_private.ranker_rate;` (the next refresh publishes the empty
-aggregates once 20 published lists are gone). That removes the five published lists too (their sources go with
+aggregates once 20 published lists are gone). That removes the seven published lists too (their sources go with
 them); to keep them, `delete from ranker_private.ranker_lists where origin = 'visitor';`. For a burst, use the review queue and the owner's tools above. If spam still gets through, lower the budgets in `save_ranking`, or add
 Cloudflare Turnstile in front of saving.

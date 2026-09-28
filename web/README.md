@@ -157,7 +157,7 @@ fetches nothing.
 
 User decisions 2026-09-25/26: each visitor saves one strict ranking of 3 to 25 burgers (the ranker above; Supabase
 `save_ranking`, one list per browser and per connection; see [`../supabase/README.md`](../supabase/README.md)), and the
-crowd's ranking is **the Patty Ladder**. Five published burger rankings are saved among the lists, each counted like any
+crowd's ranking is **the Patty Ladder**. Seven published burger rankings are saved among the lists, each counted like any
 other (user decisions 2026-09-26/27; `../data/ranker_published_lists.json`, `supabase/README.md` "Published lists"); the
 site no longer names them (the sourcing line was removed at the user's request, 2026-09-27), so its copy says plain
 "lists", never that every list is a visitor's own (`check:seo` fails on "visitors rank", "their own lists" and the like). In one sentence, the one the page carries as its only method line: "Every list
@@ -214,8 +214,9 @@ rpc/ranker_board_inputs ──(read-only GET, publishable key)──> scripts/sn
   `../data/ranker_published_lists.json` as lists: the seeding (`<version>_ranker_published_lists.sql`, the first four, once)
   and, for a list added later (`added_on` in the file), an addition named with `--add <list id> --write`
   (`<version>_ranker_published_add.sql`: rows only, idempotent; apply it as `ranker_published_add`). Without flags it checks
-  that the committed migrations are the file's; `test/ranker-published.test.ts` pins the five lists. Nothing on the site
-  reads the file.
+  that the committed migrations are the file's; `test/ranker-published.test.ts` pins the seven lists. The site never names
+  them; until the database's first publication the build fits the People's Top 10 from the file
+  (`src/lib/published-board.mjs`).
 - **The workflow** (`../.github/workflows/peoples-top.yml`): daily at 10:00 UTC and on `workflow_dispatch` (with an
   `allow_drop` input); checks out `main`, Node 22, runs the writer, keeps the aggregates as the `ranker-board-inputs`
   artifact for 90 days, and if the file changed commits "Update People's Top 10" as `github-actions[bot]` and pushes to

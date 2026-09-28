@@ -230,6 +230,90 @@
         "The page shows May 21, 2014, the date of the earlier article at the same link. The ranked text is from June 2023: its images were uploaded on June 13, 2023, and it dates itself (7th Street Burger, opened in 2021, grew just under two years later).",
         "Nowon is the East Village location the entry names; Emily is the original at 919 Fulton St (Emily West Village has no menu price); Blue Collar Burger is the Greenpoint location, the only one with a menu price; 7th Street Burger and Black Tap are one chain menu each."
       ]
+    },
+    {
+      "id": "sietsema-favorite-hamburgers-2026",
+      "publisher": "Robert Sietsema's New York",
+      "title": "My 10 Favorite Hamburgers in New York and NJ, 2026",
+      "url": "https://robertsietsema.substack.com/p/my-10-favorite-hamburgers-in-new-6ed",
+      "date": "2026-05-04",
+      "checked_on": "2026-09-27",
+      "added_on": "2026-09-27",
+      "length": 10,
+      "items": [
+        "bar-six-west-village",
+        "burgerhead-west-village",
+        "hawksmoor-gramercy",
+        "tavern-on-jane-west-village",
+        "j-g-melon-lenox-hill",
+        "union-square-cafe-gramercy"
+      ],
+      "names": [
+        "Bar Six",
+        "Burgerhead",
+        "Hawksmoor",
+        "Tavern on Jane",
+        "JG Melon",
+        "Union Square Cafe"
+      ],
+      "ranks": [1, 3, 4, 6, 7, 8],
+      "left_out": [
+        { "rank": 2, "name": "Manuela", "reason": "not on the Burger Index" },
+        { "rank": 5, "name": "F. Ottomanelli", "reason": "no menu price" },
+        { "rank": 9, "name": "Marty's", "reason": "in Jersey City, not New York City" },
+        { "rank": 10, "name": "Peter McManus", "reason": "no menu price" }
+      ],
+      "notes": [
+        "Robert Sietsema's reader-supported Substack newsletter; he ranks them from 10th down to 1st, and No. 1 comes first here.",
+        "Burgerhead's entry names the East Village branch (142 Second Ave); the Burger Index has only the Greenwich Village one (353 6th Ave), the same brand and Charburger.",
+        "Hawksmoor's entry gives 100 E 22nd St, the side of the building at 287 Park Ave S, NYC's only Hawksmoor."
+      ]
+    },
+    {
+      "id": "timeout-best-burgers-america",
+      "publisher": "Time Out",
+      "title": "The best burgers in America to sink your teeth into",
+      "url": "https://www.timeout.com/usa/restaurants/best-burgers-in-america",
+      "date": "2026-07-29",
+      "checked_on": "2026-09-27",
+      "added_on": "2026-09-27",
+      "length": 20,
+      "items": [
+        "red-hook-tavern-carroll-gardens",
+        "hamburger-america-soho-soho",
+        "deux-luxe-soho"
+      ],
+      "names": [
+        "Red Hook Tavern",
+        "Fried Onion Burger at Hamburger America",
+        "The Big Deux at Deux Luxe"
+      ],
+      "ranks": [4, 7, 11],
+      "left_out": [
+        { "rank": 1, "name": "Double Cheeseburger at Au Cheval", "reason": "the Chicago location, not the NYC Au Cheval" },
+        { "rank": 2, "name": "Big Mec Petit Trois", "reason": "not in New York City" },
+        { "rank": 3, "name": "Jucy Lucy at Matt's Bar", "reason": "not in New York City" },
+        { "rank": 5, "name": "Dyer's Burger at Dyer's Burgers", "reason": "not in New York City" },
+        { "rank": 6, "name": "L&L Burger at LeRoy and Lewis BBQ", "reason": "not in New York City" },
+        { "rank": 8, "name": "Da Kids Kewpie Burger at Familyfriend", "reason": "not in New York City" },
+        { "rank": 9, "name": "Neptune Burger at Neptune Oyster", "reason": "not in New York City" },
+        { "rank": 10, "name": "Tostada Burger at Chris Madrid's", "reason": "not in New York City" },
+        { "rank": 12, "name": "Wolf Burger at Little Bad Wolf", "reason": "not in New York City" },
+        { "rank": 13, "name": "The Maillards at Maillards Smash Burgers", "reason": "not in New York City" },
+        { "rank": 14, "name": "The Cowy Burger at Cowy Burger", "reason": "not in New York City" },
+        { "rank": 15, "name": "OG Tavern Burger at Tuckaway Tavern and Butchery", "reason": "not in New York City" },
+        { "rank": 16, "name": "Bao Burger at Xiao Bao", "reason": "not in New York City" },
+        { "rank": 17, "name": "L'Americain at Le Burger 4304", "reason": "not in New York City" },
+        { "rank": 18, "name": "The Classic at NFA Burger", "reason": "not in New York City" },
+        { "rank": 19, "name": "Boo's OG at Boo's Burgers", "reason": "not in New York City" },
+        { "rank": 20, "name": "The Burgerly at The Burgerly", "reason": "not in New York City" }
+      ],
+      "notes": [
+        "A national top 20, numbered 1 to 20 under 'Top burgers in the U.S.'; only its three New York City entries are kept, in its order.",
+        "Time Out's own news pieces (Time Out New York, 2026-08-03; Time Out Los Angeles, 2026-08-04) call it a national ranking and give Red Hook Tavern No. 4, Hamburger America No. 7 and Deux Luxe No. 11.",
+        "No. 1 is the Chicago Au Cheval (800 W Randolph St), not the New York one.",
+        "Hamburger America's entry gives 155 W Houston St, the corner of its DOHMH address, 51 Macdougal Street; Deux Luxe is at 384 Broome St, tagged Nolita by Time Out."
+      ]
     }
   ]
 }

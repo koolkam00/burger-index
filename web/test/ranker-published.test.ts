@@ -1,6 +1,7 @@
 // The published rankings saved as People's Top 10 lists (user decisions 2026-09-26/27; supabase/README.md
 // "Published lists"): data/ranker_published_lists.json holds exactly the verified published rankings (the four seeded
-// on 2026-09-27 and Tasting Table's, added the same day at the user's request, "add at least one more list"), and the
+// on 2026-09-27; Tasting Table's, added the same day at the user's request, "add at least one more list"; then Robert
+// Sietsema's, "count the robert top 10", and Time Out's national ranking, added that evening), and the
 // committed migrations (scripts/ranker-published-migration.mjs: the seeding and each addition) are the ones that file
 // gives, so the file, the migrations and the live database (checked when each was applied) agree.
 import assert from "node:assert/strict";
@@ -27,6 +28,8 @@ type List = { id: string; publisher: string; items: string[]; ranks: number[]; n
 const data = JSON.parse(readFileSync(PUBLISHED_PATH, "utf8"));
 const clone = () => JSON.parse(JSON.stringify(data));
 const TASTING_TABLE = "tastingtable-best-burgers-nyc-ranked";
+const SIETSEMA = "sietsema-favorite-hamburgers-2026";
+const TIMEOUT_AMERICA = "timeout-best-burgers-america";
 
 test("the published lists are the verified rankings, and no other (user decisions 2026-09-26/27)", () => {
   const lists = data.lists as List[];
@@ -38,12 +41,30 @@ test("the published lists are the verified rankings, and no other (user decision
       ["timeout-best-burgers-nyc", "Time Out", 14, null],
       ["bkmag-brooklyn-9-best-burgers-2024", "Brooklyn Magazine", 5, null],
       [TASTING_TABLE, "Tasting Table", 12, "2026-09-27"],
+      [SIETSEMA, "Robert Sietsema's New York", 6, "2026-09-27"],
+      [TIMEOUT_AMERICA, "Time Out", 3, "2026-09-27"],
     ],
   );
   // Tasting Table's countdown, No. 1 first: its No. 1 (Peter Luger) and No. 10 (S&P Lunch) have no menu price.
   const tt = lists[4];
   assert.deepEqual(tt.ranks, [2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14]);
   assert.deepEqual(tt.items.slice(0, 3), ["the-long-island-bar-carroll-gardens", "nowon-east-village", "keens-midtown"]);
+  // Robert Sietsema's countdown from 10, No. 1 first: No. 2 Manuela (not on the index), No. 5 F. Ottomanelli and No. 10
+  // Peter McManus (no menu price) and No. 9 Marty's (Jersey City) are left out.
+  const rs = lists[5];
+  assert.deepEqual(rs.ranks, [1, 3, 4, 6, 7, 8]);
+  assert.deepEqual(rs.items, [
+    "bar-six-west-village",
+    "burgerhead-west-village",
+    "hawksmoor-gramercy",
+    "tavern-on-jane-west-village",
+    "j-g-melon-lenox-hill",
+    "union-square-cafe-gramercy",
+  ]);
+  // Time Out's national top 20: only its New York City entries, in its order (No. 1 is the Chicago Au Cheval).
+  const ta = lists[6];
+  assert.deepEqual(ta.ranks, [4, 7, 11]);
+  assert.deepEqual(ta.items, ["red-hook-tavern-carroll-gardens", "hamburger-america-soho-soho", "deux-luxe-soho"]);
 });
 
 test("each list is one save_ranking accepted when its migration was written: 3 to 25 distinct keys of that day's key sync", () => {
@@ -68,7 +89,7 @@ test("the committed migrations are exactly the ones the data file gives: one see
   const additions = additionMigrations();
   assert.deepEqual(
     additions.map((a) => a.ids),
-    [[TASTING_TABLE]],
+    [[TASTING_TABLE], [SIETSEMA], [TIMEOUT_AMERICA]],
   );
   for (const { file, ids } of additions) {
     assert.ok(file.slice(0, 14) > files[0].slice(0, 14), `${file} comes before the seeding`);
@@ -180,7 +201,7 @@ test("a list voided later keeps its entry with a voided_on day: no migration rea
   const voided = clone();
   voided.lists[1].voided_on = "2026-10-10";
   voided.lists[4].voided_on = "2026-10-10";
-  assert.equal(checkPublishedLists(voided).length, 5);
+  assert.equal(checkPublishedLists(voided).length, 7);
   assert.equal(publishedMigrationSql(voided), publishedMigrationSql(data));
   assert.equal(additionMigrationSql(voided, [TASTING_TABLE]), additionMigrationSql(data, [TASTING_TABLE]));
   voided.lists[1].voided_on = "soon";
@@ -188,17 +209,20 @@ test("a list voided later keeps its entry with a voided_on day: no migration rea
 });
 
 test("the script: the seeding once, then explicit additions, each once; a changed file is out of sync and never re-written", () => {
+  // the file as it stood with the seeding and one addition (Tasting Table's): five lists
+  const five = { ...clone(), lists: clone().lists.slice(0, 5) };
+  const clone5 = () => JSON.parse(JSON.stringify(five));
   const dir = mkdtempSync(join(tmpdir(), "ranker-published-"));
   const log = console.log;
   console.log = () => {};
   try {
     const migrations = join(dir, "migrations");
     mkdirSync(migrations);
-    const keys = [...new Set((data.lists as List[]).flatMap((l) => l.items))].sort();
+    const keys = [...new Set((five.lists as List[]).flatMap((l) => l.items))].sort();
     writeFileSync(join(migrations, "20260101000000_ranker_keys.sql"), keysMigrationSql(keys, null));
     const file = join(dir, "lists.json");
     const args = ["--data", file, "--dir", migrations];
-    const seedOnly = clone();
+    const seedOnly = clone5();
     seedOnly.lists = seededLists(seedOnly.lists);
     writeFileSync(file, JSON.stringify(seedOnly));
 
@@ -210,7 +234,7 @@ test("the script: the seeding once, then explicit additions, each once; a change
     assert.deepEqual(main(args), { inSync: true, wrote: null, lists: 4 });
 
     // A list added to the file: out of sync until an addition names it; --write alone never writes a second seeding.
-    writeFileSync(file, JSON.stringify(data));
+    writeFileSync(file, JSON.stringify(five));
     assert.deepEqual(main(args), { inSync: false, wrote: null, lists: 5 });
     assert.deepEqual(main([...args, "--write"]), { inSync: false, wrote: null, lists: 5 });
     assert.equal(readdirSync(migrations).filter((f) => PUBLISHED_FILE.test(f)).length, 1);
@@ -221,22 +245,22 @@ test("the script: the seeding once, then explicit additions, each once; a change
     // (the next version must be after the seeding's, which the same second could reach)
     const later = readdirSync(migrations).find((f) => PUBLISHED_FILE.test(f)) as string;
     rmSync(join(migrations, later));
-    writeFileSync(join(migrations, `20260101000001_ranker_published_lists.sql`), publishedMigrationSql(data));
+    writeFileSync(join(migrations, `20260101000001_ranker_published_lists.sql`), publishedMigrationSql(five));
     const addition = main([...args, "--add", TASTING_TABLE, "--write"]);
     assert.ok(addition.wrote && PUBLISHED_ADD_FILE.test(addition.wrote.split("/").at(-1) as string));
-    assert.equal(readFileSync(addition.wrote as string, "utf8"), additionMigrationSql(data, [TASTING_TABLE]));
+    assert.equal(readFileSync(addition.wrote as string, "utf8"), additionMigrationSql(five, [TASTING_TABLE]));
     assert.deepEqual(main(args), { inSync: true, wrote: null, lists: 5 });
     // added once: a second --add of the same list is refused
     assert.throws(() => main([...args, "--add", TASTING_TABLE, "--write"]), /already added by/);
     assert.equal(readdirSync(migrations).filter((f) => PUBLISHED_ADD_FILE.test(f)).length, 1);
 
     // A seeded or added list changed after its migration: out of sync, and nothing new is written.
-    const changed = clone();
+    const changed = clone5();
     changed.lists[3].items.reverse();
     changed.lists[3].names.reverse();
     writeFileSync(file, JSON.stringify(changed));
     assert.deepEqual(main([...args, "--write"]), { inSync: false, wrote: null, lists: 5 });
-    const addedChanged = clone();
+    const addedChanged = clone5();
     addedChanged.lists[4].title = "Another title";
     writeFileSync(file, JSON.stringify(addedChanged));
     assert.deepEqual(main(args), { inSync: false, wrote: null, lists: 5 });
@@ -244,7 +268,7 @@ test("the script: the seeding once, then explicit additions, each once; a change
 
     // A key the ranker doesn't accept is refused before anything is written.
     rmSync(addition.wrote as string);
-    const unknown = clone();
+    const unknown = clone5();
     unknown.lists[4].items[0] = "not-on-the-index";
     writeFileSync(file, JSON.stringify(unknown));
     assert.throws(() => main([...args, "--add", TASTING_TABLE, "--write"]), /not one of the ranker's menu keys/);
