@@ -1,7 +1,7 @@
-// The burger ranker (DESIGN.md "The ranker hero"; user decisions 2026-09-25/26): each visitor ranks 3 to 25
-// burgers, best first ("your top 10", with room for more), saves the list and can edit or delete it. One list
-// per browser and per connection; the People's Top 10 is made from everyone's lists once a day
-// (lib/peoples-top.ts, the Patty Ladder).
+// The burger ranker (DESIGN.md "The ranker hero"; user decisions 2026-09-25/26/27): each visitor ranks 3 to 25
+// burgers, best first ("your top 10", with room for more); the list saves itself as it changes (autosave, user
+// request 2026-09-27) and can be deleted. One list per browser and per connection; the People's Top 10 is made from
+// everyone's lists once a day (lib/peoples-top.ts, the Patty Ladder).
 //
 // Pure, client-safe helpers: the list's limits and edits, the burgers as the ranker shows them and their
 // search, the saved list as the backend returns it, the failures, and the words the card says. The calls
@@ -113,19 +113,18 @@ export function linkAddOutcome(list: readonly string[], key: string, known: (key
 }
 
 /**
- * The card's line (and the announcement) for a link's add: "Emily added at #4. 4 burgers on your list." (to a saved
- * list, which is now being edited: "Emily added at #5. Save changes to keep it."), "Emily is already on your list, at #2.",
- * "Your list is full: 25 burgers. Remove one to add Emily." (in the saved view, which has no remove buttons: "Your list is
- * full: 25 burgers. Edit your list and remove one to add Emily.") or "That burger is no longer on the Burger Index."
+ * The card's line (and the announcement) for a link's add: "Emily added at #4. 4 burgers on your list.", "Emily is already
+ * on your list, at #2.", "Your list is full: 25 burgers. Remove one to add Emily." or "That burger is no longer on the
+ * Burger Index." (The list saves itself, so an add to a saved list says the same as any other.)
  */
-export function linkAddText(r: LinkAdd, label: string, editingSaved: boolean, view: "edit" | "saved" = "edit"): string {
+export function linkAddText(r: LinkAdd, label: string): string {
   switch (r.kind) {
     case "added":
-      return editingSaved ? `${label} added at #${r.position}. Save changes to keep it.` : `${label} added at #${r.position}. ${pluralize(r.position, "burger")} on your list.`;
+      return `${label} added at #${r.position}. ${pluralize(r.position, "burger")} on your list.`;
     case "already":
       return `${label} is already on your list, at #${r.position}.`;
     case "full":
-      return `Your list is full: ${MAX_ITEMS} burgers. ${view === "saved" ? "Edit your list and remove" : "Remove"} one to add ${label}.`;
+      return `Your list is full: ${MAX_ITEMS} burgers. Remove one to add ${label}.`;
     case "gone":
       return "That burger is no longer on the Burger Index.";
   }
@@ -231,24 +230,24 @@ export function nyToday(now: Date = new Date()): string {
   return formatIsoDay(now.toISOString());
 }
 
-/** Added when a saved list holds a burger that left the Burger Index (it can't be saved until it is replaced). */
-const GONE_TEXT = "Some burgers on it are no longer on the Burger Index: edit your list to replace them";
+/** Added when the saved list holds a burger that left the Burger Index (no change to it can be saved until it goes). */
+const GONE_TEXT = "Remove the burgers no longer on the Burger Index to save changes.";
 
 /**
- * What the card says about the saved list (DESIGN.md "The ranker hero": Saved):
- * - void: "Not counted." (nothing to add: a void list stays void);
- * - replaced: the backend's words for it, with "Save again" beside them;
+ * What the card says about the saved list, unchanged since its last save (DESIGN.md "The ranker hero": the status line):
+ * - void: "Not counted." (a void list stays void);
+ * - replaced: "Not counted: a newer list was saved from this connection." (a change, or "Count it again", saves it
+ *   again, which makes it count again; with a gone burger it asks for that burger to go first);
  * - counted in the last published board: "Counted in the People's Top 10.";
  * - saved, counting from a later day: "Saved. It counts from Sep 27, 2026.";
  * - saved and counting, not yet in a published board: "Saved. It joins the People's Top 10 at its next update."
- * `gone`: a burger on it left the Burger Index. A replaced list then asks for an edit instead of "Save again" (which
- * isn't offered: the list can't be saved as it is); the others add the same request.
+ * `gone`: a burger on it left the Burger Index.
  */
 export function savedStatusText(saved: Pick<SavedRanking, "status" | "countsFrom" | "inBoard">, today: string, gone = false): string {
   if (saved.status === "replaced") {
     return gone
-      ? `Not counted: a newer list was saved from this connection. ${GONE_TEXT}, then save.`
-      : "Not counted: a newer list was saved from this connection. Save again to count this one.";
+      ? "Not counted: a newer list was saved from this connection. Remove the burgers no longer on the Burger Index to count it again."
+      : "Not counted: a newer list was saved from this connection.";
   }
   const text =
     saved.status === "void"
@@ -260,23 +259,180 @@ export function savedStatusText(saved: Pick<SavedRanking, "status" | "countsFrom
           : saved.countsFrom && saved.countsFrom > today
             ? `Saved. It counts from ${formatDate(saved.countsFrom)}.`
             : "Saved. It joins the People's Top 10 at its next update.";
-  return gone ? `${text} ${GONE_TEXT}.` : text;
+  return gone ? `${text} ${GONE_TEXT}` : text;
 }
 
-/** The line under the list: how many, and what's still needed to save. */
-export function countLine(n: number): string {
-  if (n === 0) return `Add at least ${MIN_ITEMS} burgers, your favorite first.`;
-  if (n < MIN_ITEMS) return `${pluralize(n, "burger")}. Add ${MIN_ITEMS - n} more to save.`;
-  if (n >= MAX_ITEMS) return `${MAX_ITEMS} burgers: your list is full.`;
-  return `${pluralize(n, "burger")}, up to ${MAX_ITEMS}.`;
+// ---- autosave -------------------------------------------------------------------------------------------
+
+/** How long after the last change the list saves itself (ms). */
+export const AUTOSAVE_DELAY = 2000;
+/** After a save that couldn't reach the backend: try again after 5 s, 15 s, then every minute. */
+export const RETRY_DELAYS = [5000, 15000, 60000] as const;
+const HOUR = 3_600_000;
+/** How long after the hour turns a save refused by the connection's hourly budget is tried again (ms). */
+export const AFTER_HOUR_MARGIN = 15_000;
+
+export function retryDelay(attempt: number): number {
+  return RETRY_DELAYS[Math.max(0, Math.min(RETRY_DELAYS.length - 1, attempt - 1))];
 }
 
-/** Why "Save" can't go yet, in the status line. */
-export const PROBLEM_COPY: Record<ListProblem, string> = {
-  too_short: `Add at least ${MIN_ITEMS} burgers to save.`,
-  too_long: `A list holds at most ${MAX_ITEMS} burgers.`,
-  gone: "Remove the burgers no longer on the Burger Index, then save.",
+/** From `nowMs` (epoch ms) to just after the next hour turns: the connection's budget counts clock hours. */
+export function untilNextHour(nowMs: number): number {
+  return HOUR - (((nowMs % HOUR) + HOUR) % HOUR) + AFTER_HOUR_MARGIN;
+}
+
+/**
+ * Whether a failed save is tried again by itself, after its `attempt`-th failure in a row: a network failure always (the
+ * connection comes back); an unexpected reply (a server error, a reply the site can't read) up to three times, then not
+ * until the list changes (each try would count against the budgets); the connection's hourly budget once the hour turns;
+ * any other refusal never (it would only be refused again).
+ */
+export function retriesSave(kind: RankerErrorKind, attempt: number): boolean {
+  if (kind === "network" || kind === "rate_connection") return true;
+  if (kind === "unknown") return attempt <= RETRY_DELAYS.length;
+  return false;
+}
+
+/** How long to wait before trying a failed save again (`retriesSave` said it would be). */
+export function saveRetryDelay(kind: RankerErrorKind, attempt: number, nowMs: number): number {
+  return kind === "rate_connection" ? untilNextHour(nowMs) : retryDelay(attempt);
+}
+
+/**
+ * A failed save in words (the list saves itself, so no "try again" button to press): one tried again by itself says when;
+ * a refusal says what will save it, and, with a saved list, that the saved list is unchanged. The backend's own words
+ * (RANKER_ERROR_COPY) stay for the refusals a list on the card can't cause.
+ */
+export function saveFailureText(f: { kind: RankerErrorKind; retrying: boolean }, hasSaved = false): string {
+  if (f.retrying) {
+    if (f.kind === "network") return "Couldn't reach the counter. Trying again soon.";
+    // The retry lives in this page: said as such (the list on the card isn't kept once the tab closes).
+    if (f.kind === "rate_connection") return `Lots of lists were saved from this connection in the last hour. Keep this page open: ${hasSaved ? "your changes save" : "your list saves"} after the hour.`;
+    return "Something went wrong. Trying again soon.";
+  }
+  const what = hasSaved ? "your changes" : "it";
+  // A daily limit with no saved list: the list lives only in this tab (sessionStorage), so the copy never promises it
+  // waits until tomorrow.
+  const text =
+    f.kind === "rate_connection"
+      ? `Lots of lists were saved from this connection in the last hour. Change your list after the hour to save ${what}.`
+      : f.kind === "rate_voter"
+        ? hasSaved
+          ? "You've saved your list a lot today. Change it again tomorrow to save your changes."
+          : "You've saved your list a lot today. Your list can't be saved until tomorrow."
+        : f.kind === "rate_network"
+          ? hasSaved
+            ? "Lots of new lists came from this network today. Change your list again tomorrow to save your changes."
+            : "Lots of new lists came from this network today. Your list can't be saved until tomorrow."
+          : f.kind === "unknown" || f.kind === "network"
+            ? `Something went wrong. Change your list or reload the page to save ${what}.`
+            : f.kind === "invalid"
+              ? `That list doesn't look right. Reload the page to save ${what}.`
+              : RANKER_ERROR_COPY[f.kind];
+  return hasSaved ? `${text} Your saved list is unchanged.` : text;
+}
+
+/**
+ * "Count it again" failed: the saved list, replaced from this connection, sent again as it is (nothing on the card
+ * changed, so no "your changes"). A refusal keeps "Not counted: …" and says when to count it again.
+ */
+export function countAgainFailureText(f: { kind: RankerErrorKind; retrying: boolean }): string {
+  if (f.retrying) {
+    if (f.kind === "network") return "Couldn't reach the counter. Trying again soon.";
+    if (f.kind === "rate_connection") return "Lots of lists were saved from this connection in the last hour. Keep this page open: your list counts again after the hour.";
+    return "Something went wrong. Trying again soon.";
+  }
+  const why =
+    f.kind === "rate_voter"
+      ? "You've saved your list a lot today: count it again tomorrow."
+      : f.kind === "rate_network"
+        ? "Lots of new lists came from this network today: count it again tomorrow."
+        : f.kind === "rate_connection"
+          ? "Lots of lists were saved from this connection in the last hour: count it again after the hour."
+          : f.kind === "unknown" || f.kind === "network"
+            ? "Something went wrong: count it again, or reload the page."
+            : f.kind === "invalid"
+              ? "That list doesn't look right. Reload the page to count it again."
+              : RANKER_ERROR_COPY[f.kind];
+  return `Not counted: a newer list was saved from this connection. ${why}`;
+}
+
+/**
+ * A failed save in the words the status line and the live region both use: "Count it again" refused (a replaced list, as
+ * it is) keeps "Not counted: …"; a change says what saves it.
+ */
+export function saveFailureLine(f: { kind: RankerErrorKind; retrying: boolean }, saved: Pick<SavedRanking, "status"> | null, dirty: boolean): string {
+  return saved?.status === "replaced" && !dirty ? countAgainFailureText(f) : saveFailureText(f, saved !== null);
+}
+
+/** Said once in the live region (and shown above the list until the next change) when another tab changed the list. */
+export const ELSEWHERE_COPY = {
+  updated: "Showing the list saved in another tab.",
+  deleted: "Your list was deleted.",
+} as const;
+
+/** What the status line under the list needs to know. */
+export type AutosaveInput = {
+  length: number;
+  /** The saved list (null: none). */
+  saved: Pick<SavedRanking, "status" | "countsFrom" | "inBoard"> | null;
+  /** The list on the card differs from the saved one. */
+  dirty: boolean;
+  /** A save is waiting (the 2 s pause) or on its way. */
+  saving: boolean;
+  /** The last save failed: why, and whether it will be tried again by itself. */
+  failure: { kind: RankerErrorKind; retrying: boolean } | null;
+  /** Why the list can't be saved as it is (too short, a burger gone), or null. */
+  problem: ListProblem | null;
+  /** The list was just deleted (and nothing added since). */
+  deleted: boolean;
+  /** The burgers couldn't be loaded: a change can't be saved until they are. */
+  menusFailed: boolean;
+  /** A check of the saved list couldn't reach the backend and is asked again (a change waits for its answer). */
+  checkRetrying?: boolean;
 };
+
+/**
+ * What the live region says of the status line (the ranker says it once): a failed save, or a change held by a check that
+ * can't reach the counter, in the words the line shows, and only while the line shows them (not while it asks for more
+ * burgers, or for a gone one to be removed); else "".
+ */
+export function autosaveTrouble(s: AutosaveInput): string {
+  if (s.failure) return saveFailureLine(s.failure, s.saved, s.dirty);
+  if (s.problem === "gone" || s.length < MIN_ITEMS || !s.dirty || !s.checkRetrying) return "";
+  return saveFailureText({ kind: "network", retrying: true }, s.saved !== null);
+}
+
+/**
+ * The status line under the list (DESIGN.md "The ranker hero"): a failure first (with the warning icon), then a burger
+ * that left the Burger Index, then what's still needed ("Add 2 more to save your list."; with a saved list "Add 1 more to
+ * save your changes. Your saved list is unchanged."), then a change held by a check of the saved list that can't reach
+ * the counter (in a save failure's words), then "Saving…", then what the saved list counts for; a change that
+ * can't go yet says so ("Your changes save once the burgers load.", else "Saving…"), never an empty line.
+ */
+export function autosaveLine(s: AutosaveInput, today: string): { text: string; alert: boolean } {
+  const trouble = autosaveTrouble(s);
+  if (s.failure) return { text: trouble, alert: true };
+  if (s.problem === "gone") {
+    if (s.saved && !s.dirty) return { text: savedStatusText(s.saved, today, true), alert: false };
+    return { text: `Remove the burgers no longer on the Burger Index to save your ${s.saved ? "changes" : "list"}.`, alert: true };
+  }
+  if (s.length < MIN_ITEMS) {
+    if (s.length === 0 && s.deleted) return { text: "Your list was deleted.", alert: false };
+    if (s.saved) return { text: `Add ${MIN_ITEMS - s.length} more to save your changes. Your saved list is unchanged.`, alert: false };
+    if (s.length === 0) return { text: `Add at least ${MIN_ITEMS} burgers, your favorite first.`, alert: false };
+    return { text: `Add ${MIN_ITEMS - s.length} more to save your list.`, alert: false };
+  }
+  // A change waiting for a check that can't reach the backend: the same words as a save that couldn't.
+  if (trouble) return { text: trouble, alert: true };
+  if (s.saving) return { text: "Saving…", alert: false };
+  if (s.saved && !s.dirty) return { text: savedStatusText(s.saved, today), alert: false };
+  // A change that can't go yet is never left unsaid: without the burgers it waits for them (the search says why);
+  // otherwise it goes by itself once the burgers or the saved list are in, or its check is answered.
+  if (s.dirty && s.menusFailed) return { text: `Your ${s.saved ? "changes save" : "list saves"} once the burgers load.`, alert: false };
+  if (s.dirty) return { text: "Saving…", alert: false };
+  return { text: "", alert: false };
+}
 
 // ---- failures ------------------------------------------------------------------------------------------
 
@@ -330,7 +486,7 @@ export const RANKER_ERROR_COPY: Record<RankerErrorKind, string> = {
   rate_network: "Lots of new lists came from this network today. Try again tomorrow.",
   too_short: `Pick at least ${MIN_ITEMS} burgers.`,
   too_long: `A list holds at most ${MAX_ITEMS} burgers.`,
-  unknown_burger: "One of those burgers isn't on the Burger Index. Remove it and save again.",
+  unknown_burger: "One of those burgers isn't on the Burger Index. Remove it to save your list.",
   duplicate: "Each burger can be on your list only once.",
   invalid: "That list doesn't look right. Reload the page and try again.",
   network: "Couldn't reach the counter. Check your connection and try again.",

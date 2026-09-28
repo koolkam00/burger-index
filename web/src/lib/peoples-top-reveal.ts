@@ -60,16 +60,20 @@ export type RevealRow = RevealSeat & { yours: number | null };
 export type StandLine = { key: string; who: string; stand: string };
 
 /** The visitor's list as it counts toward the board (the empty board's last sentence follows it). */
-export type YourList = "counting" | "unsaved" | "not_counted";
+export type YourList = "counting" | "unsaved" | "replaced" | "recounting" | "not_counted";
 
 /**
- * What the visitor's list does for the board, from the saved list's status (none: nothing saved). A saved list keeps
- * counting while it is being edited, so an edit in progress doesn't change it: active → counting; replaced (a newer
- * list from this connection counts instead) or none → unsaved (saving would count); void or deleted → not counted.
+ * What the visitor's list does for the board, from the saved list's status (none: nothing saved) and whether the list on
+ * the card differs from it (`edited`). A saved list keeps counting while it is being edited, so an edit in progress
+ * doesn't change it: active → counting; none → unsaved (it saves itself once it holds 3); replaced (a newer list from
+ * this connection counts instead) → replaced as it is (it counts again only with "Count it again"; `recounting` while that
+ * save waits, an hourly wait included, or is on its way), unsaved once edited (the change saves itself and counts); void or
+ * deleted → not counted.
  */
-export function yourList(status: RankingStatus | null | undefined): YourList {
+export function yourList(status: RankingStatus | null | undefined, edited = false, recounting = false): YourList {
   if (status === "active") return "counting";
-  if (!status || status === "replaced") return "unsaved";
+  if (status === "replaced") return edited ? "unsaved" : recounting ? "recounting" : "replaced";
+  if (!status) return "unsaved";
   return "not_counted";
 }
 
@@ -95,13 +99,15 @@ export type RevealView = {
 /** What the visitor's list does for an empty board. */
 const HELP_TEXT: Record<YourList, string> = {
   counting: "Your list helps start it.",
-  unsaved: "Save your list to help start it.",
+  unsaved: "Your list helps start it once saved.",
+  replaced: "Count it again to help start it.",
+  recounting: "Your list helps start it once it counts again.",
   not_counted: "",
 };
 
 /**
- * "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far). Save your list to help start
- * it." Before the first board (`asOf` null: no lists published yet, though some may be saved) the count is left out,
+ * "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far). Your list helps start it once
+ * saved." Before the first board (`asOf` null: no lists published yet, though some may be saved) the count is left out,
  * as on /peoples-top-10.
  */
 export function revealEmptyText(board: Pick<RevealBoard, "gate" | "totalLists" | "asOf">, you: YourList): string {

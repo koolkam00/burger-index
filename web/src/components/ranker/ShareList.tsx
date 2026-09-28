@@ -1,6 +1,7 @@
 "use client";
 
-// "Share your top 10" (user decision 2026-09-27; DESIGN.md "The ranker hero", "Share your top 10"): under a saved list,
+// "Share your top 10" (user decision 2026-09-27; DESIGN.md "The ranker hero", "Share your top 10"): under a saved list
+// (held while the list on the card differs from the saved one),
 // a button that opens the share panel: the image size (a 1080×1920 story or a 1080×1080 square), a preview of the image
 // (drawn in the browser, lib/share-list-image.ts), "Share image" where the browser can share files (the Web Share API),
 // else "Download image", and "Copy link" with the link beside it. The link goes to the home ranker,
@@ -29,15 +30,21 @@ export function ShareList({
   items,
   burgers,
   url,
-  primary,
+  held,
+  describedBy,
 }: {
   /** The saved list, best first (the image shows its first 10). */
   items: readonly string[];
   burgers: ReadonlyMap<string, ShareBurger>;
   /** The link that goes with the image: the home ranker (lib/share-list rankerShareUrl). */
   url: string;
-  /** The card's main action (a primary button), unless "Save again" is. */
-  primary: boolean;
+  /**
+   * The list on the card differs from the saved one (a change waiting, on its way, refused or not yet savable): the button
+   * waits and the panel stays shut.
+   */
+  held: boolean;
+  /** The ranker's status line, which says why a held button waits. */
+  describedBy?: string;
 }) {
   const uid = useId();
   const [open, setOpen] = useState(false);
@@ -48,37 +55,58 @@ export function ShareList({
   const [status, setStatus] = useState<Status>(null);
   const linkRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
-  const drawing = useRef(new Set<ShareFormat>());
+  const drawing = useRef(new Set<string>()); // "<list>|<format>" being drawn
   const urls = useRef<string[]>([]);
 
   const length = items.length;
   const rows = shareRows(items, (key) => burgers.get(key));
   const image = images[format];
 
-  // The previews' object URLs go when the panel does.
+  // A new saved list starts the panel afresh (shut, its images drawn again). Done here rather than by a key on this
+  // component, so the button stays mounted and keeps focus through a save.
+  const listKey = items.join(",");
+  const [drawnFor, setDrawnFor] = useState(listKey);
+  if (drawnFor !== listKey) {
+    setDrawnFor(listKey);
+    setOpen(false);
+    setImages({});
+    setFailed({});
+    setStatus(null);
+  }
+  // The list the images are being drawn for: a drawing of the list before is dropped.
+  const drawingFor = useRef(listKey);
+  useEffect(() => {
+    drawingFor.current = listKey;
+  }, [listKey]);
+
+  // The previews' object URLs go with their list (and when the panel does).
   useEffect(() => {
     const made = urls.current;
-    return () => made.forEach((u) => URL.revokeObjectURL(u));
-  }, []);
+    return () => made.splice(0).forEach((u) => URL.revokeObjectURL(u));
+  }, [listKey]);
 
   /** Draw the image in `f` (once; a failure can be tried again). */
   const draw = async (f: ShareFormat) => {
-    if (images[f] || drawing.current.has(f)) return;
-    drawing.current.add(f);
+    const at = listKey;
+    const job = `${at}|${f}`;
+    if (images[f] || drawing.current.has(job)) return;
+    drawing.current.add(job);
     setFailed((prev) => ({ ...prev, [f]: false }));
     try {
       const blob = await renderShareImage({ format: f, rows, length, url });
+      if (drawingFor.current !== at) return;
       const src = URL.createObjectURL(blob);
       urls.current.push(src);
       setImages((prev) => ({ ...prev, [f]: { src, file: new File([blob], shareFileName(length, f), { type: "image/png" }) } }));
     } catch {
-      setFailed((prev) => ({ ...prev, [f]: true }));
+      if (drawingFor.current === at) setFailed((prev) => ({ ...prev, [f]: true }));
     } finally {
-      drawing.current.delete(f);
+      drawing.current.delete(job);
     }
   };
 
   const toggle = () => {
+    if (held) return;
     if (open) {
       setOpen(false);
       return;
@@ -136,13 +164,18 @@ export function ShareList({
   };
 
   const panelId = `${uid}-panel`;
+  // A list on the card that differs from the saved one shuts the panel (the image would be of the saved list, not the
+  // card's); the saved list's next version starts it afresh (above), so the image is always the saved list's.
+  const shown = open && !held;
   const size = SHARE_SIZES[format];
   return (
     <div className="ranker-share">
       <button
         type="button"
-        className={`btn btn-lg ${primary ? "btn-primary" : "btn-secondary"}`}
-        aria-expanded={open}
+        className="btn btn-lg btn-primary"
+        aria-expanded={shown}
+        aria-disabled={held || undefined}
+        aria-describedby={held ? describedBy : undefined}
         aria-controls={panelId}
         data-ranker-button="share"
         onClick={toggle}
@@ -150,8 +183,8 @@ export function ShareList({
         <Share2 strokeWidth={2} aria-hidden="true" />
         Share your top 10
       </button>
-      <div id={panelId} className="ranker-share-panel" hidden={!open}>
-        {open ? (
+      <div id={panelId} className="ranker-share-panel" hidden={!shown}>
+        {shown ? (
           <>
             <fieldset className="share-sizes">
               <legend className="t-label muted">Image size</legend>

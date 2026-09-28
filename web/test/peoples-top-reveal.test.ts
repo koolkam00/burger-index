@@ -132,10 +132,10 @@ test("an empty board says when it starts, with the real numbers, and what the vi
   const empty = revealBoard(peoplesTopView(EMPTY_BOARD, (k) => k), describe);
   const first = revealView(empty, ["a", "b", "c"], picks(), "unsaved");
   assert.deepEqual([first.rows, first.early, first.countLine, first.closeLegend], [[], true, null, false], "'Early results' on the empty early board too, as on /peoples-top-10");
-  assert.equal(first.empty, "No People's Top 10 yet: it starts when burgers are on 5 lists each. Save your list to help start it.", "before the first board: no count");
+  assert.equal(first.empty, "No People's Top 10 yet: it starts when burgers are on 5 lists each. Your list helps start it once saved.", "before the first board: no count");
   assert.deepEqual(first.stands, [], "nothing to place the picks on");
   const later = { ...empty, asOf: "2026-10-01", totalLists: 12 };
-  assert.equal(revealEmptyText(later, "unsaved"), "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far). Save your list to help start it.");
+  assert.equal(revealEmptyText(later, "unsaved"), "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far). Your list helps start it once saved.");
   assert.equal(revealEmptyText(later, "counting"), "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far). Your list helps start it.");
   assert.equal(revealEmptyText({ ...later, totalLists: 1 }, "not_counted"), "No People's Top 10 yet: it starts when burgers are on 5 lists each (1 list so far).");
   // Rising burgers but nothing seated yet: the picks' standings still show.
@@ -149,17 +149,26 @@ test("an empty board says when it starts, with the real numbers, and what the vi
 });
 
 test("what the visitor's list does for the empty board follows the saved list, whether or not it is being edited", () => {
-  // The ranker passes yourList(snap.saved?.status) with or without unsaved edits: a saved list keeps counting while
+  // The ranker passes yourList(snap.saved?.status, snap.dirty): a saved list keeps counting while
   // it is edited, and a void one stays uncounted.
   assert.equal(yourList("active"), "counting", "an active saved list (edited or not)");
   assert.equal(yourList("void"), "not_counted", "a void saved list (edited or not)");
   assert.equal(yourList("deleted"), "not_counted");
-  assert.equal(yourList("replaced"), "unsaved", "saving again would count");
+  assert.equal(yourList("replaced"), "replaced", "as it is: it counts again only with 'Count it again'");
+  assert.equal(yourList("replaced", true), "unsaved", "edited: the change saves itself and counts");
+  assert.equal(yourList("active", true), "counting");
   assert.equal(yourList(null), "unsaved");
   assert.equal(yourList(undefined), "unsaved");
   const later = { ...revealBoard(peoplesTopView(EMPTY_BOARD, (k) => k), describe), asOf: "2026-10-01", totalLists: 12 };
   assert.equal(revealView(later, ["a", "b", "c"], picks(), yourList("active")).empty, "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far). Your list helps start it.");
   assert.equal(revealView(later, ["a", "b", "c"], picks(), yourList("void")).empty, "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far).");
+  // a replaced list as it is: saving it waits for the visitor ("Count it again"), so never "once saved"
+  assert.equal(revealView(later, ["a", "b", "c"], picks(), yourList("replaced")).empty, "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far). Count it again to help start it.");
+  // "Count it again" pressed and waiting (the hourly budget) or on its way: no button to name
+  assert.equal(yourList("replaced", false, true), "recounting");
+  assert.equal(yourList("replaced", true, true), "unsaved");
+  assert.equal(yourList("active", false, true), "counting");
+  assert.equal(revealView(later, ["a", "b", "c"], picks(), yourList("replaced", false, true)).empty, "No People's Top 10 yet: it starts when burgers are on 5 lists each (12 lists so far). Your list helps start it once it counts again.");
 });
 
 test("a board past 500 lists isn't early; a board with no '≈' has no legend", () => {
