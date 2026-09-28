@@ -1,6 +1,8 @@
 // Server-only: the People's Top 10 board, src/data/peoples_top.json (copied from ../data/peoples_top.json by
 // scripts/sync-data.mjs, which writes the empty early board when the file is missing or broken), read and
-// checked once per build worker and joined to the dataset's menus (lib/peoples-top.ts has the rules). It never
+// checked once per build worker and joined to the dataset's menus (lib/peoples-top.ts has the rules). Before the
+// database's first publication (a board without rows) it is the published rankings' own board instead
+// (lib/published-board.mjs, from src/data/ranker_published_lists.json, which sync-data copies and checks). It never
 // fails the build: a board that doesn't check out is the empty one, with a warning.
 import "server-only";
 
@@ -11,8 +13,10 @@ import { menuWhere, pricedMenus, type Menu } from "./menus";
 import { EMPTY_BOARD, peopleStandings, peoplesTopView, type BoardFile, type PeopleStanding, type PeoplesTopView } from "./peoples-top";
 import { revealBoard, type RevealBoard } from "./peoples-top-reveal";
 import { parseBoardFile } from "./peoples-top-schema";
+import { publishedBoard } from "./published-board.mjs";
 
 const FILE = join(process.cwd(), "src", "data", "peoples_top.json");
+const PUBLISHED_FILE = join(process.cwd(), "src", "data", "ranker_published_lists.json");
 
 function load(): BoardFile {
   let raw: unknown;
@@ -29,7 +33,27 @@ function load(): BoardFile {
   return parsed.board;
 }
 
-const BOARD = load();
+/** The board the pages show: the committed one when it has rows, else the published rankings' board (if any). */
+function siteBoard(): BoardFile {
+  const committed = load();
+  if (committed.rows.length) return committed;
+  let published: unknown = null;
+  try {
+    published = JSON.parse(readFileSync(PUBLISHED_FILE, "utf8"));
+  } catch {
+    return committed; // sync-data writes the file (an empty one when ../data's is missing or broken)
+  }
+  const board = publishedBoard(published);
+  if (!board) return committed;
+  const parsed = parseBoardFile(board);
+  if (!parsed.ok) {
+    console.warn(`! the published rankings' board doesn't check out; the pages show the committed board:\n${parsed.problem}`);
+    return committed;
+  }
+  return parsed.board;
+}
+
+const BOARD = siteBoard();
 const MENUS = new Map(pricedMenus(getPricedRestaurants()).map((m) => [m.key, m]));
 const VIEW = peoplesTopView<Menu>(BOARD, (key) => MENUS.get(key));
 const REVEAL = revealBoard(VIEW, (m) => ({ name: m.restaurant.name, burger: m.restaurant.burger.name, where: menuWhere(m) }));

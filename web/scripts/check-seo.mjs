@@ -28,9 +28,12 @@
 // from ../data/best_burgers.json (every place on it, one publisher is enough): its groups ("Named by 10
 // publications", their place counts), their rows in order, menu prices, every list link and its ItemList;
 // no title, description or H1 says "best burger(s)" in our own voice.
-// The People's Top 10 (user decisions 2026-09-25/26) is recomputed from ../data/peoples_top.json and the dataset:
-// its seats (a seat whose burger left the dataset goes to the best ranked burger not under review), the rest of the
-// ranking and Rising, row for row with their ranks, list counts and links; its ItemList; "Early results" exactly
+// The People's Top 10 (user decisions 2026-09-25/26) is recomputed from ../data/peoples_top.json (without rows: the
+// published rankings' board from ../data/ranker_published_lists.json, src/lib/published-board.mjs) and the dataset:
+// its seats (a seat whose burger left the dataset goes to the best ranked burger not under review), filled to 10
+// from the same fit (user request 2026-09-27: 2+ lists from 2+ networks, not held, under review or surging, by
+// cautious score), the rest of the ranking and Rising (never a burger in the top 10), row for row with their ranks,
+// list counts and links; its heading ("The top 10 so far." while early); its ItemList; "Early results" exactly
 // while the board is early; the one-liner (and no copy anywhere, the JS chunks' strings included, that calls every
 // list a visitor's own: OVERCLAIMS);
 // and each /best-burgers row's People's rank. Crowd pricing is gone for
@@ -65,7 +68,9 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { LANDMARK_RADIUS_KM, LANDMARKS, MIN_LANDMARK_SPOTS } from "../src/lib/landmarks.mjs";
-import { readBoardText } from "./snapshot-peoples-top.mjs";
+import { siteBoard } from "../src/lib/published-board.mjs";
+import { checkPublishedLists } from "./ranker-published-migration.mjs";
+import { emptyBoard, readBoardText } from "./snapshot-peoples-top.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const WEB = join(here, "..");
@@ -73,6 +78,7 @@ const OUT = join(WEB, "out");
 const DATASET = join(WEB, "..", "data", "burger_index.json");
 const BEST = join(WEB, "..", "data", "best_burgers.json");
 const PEOPLE_TOP = join(WEB, "..", "data", "peoples_top.json");
+const PUBLISHED_LISTS = join(WEB, "..", "data", "ranker_published_lists.json");
 
 const args = process.argv.slice(2);
 const expectSite = (() => {
@@ -293,8 +299,21 @@ for (const l of best?.lists ?? []) {
 
 // ---- the People's Top 10, recomputed from ../data/peoples_top.json ----------------------------------------
 
-const board = readBoardText(existsSync(PEOPLE_TOP) ? readFileSync(PEOPLE_TOP, "utf8") : null);
-if (!board) err("../data/peoples_top.json is missing or not a board");
+const committedBoard = readBoardText(existsSync(PEOPLE_TOP) ? readFileSync(PEOPLE_TOP, "utf8") : null);
+if (!committedBoard) err("../data/peoples_top.json is missing or not a board");
+// The published rankings, as sync-data takes them: checked in full, or none.
+const publishedLists = (() => {
+  try {
+    const raw = JSON.parse(readFileSync(PUBLISHED_LISTS, "utf8"));
+    checkPublishedLists(raw);
+    return raw;
+  } catch {
+    warn("../data/ranker_published_lists.json is missing or broken: no published list counts");
+    return null;
+  }
+})();
+/** The board the site shows: the committed one with rows, else the published rankings' own. */
+const board = siteBoard(committedBoard ?? emptyBoard(), publishedLists);
 const allMenus = distinctMenus(priced);
 const menuByKey = new Map(allMenus.map((m) => [m.key, m]));
 const ONE_LINER =
@@ -309,8 +328,17 @@ const topView = (() => {
     seats.push(...ranked.filter((r) => !seats.includes(r) && !r.review && !r.held).slice(0, dropped));
     seats.sort((a, b) => b.score - a.score || b.theta - a.theta || byKeyOrder(a, b));
   }
+  // Fewer than 10 seated: the best other rows on 2+ lists from 2+ networks, not held, under review or surging.
+  const fill = rows
+    .filter((r) => !seats.includes(r) && r.lists >= 2 && r.networks >= 2 && !r.held && !r.review && !r.surging)
+    .sort((a, b) => (b.score ?? b.raw) - (a.score ?? a.raw) || b.lists - a.lists || b.theta - a.theta || byKeyOrder(a, b));
+  seats.push(...fill.slice(0, Math.max(0, 10 - seats.length)));
   const order = [...seats, ...ranked.filter((r) => !seats.includes(r))].map((r, i) => ({ ...r, rank: i + 1, m: menuByKey.get(r.key) }));
-  return { seats: order.slice(0, seats.length), ranked: order, rising: rows.filter((r) => r.tier === "rising").map((r) => ({ ...r, m: menuByKey.get(r.key) })) };
+  return {
+    seats: order.slice(0, seats.length),
+    ranked: order,
+    rising: rows.filter((r) => r.tier === "rising" && !seats.includes(r)).map((r) => ({ ...r, m: menuByKey.get(r.key) })),
+  };
 })();
 const boardTime = board && (board.refreshedAt ?? board.asOf) ? new Date(board.refreshedAt ?? board.asOf).getTime() : null;
 
@@ -776,7 +804,7 @@ for (const p of pages) {
     if (risingShown.map(fmt).join("\n") !== wantRising.map(fmt).join("\n")) err(`${path}: Rising rows differ from the board`);
     const seatsTitle = text(/<h2 id="top-10"[^>]*>(.*?)<\/h2>/s.exec(html)?.[1] ?? "");
     const n = topView.seats.length;
-    const wantTitle = n >= 10 ? "The top 10." : n === 1 ? "The top burger so far." : n ? `The top ${n} so far.` : "The top 10.";
+    const wantTitle = n >= 10 ? (board?.early ? "The top 10 so far." : "The top 10.") : n === 1 ? "The top burger so far." : n ? `The top ${n} so far.` : "The top 10.";
     if (seatsTitle !== wantTitle) err(`${path}: the seats' heading "${seatsTitle}", expected "${wantTitle}"`);
     // Before the first board (asOf null) the sentence has no count: lists may be saved but none is published yet.
     const soFar = board?.asOf ? ` (${count(board.totalLists)} ${board.totalLists === 1 ? "list" : "lists"} so far)` : "";
@@ -1018,6 +1046,14 @@ for (const p of pages) {
   }
 }
 for (const [img, paths] of usedImages) if (img !== "/og.png" && paths.length > 1) err(`${img} is the share image of ${paths.join(", ")}`);
+// The People's Top 10's card shows its first three (the top 10 as the page shows it), or no rows before any.
+{
+  const p = pages.find((x) => x.path === PEOPLES_TOP_PATH);
+  const alt = p ? (metaContent(p.head, "property", "og:image:alt") ?? "") : "";
+  const n = Math.min(3, topView.seats.length);
+  if (p && n && !alt.includes(`the first ${n === 1 ? "one" : n} with prices`)) err(`${PEOPLES_TOP_PATH}: share image alt "${alt}" doesn't show the first ${n}`);
+  if (p && !n && /the first/.test(alt)) err(`${PEOPLES_TOP_PATH}: share image alt "${alt}" shows rows of an empty board`);
+}
 const ogDir = join(OUT, "og");
 const ogFiles = existsSync(ogDir) ? walk(ogDir).map((f) => `/${relative(OUT, f)}`) : [];
 for (const f of ogFiles) if (!usedImages.has(f)) err(`${f}: a share image no page names`);

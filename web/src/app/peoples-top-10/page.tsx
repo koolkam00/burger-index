@@ -69,7 +69,7 @@ export default function PeoplesTopPage() {
 
         <section className="mt-8" aria-labelledby="top-10">
           <h2 id="top-10" className="t-display-m">
-            {top.seats.length ? seatsHeading(top.seats.length) : "The top 10."}
+            {top.seats.length ? seatsHeading(top.seats.length, top.early) : "The top 10."}
           </h2>
           <div className="mt-4">
             {top.seats.length ? (

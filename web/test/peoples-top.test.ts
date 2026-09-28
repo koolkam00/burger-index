@@ -27,7 +27,8 @@ import { parseBoardFile } from "../src/lib/peoples-top-schema";
 import { loadDataset } from "./dataset";
 
 function row(key: string, tier: BoardRow["tier"], score: number | null, extra: Partial<BoardRow> = {}): BoardRow {
-  return { key, tier, rank: null, score, theta: score ?? 0, lists: 20, firsts: 2, needs: 0, held: false, review: false, closeToNext: false, ...extra };
+  const theta = score ?? 0;
+  return { key, tier, rank: null, score, theta, raw: theta, lists: 20, firsts: 2, networks: 20, needs: 0, surging: false, held: false, review: false, closeToNext: false, ...extra };
 }
 
 /** A board of 12 ranked burgers (the 10 seats first), 2 rising and 1 listed. */
@@ -75,16 +76,50 @@ test("a burger the dataset no longer has leaves the board; its seat goes to the 
   assert.deepEqual(v.rising.map((e) => e.key), ["r2"]);
 });
 
-test("early boards: fewer than 10 seats are shown as they are, never filled", () => {
+test("fewer than 10 seats: the top 10 is filled from the same fit, and a filled burger isn't also Rising", () => {
   const b = board();
   b.top10 = b.top10.slice(0, 3);
   b.rows = b.rows.filter((r) => r.tier !== "ranked" || b.top10.includes(r.key));
+  b.rows = [
+    ...b.rows,
+    row("x-best", "listed", null, { raw: 0.5, theta: 0.9, lists: 2, networks: 2 }),
+    row("x-tie-more", "listed", null, { raw: -0.2, theta: 0.1, lists: 3, networks: 3 }),
+    row("x-tie-less", "listed", null, { raw: -0.2, theta: 0.8, lists: 2, networks: 2 }),
+    row("x-one-net", "listed", null, { raw: 2, lists: 2, networks: 1 }),
+    row("x-surging", "listed", null, { raw: 2, lists: 4, networks: 4, surging: true }),
+    row("x-held", "rising", null, { raw: 2, lists: 4, networks: 4, held: true, review: true }),
+    row("x-review", "rising", null, { raw: 2, lists: 4, networks: 4, review: true }),
+  ];
+  b.rows.find((r) => r.key === "r1")!.raw = 0.1; // rising, 4 lists
+  b.rows.find((r) => r.key === "r2")!.raw = -0.5; // rising, 3 lists
+  b.rows.find((r) => r.key === "l1")!.raw = 3; // 1 list: never
   const v = peoplesTopView(b, everything);
-  assert.deepEqual(v.seats.map((e) => e.key), ["b01", "b02", "b03"]);
+  assert.deepEqual(
+    v.seats.map((e) => [e.rank, e.key]),
+    [[1, "b01"], [2, "b02"], [3, "b03"], [4, "x-best"], [5, "r1"], [6, "x-tie-more"], [7, "x-tie-less"], [8, "r2"]],
+    "the seats in board order, then the rest by cautious score (ties: more lists first); fewer than 10 qualify",
+  );
   assert.deepEqual(v.rest, []);
-  assert.equal(seatsHeading(v.seats.length), "The top 3 so far.");
+  assert.deepEqual(v.rising.map((e) => e.key), ["x-held", "x-review"], "a burger in the top 10 is not also Rising");
+  assert.ok(v.seats.slice(3).every((e) => e.flag === null && !e.closeToAbove));
+  assert.equal(seatsHeading(v.seats.length, true), "The top 8 so far.");
+  // enough to fill: exactly 10
+  b.rows.push(...["y1", "y2", "y3", "y4"].map((k, i) => row(k, "listed", null, { raw: -1 - i, lists: 2, networks: 2 })));
+  const full = peoplesTopView(b, everything);
+  assert.deepEqual(full.seats.slice(8).map((e) => [e.rank, e.key]), [[9, "y1"], [10, "y2"]]);
+  assert.equal(seatsHeading(full.seats.length, true), "The top 10 so far.");
+  assert.equal(seatsHeading(full.seats.length, false), "The top 10.");
+  // a burger the dataset doesn't have never fills
+  assert.ok(!peoplesTopView(b, (k) => (k === "x-best" ? undefined : { key: k })).seats.some((e) => e.key === "x-best"));
   const empty = peoplesTopView(EMPTY_BOARD, everything);
   assert.deepEqual([empty.seats, empty.rest, empty.rising, empty.early], [[], [], [], true]);
+});
+
+test("10 seats: nothing is filled", () => {
+  const b = board();
+  b.rows.push(row("x-best", "listed", null, { raw: 5, lists: 4, networks: 4 }));
+  const v = peoplesTopView(b, everything);
+  assert.deepEqual(v.seats.map((e) => e.key), b.top10);
 });
 
 test("the words: rows, headings, the ladder's start, the count line and the lede", () => {

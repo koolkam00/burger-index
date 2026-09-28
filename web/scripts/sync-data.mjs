@@ -9,11 +9,18 @@
 // 4. Copies ../data/peoples_top.json (the People's Top 10 board, committed by the daily workflow on main:
 //    scripts/snapshot-peoples-top.mjs) to src/data/peoples_top.json. A missing or unreadable board never fails the
 //    build: the empty early board is written instead, with a warning. src/lib/peoples-top-data.ts checks it at build.
-// 5. Copies the MapLibre worker modules into public/vendor/maplibre/ (served same-origin).
+// 5. Copies ../data/ranker_published_lists.json (the published rankings saved as People's Top 10 lists, committed) to
+//    src/data/ranker_published_lists.json, checked like scripts/ranker-published-migration.mjs checks it. Before the
+//    database's first publication (a board without rows) the pages show these lists' own board
+//    (src/lib/published-board.mjs). A missing or broken file never fails the build: a file with no lists is written
+//    instead, with a warning, and the pages show the empty early board.
+// 6. Copies the MapLibre worker modules into public/vendor/maplibre/ (served same-origin).
 
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { publishedBoard } from "../src/lib/published-board.mjs";
+import { checkPublishedLists } from "./ranker-published-migration.mjs";
 import { emptyBoard, readBoardText, renderBoard } from "./snapshot-peoples-top.mjs";
 import { validateDataset } from "./validate-contract.mjs";
 
@@ -77,6 +84,30 @@ if (board) {
   console.warn(
     `! People's Top 10: ${relative(web, PEOPLES_TOP)} is ${boardText === null ? "missing" : "not a board"}; ` +
       "the page shows the empty early board (`node scripts/snapshot-peoples-top.mjs` writes it).",
+  );
+}
+
+const PUBLISHED = join(web, "..", "data", "ranker_published_lists.json");
+const PUBLISHED_OUT = join(OUT_DIR, "ranker_published_lists.json");
+let published = null;
+try {
+  const text = readFileSync(PUBLISHED, "utf8");
+  published = JSON.parse(text);
+  checkPublishedLists(published);
+  writeFileSync(PUBLISHED_OUT, text);
+} catch (err) {
+  published = null;
+  writeFileSync(PUBLISHED_OUT, `${JSON.stringify({ version: 1, seeded_on: null, lists: [] }, null, 2)}\n`);
+  console.warn(
+    `! published rankings: ${relative(web, PUBLISHED)} is ${existsSync(PUBLISHED) ? `not usable (${err instanceof Error ? err.message : err})` : "missing"}; ` +
+      "no published list counts on the site's board.",
+  );
+}
+if (published) {
+  const own = board?.rows.length ? null : publishedBoard(published);
+  console.log(
+    `✓ published rankings: ${relative(web, PUBLISHED)} → ${relative(web, PUBLISHED_OUT)}` +
+      (own ? ` (the board shows them until the first publication: ${own.totalLists} lists, as of ${own.asOf})` : ""),
   );
 }
 

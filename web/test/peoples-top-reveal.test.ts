@@ -27,7 +27,8 @@ import { loadDataset } from "./dataset";
 import { place } from "./places";
 
 function row(key: string, tier: BoardRow["tier"], score: number | null, extra: Partial<BoardRow> = {}): BoardRow {
-  return { key, tier, rank: null, score, theta: score ?? 0, lists: 20, firsts: 2, needs: 0, held: false, review: false, closeToNext: false, ...extra };
+  const theta = score ?? 0;
+  return { key, tier, rank: null, score, theta, raw: theta, lists: 20, firsts: 2, networks: 20, needs: 0, surging: false, held: false, review: false, closeToNext: false, ...extra };
 }
 
 /** 12 ranked burgers (s01…s12; the first 10 seated), 2 Rising (r1 on 4 lists, r2 on 3) and 1 listed. */

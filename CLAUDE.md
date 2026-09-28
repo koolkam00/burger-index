@@ -199,8 +199,9 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
   `20260927165759_ranker_published_add.sql`. Both are written from this file by `web/scripts/ranker-published-migration.mjs`
   (`--write` seeds once; `--add <id> --write` adds a list marked `added_on`); `web/test/ranker-published.test.ts` pins the
   five lists and fails if the file and a migration differ: **don't edit it to change the lists** (see "Published rankings
-  in the People's Top 10" under "Website"). Not a pipeline output, and the site doesn't read it (the sourcing line that did
-  was removed at the user's request on 2026-09-27).
+  in the People's Top 10" under "Website"). Not a pipeline output. The site never names the lists (the sourcing line was removed at
+  the user's request on 2026-09-27); the web build reads the file only to fit the People's Top 10 before the database's
+  first publication (see "People's Top 10 snapshot"), so the build reads whatever lists it holds.
 - `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,125 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, the 2026-09-25 deletions, the 2026-09-25 best-burger-list additions (two rounds) and the 2026-09-26 deletions (Bandits Burger + Dive, closed, and the old Lori Jayne row at Alphaville), see `data/list_changes_2026-09-23.md`: `name, neighborhood,
   borough, website, menu_url, notes, source` where `source` is `pilot-100|uptown|downtown|outer|dohmh-diner-pub|dohmh-hamburgers|best-lists-2026-09`). It's the user's data:
   don't edit it without their approval; report duplicates (`report.csv_duplicate_matches`), unmatched rows (`report.csv_unmatched`),
@@ -530,7 +531,14 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   and Top 10 on every one of 149 daily boards, scores within 1e-6; fixtures in `test/fixtures/patty-ladder/`, written
   by the design's `check/dump_golden.py`), `test/peoples-top-snapshot.test.ts` (Supabase faked). Changing a parameter
   means re-running the design's simulation gate (FINAL.md 12 B) and bumping `PARAMS.version` with the database's
-  `params_version`; the script refuses aggregates of another method.
+  `params_version`; the script refuses aggregates of another method. **What the site shows (user request 2026-09-27, "count the robert top 10 a populatoed peopels list needs to show when i
+  send this to people"; web only, the ladder unchanged):** the committed board when it has rows, else (before the
+  database's first publication) the published rankings' own board, fitted at build by `ladder.mjs` from
+  `data/ranker_published_lists.json` (`web/src/lib/published-board.mjs`; `voided_on` lists left out; `sync-data` copies and
+  checks the file, `.vercelignore` lets it through). Everywhere the People's Top 10 shows (page, ranker reveal,
+  `/data/menus.json`, `/best-burgers` ranks, JSON-LD, llms.txt, sitemap date, share image) it is the seats, then, while fewer
+  than 10, the best other rows on 2+ lists from 2+ networks, not held, under review or surging, by cautious score (ties:
+  lists, then θ), up to 10 (`peoplesTopView`); never also Rising; "The top 10 so far." while early; no copy explains it.
 
 ## Context.dev (web data)
 

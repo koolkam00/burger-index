@@ -188,6 +188,15 @@ rpc/ranker_board_inputs ──(read-only GET, publishable key)──> scripts/sn
   phi, raw, lists, weighted, firsts, networks, needs, surging, inconsistent, held, review, frozen, aheadP, closeToNext`).
   Two-space JSON with one row per line, so a day's diff reads burger by burger. Before the first publication it is the
   empty early board. Yesterday's file is the ladder's only memory: never edit it by hand.
+- **What the site shows** (user request 2026-09-27, "a populated people's list"; `src/lib/peoples-top.ts`
+  `peoplesTopView`, `src/lib/published-board.mjs`): the board is the committed file when it has rows; before the database's
+  first publication (no rows) the build fits the published rankings in `../data/ranker_published_lists.json` (lists with
+  `voided_on` left out; each on its `added_on` day, else `seeded_on`; one network per publisher) with `refreshInputs` +
+  `computeBoard(inputs, null)`, nothing else (`sync-data` copies and checks the file; missing or broken: a warning and no
+  published board). The top 10 everywhere (the page, the ranker's reveal, `/data/menus.json`, `/best-burgers` ranks, JSON-LD,
+  llms.txt, the share image) is the seats in board order, then, while fewer than 10, the best other rows on 2+ lists from 2+
+  networks, not held, under review or surging, by cautious score (`score`, else `raw`; ties: more lists, then θ), up to 10;
+  a burger in it is not also Rising. Heading "The top 10 so far." while early. The Patty Ladder itself is unchanged.
 - **The writer** (`scripts/snapshot-peoples-top.mjs`): GETs `rpc/ranker_board_inputs` with the publishable key (it refuses
   a secret or service_role key), checks the reply, runs `computeBoard` with the committed board as yesterday, keeps only the
   dataset's menu keys in the file (other keys stay in the fit), and writes the file only when it changes (deterministic:
@@ -416,8 +425,8 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   non-overlapping lists have them, each linked from its neighborhood page), each style list row by row (distinct menus,
   dataset prices, order, ranks, a style word in each burger, the "where the priciest burger is a …" H1), `/best-burgers`
   against `../data/best_burgers.json` (groups and their place counts, rows in order, prices, every list link, the count line, the ItemList), no "best
-  burger" in our own titles, descriptions or H1s, `/peoples-top-10` recomputed from `../data/peoples_top.json` and the dataset
-  (seats, the rest and Rising row by row with ranks, list counts, flags and links; the ItemList; "Early results" exactly while
+  burger" in our own titles, descriptions or H1s, `/peoples-top-10` recomputed from `../data/peoples_top.json` (without rows: the published rankings' board) and the dataset
+  (seats and the top 10's fill, the rest and Rising row by row with ranks, list counts, flags and links; the ItemList; "Early results" exactly while
   early; the one-liner; each `/best-burgers` row's People's rank), no "People's Price", "What's it worth" or "Price a burger"
   left anywhere and `/peoples-price`, `/best-value-burgers` and `/data/pricer.json` not built, the ranker's region on home (before the H1), each menu's People's Top 10 standing in `/data/menus.json`,
   any `/_none` placeholder noindex and unlisted, every page's share image (its own `/og/<path>.png` for restaurant,
