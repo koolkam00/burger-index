@@ -18,6 +18,8 @@ import {
   PEOPLES_TOP_ONE_LINER,
   peoplesTopLede,
   peoplesTopView,
+  risingDetail,
+  risingHeading,
   risingText,
   seatsHeading,
   type BoardFile,
@@ -115,11 +117,35 @@ test("fewer than 10 seats: the top 10 is filled from the same fit, and a filled 
   assert.deepEqual([empty.seats, empty.rest, empty.rising, empty.early], [[], [], [], true]);
 });
 
+test("a Rising burger that loses the fill says only its count, under a heading without \"not ranked yet\"", () => {
+  const b = board();
+  b.top10 = b.top10.slice(0, 3);
+  b.rows = b.rows.filter((r) => r.tier !== "ranked" || b.top10.includes(r.key));
+  // 7 burgers on 2 lists fill the ten above a Rising burger on 3 lists with a lower cautious score
+  b.rows.push(...Array.from({ length: 7 }, (_, i) => row(`f${i}`, "listed", null, { raw: -1 - i * 0.05, lists: 2, networks: 2 })));
+  b.rows.find((r) => r.key === "r1")!.raw = -1.8;
+  b.rows.find((r) => r.key === "r2")!.raw = -2;
+  const v = peoplesTopView(b, everything);
+  assert.equal(v.seats.length, 10);
+  assert.equal(v.filled, true);
+  assert.ok(v.seats.some((e) => e.lists === 2), "a top 10 row on 2 lists");
+  assert.deepEqual(v.rising.map((e) => e.key), ["r1", "r2"]);
+  assert.equal(risingHeading(v.rising.length, v.filled), "Rising: 2 burgers.");
+  assert.deepEqual(v.rising.map((e) => risingDetail(e, v.filled)), ["On 4 lists", "On 3 lists"], "no \"needs N more lists\" under a filled top 10");
+  // no fill: the method's own Rising words
+  const plain = peoplesTopView(board(), everything);
+  assert.equal(plain.filled, false);
+  assert.equal(risingHeading(plain.rising.length, plain.filled), "Rising: 2 burgers not ranked yet.");
+  assert.deepEqual(plain.rising.map((e) => risingDetail(e, plain.filled)), ["On 4 lists · needs 2 more lists", "On 3 lists · needs 1 more list"]);
+  assert.equal(risingHeading(1, false), "Rising: 1 burger not ranked yet.");
+});
+
 test("10 seats: nothing is filled", () => {
   const b = board();
   b.rows.push(row("x-best", "listed", null, { raw: 5, lists: 4, networks: 4 }));
   const v = peoplesTopView(b, everything);
   assert.deepEqual(v.seats.map((e) => e.key), b.top10);
+  assert.equal(v.filled, false);
 });
 
 test("the words: rows, headings, the ladder's start, the count line and the lede", () => {

@@ -14,7 +14,7 @@ import { loadDataset } from "./dataset";
 
 const FILE = JSON.parse(readFileSync(new URL("../../data/ranker_published_lists.json", import.meta.url), "utf8"));
 
-const mk = (lists: { publisher: string; items: string[]; added_on?: string; voided_on?: string }[]) => ({ version: 1, seeded_on: "2026-09-27", lists });
+const mk = (lists: { publisher: string; items: string[]; ranks?: number[]; added_on?: string; voided_on?: string }[]) => ({ version: 1, seeded_on: "2026-09-27", lists });
 
 test("the saves: each counting list on its day, one network per publisher, a voided list left out", () => {
   const saves = publishedSaves(
@@ -61,10 +61,61 @@ test("the site's board: the committed one when it has rows, else the published l
   const own = siteBoard(empty, FILE);
   assert.notEqual(own, empty);
   assert.equal(own.asOf, FILE.lists.reduce((m: string, l: { added_on?: string }) => ((l.added_on ?? FILE.seeded_on) > m ? (l.added_on ?? FILE.seeded_on) : m), FILE.seeded_on));
-  const withRows = { ...empty, rows: [{ key: "x" }] };
+  const withRows = { ...empty, asOf: "2026-10-01", rows: [{ key: "x", firsts: 0 }] };
   assert.equal(siteBoard(withRows, FILE), withRows, "a published board's rows cover every counted list: it wins");
   assert.equal(siteBoard(empty, null), empty);
   assert.equal(siteBoard(empty, { junk: true }), empty);
+  // a board the database published empty (a reset deleted every list) stays empty: no list the database dropped comes back
+  const reset = { ...empty, asOf: "2026-10-01", rows: [] };
+  assert.equal(siteBoard(reset, FILE), reset);
+  assert.equal(siteBoard(reset, FILE).rows.length, 0);
+});
+
+test("\"#1 on N\" counts only a list whose own No. 1 the burger is", () => {
+  // a list that counts only some of a publication's entries can lead with its No. 4
+  const f = mk([
+    { publisher: "A", items: ["k1", "k2", "k3"], ranks: [1, 2, 3] },
+    { publisher: "B", items: ["k1", "k3", "k2"], ranks: [4, 7, 11] },
+    { publisher: "C", items: ["k2", "k1", "k3"], ranks: [2, 3, 4] },
+    { publisher: "D", items: ["k2", "k3", "k1"] },
+  ]);
+  const b = publishedBoard(f);
+  assert.ok(b);
+  const firsts = Object.fromEntries(b.rows.map((r) => [r.key, r.firsts]));
+  assert.deepEqual(firsts, { k1: 1, k2: 1, k3: 0 });
+  // the fit is the ladder's own: only `firsts` differs from computeBoard over the same lists
+  const want = computeBoard(buildAggregates([["k1", "k2", "k3"], ["k1", "k3", "k2"], ["k2", "k1", "k3"], ["k2", "k3", "k1"]], { nets: ["A", "B", "C", "D"], asOf: "2026-09-27" }), null);
+  const noFirsts = (r: { firsts: number }) => ({ ...r, firsts: 0 });
+  assert.deepEqual(b.rows.map(noFirsts), want.rows.map(noFirsts));
+
+  // the committed files: Red Hook Tavern is Brooklyn Magazine's No. 1 but Time Out's national No. 4, The Long Island Bar
+  // Tasting Table's No. 2 (its No. 1, Peter Luger, has no menu price), Raoul's The Infatuation's No. 1
+  const own = publishedBoard(FILE);
+  assert.ok(own);
+  const of = (k: string) => own.rows.find((r) => r.key === k)?.firsts;
+  assert.equal(of("red-hook-tavern-carroll-gardens"), 1);
+  assert.equal(of("the-long-island-bar-carroll-gardens"), 0);
+  assert.equal(of("raouls-soho"), 1);
+  for (const r of own.rows) {
+    const no1 = FILE.lists.filter((l: { items: string[]; ranks: number[]; voided_on?: string }) => !l.voided_on && l.items[0] === r.key && l.ranks[0] === 1).length;
+    assert.equal(r.firsts, no1, `${r.key}: #1 on ${r.firsts}, but the No. 1 of ${no1} list(s)`);
+  }
+
+  // a database board: its rows' firsts less the published lists it counted that lead with a lower rank
+  const row = (key: string, firsts: number) => ({ key, firsts });
+  const db = { ...emptyBoard(), asOf: "2026-09-30", rows: [row("red-hook-tavern-carroll-gardens", 5), row("the-long-island-bar-carroll-gardens", 1), row("raouls-soho", 3)] };
+  const shown = siteBoard(db, FILE);
+  assert.deepEqual(shown.rows.map((r) => r.firsts), [4, 0, 3]);
+  assert.deepEqual(db.rows.map((r) => r.firsts), [5, 1, 3], "the committed board itself is untouched");
+  // a board older than those lists counted none of them
+  const old = { ...db, asOf: "2026-09-26" };
+  assert.equal(siteBoard(old, FILE), old);
+  // a list voided on or before the board's day no longer counts
+  const voided = mk([{ publisher: "B", items: ["k1", "k3", "k2"], ranks: [4, 7, 11], voided_on: "2026-09-29" }]);
+  const dbk = { ...emptyBoard(), asOf: "2026-09-30", rows: [row("k1", 2)] };
+  assert.equal(siteBoard(dbk, voided), dbk);
+  assert.equal(siteBoard({ ...dbk, asOf: "2026-09-28" }, voided).rows[0].firsts, 1, "voided after the board's day: it still counted");
+  assert.equal(siteBoard({ ...dbk, rows: [row("k1", 0)] }, mk([{ publisher: "B", items: ["k1", "k3", "k2"], ranks: [4, 7, 11] }])).rows[0].firsts, 0, "never below 0");
 });
 
 test("the committed published lists fill a top 10 of burgers on 2+ lists from 2+ publishers", () => {

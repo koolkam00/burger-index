@@ -188,15 +188,18 @@ rpc/ranker_board_inputs ──(read-only GET, publishable key)──> scripts/sn
   phi, raw, lists, weighted, firsts, networks, needs, surging, inconsistent, held, review, frozen, aheadP, closeToNext`).
   Two-space JSON with one row per line, so a day's diff reads burger by burger. Before the first publication it is the
   empty early board. Yesterday's file is the ladder's only memory: never edit it by hand.
-- **What the site shows** (user request 2026-09-27, "a populated people's list"; `src/lib/peoples-top.ts`
-  `peoplesTopView`, `src/lib/published-board.mjs`): the board is the committed file when it has rows; before the database's
-  first publication (no rows) the build fits the published rankings in `../data/ranker_published_lists.json` (lists with
+- **What the site shows** (user request 2026-09-27, "count the robert top 10 a populatoed peopels list needs to show when i
+  send this to people"; `src/lib/peoples-top.ts` `peoplesTopView`, `src/lib/published-board.mjs`): the board is the
+  committed file once the database has published one (rows, or an `asOf`: a board published empty after a reset stays
+  empty); before the database's first publication the build fits the published rankings in `../data/ranker_published_lists.json` (lists with
   `voided_on` left out; each on its `added_on` day, else `seeded_on`; one network per publisher) with `refreshInputs` +
   `computeBoard(inputs, null)`, nothing else (`sync-data` copies and checks the file; missing or broken: a warning and no
   published board). The top 10 everywhere (the page, the ranker's reveal, `/data/menus.json`, `/best-burgers` ranks, JSON-LD,
   llms.txt, the share image) is the seats in board order, then, while fewer than 10, the best other rows on 2+ lists from 2+
   networks, not held, under review or surging, by cautious score (`score`, else `raw`; ties: more lists, then θ), up to 10;
-  a burger in it is not also Rising. Heading "The top 10 so far." while early. The Patty Ladder itself is unchanged.
+  a burger in it is not also Rising (under a filled top 10, Rising reads "Rising: 2 burgers." with plain "On 3 lists"
+  rows). Heading "The top 10 so far." while early. "#1 on N" counts only lists whose own No. 1 the burger is (a published
+  list's `ranks[0] === 1`; `ownFirsts`, display only). The Patty Ladder itself is unchanged.
 - **The writer** (`scripts/snapshot-peoples-top.mjs`): GETs `rpc/ranker_board_inputs` with the publishable key (it refuses
   a secret or service_role key), checks the reply, runs `computeBoard` with the committed board as yesterday, keeps only the
   dataset's menu keys in the file (other keys stay in the fit), and writes the file only when it changes (deterministic:
@@ -479,7 +482,8 @@ Notes:
 
 - The build reads `../data/burger_index.json` and `../contract/burger_index.schema.json`, both outside `web/`. Commit the dataset, and
   keep Vercel's "Include files outside the root directory in the Build Step" setting on (the default for new projects).
-- The repo-root `.vercelignore` is an allowlist (`web/`, `contract/`, `data/burger_index.json`). Vercel does not read
+- The repo-root `.vercelignore` is an allowlist (`web/`, `contract/`, `data/burger_index.json`, `data/best_burgers.json`,
+  `data/peoples_top.json`, `data/ranker_published_lists.json`: a new data file the build reads must be added there). Vercel does not read
   `.gitignore`, so without it a CLI deploy from the root would upload `.env` (the Context.dev key), `.venv/` and the scrape cache.
 - Environment variables (Project → Settings → Environment Variables): `NEXT_PUBLIC_SUPABASE_URL` and
   `NEXT_PUBLIC_SUPABASE_ANON_KEY` on Production and Preview, `NEXT_PUBLIC_POSTHOG_KEY` on Production only. All are public,

@@ -28,12 +28,14 @@
 // from ../data/best_burgers.json (every place on it, one publisher is enough): its groups ("Named by 10
 // publications", their place counts), their rows in order, menu prices, every list link and its ItemList;
 // no title, description or H1 says "best burger(s)" in our own voice.
-// The People's Top 10 (user decisions 2026-09-25/26) is recomputed from ../data/peoples_top.json (without rows: the
-// published rankings' board from ../data/ranker_published_lists.json, src/lib/published-board.mjs) and the dataset:
-// its seats (a seat whose burger left the dataset goes to the best ranked burger not under review), filled to 10
-// from the same fit (user request 2026-09-27: 2+ lists from 2+ networks, not held, under review or surging, by
-// cautious score), the rest of the ranking and Rising (never a burger in the top 10), row for row with their ranks,
-// list counts and links; its heading ("The top 10 so far." while early); its ItemList; "Early results" exactly
+// The People's Top 10 (user decisions 2026-09-25/26) is recomputed from ../data/peoples_top.json (before the database
+// publishes one: the published rankings' board from ../data/ranker_published_lists.json, src/lib/published-board.mjs)
+// and the dataset: its seats (a seat whose burger left the dataset goes to the best ranked burger not under review),
+// filled to 10 from the same fit (user request 2026-09-27: 2+ lists from 2+ networks, not held, under review or
+// surging, by cautious score), the rest of the ranking and Rising (never a burger in the top 10; under a filled top 10
+// "Rising: N burgers." and plain "On N lists"), row for row with their ranks, list counts ("#1 on N" only for a list's
+// own No. 1) and links; its heading ("The top 10 so far." while early); its ItemList; the ranker's People's Top 10 in
+// the home page and the llms.txt line; "Early results" exactly
 // while the board is early; the one-liner (and no copy anywhere, the JS chunks' strings included, that calls every
 // list a visitor's own: OVERCLAIMS);
 // and each /best-burgers row's People's rank. Crowd pricing is gone for
@@ -332,14 +334,61 @@ const topView = (() => {
   const fill = rows
     .filter((r) => !seats.includes(r) && r.lists >= 2 && r.networks >= 2 && !r.held && !r.review && !r.surging)
     .sort((a, b) => (b.score ?? b.raw) - (a.score ?? a.raw) || b.lists - a.lists || b.theta - a.theta || byKeyOrder(a, b));
-  seats.push(...fill.slice(0, Math.max(0, 10 - seats.length)));
+  const filled = fill.slice(0, Math.max(0, 10 - seats.length));
+  seats.push(...filled);
   const order = [...seats, ...ranked.filter((r) => !seats.includes(r))].map((r, i) => ({ ...r, rank: i + 1, m: menuByKey.get(r.key) }));
   return {
     seats: order.slice(0, seats.length),
     ranked: order,
     rising: rows.filter((r) => r.tier === "rising" && !seats.includes(r)).map((r) => ({ ...r, m: menuByKey.get(r.key) })),
+    // The top 10 holds burgers the method hasn't seated: Rising rows then say only their count.
+    filled: filled.length > 0,
   };
 })();
+// "#1 on N" counts only lists whose own No. 1 the burger is: never more than the published lists that rank it No. 1,
+// plus (on a database board) the visitors' lists it leads.
+if (publishedLists && board && !board.refreshedAt) {
+  for (const r of board.rows) {
+    const no1 = publishedLists.lists.filter((l) => !l.voided_on && l.items[0] === r.key && l.ranks[0] === 1).length;
+    if (r.firsts !== no1) err(`People's Top 10: ${r.key} is "#1 on ${r.firsts}", but the No. 1 of ${no1} published list(s)`);
+  }
+}
+/** "Sep 27, 2026": a board's day (a bare date), as the pages print it. */
+const dayText = (d) => new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" }).format(new Date(`${d}T12:00:00Z`));
+/**
+ * The ranker's People's Top 10 as the home page hands it over (the `board` prop in the page's flight data): the
+ * seats and the board's numbers, or null when the page carries none.
+ */
+function revealPayload(html) {
+  for (const m of html.matchAll(/self\.__next_f\.push\(\[1,("(?:[^"\\]|\\.)*")\]\)/g)) {
+    let chunk;
+    try {
+      chunk = JSON.parse(m[1]);
+    } catch {
+      continue;
+    }
+    const at = chunk.indexOf('"board":{"asOf"');
+    if (at < 0) continue;
+    const start = chunk.indexOf("{", at);
+    for (let i = start, depth = 0, inStr = false; i < chunk.length; i++) {
+      const c = chunk[i];
+      if (inStr) {
+        if (c === "\\") i++;
+        else if (c === '"') inStr = false;
+      } else if (c === '"') inStr = true;
+      else if (c === "{") depth++;
+      else if (c === "}" && --depth === 0) {
+        try {
+          return JSON.parse(chunk.slice(start, i + 1));
+        } catch {
+          return undefined;
+        }
+      }
+    }
+    return undefined;
+  }
+  return null;
+}
 const boardTime = board && (board.refreshedAt ?? board.asOf) ? new Date(board.refreshedAt ?? board.asOf).getTime() : null;
 
 // ---- burgers near a landmark, recomputed from the dataset and src/lib/landmarks.mjs's points -------------
@@ -799,9 +848,17 @@ for (const p of pages) {
     if (rankedShown.map(fmt).join("\n") !== wantRanked.map(fmt).join("\n")) err(`${path}: ranked rows differ from the board:\n    page  ${rankedShown.slice(0, 3).map(fmt).join(" | ")}\n    board ${wantRanked.slice(0, 3).map(fmt).join(" | ")}`);
     const wantRising = topView.rising.map((r) => {
       const n = Math.max(1, r.needs);
-      return { rank: NaN, name: r.m.r.name, path: `/restaurants/${r.m.r.id}`, lists: `${listsWord(r)} · needs ${count(n)} more ${n === 1 ? "list" : "lists"}${r.held ? "Under review" : r.review ? "Checking a surge of lists" : ""}` };
+      const needs = topView.filled ? "" : ` · needs ${count(n)} more ${n === 1 ? "list" : "lists"}`;
+      return { rank: NaN, name: r.m.r.name, path: `/restaurants/${r.m.r.id}`, lists: `${listsWord(r)}${needs}${r.held ? "Under review" : r.review ? "Checking a surge of lists" : ""}` };
     });
     if (risingShown.map(fmt).join("\n") !== wantRising.map(fmt).join("\n")) err(`${path}: Rising rows differ from the board`);
+    if (topView.rising.length) {
+      const risingTitle = text(/<h2 id="rising"[^>]*>(.*?)<\/h2>/s.exec(html)?.[1] ?? "");
+      const nr = `${count(topView.rising.length)} ${topView.rising.length === 1 ? "burger" : "burgers"}`;
+      const wantRisingTitle = topView.filled ? `Rising: ${nr}.` : `Rising: ${nr} not ranked yet.`;
+      if (risingTitle !== wantRisingTitle) err(`${path}: the Rising heading "${risingTitle}", expected "${wantRisingTitle}"`);
+    }
+    if (topView.filled && /needs \d[\d,]* more lists?|not ranked yet/.test(body)) err(`${path}: "needs N more lists" or "not ranked yet" under a filled top 10`);
     const seatsTitle = text(/<h2 id="top-10"[^>]*>(.*?)<\/h2>/s.exec(html)?.[1] ?? "");
     const n = topView.seats.length;
     const wantTitle = n >= 10 ? (board?.early ? "The top 10 so far." : "The top 10.") : n === 1 ? "The top burger so far." : n ? `The top ${n} so far.` : "The top 10.";
@@ -962,6 +1019,16 @@ if (home) {
   if (rankAt < 0 || h1At < 0 || rankAt > h1At) err("/: the ranker does not come before the H1");
   const h1 = text((/<h1[^>]*>(.*?)<\/h1>/s.exec(home.html) ?? ["", ""])[1]);
   if (h1 !== "What a burger costs in New York.") err(`/: h1 "${h1}"`);
+  // The ranker's People's Top 10 beside a list of 3+: the page's top 10, in its order, with the board's numbers.
+  const reveal = revealPayload(home.html);
+  if (!reveal) err(`/: the ranker's People's Top 10 is ${reveal === null ? "missing from" : "unreadable in"} the page`);
+  else {
+    const got = reveal.seats.map((x) => `${x.rank} ${x.key} ${x.name}`).join(" | ");
+    const want = topView.seats.map((r) => `${r.rank} ${r.key} ${r.m.r.name}`).join(" | ");
+    if (got !== want) err(`/: the ranker's People's Top 10 differs from the page's:\n    ranker ${got}\n    page   ${want}`);
+    const nums = (b) => JSON.stringify([b?.asOf ?? null, b?.totalLists ?? 0, b?.gate ?? 5, b?.early ?? true]);
+    if (nums(reveal) !== nums(board)) err(`/: the ranker's People's Top 10 numbers ${nums(reveal)}, the board's ${nums(board)}`);
+  }
 }
 // /data/menus.json: every menu the board shows carries its standing as /peoples-top-10 numbers it (ranked: its rank;
 // Rising: its list count), and no other menu carries one.
@@ -1263,6 +1330,21 @@ for (const x of landmarkPagesWant) {
   const { lo, hi } = landmarkEnds(x.spots);
   const want = `: ${count(x.spots.length)} burger spots within half a mile${alongWords(x.l)}; their priciest burgers run from ${money(lo.r.index_price)} at ${lo.r.name} to ${money(hi.r.index_price)} at ${hi.r.name}`;
   if (cents(lo.r.index_price) !== cents(hi.r.index_price) && !line.endsWith(want)) err(`llms.txt: the /burgers-near/${x.l.slug} line "${line}" does not end "${want}"`);
+}
+// The People's Top 10 line: its first three as the page shows them, with their list counts and the board's day.
+{
+  const line = llms.split("\n").find((l) => l.includes(`](${site}${PEOPLES_TOP_PATH})`)) ?? "";
+  const what = "the burgers ranked highest across the lists on The Burger Index";
+  const lists = (n) => `${count(n)} ${n === 1 ? "list" : "lists"}`;
+  const want = topView.seats.length
+    ? `${what}: ${topView.seats
+        .slice(0, 3)
+        .map((r) => `#${r.rank} ${r.m.r.name} (on ${lists(r.lists)})`)
+        .join(", ")}${board?.asOf ? ` (as of ${dayText(board.asOf)})` : ""}`
+    : board?.asOf
+      ? `${what}; nothing ranked yet (${lists(board.totalLists)} so far)`
+      : `${what}; nothing ranked yet`;
+  if (!line.endsWith(`: ${want}`)) err(`llms.txt: the ${PEOPLES_TOP_PATH} line "${line}" does not end ": ${want}"`);
 }
 if (EMAIL.test(llms)) err("llms.txt carries an email address");
 for (const l of llmsLinks) {

@@ -292,7 +292,7 @@ changes that board on the next deploy; after the first publication it changes th
 **Fading them.** The Patty Ladder has no per-list weight, so they can't be counted at part weight without changing the
 method (a new `PARAMS.version`, the database's `params_version` and the design's simulation gate, FINAL.md 12 B).
 They fade on their own: seven lists among the visitors' lists weigh less as the lists grow (under a third of the lists
-beside 15 visitors' lists, about 1% past 500). The owner decides when to void them; a natural point is when the board
+beside 15 visitors' lists, under 1.5% past 500). The owner decides when to void them; a natural point is when the board
 stops being early (500 lists).
 
 **Changing one** (a publication updates its ranking): a new, hand-written migration that edits the row as a

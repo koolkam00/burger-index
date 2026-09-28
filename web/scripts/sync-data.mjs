@@ -11,7 +11,7 @@
 //    build: the empty early board is written instead, with a warning. src/lib/peoples-top-data.ts checks it at build.
 // 5. Copies ../data/ranker_published_lists.json (the published rankings saved as People's Top 10 lists, committed) to
 //    src/data/ranker_published_lists.json, checked like scripts/ranker-published-migration.mjs checks it. Before the
-//    database's first publication (a board without rows) the pages show these lists' own board
+//    database's first publication (a board with no rows and no date) the pages show these lists' own board
 //    (src/lib/published-board.mjs). A missing or broken file never fails the build: a file with no lists is written
 //    instead, with a warning, and the pages show the empty early board.
 // 6. Copies the MapLibre worker modules into public/vendor/maplibre/ (served same-origin).
@@ -19,7 +19,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { publishedBoard } from "../src/lib/published-board.mjs";
+import { everPublished, publishedBoard } from "../src/lib/published-board.mjs";
 import { checkPublishedLists } from "./ranker-published-migration.mjs";
 import { emptyBoard, readBoardText, renderBoard } from "./snapshot-peoples-top.mjs";
 import { validateDataset } from "./validate-contract.mjs";
@@ -104,7 +104,7 @@ try {
   );
 }
 if (published) {
-  const own = board?.rows.length ? null : publishedBoard(published);
+  const own = board && everPublished(board) ? null : publishedBoard(published);
   console.log(
     `✓ published rankings: ${relative(web, PUBLISHED)} → ${relative(web, PUBLISHED_OUT)}` +
       (own ? ` (the board shows them until the first publication: ${own.totalLists} lists, as of ${own.asOf})` : ""),

@@ -4,7 +4,7 @@
 // one (lib/peoples-top-data.ts); nothing here recomputes it.
 import Link from "next/link";
 import { menuWhere, type Menu } from "@/lib/menus";
-import { FLAG_TEXT, listsText, risingText, type RisingEntry, type RowFlag, type TopEntry } from "@/lib/peoples-top";
+import { FLAG_TEXT, listsText, risingDetail, type RisingEntry, type RowFlag, type TopEntry } from "@/lib/peoples-top";
 import { PriceChip } from "./ui";
 
 function Flag({ flag }: { flag: RowFlag }) {
@@ -55,14 +55,14 @@ export function PeoplesTopList({ entries, median, label }: { entries: readonly T
   );
 }
 
-/** Rising rows: unnumbered, each with how many more lists it needs. */
-export function RisingList({ entries, median }: { entries: readonly RisingEntry<Menu>[]; median: number | null }) {
+/** Rising rows: unnumbered, each with how many more lists it needs (only its count once the top 10 is filled). */
+export function RisingList({ entries, median, filled }: { entries: readonly RisingEntry<Menu>[]; median: number | null; filled: boolean }) {
   return (
     <div className="ptop-shell">
       <ul className="ptop-board is-rising" aria-label="Rising">
         {entries.map((e) => (
           <li key={e.key} className="ptop-row">
-            <What menu={e.menu} detail={risingText(e.lists, e.needs)} flag={e.flag} />
+            <What menu={e.menu} detail={risingDetail(e, filled)} flag={e.flag} />
             <span className="ptop-price">
               <PriceChip price={e.menu.indexPrice} median={median} delta={false} />
             </span>

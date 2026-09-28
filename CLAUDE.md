@@ -188,7 +188,8 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
   snapshot" under "Website". Not a pipeline output; `pipeline build` never touches it.
 - `data/ranker_published_lists.json` — **the seven published burger rankings counted as People's Top 10 lists** (user
   decisions 2026-09-26/27: the critics' rankings seeded "as peoples lists in the database", then "add at least one more
-  list", then "count the robert top 10"; only genuinely ranked lists, none invented). Facts only: per list its `id` (the `/best-burgers` list id, or its
+  list", then "count the robert top 10" (Robert Sietsema's) and the standing "create as many peoples rankings list
+  possible" (Time Out's national one); only genuinely ranked lists, none invented). Facts only: per list its `id` (the `/best-burgers` list id, or its
   own slug), `publisher`, `title`, `url`, `date`, `checked_on`, `added_on` (a list added after the seeding: the New York
   day its addition was applied), `length` (the list's own entry count), `items` (menu keys, best first), the list's own
   `ranks` and `names` for them, `left_out` (rank, name, reason) and short mapping `notes`; plus `seeded_on`. The
@@ -198,13 +199,15 @@ ask the user before widening `--cuisines`: other entertainment venues (Lucky Str
   (12; June 2023, though its page shows the 2014 date of the earlier article at that link), added by
   `20260927165759_ranker_published_add.sql`, then Robert Sietsema's My 10 Favorite Hamburgers in New York and NJ, 2026
   (6; his Substack, a countdown from 10) by `20260928011846_ranker_published_add.sql` and Time Out's national The best
-  burgers in America (3: its NYC entries, Nos. 4, 7 and 11 of 20) by `20260928011915_ranker_published_add.sql`. All are
+  burgers in America (3: its NYC entries, Nos. 4, 7 and 11 of 20; counting a national ranking this way waits for the
+  user's confirmation) by `20260928011915_ranker_published_add.sql`. All are
   written from this file by `web/scripts/ranker-published-migration.mjs`
   (`--write` seeds once; `--add <id> --write` adds a list marked `added_on`); `web/test/ranker-published.test.ts` pins the
   seven lists and fails if the file and a migration differ: **don't edit it to change the lists** (see "Published rankings
   in the People's Top 10" under "Website"). Not a pipeline output. The site never names the lists (the sourcing line was removed at
-  the user's request on 2026-09-27); the web build reads the file only to fit the People's Top 10 before the database's
-  first publication (see "People's Top 10 snapshot"), so the build reads whatever lists it holds.
+  the user's request on 2026-09-27); the web build reads the file to fit the People's Top 10 before the database's
+  first publication (see "People's Top 10 snapshot") and, always, so that "#1 on N" counts only a list's own No. 1
+  (its `ranks`), so the build reads whatever lists it holds.
 - `burger-list-master.csv` — **the restaurant list** (`config.RESTAURANT_LIST_CSV`; 1,125 rows after the 2026-09-23 clean-up, the 2026-09-24 passes and DOHMH expansion, the 2026-09-25 deletions, the 2026-09-25 best-burger-list additions (two rounds) and the 2026-09-26 deletions (Bandits Burger + Dive, closed, and the old Lori Jayne row at Alphaville), see `data/list_changes_2026-09-23.md`: `name, neighborhood,
   borough, website, menu_url, notes, source` where `source` is `pilot-100|uptown|downtown|outer|dohmh-diner-pub|dohmh-hamburgers|best-lists-2026-09`). It's the user's data:
   don't edit it without their approval; report duplicates (`report.csv_duplicate_matches`), unmatched rows (`report.csv_unmatched`),
@@ -322,8 +325,14 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   checked by the zod mirror in `src/lib/peoples-top-schema.ts`; a board that doesn't check out is the empty one, with a
   warning) and joined to the dataset's menus by `src/lib/peoples-top.ts` (pure: only burgers the dataset has, numbered,
   seats first; a seat whose burger left the dataset goes to the best ranked burger not under review; "≈" only between
-  rows that are neighbors on the board too). The page: the 10 seats ("The top 3 so far." early on), the rest of the
-  ranking, Rising ("On 7 lists · needs 3 more lists"), "Early results" under 500 lists, "Under review" (an owner hold) and
+  rows that are neighbors on the board too). **The displayed top 10** (user request 2026-09-27, see "What the site
+  shows" under "People's Top 10 snapshot"): the seats, then, while fewer than 10, the fill from the same fit
+  (`peoplesTopView`); every surface (page, ranker reveal, `/data/menus.json`, `/best-burgers`, JSON-LD, llms.txt, sitemap,
+  share image) uses it. The page: the top 10 ("The top 10 so far." while early, "The top 3 so far." when only 3
+  qualify), the rest of the ranking, Rising ("On 7 lists · needs 3 more lists"; once the top 10 is filled "Rising: 2
+  burgers." and plain "On 3 lists", since a filled row on 2 lists sits above them), "#1 on N" counting only lists
+  whose own No. 1 it is (a list of a publication's NYC or priced entries only can lead with its No. 4: `ownFirsts` in
+  `src/lib/published-board.mjs`, display only), "Early results" under 500 lists, "Under review" (an owner hold) and
   "Checking a surge of lists" (the surge review bar), the one-liner as the only method line (**no sourcing line**: the
   one naming the published rankings, "Includes 4 published burger rankings, each counted like one visitor's list: …", was
   removed from the page, the ranker's People's Top 10 and llms.txt at the user's request on 2026-09-27; since the lists
@@ -333,7 +342,8 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   (never Review, Rating or AggregateRating), its own share image, the sitemap (dated by the board) and llms.txt; linked
   from the nav ("People's Top 10", replacing "People's Price"), the footer, "More burger rankings." and under the home
   board. `/best-burgers` rows show a ranked menu's People's rank ("#3 on 143 lists"). Tested in
-  `test/peoples-top.test.ts`; `check:seo` recomputes the page from the board file.
+  `test/peoples-top.test.ts` and `test/published-board.test.ts`; `check:seo` recomputes the page, the ranker's reveal and
+  the llms.txt line from the board file (or, before the first publication, the published-lists file).
 - **SEO / AEO / GEO (user decisions 2026-09-25):** the origin comes from `src/lib/site-url.ts`: `NEXT_PUBLIC_SITE_URL`,
   else `https://$VERCEL_PROJECT_PRODUCTION_URL` (the free `*.vercel.app` address), else `http://localhost:4173` with a
   build warning (never a domain the user doesn't own). Titles and meta descriptions for every page type are built in
@@ -373,8 +383,9 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   (`data/ranker_published_lists.json`) are saved in the ranker's database as seven lists, each counting exactly like one
   visitor's list (`supabase/README.md` "Published lists"): `origin = 'published'` rows of `ranker_private.ranker_lists`,
   their sources in `ranker_private.ranker_published`, active since 2026-09-27 (the four seeded, then Tasting Table's added
-  the same day when the user asked to "add at least one more list", then Robert Sietsema's and Time Out's national ranking
-  that evening when the user asked to "count the robert top 10"). **The site doesn't name them** (user decision
+  the same day when the user asked to "add at least one more list", then Robert Sietsema's that evening when the user
+  asked to "count the robert top 10", and Time Out's national ranking with it, under the standing request to "create as
+  many peoples rankings list possible"). **The site doesn't name them** (user decision
   2026-09-27: the sourcing line was removed at the user's request); the public audit view and these docs do, and the
   site's copy never says every list is a visitor's own. No function treats them differently (the nightly refresh, surge
   damping, rate limits, one-list-per-connection rule and owner tools are unchanged); their voter ids come from each link
@@ -385,7 +396,9 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   or numbers them best first; a reader-vote ranking counts as one list) from a reputable publication, with 3+ entries
   that are priced menu keys; never an unordered roundup given an invented order, never an Upper Cut Media House list or a
   trend feature; prefer 2022-2026. A named critic's own ranking counts too (user decision 2026-09-27: Robert Sietsema's
-  Substack, "count the robert top 10"); a national ranking counts with only its NYC entries, in its order. **To add one** (only with the user): its entry in the data file with
+  Substack, "count the robert top 10"). A national ranking counting with only its NYC entries, in its order (Time Out's,
+  whose No. 4 then leads the list and gets its #1 weight in the fit), was the implementer's choice and **waits for the
+  user's confirmation**; the site's "#1 on N" never credits it (`ownFirsts`). **To add one** (only with the user): its entry in the data file with
   `added_on`, `node web/scripts/ranker-published-migration.mjs --add <id> --write`, `apply_migration` (name
   `ranker_published_add`: rows only, idempotent, every key checked against `ranker_private.ranker_keys` first), the file
   renamed to the version the project recorded, and the list pinned in `web/test/ranker-published.test.ts`. **To remove
@@ -475,7 +488,7 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   directory in the Build Step" on (the build reads `../data` and `../contract`). CLI deploys run **from the repo
   root** (`npx vercel link` once, then `npx vercel --prod`); the root `.vercelignore` is an allowlist so `.env`,
   `.venv/` and `data/cache/` are never uploaded (it lets through `data/burger_index.json`, `data/best_burgers.json`,
-  and `data/peoples_top.json`: a new data file the build reads must be added there). Environment variables: `NEXT_PUBLIC_SUPABASE_URL` and
+  `data/peoples_top.json` and `data/ranker_published_lists.json`: a new data file the build reads must be added there). Environment variables: `NEXT_PUBLIC_SUPABASE_URL` and
   `NEXT_PUBLIC_SUPABASE_ANON_KEY` on Production and Preview, `NEXT_PUBLIC_POSTHOG_KEY` on Production only
   (`NEXT_PUBLIC_POSTHOG_HOST` stays unset: the default `/ingest` is proxied to PostHog by the rewrites in
   `web/vercel.json`, which Vercel reads from the Root Directory; Next's own `rewrites` don't work with
@@ -536,8 +549,9 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   by the design's `check/dump_golden.py`), `test/peoples-top-snapshot.test.ts` (Supabase faked). Changing a parameter
   means re-running the design's simulation gate (FINAL.md 12 B) and bumping `PARAMS.version` with the database's
   `params_version`; the script refuses aggregates of another method. **What the site shows (user request 2026-09-27, "count the robert top 10 a populatoed peopels list needs to show when i
-  send this to people"; web only, the ladder unchanged):** the committed board when it has rows, else (before the
-  database's first publication) the published rankings' own board, fitted at build by `ladder.mjs` from
+  send this to people"; web only, the ladder unchanged):** the committed board once the database has published one (rows
+  or an `asOf`: a board published empty after a reset stays empty), else (before the database's first publication) the
+  published rankings' own board, fitted at build by `ladder.mjs` from
   `data/ranker_published_lists.json` (`web/src/lib/published-board.mjs`; `voided_on` lists left out; `sync-data` copies and
   checks the file, `.vercelignore` lets it through). Everywhere the People's Top 10 shows (page, ranker reveal,
   `/data/menus.json`, `/best-burgers` ranks, JSON-LD, llms.txt, sitemap date, share image) it is the seats, then, while fewer

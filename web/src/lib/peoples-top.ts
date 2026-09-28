@@ -3,8 +3,8 @@
 // a day by the Patty Ladder (src/lib/ladder.mjs, scripts/snapshot-peoples-top.mjs) and committed as data/peoples_top.json
 // (before the database's first publication, the published rankings' own board: lib/published-board.mjs). The site
 // shows that board's seats, the rest of the ranking, the Rising tier, "Early results" and the "too close to call"
-// marks, and while fewer than 10 are seated it fills the top 10 from the same fit (user request 2026-09-27, "a
-// populated people's list"; `peoplesTopView`). It never explains any of it beyond the one-liner.
+// marks, and while fewer than 10 are seated it fills the top 10 from the same fit (user request 2026-09-27, "count the
+// robert top 10 a populatoed peopels list needs to show when i send this to people"; `peoplesTopView`). It never explains any of it beyond the one-liner.
 //
 // Pure and client-safe: the board file's shape, and the board as the pages show it, joined to the dataset's
 // menus. lib/peoples-top-data.ts (server-only) reads the file.
@@ -82,6 +82,11 @@ export type PeoplesTopView<T> = {
   rest: TopEntry<T>[];
   /** Burgers on 3+ lists that aren't ranked yet and aren't in the top 10, unnumbered. */
   rising: RisingEntry<T>[];
+  /**
+   * The top 10 holds burgers the method hasn't seated (the fill): Rising rows then say only their count, since a
+   * top 10 row on 2 lists sits above them ("needs 2 more lists" would contradict it).
+   */
+  filled: boolean;
 };
 
 /** A burger fills an open place in the top 10 only with this many lists, from as many networks. */
@@ -121,10 +126,12 @@ export function peoplesTopView<T>(board: BoardFile, menuOf: (key: string) => T |
     seats.sort(byScore);
   }
   const seated = new Set(seats.map((r) => r.key));
+  let filled = false;
   if (seats.length < SEATS) {
     const fill = known.filter((r) => !seated.has(r.key) && fillsTop(r)).sort(byFill).slice(0, SEATS - seats.length);
     seats.push(...fill);
     for (const r of fill) seated.add(r.key);
+    filled = fill.length > 0;
   }
   const order = [...seats, ...ranked.filter((r) => !seated.has(r.key))];
   // The file's own neighbors: a row's closeToNext is about the ranked row right after it in the file.
@@ -150,6 +157,7 @@ export function peoplesTopView<T>(board: BoardFile, menuOf: (key: string) => T |
     seats: entries.slice(0, seats.length),
     rest: entries.slice(seats.length),
     rising: known.filter((r) => r.tier === "rising" && !seated.has(r.key)).map((r) => ({ key: r.key, lists: r.lists, needs: Math.max(1, r.needs), flag: flagOf(r), menu: menuOf(r.key) as T })),
+    filled,
   };
 }
 
@@ -179,6 +187,19 @@ export function listsText(lists: number, firsts: number): string {
 export function risingText(lists: number, needs: number): string {
   const n = Math.max(1, needs);
   return `On ${pluralize(lists, "list")} · needs ${formatCount(n)} more ${n === 1 ? "list" : "lists"}`;
+}
+
+/**
+ * The Rising heading: "Rising: 40 burgers not ranked yet." ("Rising: 1 burger." once the top 10 is filled, whose rows on
+ * 2 lists would contradict "not ranked yet").
+ */
+export function risingHeading(n: number, filled: boolean): string {
+  return filled ? `Rising: ${pluralize(n, "burger")}.` : `Rising: ${pluralize(n, "burger")} not ranked yet.`;
+}
+
+/** A Rising row's line: "On 7 lists · needs 3 more lists", or only "On 7 lists" once the top 10 is filled. */
+export function risingDetail(e: Pick<RisingEntry<unknown>, "lists" | "needs">, filled: boolean): string {
+  return filled ? listsText(e.lists, 0) : risingText(e.lists, e.needs);
 }
 
 /** A flagged row's label ("Under review", FINAL.md's proposed wording, was approved as is by the user on 2026-09-26). */
