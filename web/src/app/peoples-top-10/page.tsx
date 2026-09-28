@@ -9,7 +9,7 @@ import { getPricedRestaurants, getStats } from "@/lib/data";
 import { pluralize } from "@/lib/format";
 import { breadcrumbNode, itemListNode } from "@/lib/jsonld";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
-import { asOfText, boardCountLine, ladderStartText, PEOPLES_TOP_ONE_LINER, PEOPLES_TOP_TICKET, peoplesTopLede, seatsHeading } from "@/lib/peoples-top";
+import { asOfText, boardCountLine, ladderStartText, PEOPLES_TOP_ONE_LINER, PEOPLES_TOP_TICKET, peoplesTopLede, risingHeading, seatsHeading } from "@/lib/peoples-top";
 import { getPeoplesTop } from "@/lib/peoples-top-data";
 import { rankingSpecs } from "@/lib/rankings";
 import { peoplesTopSeo } from "@/lib/seo";
@@ -69,7 +69,7 @@ export default function PeoplesTopPage() {
 
         <section className="mt-8" aria-labelledby="top-10">
           <h2 id="top-10" className="t-display-m">
-            {top.seats.length ? seatsHeading(top.seats.length) : "The top 10."}
+            {top.seats.length ? seatsHeading(top.seats.length, top.early) : "The top 10."}
           </h2>
           <div className="mt-4">
             {top.seats.length ? (
@@ -105,9 +105,9 @@ export default function PeoplesTopPage() {
 
         {top.rising.length ? (
           <section className="section" aria-labelledby="rising">
-            <SectionHeading id="rising" kicker="Climbing the ladder" icon={RopeLadder} title={`Rising: ${pluralize(top.rising.length, "burger")} not ranked yet.`} />
+            <SectionHeading id="rising" kicker="Climbing the ladder" icon={RopeLadder} title={risingHeading(top.rising.length, top.filled)} />
             <div className="mt-6">
-              <RisingList entries={top.rising} median={median} />
+              <RisingList entries={top.rising} median={median} filled={top.filled} />
             </div>
           </section>
         ) : null}

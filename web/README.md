@@ -157,7 +157,7 @@ fetches nothing.
 
 User decisions 2026-09-25/26: each visitor saves one strict ranking of 3 to 25 burgers (the ranker above; Supabase
 `save_ranking`, one list per browser and per connection; see [`../supabase/README.md`](../supabase/README.md)), and the
-crowd's ranking is **the Patty Ladder**. Five published burger rankings are saved among the lists, each counted like any
+crowd's ranking is **the Patty Ladder**. Seven published burger rankings are saved among the lists, each counted like any
 other (user decisions 2026-09-26/27; `../data/ranker_published_lists.json`, `supabase/README.md` "Published lists"); the
 site no longer names them (the sourcing line was removed at the user's request, 2026-09-27), so its copy says plain
 "lists", never that every list is a visitor's own (`check:seo` fails on "visitors rank", "their own lists" and the like). In one sentence, the one the page carries as its only method line: "Every list
@@ -188,6 +188,18 @@ rpc/ranker_board_inputs ──(read-only GET, publishable key)──> scripts/sn
   phi, raw, lists, weighted, firsts, networks, needs, surging, inconsistent, held, review, frozen, aheadP, closeToNext`).
   Two-space JSON with one row per line, so a day's diff reads burger by burger. Before the first publication it is the
   empty early board. Yesterday's file is the ladder's only memory: never edit it by hand.
+- **What the site shows** (user request 2026-09-27, "count the robert top 10 a populatoed peopels list needs to show when i
+  send this to people"; `src/lib/peoples-top.ts` `peoplesTopView`, `src/lib/published-board.mjs`): the board is the
+  committed file once the database has published one (rows, or an `asOf`: a board published empty after a reset stays
+  empty); before the database's first publication the build fits the published rankings in `../data/ranker_published_lists.json` (lists with
+  `voided_on` left out; each on its `added_on` day, else `seeded_on`; one network per publisher) with `refreshInputs` +
+  `computeBoard(inputs, null)`, nothing else (`sync-data` copies and checks the file; missing or broken: a warning and no
+  published board). The top 10 everywhere (the page, the ranker's reveal, `/data/menus.json`, `/best-burgers` ranks, JSON-LD,
+  llms.txt, the share image) is the seats in board order, then, while fewer than 10, the best other rows on 2+ lists from 2+
+  networks, not held, under review or surging, by cautious score (`score`, else `raw`; ties: more lists, then θ), up to 10;
+  a burger in it is not also Rising (under a filled top 10, Rising reads "Rising: 2 burgers." with plain "On 3 lists"
+  rows). Heading "The top 10 so far." while early. "#1 on N" counts only lists whose own No. 1 the burger is (a published
+  list's `ranks[0] === 1`; `ownFirsts`, display only). The Patty Ladder itself is unchanged.
 - **The writer** (`scripts/snapshot-peoples-top.mjs`): GETs `rpc/ranker_board_inputs` with the publishable key (it refuses
   a secret or service_role key), checks the reply, runs `computeBoard` with the committed board as yesterday, keeps only the
   dataset's menu keys in the file (other keys stay in the fit), and writes the file only when it changes (deterministic:
@@ -205,8 +217,9 @@ rpc/ranker_board_inputs ──(read-only GET, publishable key)──> scripts/sn
   `../data/ranker_published_lists.json` as lists: the seeding (`<version>_ranker_published_lists.sql`, the first four, once)
   and, for a list added later (`added_on` in the file), an addition named with `--add <list id> --write`
   (`<version>_ranker_published_add.sql`: rows only, idempotent; apply it as `ranker_published_add`). Without flags it checks
-  that the committed migrations are the file's; `test/ranker-published.test.ts` pins the five lists. Nothing on the site
-  reads the file.
+  that the committed migrations are the file's; `test/ranker-published.test.ts` pins the seven lists. The site never names
+  them; until the database's first publication the build fits the People's Top 10 from the file
+  (`src/lib/published-board.mjs`).
 - **The workflow** (`../.github/workflows/peoples-top.yml`): daily at 10:00 UTC and on `workflow_dispatch` (with an
   `allow_drop` input); checks out `main`, Node 22, runs the writer, keeps the aggregates as the `ranker-board-inputs`
   artifact for 90 days, and if the file changed commits "Update People's Top 10" as `github-actions[bot]` and pushes to
@@ -416,8 +429,8 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   non-overlapping lists have them, each linked from its neighborhood page), each style list row by row (distinct menus,
   dataset prices, order, ranks, a style word in each burger, the "where the priciest burger is a …" H1), `/best-burgers`
   against `../data/best_burgers.json` (groups and their place counts, rows in order, prices, every list link, the count line, the ItemList), no "best
-  burger" in our own titles, descriptions or H1s, `/peoples-top-10` recomputed from `../data/peoples_top.json` and the dataset
-  (seats, the rest and Rising row by row with ranks, list counts, flags and links; the ItemList; "Early results" exactly while
+  burger" in our own titles, descriptions or H1s, `/peoples-top-10` recomputed from `../data/peoples_top.json` (without rows: the published rankings' board) and the dataset
+  (seats and the top 10's fill, the rest and Rising row by row with ranks, list counts, flags and links; the ItemList; "Early results" exactly while
   early; the one-liner; each `/best-burgers` row's People's rank), no "People's Price", "What's it worth" or "Price a burger"
   left anywhere and `/peoples-price`, `/best-value-burgers` and `/data/pricer.json` not built, the ranker's region on home (before the H1), each menu's People's Top 10 standing in `/data/menus.json`,
   any `/_none` placeholder noindex and unlisted, every page's share image (its own `/og/<path>.png` for restaurant,
@@ -469,7 +482,8 @@ Notes:
 
 - The build reads `../data/burger_index.json` and `../contract/burger_index.schema.json`, both outside `web/`. Commit the dataset, and
   keep Vercel's "Include files outside the root directory in the Build Step" setting on (the default for new projects).
-- The repo-root `.vercelignore` is an allowlist (`web/`, `contract/`, `data/burger_index.json`). Vercel does not read
+- The repo-root `.vercelignore` is an allowlist (`web/`, `contract/`, `data/burger_index.json`, `data/best_burgers.json`,
+  `data/peoples_top.json`, `data/ranker_published_lists.json`: a new data file the build reads must be added there). Vercel does not read
   `.gitignore`, so without it a CLI deploy from the root would upload `.env` (the Context.dev key), `.venv/` and the scrape cache.
 - Environment variables (Project → Settings → Environment Variables): `NEXT_PUBLIC_SUPABASE_URL` and
   `NEXT_PUBLIC_SUPABASE_ANON_KEY` on Production and Preview, `NEXT_PUBLIC_POSTHOG_KEY` on Production only. All are public,
