@@ -37,10 +37,25 @@ export type SocialImage = { url: string; width: number; height: number; alt: str
 /**
  * Title, description, canonical and social tags for one page. The title is final (absolute): the
  * suffix is added here only when it fits, so the layout's template never pushes it past TITLE_MAX.
- * `image` is the page's own share image (lib/share-cards.ts shareImage), else the site's /og.png.
+ * `image` is the page's own share image (lib/share-cards.ts shareImage), else the site's /og.png. `social` gives the
+ * link preview (og:/twitter: title and description) its own words where the card shows something else (home's People's
+ * Top 10); by default the preview repeats the title and description.
  */
-export function pageMetadata({ title, description, path, image = OG_IMAGE }: { title: string; description: string; path: string; image?: SocialImage }): Metadata {
+export function pageMetadata({
+  title,
+  description,
+  path,
+  image = OG_IMAGE,
+  social,
+}: {
+  title: string;
+  description: string;
+  path: string;
+  image?: SocialImage;
+  social?: { title: string; description: string } | null;
+}): Metadata {
   const full = fullTitle(title);
+  const preview = social ? { title: fullTitle(social.title), description: social.description } : { title: full, description };
   return {
     title: { absolute: full },
     description,
@@ -49,15 +64,13 @@ export function pageMetadata({ title, description, path, image = OG_IMAGE }: { t
       type: "website",
       siteName: SITE_NAME,
       locale: "en_US",
-      title: full,
-      description,
+      ...preview,
       url: path,
       images: [image],
     },
     twitter: {
       card: "summary_large_image",
-      title: full,
-      description,
+      ...preview,
       images: [{ url: image.url, alt: image.alt }],
     },
   };

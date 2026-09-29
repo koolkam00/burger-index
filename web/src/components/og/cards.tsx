@@ -1,11 +1,12 @@
 // A page's share image (DESIGN.md "Share images"): the Order Board over the water, carrying the page's own
 // card (lib/share-images.ts). A board card (a restaurant or an area) is the name and one price; a list card
-// (a ranking, the most-recommended burgers or a landmark page) is the page's H1 and its first rows. Satori-only markup.
+// (a ranking, the most-recommended burgers or a landmark page) is the page's H1 and its first rows; the home card is
+// the People's Top 10, ten names in two columns, sized to read in a chat app's small preview. Satori-only markup.
 import "server-only";
 
 import type { ReactNode } from "react";
 import { formatPrice } from "@/lib/format";
-import { estimateLines, fitFontSize, type BoardCard, type ListCard, type ShareCard } from "@/lib/share-images";
+import { estimateLines, fitFontSize, type BoardCard, type ListCard, type ShareCard, type TopCard } from "@/lib/share-images";
 import { Board, BoardLine, BoardPrice, C, Overline, Sea } from "./board";
 
 const BOARD = 1040;
@@ -131,6 +132,55 @@ function ListCardImage({ card }: { card: ListCard }) {
   );
 }
 
+/** The home card's rows: two columns of up to five (1-5, then 6-10), a rank in sign-painter red and a name. */
+const TOP_ROW = 54;
+const TOP_NAME = 36;
+
+function TopCardImage({ card }: { card: TopCard }) {
+  const rule = "2px solid rgba(58,31,12,0.22)";
+  const perColumn = Math.min(5, Math.ceil(card.rows.length / 2));
+  const columns = [card.rows.slice(0, perColumn), card.rows.slice(perColumn)].filter((c) => c.length);
+  const used = 26.4 + 4 + 64 * 1.02 + 14 + perColumn * TOP_ROW;
+  const spare = Math.max(0, LIST_CONTENT - used);
+  return (
+    <Sea>
+      <Board width={BOARD} marginTop={40} hang={24 + Math.round(spare / 2)} facePadding="24px 40px 24px">
+        <Overline size={22}>{card.overline}</Overline>
+        <div style={{ display: "flex", fontFamily: "Lilita One", fontSize: 64, lineHeight: 1.02, marginTop: 4, color: C.signInk }}>{card.title}</div>
+        <div style={{ display: "flex", width: "100%", marginTop: 14, gap: 44 }}>
+          {columns.map((column, c) => (
+            <div key={c} style={{ display: "flex", flexDirection: "column", flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0, borderTop: rule }}>
+              {column.map((row) => (
+                <div key={row.rank} style={{ display: "flex", alignItems: "center", height: TOP_ROW, borderBottom: rule, gap: 14 }}>
+                  <div style={{ display: "flex", justifyContent: "flex-end", width: 52, flexShrink: 0, fontFamily: "Lilita One", fontSize: 40, lineHeight: 1, color: C.signPrice }}>{row.rank}</div>
+                  <div
+                    style={{
+                      display: "block",
+                      overflow: "hidden",
+                      whiteSpace: "nowrap",
+                      textOverflow: "ellipsis",
+                      flexGrow: 1,
+                      flexShrink: 1,
+                      minWidth: 0,
+                      paddingRight: 8, // room for the ellipsis's last dot
+                      fontSize: TOP_NAME,
+                      fontWeight: 600,
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    {row.name}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </Board>
+    </Sea>
+  );
+}
+
 export function ShareCardImage({ card }: { card: ShareCard }) {
+  if (card.kind === "top") return <TopCardImage card={card} />;
   return card.kind === "board" ? <BoardCardImage card={card} /> : <ListCardImage card={card} />;
 }

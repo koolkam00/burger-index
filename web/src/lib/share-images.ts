@@ -15,8 +15,17 @@ export const SHARE_IMAGE_HEIGHT = 630;
 /** Where the share images live: /og/restaurants/<id>.png, /og/cheapest-burgers/brooklyn.png, … */
 export const SHARE_IMAGE_DIR = "/og";
 
-/** A page's own share image: "/restaurants/x" → "/og/restaurants/x.png". */
+/**
+ * The home page's share image (user request 2026-09-28): the People's Top 10, at a path of its own so chat apps
+ * and social sites that kept the old /og.png preview fetch the new one.
+ */
+export const HOME_SHARE_IMAGE = `${SHARE_IMAGE_DIR}/home.png`;
+/** The home card needs this many burgers in the People's Top 10; with fewer, home keeps /og.png. */
+export const HOME_CARD_MIN = 3;
+
+/** A page's own share image: "/restaurants/x" → "/og/restaurants/x.png", and home → /og/home.png. */
 export function shareImagePath(pagePath: string): string {
+  if (pagePath === "/") return HOME_SHARE_IMAGE;
   if (!/^\/[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(pagePath)) throw new Error(`no share image for ${pagePath}`);
   return `${SHARE_IMAGE_DIR}${pagePath}.png`;
 }
@@ -28,6 +37,7 @@ export function shareImageSegments(pagePath: string): string[] {
 
 /** The page an image's segments belong to, or null: ["restaurants", "x.png"] → "/restaurants/x". */
 export function pagePathOfSegments(segments: readonly string[]): string | null {
+  if (segments.length === 1 && segments[0] === "home.png") return "/";
   if (!segments.length || !segments[segments.length - 1].endsWith(".png")) return null;
   const path = `/${segments.join("/").slice(0, -".png".length)}`;
   return /^\/[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(path) ? path : null;
@@ -59,7 +69,19 @@ export type ListCard = {
   alt: string;
 };
 
-export type ShareCard = BoardCard | ListCard;
+/**
+ * The home page's card (user request 2026-09-28): the People's Top 10 as the page shows it, every row numbered, in
+ * two columns of up to five, under an overline with "Early results" while the board is early and the board's count.
+ */
+export type TopCard = {
+  kind: "top";
+  overline: string;
+  title: string;
+  rows: { rank: number; name: string }[];
+  alt: string;
+};
+
+export type ShareCard = BoardCard | ListCard | TopCard;
 
 /** Rows a list card shows (the page's first ones). */
 export const LIST_CARD_ROWS = 3;
@@ -135,6 +157,38 @@ export function listCard(l: { ticket: string; title: string; rows: readonly List
     alt: rows.length
       ? `The Burger Index: ${l.title.replace(/\.$/, "")}, the first ${rows.length === 1 ? "one" : rows.length} ${priced ? "with prices" : "listed"} ${WATER}`
       : `The Burger Index: ${l.title.replace(/\.$/, "")}, ${WATER}`,
+  };
+}
+
+/** Rows the home card shows: the whole top 10. */
+export const TOP_CARD_ROWS = 10;
+/** Characters a home card name shows before it is cut; a longer name drops a trailing "(SoHo)" first. */
+export const TOP_CARD_NAME_FIT = 22;
+
+/** A name as the home card shows it: "Hamburger America (SoHo)" → "Hamburger America" when it wouldn't fit whole. */
+export function topCardName(name: string): string {
+  if (name.length <= TOP_CARD_NAME_FIT) return name;
+  const bare = name.replace(/\s*\([^()]*\)$/, "");
+  return bare || name;
+}
+
+/**
+ * The home page's People's Top 10 card: "EARLY RESULTS · FROM 7 LISTS, AS OF SEP 27, 2026" (the page's early badge
+ * and its count line), "The People's Top 10 so far" (the page's own "so far", in the heading so it reads at phone-preview
+ * size: while early or under 10 burgers; plain "The People's Top 10" once settled), then the top 10's restaurants by
+ * rank. The alt names every row.
+ */
+export function peoplesTopCard(t: { title: string; early: boolean; rows: readonly { rank: number; name: string }[]; count: string | null }): TopCard {
+  const rows = t.rows.slice(0, TOP_CARD_ROWS);
+  const soFar = t.early || rows.length < TOP_CARD_ROWS;
+  const title = `${t.title.replace(/\.$/, "")}${soFar ? " so far" : ""}`;
+  const listed = rows.map((r) => `${r.rank}. ${r.name}`).join(", ");
+  return {
+    kind: "top",
+    overline: overline([t.early ? "Early results" : null, t.count ? t.count.replace(/\.$/, "") : null]),
+    title,
+    rows: rows.map((r) => ({ rank: r.rank, name: topCardName(r.name) })),
+    alt: `The Burger Index: ${title.replace(/^The /, "the ")}${t.early ? " (early results)" : ""}${listed ? `: ${listed},` : ","} ${WATER}`,
   };
 }
 

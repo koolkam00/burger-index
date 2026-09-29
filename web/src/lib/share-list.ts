@@ -31,7 +31,7 @@ export function rankerShareUrl(site: string): string {
   return `${site.replace(/\/+$/, "")}/?ref=${SHARE_REF}#${RANKER_ANCHOR}`;
 }
 
-/** "nycburgerindex.vercel.app": the site as the image prints it (with its port on a local build). */
+/** "nycburgerindex.com": the site as the image prints it (with its port on a local build). */
 export function shareHost(url: string): string {
   try {
     return new URL(url).host;
@@ -65,7 +65,7 @@ export function shareTitle(length: number): string {
   return n === 1 ? "My top burger" : `My top ${formatCount(n)} burgers`;
 }
 
-/** The image's call to action: "Rank yours at nycburgerindex.vercel.app". */
+/** The image's call to action: "Rank yours at nycburgerindex.com". */
 export function shareCta(url: string): { lead: string; host: string } {
   return { lead: "Rank yours at", host: shareHost(url) };
 }
@@ -82,7 +82,7 @@ export function shareFileName(length: number, format: ShareFormat): string {
 
 /**
  * The preview's alt text, what is drawn: "The Burger Index: “My top 4 burgers” on a yellow order board hanging over the
- * water: 1. Emily, Emily Burger · Clinton Hill, Brooklyn; 2. …; then “Rank yours at nycburgerindex.vercel.app”."
+ * water: 1. Emily, Emily Burger · Clinton Hill, Brooklyn; 2. …; then “Rank yours at nycburgerindex.com”."
  */
 export function shareAlt(rows: readonly ShareRow[], url: string): string {
   const list = rows.map((r) => `${r.rank}. ${r.name}${r.detail ? `, ${r.detail}` : ""}`).join("; ");

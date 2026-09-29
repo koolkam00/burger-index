@@ -348,7 +348,8 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   else `https://$VERCEL_PROJECT_PRODUCTION_URL`, else `http://localhost:4173` with a
   build warning (never a domain the user doesn't own). **The site lives at https://nycburgerindex.com** (bought by the user
   2026-09-28 through Vercel, auto-renew on; `NEXT_PUBLIC_SITE_URL` is set to it on Production; `www.` 308s to the apex, and
-  `web/vercel.json` 308s the old `nycburgerindex.vercel.app` and `burger-index-six.vercel.app` hosts path for path). Titles and meta descriptions for every page type are built in
+  `web/vercel.json` 308s the old `nycburgerindex.vercel.app` and `burger-index-six.vercel.app` hosts path for path, the root included: `source` `/:path(.*)`, since Vercel's strict `/:path*` never
+  matches `/`; `test/vercel.test.ts`). Titles and meta descriptions for every page type are built in
   `src/lib/seo.ts` from the real numbers and the month (titles ≤ 60 characters where possible, " · The Burger Index" only
   when it fits; descriptions ≤ 160; `pageMetadata` in `src/lib/metadata.ts` applies them); `sourceLine()` there is the one
   plain source/date line. JSON-LD: builders in `src/lib/jsonld.ts` (pure; `serializeJsonLd` escapes `<`, `>`, `&`),
@@ -443,7 +444,12 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   (`src/lib/share-images.ts` the cards and paths, `src/lib/share-cards.ts` server-only, builds them and gives each page its
   `og:image` through `pageMetadata({ image: shareImage(path) })`, `components/og/` the Satori markup shared with `/og.png`,
   `app/og/[...path]/route.tsx` renders them); they are stored as 256-color PNGs (`src/lib/png-palette.ts`: 786 images,
-  ~26 MB) and make the build take about 2 minutes instead of 17 s. Other pages keep `/og.png`. **Price badge**:
+  ~26 MB) and make the build take about 2 minutes instead of 17 s. **Home's link preview is the People's Top 10** (user
+  request 2026-09-28, "can it be the peoples top 10 instead [of] the median price"): `/og/home.png`, the ten in two columns
+  (`peoplesTopCard`; "The People's Top 10 so far" in the heading and og:title while early or under 10, the page's own
+  words, since a chat preview shows only the image and title), with og:/twitter: title and description of their own (`homeShareSeo`: the first three, "Rank your
+  top 10."; `pageMetadata({ social })`) while its `<title>` and meta description stay the prices'; under 3 burgers home
+  keeps `/og.png`. Other pages keep `/og.png`. **Price badge**:
   `/badge/<id>.svg` for every priced restaurant (`src/lib/badge.ts`, `app/badge/[file]/route.tsx`: drawn with `satori`
   (a dependency pinned to the version next/og bundles) so the text is outlines, paths compacted by `src/lib/svg-path.ts`;
   not pages, never in the sitemap) and the `/badge` page (`components/badge/`: the badge of `?r=<id>` or an example, a finder

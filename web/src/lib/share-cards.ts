@@ -1,7 +1,7 @@
 // Server-only: every page's share card (lib/share-images.ts), built once per build worker from the
 // dataset (restaurants, areas, rankings, landmark pages, the most-recommended burgers, the People's Top 10).
 // The pages ask shareImage(path) for their og:image; app/og/[...path]/route.tsx draws each card to
-// /og/<page path>.png. A page without a card (home, the map, /burgers, the landmarks hub, …) keeps /og.png.
+// /og/<page path>.png (home: /og/home.png, the People's Top 10). A page without a card (the map, /burgers, the landmarks hub, …) keeps /og.png.
 import "server-only";
 
 import { BEST_BURGERS_NAME, BEST_BURGERS_PATH, BEST_BURGERS_TICKET, bestBurgersCountLine, namedByHeading } from "./best-burgers";
@@ -13,7 +13,7 @@ import { isAlong, LANDMARKS_TICKET, landmarkCountLine, landmarkPath, landmarksWi
 import { boardCountLine, PEOPLES_TOP_TICKET } from "./peoples-top";
 import { getPeoplesTop } from "./peoples-top-data";
 import { RANKING_TICKETS, rankingCountLine, rankingName, rankingPath, rankingSpecs, rankMenus } from "./rankings";
-import { areaCard, listCard, restaurantCard, SHARE_IMAGE_HEIGHT, SHARE_IMAGE_WIDTH, shareImagePath, type ShareCard } from "./share-images";
+import { areaCard, HOME_CARD_MIN, listCard, peoplesTopCard, restaurantCard, SHARE_IMAGE_HEIGHT, SHARE_IMAGE_WIDTH, shareImagePath, type ShareCard } from "./share-images";
 import { PEOPLES_TOP_NAME, PEOPLES_TOP_PATH } from "./site";
 
 function build(): Map<string, ShareCard> {
@@ -82,6 +82,18 @@ function build(): Map<string, ShareCard> {
       count: boardCountLine(top),
     }),
   );
+  // Home's link preview is the People's Top 10 (user request 2026-09-28), once it shows 3+ burgers; else /og.png.
+  if (top.seats.length >= HOME_CARD_MIN) {
+    cards.set(
+      "/",
+      peoplesTopCard({
+        title: PEOPLES_TOP_NAME,
+        early: top.early,
+        rows: top.seats.map((e) => ({ rank: e.rank, name: e.menu.restaurant.name })),
+        count: boardCountLine(top),
+      }),
+    );
+  }
   return cards;
 }
 

@@ -397,11 +397,12 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   page (with its spot count and the ends of their priciest burgers) under "Burgers near landmarks".
 - **Share images, the price badge, the press kit (user decisions 2026-09-25, stage 4):**
   - Every restaurant, neighborhood, borough, ranking, style and landmark page and `/best-burgers` names its own 1200×630 share image,
-    `/og/<page path>.png` (`og:image`, `twitter:image` and their alt text through `pageMetadata({ image })`); the rest keep
-    `/og.png`. `src/lib/share-images.ts` says what each card holds (a board: the name, burger and price, or the area's median
+    `/og/<page path>.png` (`og:image`, `twitter:image` and their alt text through `pageMetadata({ image })`); home's link
+    preview is the People's Top 10, `/og/home.png` (user request 2026-09-28; with its own og:/twitter: title and description,
+    `pageMetadata({ social })`; `/og.png` under 3 burgers); the rest keep `/og.png`. `src/lib/share-images.ts` says what each card holds (a board: the name, burger and price, or the area's median
     and menu count; a list: the page's ticket, H1, first three rows and count line) and fits the text; `src/lib/share-cards.ts`
     (server-only) builds one per page from the dataset; `components/og/board.tsx` holds the Order Board pieces `/og.png`
-    uses too, `components/og/cards.tsx` the two cards; `app/og/[...path]/route.tsx` renders each at build time with next/og and
+    uses too, `components/og/cards.tsx` the board, list and home cards; `app/og/[...path]/route.tsx` renders each at build time with next/og and
     stores it in 256 colors (`src/lib/png-palette.ts`: median cut, no dithering; about a third of next/og's RGBA file, no
     visible change). 786 images, about 26 MB; they make `npm run build` take about 2 minutes (from 17 s) on a 12-core Mac.
   - `/badge/<id>.svg`: a 300×84 badge for every priced restaurant ("$22 burger", "10% above the $20.00 NYC median", "THE
@@ -434,7 +435,8 @@ User decisions of 2026-09-25 (SEO, answer engines and generative search). Everyt
   early; the one-liner; each `/best-burgers` row's People's rank), no "People's Price", "What's it worth" or "Price a burger"
   left anywhere and `/peoples-price`, `/best-value-burgers` and `/data/pricer.json` not built, the ranker's region on home (before the H1), each menu's People's Top 10 standing in `/data/menus.json`,
   any `/_none` placeholder noindex and unlisted, every page's share image (its own `/og/<path>.png` for restaurant,
-  area, ranking, style, landmark and most-recommended pages, else `/og.png`; a 1200×630 PNG that exists; an alt naming the page's
+  area, ranking, style, landmark and most-recommended pages, `/og/home.png` on home with the People's Top 10 in its alt and
+  og:/twitter: words about it, else `/og.png`; a 1200×630 PNG that exists; an alt naming the page's
   price or H1; no image unused or shared), one badge per priced restaurant and nothing else (its title's price and comparison
   recomputed, no script) with its page's `/badge?r=<id>` link, `/badge` (the example snippet) and `/press` (median, borough
   medians, source line, CSV, license and GitHub links, share image, credit line), no email address on any page or in
@@ -500,7 +502,8 @@ Notes:
   The origin (`src/lib/site-url.ts`) sets canonical URLs, the sitemap, robots.txt, llms.txt, JSON-LD, the CSV's `page_url` and
   Open Graph tags. The site launched on its free `*.vercel.app` address (user decision 2026-09-25) and moved to
   https://nycburgerindex.com on 2026-09-28: `NEXT_PUBLIC_SITE_URL` is set on Production, and the host-scoped redirects in
-  `web/vercel.json` send `nycburgerindex.vercel.app` (and `burger-index-six.vercel.app`) to the same path there. A build with neither
+  `web/vercel.json` send `nycburgerindex.vercel.app` (and `burger-index-six.vercel.app`) to the same path there, the home page included (`/:path(.*)`: Vercel's strict `/:path*` never matches `/`;
+  `test/vercel.test.ts`). A build with neither
   variable (a local one) uses the preview origin and says so; it never names a domain we don't own.
   `NEXT_PUBLIC_POSTHOG_HOST` is only for a build served somewhere without the proxy (for example `https://us.i.posthog.com`
   for a local check).
