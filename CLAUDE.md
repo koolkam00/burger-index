@@ -345,8 +345,10 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   `test/peoples-top.test.ts` and `test/published-board.test.ts`; `check:seo` recomputes the page, the ranker's reveal and
   the llms.txt line from the board file (or, before the first publication, the published-lists file).
 - **SEO / AEO / GEO (user decisions 2026-09-25):** the origin comes from `src/lib/site-url.ts`: `NEXT_PUBLIC_SITE_URL`,
-  else `https://$VERCEL_PROJECT_PRODUCTION_URL` (the free `*.vercel.app` address), else `http://localhost:4173` with a
-  build warning (never a domain the user doesn't own). Titles and meta descriptions for every page type are built in
+  else `https://$VERCEL_PROJECT_PRODUCTION_URL`, else `http://localhost:4173` with a
+  build warning (never a domain the user doesn't own). **The site lives at https://nycburgerindex.com** (bought by the user
+  2026-09-28 through Vercel, auto-renew on; `NEXT_PUBLIC_SITE_URL` is set to it on Production; `www.` 308s to the apex, and
+  `web/vercel.json` 308s the old `nycburgerindex.vercel.app` and `burger-index-six.vercel.app` hosts path for path). Titles and meta descriptions for every page type are built in
   `src/lib/seo.ts` from the real numbers and the month (titles ≤ 60 characters where possible, " · The Burger Index" only
   when it fits; descriptions ≤ 160; `pageMetadata` in `src/lib/metadata.ts` applies them); `sourceLine()` there is the one
   plain source/date line. JSON-LD: builders in `src/lib/jsonld.ts` (pure; `serializeJsonLd` escapes `<`, `>`, `&`),
@@ -492,8 +494,10 @@ npm run indexnow         # after a production deploy: submit the live sitemap to
   `NEXT_PUBLIC_SUPABASE_ANON_KEY` on Production and Preview, `NEXT_PUBLIC_POSTHOG_KEY` on Production only
   (`NEXT_PUBLIC_POSTHOG_HOST` stays unset: the default `/ingest` is proxied to PostHog by the rewrites in
   `web/vercel.json`, which Vercel reads from the Root Directory; Next's own `rewrites` don't work with
-  `output: "export"`). Set `NEXT_PUBLIC_SITE_URL` only once there is a custom domain: until then the build uses the
-  `VERCEL_PROJECT_PRODUCTION_URL` Vercel provides (the site launches on its `*.vercel.app` address). The site has no
+  `output: "export"`). `NEXT_PUBLIC_SITE_URL` = `https://nycburgerindex.com` on Production (the custom domain, 2026-09-28;
+  Preview builds fall back to `VERCEL_PROJECT_PRODUCTION_URL`). Domains on the project: `nycburgerindex.com` (production),
+  `www.nycburgerindex.com` (308 to the apex), and the old `nycburgerindex.vercel.app` / `burger-index-six.vercel.app`, which
+  the host-scoped redirects in `web/vercel.json` send to the same path on the new domain. The site has no
   Content-Security-Policy.
 - **Refresh the live site:** `pipeline run` (spends credits) → `pipeline build` → when the priced menus changed,
   `node web/scripts/ranker-keys-migration.mjs --write` (a new `supabase/migrations/<version>_ranker_keys.sql` setting the

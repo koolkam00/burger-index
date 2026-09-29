@@ -495,11 +495,12 @@ Notes:
   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the Supabase **publishable** key, `sb_publishable_…` (also in `web/.env.local`) | answers stay closed |
   | `NEXT_PUBLIC_POSTHOG_KEY` | `phc_soMqVLQsk4hmuZYyWwGDrjjPQwRng7a6bK4i9E9vpBQ9` (the PostHog project's public token; **Vercel, Production environment only**, never in `web/.env.local`: a Preview deployment with the key would count as real traffic on the dashboard, whose filters only drop localhost) | no analytics |
   | `NEXT_PUBLIC_POSTHOG_HOST` | optional; leave unset for the `/ingest` proxy in `web/vercel.json` | `/ingest` |
-  | `NEXT_PUBLIC_SITE_URL` | only for a custom domain, once there is one (`https://…`) | Vercel's production URL (`https://$VERCEL_PROJECT_PRODUCTION_URL`, the `*.vercel.app` address), else `http://localhost:4173` with a build warning |
+  | `NEXT_PUBLIC_SITE_URL` | `https://nycburgerindex.com` (**Vercel, Production**; the custom domain since 2026-09-28) | Vercel's production URL (`https://$VERCEL_PROJECT_PRODUCTION_URL`, the `*.vercel.app` address), else `http://localhost:4173` with a build warning |
 
   The origin (`src/lib/site-url.ts`) sets canonical URLs, the sitemap, robots.txt, llms.txt, JSON-LD, the CSV's `page_url` and
-  Open Graph tags. The site launches on its free `*.vercel.app` address (user decision 2026-09-25), which Vercel passes to every
-  build as `VERCEL_PROJECT_PRODUCTION_URL`, so nothing needs setting until a custom domain arrives. A build with neither
+  Open Graph tags. The site launched on its free `*.vercel.app` address (user decision 2026-09-25) and moved to
+  https://nycburgerindex.com on 2026-09-28: `NEXT_PUBLIC_SITE_URL` is set on Production, and the host-scoped redirects in
+  `web/vercel.json` send `nycburgerindex.vercel.app` (and `burger-index-six.vercel.app`) to the same path there. A build with neither
   variable (a local one) uses the preview origin and says so; it never names a domain we don't own.
   `NEXT_PUBLIC_POSTHOG_HOST` is only for a build served somewhere without the proxy (for example `https://us.i.posthog.com`
   for a local check).
