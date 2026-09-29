@@ -11,11 +11,14 @@ import {
   estimateLines,
   fitFontSize,
   LIST_CARD_ROWS,
+  HOME_SHARE_IMAGE,
   listCard,
   pagePathOfSegments,
+  peoplesTopCard,
   restaurantCard,
   shareImagePath,
   shareImageSegments,
+  topCardName,
 } from "../src/lib/share-images";
 import { loadDataset } from "./dataset";
 
@@ -32,7 +35,11 @@ test("shareImagePath / segments: /og/<page path>.png, and back", () => {
   assert.equal(pagePathOfSegments(["restaurants", "x"]), null, "not a .png");
   assert.equal(pagePathOfSegments(["..", "x.png"]), null);
   assert.equal(pagePathOfSegments([]), null);
-  assert.throws(() => shareImagePath("/"), /no share image/);
+  // Home's card (the People's Top 10) has a path of its own, never the old /og.png.
+  assert.equal(shareImagePath("/"), "/og/home.png");
+  assert.equal(HOME_SHARE_IMAGE, "/og/home.png");
+  assert.deepEqual(shareImageSegments("/"), ["home.png"]);
+  assert.equal(pagePathOfSegments(["home.png"]), "/");
   assert.throws(() => shareImagePath("/burgers?q=x"), /no share image/);
 });
 
@@ -129,4 +136,28 @@ test("the dataset: one card per restaurant, neighborhood, borough, ranking and s
   assert.equal(bestBurgersCountLine(96), "All 96 places on this list, most publications first.");
   assert.equal(BOROUGH_META.length, 5);
   for (const r of priced.slice(0, 50)) assert.equal(shareImagePath(`/restaurants/${r.id}`), `/og/restaurants/${r.id}.png`);
+});
+
+test("peoplesTopCard: home's People's Top 10, every row by rank, the early marker and the count in the overline", () => {
+  const names = ["Red Hook Tavern", "The Long Island Bar", "Raoul's", "Hamburger America (SoHo)", "Smacking Burger", "Nowon", "Sip & Guzzle", "Minetta Tavern", "7th Street Burger", "J.G. Melon", "Eleventh"];
+  const card = peoplesTopCard({ title: "The People's Top 10", early: true, rows: names.map((name, i) => ({ rank: i + 1, name })), count: "From 7 lists, as of Sep 27, 2026." });
+  assert.equal(card.kind, "top");
+  assert.equal(card.title, "The People's Top 10");
+  assert.equal(card.overline, `EARLY RESULTS${NBSP}· FROM${NBSP}7${NBSP}LISTS,${NBSP}AS${NBSP}OF${NBSP}SEP${NBSP}27,${NBSP}2026`);
+  assert.equal(card.rows.length, 10, "the top 10, never more");
+  assert.deepEqual(card.rows[3], { rank: 4, name: "Hamburger America" }, "a trailing (SoHo) goes before the name is cut");
+  assert.ok(card.alt.startsWith("The Burger Index: the People's Top 10 (early results): 1. Red Hook Tavern, 2. The Long Island Bar, 3. Raoul's, 4. Hamburger America (SoHo),"), card.alt);
+  assert.ok(card.alt.includes("10. J.G. Melon, on a yellow order board") && !card.alt.includes("Eleventh"));
+  const settled = peoplesTopCard({ title: "The People's Top 10", early: false, rows: names.slice(0, 3).map((name, i) => ({ rank: i + 1, name })), count: "From 1,284 lists, as of Oct 1, 2026." });
+  assert.ok(!/early/i.test(`${settled.overline} ${settled.alt}`));
+  assert.equal(settled.rows.length, 3);
+  assert.doesNotMatch(`${card.overline} ${card.alt}`, /median|visitor|their own/i);
+});
+
+test("topCardName: a name that fits stays whole; a long one drops a trailing parenthetical only", () => {
+  assert.equal(topCardName("Raoul's"), "Raoul's");
+  assert.equal(topCardName("Burger Joint (Midtown)"), "Burger Joint (Midtown)");
+  assert.equal(topCardName("Hamburger America (SoHo)"), "Hamburger America");
+  assert.equal(topCardName("A Very Long Restaurant Name Without Parens"), "A Very Long Restaurant Name Without Parens");
+  assert.equal(topCardName("(Twenty-three characters)"), "(Twenty-three characters)");
 });

@@ -8,6 +8,7 @@ import {
   boroughSeo,
   DESCRIPTION_MAX,
   homeSeo,
+  homeShareSeo,
   neighborhoodSeo,
   peoplesTopSeo,
   pickTitle,
@@ -128,6 +129,26 @@ test("area titles and descriptions carry the median, the comparison and the mont
   const home = homeSeo({ median: 20, menus: 532, generatedAt: GEN, cheapest: null, priciest: null });
   assert.equal(home.title, "The Burger Index: NYC burger prices, $20 median (Sep 2026)");
   assert.ok(home.title.length <= TITLE_MAX);
+});
+
+test("homeShareSeo: home's link preview names the People's Top 10's first three and invites a ranking", () => {
+  const early = homeShareSeo({ leaders: ["Red Hook Tavern", "The Long Island Bar", "Raoul's", "Nowon"], early: true });
+  assert.deepEqual(early, {
+    title: "The People's Top 10 burgers in NYC",
+    description: "Red Hook Tavern tops the People's Top 10 burgers in NYC so far, then The Long Island Bar and Raoul's. Rank your top 10.",
+  });
+  assert.equal(
+    homeShareSeo({ leaders: ["Emily", "Au Cheval", "J.G. Melon"], early: false })?.description,
+    "Emily tops the People's Top 10 burgers in NYC, then Au Cheval and J.G. Melon. Rank your top 10.",
+  );
+  // Fewer than 3: no preview of its own (home keeps the median's).
+  assert.equal(homeShareSeo({ leaders: ["Emily", "Au Cheval"], early: true }), null);
+  // Long names: only the #1, and the invitation always fits.
+  const long = homeShareSeo({ leaders: ["A".repeat(60), "B".repeat(60), "C".repeat(60)], early: true });
+  assert.ok(long && long.description.length <= DESCRIPTION_MAX && long.description.endsWith(" Rank your top 10."), long?.description);
+  assert.ok(!long?.description.includes("B"));
+  for (const s of [early, long]) assert.doesNotMatch(`${s?.title} ${s?.description}`, /visitor|their own|median/i);
+  assert.ok(`${early?.title} · The Burger Index`.length <= TITLE_MAX);
 });
 
 test("the real dataset: every restaurant title is unique and every description within 160 characters", () => {

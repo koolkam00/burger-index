@@ -21,11 +21,12 @@ import { formatCount, formatDate, formatIsoDay, formatMonthYear, formatPrice, pl
 import { datasetNode, itemListNode, organizationNode, websiteNode } from "@/lib/jsonld";
 import { menuIndexPrices, menusByIndexPrice, menusByIndexPriceDesc, type Menu } from "@/lib/menus";
 import { pageMetadata, SITE_URL } from "@/lib/metadata";
-import { getRevealBoard } from "@/lib/peoples-top-data";
+import { getPeoplesTop, getRevealBoard } from "@/lib/peoples-top-data";
+import { shareImage } from "@/lib/share-cards";
 import { rankerShareUrl } from "@/lib/share-list";
 import { RANKER_ANCHOR, RANKER_TITLE_ID } from "@/lib/site";
 import { cheapestSpec, priciestSpec, rankingNameInSentence, rankingPath, rankMenus, topTied } from "@/lib/rankings";
-import { homeSeo, sourceLine, type NamedPrice } from "@/lib/seo";
+import { homeSeo, homeShareSeo, sourceLine, type NamedPrice } from "@/lib/seo";
 
 const named = (m: Menu | undefined): NamedPrice | null => (m ? { name: m.restaurant.name, price: m.indexPrice } : null);
 
@@ -37,7 +38,13 @@ const seo = homeSeo({
   priciest: named(menusByIndexPriceDesc(getPricedRestaurants())[0]),
 });
 
-export const metadata = pageMetadata({ ...seo, path: "/" });
+// The link preview is the People's Top 10 (user request 2026-09-28): its own card (/og/home.png) and words, once the
+// board shows 3+ burgers; the <title> and meta description stay the prices'.
+const peoplesTop = getPeoplesTop();
+const image = shareImage("/");
+const social = image ? homeShareSeo({ leaders: peoplesTop.seats.map((e) => e.menu.restaurant.name), early: peoplesTop.early }) : null;
+
+export const metadata = pageMetadata({ ...seo, path: "/", image, social });
 
 export default function HomePage() {
   const stats = getStats();

@@ -43,6 +43,21 @@ test("fullTitle: the brand suffix only when the whole title stays within 60 char
   assert.deepEqual(meta.title, { absolute: "Map · The Burger Index" });
   assert.equal(meta.alternates?.canonical, "/map");
   assert.equal((meta.openGraph as { title?: string }).title, "Map · The Burger Index");
+  // Home's link preview has words of its own (the People's Top 10); the <title> and description stay.
+  const home = pageMetadata({
+    title: "The Burger Index: NYC burger prices",
+    description: "prices",
+    path: "/",
+    social: { title: "The People's Top 10 burgers in NYC", description: "Emily tops it. Rank your top 10." },
+  });
+  assert.deepEqual(home.title, { absolute: "The Burger Index: NYC burger prices" });
+  assert.equal(home.description, "prices");
+  for (const tags of [home.openGraph, home.twitter] as { title?: string; description?: string }[]) {
+    assert.equal(tags.title, "The People's Top 10 burgers in NYC · The Burger Index");
+    assert.equal(tags.description, "Emily tops it. Rank your top 10.");
+  }
+  const plain = pageMetadata({ title: "Map", description: "d", path: "/map", social: null });
+  assert.equal((plain.twitter as { description?: string }).description, "d");
 });
 
 test("robots: every crawler allowed, AI search and training bots named, only /ingest/ disallowed", () => {

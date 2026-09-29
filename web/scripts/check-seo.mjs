@@ -46,7 +46,9 @@
 // a list of 3+).
 // Sharing and link-building (user decisions 2026-09-25, stage 4): every restaurant, neighborhood, borough,
 // ranking and style page and /best-burgers names its own 1200×630 share image (/og/<path>.png, a PNG of that
-// size that exists, used by no other page, its alt naming the page's burger or area and price); every other
+// size that exists, used by no other page, its alt naming the page's burger or area and price); home names
+// /og/home.png, the People's Top 10 (user request 2026-09-28; /og.png under 3 burgers), with og:/twitter: title and
+// description about it (the #1, "Rank your top 10.") while its <title> and description stay the prices'; every other
 // page names /og.png; nothing under out/og/ goes unused. Every priced restaurant has /badge/<id>.svg (and
 // nothing else is there), whose title states its price and how it compares with the NYC median, and its
 // page links /badge?r=<id>. /badge and /press exist, are linked from every page's footer, in the sitemap
@@ -1065,8 +1067,11 @@ for (const p of pages) if (p.description.length > 160) err(`${p.path}: descripti
 
 // ---- share images, badges, the press kit, nearby (stage 4) ------------------------------------------
 
+/** Home's link preview is the People's Top 10 (user request 2026-09-28) once it shows 3+ burgers; else /og.png. */
+const HOME_CARD = topView.seats.length >= 3;
 /** The page's own share image, by page type; every other page uses the site's /og.png. */
 function expectedImage(path) {
+  if (path === "/") return HOME_CARD ? "/og/home.png" : "/og.png";
   const own = /^\/(restaurants|neighborhoods|boroughs)\/[^/]+$/.test(path) || RANKING_PATH.test(path) || STYLE_PATH.test(path) || LANDMARK_PATH.test(path) || path === BEST_PATH || path === PEOPLES_TOP_PATH;
   return own ? `/og${path}.png` : "/og.png";
 }
@@ -1097,7 +1102,7 @@ for (const p of pages) {
   const size = file ? pngSize(file) : null;
   if (!size || size[0] !== 1200 || size[1] !== 630) err(`${p.path}: ${want} is ${file ? `a ${size ? size.join("×") : "non-PNG"} file` : "missing"}, not a 1200×630 PNG`);
   usedImages.set(want, [...(usedImages.get(want) ?? []), p.path]);
-  if (want === "/og.png" || !alt) continue;
+  if (want === "/og.png" || !alt || p.path === "/") continue; // home's card: below
   // The card is the page's own: its alt names the restaurant and its price, the area and its median, or the list.
   const rest = /^\/restaurants\/([^/]+)$/.exec(p.path);
   const area = /^\/(neighborhoods|boroughs)\/([^/]+)$/.exec(p.path);
@@ -1120,6 +1125,35 @@ for (const [img, paths] of usedImages) if (img !== "/og.png" && paths.length > 1
   const n = Math.min(3, topView.seats.length);
   if (p && n && !alt.includes(`the first ${n === 1 ? "one" : n} with prices`)) err(`${PEOPLES_TOP_PATH}: share image alt "${alt}" doesn't show the first ${n}`);
   if (p && !n && /the first/.test(alt)) err(`${PEOPLES_TOP_PATH}: share image alt "${alt}" shows rows of an empty board`);
+}
+// Home's link preview (user request 2026-09-28): the People's Top 10 card, its alt naming every row as the page
+// numbers it, and og:/twitter: title and description about the People's Top 10 (the #1 to #3, "Rank your top 10");
+// the <title> and meta description stay the prices'. Under 3 burgers: /og.png, and the preview repeats the page's.
+{
+  const p = pages.find((x) => x.path === "/");
+  if (p) {
+    const alt = metaContent(p.head, "property", "og:image:alt") ?? "";
+    const ogTitle = metaContent(p.head, "property", "og:title") ?? "";
+    const ogDesc = metaContent(p.head, "property", "og:description") ?? "";
+    if (metaContent(p.head, "name", "twitter:title") !== ogTitle) err("/: twitter:title is not the og:title");
+    if (metaContent(p.head, "name", "twitter:description") !== ogDesc) err("/: twitter:description is not the og:description");
+    if (metaContent(p.head, "name", "twitter:image:alt") !== alt) err("/: twitter:image:alt is not the og:image:alt");
+    overclaims("/ og:title", ogTitle);
+    overclaims("/ og:description", ogDesc);
+    overclaims("/ og:image:alt", alt);
+    if (HOME_CARD) {
+      const names = topView.seats.map((r) => r.m.r.name);
+      const listed = topView.seats.map((r) => `${r.rank}. ${r.m.r.name}`).join(", ");
+      if (!alt.startsWith(`The Burger Index: the People's Top 10${board?.early ? " (early results)" : ""}: ${listed},`)) err(`/: share image alt "${alt}" doesn't list the People's Top 10 (${listed})`);
+      if (ogTitle !== "The People's Top 10 burgers in NYC · The Burger Index") err(`/: og:title "${ogTitle}" is not the People's Top 10's`);
+      if (!ogDesc.startsWith(`${names[0]} tops the People's Top 10 burgers in NYC${board?.early ? " so far" : ""}`) || !ogDesc.endsWith("Rank your top 10.")) err(`/: og:description "${ogDesc}" doesn't name the #1 (${names[0]}) and invite "Rank your top 10."`);
+      if (ogDesc.length > 160) err(`/: og:description is ${ogDesc.length} characters`);
+      if (ogTitle === p.title) err("/: og:title repeats the <title> (the preview is the People's Top 10)");
+    } else {
+      if (ogTitle !== p.title || ogDesc !== p.description) err("/: under 3 burgers in the People's Top 10 the preview repeats the title and description");
+    }
+    if (/median/i.test(`${ogTitle} ${ogDesc}`) === HOME_CARD) err(`/: the preview ${HOME_CARD ? "still speaks of the median" : "lost the median"} ("${ogTitle}")`);
+  }
 }
 const ogDir = join(OUT, "og");
 const ogFiles = existsSync(ogDir) ? walk(ogDir).map((f) => `/${relative(OUT, f)}`) : [];

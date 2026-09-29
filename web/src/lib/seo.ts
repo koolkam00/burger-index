@@ -113,6 +113,23 @@ export function homeSeo(d: { median: number | null; menus: number; generatedAt: 
   };
 }
 
+/**
+ * The home page's link preview (og:/twitter: title and description; user request 2026-09-28: "can it be the peoples
+ * top 10 instead of the median price"): the People's Top 10's first three and an invitation to rank. The <title> and
+ * meta description stay homeSeo's (they answer "NYC burger prices" searches). Null under 3 burgers: home's preview
+ * then stays the median (/og.png and homeSeo).
+ */
+export function homeShareSeo(d: { leaders: readonly string[]; early: boolean }): Seo | null {
+  if (d.leaders.length < 3) return null;
+  const [first, second, third] = d.leaders;
+  const soFar = d.early ? " so far" : "";
+  const invite = "Rank your top 10.";
+  const lead = `${first} tops the People's Top 10 burgers in NYC${soFar}, then ${second} and ${third}.`;
+  const short = `${first} tops the People's Top 10 burgers in NYC${soFar}.`;
+  const description = `${lead} ${invite}`.length <= DESCRIPTION_MAX ? `${lead} ${invite}` : `${truncate(short, DESCRIPTION_MAX - invite.length - 1)} ${invite}`;
+  return { title: "The People's Top 10 burgers in NYC", description };
+}
+
 export function burgersSeo(d: { count: number; generatedAt: string; cheapest: NamedPrice | null; priciest: NamedPrice | null }): Seo {
   if (!d.count || !d.cheapest || !d.priciest) return { title: "Every burger", description: "Search every New York burger we priced by name, restaurant or neighborhood." };
   return {
