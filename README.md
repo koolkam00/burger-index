@@ -90,8 +90,8 @@ fails with `NEXT_NO_ROUTES_MANIFEST`), Node.js 22.x, "Include files outside the 
 `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` on Production and Preview, `NEXT_PUBLIC_POSTHOG_KEY` on
 Production only. Deploy by pushing, or from the **repo root** with the CLI (`npx vercel link` once, then
 `npx vercel --prod`). The root `.vercelignore` limits the upload to what the build needs, so `.env` never leaves your
-machine. The site launches on its `*.vercel.app` address, which the
-build picks up from Vercel; set `NEXT_PUBLIC_SITE_URL` only once there is a custom domain.
+machine. The site lives at https://nycburgerindex.com (`NEXT_PUBLIC_SITE_URL` on Production); the old
+`nycburgerindex.vercel.app` address redirects to it (`web/vercel.json`).
 
 To publish new prices: `pipeline run`, then `pipeline build`, commit `data/burger_index.json`, deploy, then tell the
 search engines: `cd web && SITE_URL=https://<production host> npm run indexnow`.
