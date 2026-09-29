@@ -502,7 +502,8 @@ Notes:
   The origin (`src/lib/site-url.ts`) sets canonical URLs, the sitemap, robots.txt, llms.txt, JSON-LD, the CSV's `page_url` and
   Open Graph tags. The site launched on its free `*.vercel.app` address (user decision 2026-09-25) and moved to
   https://nycburgerindex.com on 2026-09-28: `NEXT_PUBLIC_SITE_URL` is set on Production, and the host-scoped redirects in
-  `web/vercel.json` send `nycburgerindex.vercel.app` (and `burger-index-six.vercel.app`) to the same path there. A build with neither
+  `web/vercel.json` send `nycburgerindex.vercel.app` (and `burger-index-six.vercel.app`) to the same path there, the home page included (`/:path(.*)`: Vercel's strict `/:path*` never matches `/`;
+  `test/vercel.test.ts`). A build with neither
   variable (a local one) uses the preview origin and says so; it never names a domain we don't own.
   `NEXT_PUBLIC_POSTHOG_HOST` is only for a build served somewhere without the proxy (for example `https://us.i.posthog.com`
   for a local check).

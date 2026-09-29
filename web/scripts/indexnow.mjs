@@ -4,7 +4,7 @@
 // the build.
 //
 //   npm run indexnow                          # SITE_URL, else NEXT_PUBLIC_SITE_URL, else https://$VERCEL_PROJECT_PRODUCTION_URL
-//   npm run indexnow -- --site https://burger-index.vercel.app
+//   npm run indexnow -- --site https://nycburgerindex.com
 //   npm run indexnow -- --dry-run             # check the key file and the sitemap, print what would be sent, send nothing
 //   npm run indexnow -- --sitemap out/sitemap.xml   # read the URLs from a local build instead of the live sitemap
 //

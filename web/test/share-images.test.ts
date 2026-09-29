@@ -142,15 +142,20 @@ test("peoplesTopCard: home's People's Top 10, every row by rank, the early marke
   const names = ["Red Hook Tavern", "The Long Island Bar", "Raoul's", "Hamburger America (SoHo)", "Smacking Burger", "Nowon", "Sip & Guzzle", "Minetta Tavern", "7th Street Burger", "J.G. Melon", "Eleventh"];
   const card = peoplesTopCard({ title: "The People's Top 10", early: true, rows: names.map((name, i) => ({ rank: i + 1, name })), count: "From 7 lists, as of Sep 27, 2026." });
   assert.equal(card.kind, "top");
-  assert.equal(card.title, "The People's Top 10");
+  // Early: the page's "so far" in the heading, the biggest words on the card, so a phone preview carries it.
+  assert.equal(card.title, "The People's Top 10 so far");
   assert.equal(card.overline, `EARLY RESULTS${NBSP}· FROM${NBSP}7${NBSP}LISTS,${NBSP}AS${NBSP}OF${NBSP}SEP${NBSP}27,${NBSP}2026`);
   assert.equal(card.rows.length, 10, "the top 10, never more");
   assert.deepEqual(card.rows[3], { rank: 4, name: "Hamburger America" }, "a trailing (SoHo) goes before the name is cut");
-  assert.ok(card.alt.startsWith("The Burger Index: the People's Top 10 (early results): 1. Red Hook Tavern, 2. The Long Island Bar, 3. Raoul's, 4. Hamburger America (SoHo),"), card.alt);
+  assert.ok(card.alt.startsWith("The Burger Index: the People's Top 10 so far (early results): 1. Red Hook Tavern, 2. The Long Island Bar, 3. Raoul's, 4. Hamburger America (SoHo),"), card.alt);
   assert.ok(card.alt.includes("10. J.G. Melon, on a yellow order board") && !card.alt.includes("Eleventh"));
   const settled = peoplesTopCard({ title: "The People's Top 10", early: false, rows: names.slice(0, 3).map((name, i) => ({ rank: i + 1, name })), count: "From 1,284 lists, as of Oct 1, 2026." });
   assert.ok(!/early/i.test(`${settled.overline} ${settled.alt}`));
   assert.equal(settled.rows.length, 3);
+  assert.equal(settled.title, "The People's Top 10 so far", "under 10 burgers it is still \"so far\", as the page's \"The top 3 so far.\"");
+  const full = peoplesTopCard({ title: "The People's Top 10", early: false, rows: names.slice(0, 10).map((name, i) => ({ rank: i + 1, name })), count: "From 1,284 lists, as of Oct 1, 2026." });
+  assert.equal(full.title, "The People's Top 10", "settled with a full ten: the plain name");
+  assert.ok(full.alt.startsWith("The Burger Index: the People's Top 10: 1. Red Hook Tavern,"), full.alt);
   assert.doesNotMatch(`${card.overline} ${card.alt}`, /median|visitor|their own/i);
 });
 

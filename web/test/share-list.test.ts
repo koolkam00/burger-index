@@ -23,7 +23,7 @@ import {
   type ShareBurger,
 } from "../src/lib/share-list";
 
-const SITE = "https://nycburgerindex.vercel.app";
+const SITE = "https://nycburgerindex.com";
 const URL_ = rankerShareUrl(SITE);
 const burgers = new Map<string, ShareBurger>(
   Array.from({ length: 25 }, (_, i) => [`spot-${i + 1}`, { name: `Spot ${i + 1}`, burger: `Burger ${i + 1}`, where: i % 2 ? "Astoria, Queens" : "3 locations" }]),
@@ -51,8 +51,8 @@ test("the words: the title, the call to action, the share text, the file name an
   assert.equal(shareTitle(3), "My top 3 burgers");
   assert.equal(shareTitle(10), "My top 10 burgers");
   assert.equal(shareTitle(25), "My top 10 burgers");
-  assert.deepEqual(shareCta(URL_), { lead: "Rank yours at", host: "nycburgerindex.vercel.app" });
-  assert.equal(shareText(4, URL_), "My top 4 burgers on The Burger Index. Rank yours: https://nycburgerindex.vercel.app/?ref=share#rank");
+  assert.deepEqual(shareCta(URL_), { lead: "Rank yours at", host: "nycburgerindex.com" });
+  assert.equal(shareText(4, URL_), "My top 4 burgers on The Burger Index. Rank yours: https://nycburgerindex.com/?ref=share#rank");
   assert.equal(shareFileName(25, "story"), "my-top-10-burgers-story.png");
   assert.equal(shareFileName(4, "square"), "my-top-4-burgers-square.png");
   assert.equal(formatLabel("story"), "Story · 1080 × 1920");
@@ -63,12 +63,12 @@ test("the words: the title, the call to action, the share text, the file name an
   const rows = shareRows(list(3), (k) => burgers.get(k));
   assert.equal(
     shareAlt(rows, URL_),
-    "The Burger Index: “My top 3 burgers” on a yellow order board hanging over the water: 1. Spot 1, Burger 1 · 3 locations; 2. Spot 2, Burger 2 · Astoria, Queens; 3. Spot 3, Burger 3 · 3 locations; then “Rank yours at nycburgerindex.vercel.app”.",
+    "The Burger Index: “My top 3 burgers” on a yellow order board hanging over the water: 1. Spot 1, Burger 1 · 3 locations; 2. Spot 2, Burger 2 · Astoria, Queens; 3. Spot 3, Burger 3 · 3 locations; then “Rank yours at nycburgerindex.com”.",
   );
 });
 
 test("the link is the home ranker's, with no list and no voter id", () => {
-  assert.equal(URL_, "https://nycburgerindex.vercel.app/?ref=share#rank");
+  assert.equal(URL_, "https://nycburgerindex.com/?ref=share#rank");
   assert.equal(rankerShareUrl(`${SITE}/`), URL_);
   assert.equal(rankerShareUrl("http://localhost:4173"), "http://localhost:4173/?ref=share#rank");
   assert.equal(shareHost("http://localhost:4173/?ref=share#rank"), "localhost:4173");

@@ -152,7 +152,7 @@ function TopCardImage({ card }: { card: TopCard }) {
             <div key={c} style={{ display: "flex", flexDirection: "column", flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0, borderTop: rule }}>
               {column.map((row) => (
                 <div key={row.rank} style={{ display: "flex", alignItems: "center", height: TOP_ROW, borderBottom: rule, gap: 14 }}>
-                  <div style={{ display: "flex", justifyContent: "flex-end", width: 52, fontFamily: "Lilita One", fontSize: 40, lineHeight: 1, color: C.signPrice }}>{row.rank}</div>
+                  <div style={{ display: "flex", justifyContent: "flex-end", width: 52, flexShrink: 0, fontFamily: "Lilita One", fontSize: 40, lineHeight: 1, color: C.signPrice }}>{row.rank}</div>
                   <div
                     style={{
                       display: "block",
@@ -162,6 +162,7 @@ function TopCardImage({ card }: { card: TopCard }) {
                       flexGrow: 1,
                       flexShrink: 1,
                       minWidth: 0,
+                      paddingRight: 8, // room for the ellipsis's last dot
                       fontSize: TOP_NAME,
                       fontWeight: 600,
                       lineHeight: 1.1,

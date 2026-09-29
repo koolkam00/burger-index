@@ -174,11 +174,14 @@ export function topCardName(name: string): string {
 
 /**
  * The home page's People's Top 10 card: "EARLY RESULTS · FROM 7 LISTS, AS OF SEP 27, 2026" (the page's early badge
- * and its count line), "The People's Top 10", then the top 10's restaurants by rank. The alt names every row.
+ * and its count line), "The People's Top 10 so far" (the page's own "so far", in the heading so it reads at phone-preview
+ * size: while early or under 10 burgers; plain "The People's Top 10" once settled), then the top 10's restaurants by
+ * rank. The alt names every row.
  */
 export function peoplesTopCard(t: { title: string; early: boolean; rows: readonly { rank: number; name: string }[]; count: string | null }): TopCard {
   const rows = t.rows.slice(0, TOP_CARD_ROWS);
-  const title = t.title.replace(/\.$/, "");
+  const soFar = t.early || rows.length < TOP_CARD_ROWS;
+  const title = `${t.title.replace(/\.$/, "")}${soFar ? " so far" : ""}`;
   const listed = rows.map((r) => `${r.rank}. ${r.name}`).join(", ");
   return {
     kind: "top",

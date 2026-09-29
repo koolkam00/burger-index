@@ -1144,9 +1144,13 @@ for (const [img, paths] of usedImages) if (img !== "/og.png" && paths.length > 1
     if (HOME_CARD) {
       const names = topView.seats.map((r) => r.m.r.name);
       const listed = topView.seats.map((r) => `${r.rank}. ${r.m.r.name}`).join(", ");
-      if (!alt.startsWith(`The Burger Index: the People's Top 10${board?.early ? " (early results)" : ""}: ${listed},`)) err(`/: share image alt "${alt}" doesn't list the People's Top 10 (${listed})`);
-      if (ogTitle !== "The People's Top 10 burgers in NYC · The Burger Index") err(`/: og:title "${ogTitle}" is not the People's Top 10's`);
-      if (!ogDesc.startsWith(`${names[0]} tops the People's Top 10 burgers in NYC${board?.early ? " so far" : ""}`) || !ogDesc.endsWith("Rank your top 10.")) err(`/: og:description "${ogDesc}" doesn't name the #1 (${names[0]}) and invite "Rank your top 10."`);
+      // "so far" (the page's own words) while early or under 10 burgers, in the card's heading, the alt and og:title:
+      // a chat preview shows only the image and the title.
+      const soFar = board?.early || names.length < 10 ? " so far" : "";
+      if (!alt.startsWith(`The Burger Index: the People's Top 10${soFar}${board?.early ? " (early results)" : ""}: ${listed},`)) err(`/: share image alt "${alt}" doesn't list the People's Top 10${soFar} (${listed})`);
+      if (ogTitle !== `The People's Top 10 burgers in NYC${soFar} · The Burger Index`) err(`/: og:title "${ogTitle}" is not the People's Top 10's${soFar ? ' with "so far"' : ""}`);
+      if (ogTitle.length > 60) err(`/: og:title is ${ogTitle.length} characters`);
+      if (!ogDesc.startsWith(`${names[0]} tops the People's Top 10 burgers in NYC${soFar}`) || !ogDesc.endsWith("Rank your top 10.")) err(`/: og:description "${ogDesc}" doesn't name the #1 (${names[0]}) and invite "Rank your top 10."`);
       if (ogDesc.length > 160) err(`/: og:description is ${ogDesc.length} characters`);
       if (ogTitle === p.title) err("/: og:title repeats the <title> (the preview is the People's Top 10)");
     } else {

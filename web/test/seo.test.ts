@@ -134,13 +134,20 @@ test("area titles and descriptions carry the median, the comparison and the mont
 test("homeShareSeo: home's link preview names the People's Top 10's first three and invites a ranking", () => {
   const early = homeShareSeo({ leaders: ["Red Hook Tavern", "The Long Island Bar", "Raoul's", "Nowon"], early: true });
   assert.deepEqual(early, {
-    title: "The People's Top 10 burgers in NYC",
+    title: "The People's Top 10 burgers in NYC so far",
     description: "Red Hook Tavern tops the People's Top 10 burgers in NYC so far, then The Long Island Bar and Raoul's. Rank your top 10.",
   });
-  assert.equal(
-    homeShareSeo({ leaders: ["Emily", "Au Cheval", "J.G. Melon"], early: false })?.description,
-    "Emily tops the People's Top 10 burgers in NYC, then Au Cheval and J.G. Melon. Rank your top 10.",
-  );
+  // Settled with a full ten: no "so far" anywhere.
+  const ten = ["Emily", "Au Cheval", "J.G. Melon", "4", "5", "6", "7", "8", "9", "10"];
+  assert.deepEqual(homeShareSeo({ leaders: ten, early: false }), {
+    title: "The People's Top 10 burgers in NYC",
+    description: "Emily tops the People's Top 10 burgers in NYC, then Au Cheval and J.G. Melon. Rank your top 10.",
+  });
+  // Settled but under 10 burgers: "so far", as the page's "The top 3 so far." (the title is what a chat preview shows).
+  assert.deepEqual(homeShareSeo({ leaders: ten.slice(0, 3), early: false }), {
+    title: "The People's Top 10 burgers in NYC so far",
+    description: "Emily tops the People's Top 10 burgers in NYC so far, then Au Cheval and J.G. Melon. Rank your top 10.",
+  });
   // Fewer than 3: no preview of its own (home keeps the median's).
   assert.equal(homeShareSeo({ leaders: ["Emily", "Au Cheval"], early: true }), null);
   // Long names: only the #1, and the invitation always fits.
@@ -148,7 +155,8 @@ test("homeShareSeo: home's link preview names the People's Top 10's first three 
   assert.ok(long && long.description.length <= DESCRIPTION_MAX && long.description.endsWith(" Rank your top 10."), long?.description);
   assert.ok(!long?.description.includes("B"));
   for (const s of [early, long]) assert.doesNotMatch(`${s?.title} ${s?.description}`, /visitor|their own|median/i);
-  assert.ok(`${early?.title} · The Burger Index`.length <= TITLE_MAX);
+  // The brand suffix still fits with "so far": exactly 60 characters.
+  assert.equal(`${early?.title} · The Burger Index`.length, TITLE_MAX);
 });
 
 test("the real dataset: every restaurant title is unique and every description within 160 characters", () => {

@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "redirects": [
-    { "source": "/:path*", "has": [{ "type": "host", "value": "nycburgerindex.vercel.app" }], "destination": "https://nycburgerindex.com/:path*", "permanent": true },
-    { "source": "/:path*", "has": [{ "type": "host", "value": "burger-index-six.vercel.app" }], "destination": "https://nycburgerindex.com/:path*", "permanent": true },
+    { "source": "/:path(.*)", "has": [{ "type": "host", "value": "nycburgerindex.vercel.app" }], "destination": "https://nycburgerindex.com/:path", "permanent": true },
+    { "source": "/:path(.*)", "has": [{ "type": "host", "value": "burger-index-six.vercel.app" }], "destination": "https://nycburgerindex.com/:path", "permanent": true },
     { "source": "/peoples-price", "destination": "/peoples-top-10", "permanent": true }
   ],
   "rewrites": [

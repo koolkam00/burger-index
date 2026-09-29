@@ -122,12 +122,14 @@ export function homeSeo(d: { median: number | null; menus: number; generatedAt: 
 export function homeShareSeo(d: { leaders: readonly string[]; early: boolean }): Seo | null {
   if (d.leaders.length < 3) return null;
   const [first, second, third] = d.leaders;
-  const soFar = d.early ? " so far" : "";
+  // "so far" (the page's own words) while early or under 10 burgers, in the title too: a chat preview shows the image
+  // and the title, never the description ("…in NYC so far · The Burger Index" is exactly 60 characters).
+  const soFar = d.early || d.leaders.length < 10 ? " so far" : "";
   const invite = "Rank your top 10.";
   const lead = `${first} tops the People's Top 10 burgers in NYC${soFar}, then ${second} and ${third}.`;
   const short = `${first} tops the People's Top 10 burgers in NYC${soFar}.`;
   const description = `${lead} ${invite}`.length <= DESCRIPTION_MAX ? `${lead} ${invite}` : `${truncate(short, DESCRIPTION_MAX - invite.length - 1)} ${invite}`;
-  return { title: "The People's Top 10 burgers in NYC", description };
+  return { title: `The People's Top 10 burgers in NYC${soFar}`, description };
 }
 
 export function burgersSeo(d: { count: number; generatedAt: string; cheapest: NamedPrice | null; priciest: NamedPrice | null }): Seo {
